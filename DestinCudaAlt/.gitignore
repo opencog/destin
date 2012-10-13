@@ -1,1 +1,12 @@
 CMakeFiles/
+data
+*.o
+mnist_data/
+*.swp
+.cproject
+.project
+.settings/
+CMakeCache.txt
+bin/
+cmake_install.cmake
+libdestinalt.so

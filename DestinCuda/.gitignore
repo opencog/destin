@@ -14,3 +14,9 @@ CMakeFiles/
 *.so
 cmake_install.cmake
 CMakeCache.txt
+.cproject
+.project
+uniform_test
+webcamExp
+Makefile
+*.swp
