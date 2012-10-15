@@ -363,22 +363,15 @@ void FormulateBelief( Destin *d, float *image )
     {
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
+            GetObservation( d->nodes, image, n );
+            CalculateDistances( d->nodes, n );
+
+            NormalizeBeliefGetWinner( d->nodes, n );
             if( d->layerMask[l] == 1 )
             {
-                GetObservation( d->nodes, image, n );
-                CalculateDistances( d->nodes, n );
-
-                NormalizeBeliefGetWinner( d->nodes, n );
 
                 UpdateWinner( d->nodes, d->inputLabel, n );
                 d->muSumSqDiff += d->nodes[n].muSqDiff;
-            }
-            else
-            {
-                GetObservation( d->nodes, image, n );
-                CalculateDistances( d->nodes, n );
-
-                NormalizeBeliefGetWinner( d->nodes, n );
             }
         }
     }
