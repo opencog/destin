@@ -303,6 +303,36 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
+    //setup book keeping to be able to look up nodes by row col and layer
+
+    int layerSize;
+    MALLOC( d->nodeRef, int *, d->nLayers );
+
+    // set up layer/row/col references for nodes
+    for( i=0, l=0; l < d->nLayers - 1; l++ )
+    {
+        layerSize = d->layerSize[l];
+        layerSizeSqRoot = (uint) sqrt( layerSize );
+
+        MALLOC( d->nodeRef[l], int, layerSize );
+
+        for( m=0; m < layerSizeSqRoot; m+=2 )
+        {
+            for( n=0; n < layerSizeSqRoot; n+=2, i+=4 )
+            {
+                d->nodeRef[l][  m   * layerSizeSqRoot + n  ] = i;
+                d->nodeRef[l][  m   * layerSizeSqRoot + n+1] = i+1;
+                d->nodeRef[l][(m+1) * layerSizeSqRoot + n  ] = i+2;
+                d->nodeRef[l][(m+1) * layerSizeSqRoot + n+1] = i+3;
+            }
+        }
+    }
+
+    // set up layer/row/col reference for top node
+    MALLOC( d->nodeRef[d->nLayers - 1], int, 1 );
+    d->nodeRef[l][0] = d->nNodes - 1;
+
+
     for( i=0; i < nInputNodes; i++ )
     {
         free(inputOffsets[i]);
@@ -337,7 +367,7 @@ void LinkParentBeliefToChildren( Destin *d )
     }
 }
 
-void DestroyDestin( Destin *d )
+void DestroyDestin( Destin * d )
 {
     uint i;
 
@@ -354,6 +384,10 @@ void DestroyDestin( Destin *d )
     FREE(d->belief);
     FREE(d->layerSize);
 
+    for( i=0; i < d->nLayers; i++ )
+    {
+        FREE( d->nodeRef[i] );
+    }
     FREE(d);
 }
 
@@ -438,7 +472,7 @@ Destin * LoadDestin( Destin *d, char *filename )
     if( !dFile )
     {
         fprintf(stderr, "Error: Cannot open %s", filename);
-        return;
+        return NULL;
     }
 
     // read destin hierarchy information from disk
@@ -561,6 +595,7 @@ void InitNode
     {
         node->observation[i] = (float) rand() / (float) RAND_MAX;
     }
+
 }
 
 // deallocate the node.

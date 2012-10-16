@@ -28,7 +28,9 @@ typedef struct Destin {
     uint        * inputLabel;           // input label (used during supervised training)
     uint        * layerSize;            // size for each layer ( nodes per layer )
     uint        * layerMask;
-} Destin;
+
+    int     ** nodeRef;                 // allows easy indexing of nodes by layer, row, and col
+} Destin  ;
 /* Destin Struct Definition End */
 
 
@@ -102,6 +104,15 @@ void DisplayFeatures(
 void ClearBeliefs(                      // cleanse the pallette
                   Destin *              // pointer to destin object
                  );
+
+
+// grab a node at a particular layer, row, and column
+struct Node * GetNodeFromDestin(
+                        Destin *d,      // pointer to destin object
+                        uint l,         // layer
+                        uint r,         // row
+                        uint c          // column
+                        );
 
 /* Destin Functions End */
 

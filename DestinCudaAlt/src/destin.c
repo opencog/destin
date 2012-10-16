@@ -369,7 +369,6 @@ void FormulateBelief( Destin *d, float *image )
             NormalizeBeliefGetWinner( d->nodes, n );
             if( d->layerMask[l] == 1 )
             {
-
                 UpdateWinner( d->nodes, d->inputLabel, n );
                 d->muSumSqDiff += d->nodes[n].muSqDiff;
             }
@@ -727,4 +726,36 @@ void ResetStarvTrace( Destin *d )
             nTmp->starv[j] = 1;
         }
     }
+}
+
+
+// grab a node at a particular layer, row, and column
+struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
+{
+    // check layer bounds
+    if( l >= d->nLayers )
+    {
+        fprintf(stderr, "GetNodeFromDestin(): layer requested is out of range!\n");
+        return NULL;
+    }
+
+    uint layerSizeSqRoot = (uint) sqrt( d->layerSize[l] );
+
+    // check row bounds
+    if( r >= layerSizeSqRoot )
+    {
+        fprintf(stderr, "GetNodeFromDestin(): row requested is out of range!\n");
+        return NULL;
+    }
+
+    // check column bounds
+    if( c >= layerSizeSqRoot )
+    {
+        fprintf(stderr, "GetNodeFromDestin(): column requested is out of range!\n");
+        return NULL;
+    }
+
+    // grab the node index
+    uint nIdx = d->nodeRef[l][r*layerSizeSqRoot+c];
+    return &d->nodes[nIdx];
 }
