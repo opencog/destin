@@ -1,7 +1,6 @@
 #ifndef DestinIterationFinishedCallback_H
 #define DestinIterationFinishedCallback_H
 
-#include "DestinKernel.h"
 
 #include "INetwork.h"
 
