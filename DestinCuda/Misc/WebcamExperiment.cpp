@@ -15,7 +15,7 @@ int main(int argc, char ** argv){
 
     vs.enableDisplayWindow();
 
-    Transporter t(512 * 512);
+    Transporter t;
 
 
 
@@ -25,7 +25,7 @@ int main(int argc, char ** argv){
         t.setHostSourceImage(vs.getOutput());
         t.transport(); //move video from host to card
 
-        network.doDestin(t.getDeviceDest());
+        network.doDestin(t.getDest());
 
         beliefs = network.getNodeBeliefs(7,0,0);
 

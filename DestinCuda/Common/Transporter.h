@@ -19,10 +19,8 @@
 
 using namespace std;
 class Transporter {
-private:
-	float * deviceDest;
-	int floatArrayLength;
 protected:
+	float * dest;
 	float * sourceImage;
 	float * transformedImage;
 
@@ -31,33 +29,24 @@ protected:
 	}
 
 public:
-	virtual ~Transporter(){
-		cudaFree(deviceDest);
-	}
+	virtual ~Transporter(){}
 
-	Transporter(int floatArrayLength )
-		:floatArrayLength(floatArrayLength),
-		 transformedImage(NULL){
-
-		std::cout << "Transporter constructor" << std::endl;
-		cout << "floatArrayLength " << floatArrayLength  << endl;
-		CUDA_TEST_MALLOC( (void**)&deviceDest, floatArrayLength  * sizeof(float) );
-	}
+	Transporter(){}
 
 	void setHostSourceImage(float * sourceImage){
 		this->sourceImage = sourceImage;
 	}
 
-	float * getDeviceDest(){
-		return deviceDest;
+	float * getDest(){
+		return dest;
 	}
 
-	void transport(){
+	virtual void transport(){
 		transform();
-		cudaMemcpy( deviceDest, transformedImage, floatArrayLength *sizeof(float), cudaMemcpyHostToDevice );
 	}
 
 };
+
 
 class ImageTransporter : public Transporter {
 private:
@@ -94,19 +83,12 @@ public:
 
 	virtual ~ImageTransporter(){
 		delete [] transformedImage;
-		cout << "~ImageTransporter" << endl;
 	}
-	ImageTransporter(int floatArrayLength, int nodes_wide, int nodes_high, int ppn_x, int ppn_y)
-		:Transporter(floatArrayLength),
-		 nodes_wide(nodes_wide),
+	ImageTransporter(int nodes_wide, int nodes_high, int ppn_x, int ppn_y)
+		:nodes_wide(nodes_wide),
 		 nodes_high(nodes_high),
 		 ppn_x(ppn_x),ppn_y(ppn_y) {
-		std::cout << "ImageTransporter constructor" << std::endl;
-		if(floatArrayLength != (nodes_wide * ppn_x * nodes_high * ppn_y)){
-			std::stringstream mess; mess << __FILE__ ":" << __LINE__ << ": floatArrayLength did not match constructor parameters." << std::endl;
-			throw std::logic_error(mess.str());
-		}
-		transformedImage = new float[floatArrayLength];
+	    transformedImage = new float[nodes_wide * nodes_high * ppn_x * ppn_y];
 	}
 
 };

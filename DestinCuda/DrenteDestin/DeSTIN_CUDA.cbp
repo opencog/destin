@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+   <FileVersion major="1" minor="6" />
+   <Project>
+      <Option title="DeSTIN_CUDA" />
+      <Option makefile_is_custom="1" />
+      <Option compiler="gcc" />
+      <Option virtualFolders="CMake Files\;CMake Files\DrenteDestin\;CMake Files\DrenteDestin\pugixml\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\usr\;CMake Files\..\..\..\..\..\usr\share\;CMake Files\..\..\..\..\..\usr\share\cmake-2.8\;CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\;CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\;CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Platform\;CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Compiler\;CMake Files\DavisDestin\;CMake Files\Misc\;" />
+      <Build>
+      <Target title="all">
+         <Option working_dir="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin" />
+         <Option type="4" />
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 all" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="cudadestin">
+         <Option output="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/libcudadestin.so" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin" />
+         <Option object_output="./" />
+         <Option type="3" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/../Common" />
+            <Add directory="/usr/local/cuda/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 cudadestin" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="cudadestin/fast">
+         <Option output="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/libcudadestin.so" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin" />
+         <Option object_output="./" />
+         <Option type="3" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/../Common" />
+            <Add directory="/usr/local/cuda/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 cudadestin/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="destinCuda">
+         <Option output="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/destinCuda" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/../Common" />
+            <Add directory="/usr/local/cuda/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 destinCuda" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="destinCuda/fast">
+         <Option output="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/destinCuda" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin" />
+         <Option object_output="./" />
+         <Option type="1" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/../Common" />
+            <Add directory="/usr/local/cuda/include" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 destinCuda/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="pugixml">
+         <Option output="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/libpugixml.so" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml" />
+         <Option object_output="./" />
+         <Option type="3" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/../Common" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 pugixml" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      <Target title="pugixml/fast">
+         <Option output="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/libpugixml.so" prefix_auto="0" extension_auto="0" />
+         <Option working_dir="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml" />
+         <Option object_output="./" />
+         <Option type="3" />
+         <Option compiler="gcc" />
+         <Compiler>
+            <Add directory="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/../Common" />
+         </Compiler>
+         <MakeCommands>
+            <Build command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 pugixml/fast" />
+            <CompileFile command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 &quot;$file&quot;" />
+            <Clean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 clean" />
+            <DistClean command="/usr/bin/make -f &quot;/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/Makefile&quot;  VERBOSE=1 clean" />
+         </MakeCommands>
+      </Target>
+      </Build>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/pugixml.cpp">
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/AdviceData.cu">
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/DestinCuda.cu">
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/DestinData.cu">
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/DestinKernel.cu">
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/pugixml.hpp">
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\DrenteDestin\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\DrenteDestin\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\DrenteDestin\pugixml\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DrenteDestin/pugixml/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\DrenteDestin\pugixml\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindPackageHandleStandardArgs.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindPackageMessage.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeParseArguments.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeSystemSpecificInformation.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeGenericSystem.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeFindCodeBlocks.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeCInformation.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeCommonLanguageInclude.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeCXXInformation.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeCommonLanguageInclude.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindPackageHandleStandardArgs.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindPackageMessage.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/CMakeParseArguments.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/FindCUDA/run_nvcc.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\FindCUDA\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Platform/Linux.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Platform\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Platform/UnixPaths.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Platform\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Platform/Linux-GNU-C.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Platform\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Platform/Linux-GNU.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Platform\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Platform/Linux-GNU-CXX.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Platform\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Platform/Linux-GNU.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Platform\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Compiler/GNU-C.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Compiler\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Compiler/GNU.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Compiler\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Compiler/GNU-CXX.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Compiler\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/../../../../../usr/share/cmake-2.8/Modules/Compiler/GNU.cmake">
+          <Option virtualFolder="CMake Files\..\..\..\..\..\usr\share\cmake-2.8\Modules\Compiler\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DavisDestin/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\DavisDestin\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/DavisDestin/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\DavisDestin\" />
+      </Unit>
+      <Unit filename="/home/ted/my_oc_git_clone/destin_git_repo/DestinCuda/Misc/CMakeLists.txt">
+          <Option virtualFolder="CMake Files\Misc\" />
+      </Unit>
+   </Project>
+</CodeBlocks_project_file>

@@ -55,10 +55,6 @@ if(CUDA_FOUND)
     if(WIN32)
         link_directories( $ENV{CUDA_LIB_PATH} )
     endif()
-
-    ADD_LIBRARY( destinalt SHARED IMPORTED )
-    SET_TARGET_PROPERTIES( destinalt PROPERTIES  IMPORTED_LOCATION "../DestinCudaAlt/libdestinalt.so"  )
- 
     
 else()
     MESSAGE("CUDA not found. Not building CUDA DestinPort.")
