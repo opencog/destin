@@ -8,6 +8,10 @@
 #ifndef DESTINNETWORKALT_H_
 #define DESTINNETWORKALT_H_
 
+#include <stdexcept>
+#include <vector>
+#include <iostream>
+
 #include "INetwork.h"
 
 extern "C" {
@@ -16,9 +20,6 @@ extern "C" {
 }
 
 #include "DestinIterationFinishedCallback.h"
-#include <stdexcept>
-#include <vector>
-#include <iostream>
 
 enum SupportedImageWidths {
     W4 = 4,     //1
@@ -70,8 +71,8 @@ private:
     }
 
 public:
-    destin_network_alt(SupportedImageWidths width, uint layers,
-            uint centroid_counts [] ) :
+    destin_network_alt(SupportedImageWidths width, unsigned int layers,
+            unsigned int centroid_counts [] ) :
             training(true),
             beta(.01),
             lambda(.1),

@@ -36,7 +36,7 @@ public class VideoPresentor implements IPresentor {
 
 			//Make sure no other threads are trying to do stuff with the network
 			synchronized (networkLock) {
-				network.doDestin(inputTrans.getDeviceDest());
+				network.doDestin(inputTrans.getDest());
 			}
 		}
 		System.out.println("finished presenting");

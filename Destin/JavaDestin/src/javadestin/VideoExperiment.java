@@ -34,7 +34,7 @@ public class VideoExperiment implements IExperiment {
 		
 		int pixelCount =  layerNodesWide  * layerNodesHigh * nodePixelWidth * nodePixelHeight;
 		
-		presentor.setInputTransporter(new ImageTransporter(pixelCount, layerNodesWide ,layerNodesHigh , nodePixelWidth , nodePixelHeight));
+		presentor.setInputTransporter(new ImageTransporter(layerNodesWide ,layerNodesHigh , nodePixelWidth , nodePixelHeight));
 	}
 	
 

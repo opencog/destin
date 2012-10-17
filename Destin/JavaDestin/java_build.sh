@@ -1,1 +1,1 @@
-ant -f JavaDestin/build.xml
+ant -f build.xml

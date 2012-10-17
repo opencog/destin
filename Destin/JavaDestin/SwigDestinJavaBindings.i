@@ -5,12 +5,9 @@
 #include "macros.h"
 /* includes that are needed to compile */
 #include "DestinIterationFinishedCallback.h"
-#include "DestinKernel.h"
-#include "DestinCuda.h"
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 #include "VideoSource.h"
-#include "CurandGeneratorWrapper.h"
 #include "Transporter.h"
 #include "INetwork.h"
 #include "DestinNetworkAlt.h"
@@ -43,9 +40,6 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 
 /* the other classes to generate wrappers for */
 %include "VideoSource.h"
-%include "DestinKernel.h"
-%include "DestinCuda.h"
-%include "CurandGeneratorWrapper.h"
 %include "Transporter.h"
 %include "DestinNetworkAlt.h"
 
