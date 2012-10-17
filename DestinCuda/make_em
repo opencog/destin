@@ -1,1 +1,0 @@
-( ( cd ../DestinCudaAlt/ && make 2>&1  ) && echo start destin2 &&  make 2>&1 ) | less
