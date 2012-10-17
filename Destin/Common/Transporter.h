@@ -3,12 +3,11 @@
 
 #include <iostream>
 #include <stdexcept>
-/**
- * This  Transporter class transforms a source image and then transfers it to GPU memory.
- * It allocates its own memory on the device upon creation then frees it in the deconstructor.
- * By default this base class does not transform it, just transers it over.
- * Derived classes may want to arrage the image pixels so that different nodes
- * get different regions of pixels.
+/** Transforms a source image and then transfers it to its destination.
+ *
+ * This base class does not do much, just sets the destination as the source and
+ * does no transformations.
+ *
  */
 
 #define CUDA_TEST_MALLOC( p, s )                                                                    \
@@ -20,10 +19,15 @@
 using namespace std;
 class Transporter {
 protected:
-	float * dest;
+	float * destImage;
 	float * sourceImage;
 	float * transformedImage;
 
+	/**
+	 * Inheriting classes should overide this to
+	 * transform the image as necessary setting the
+	 * transformedImaged.
+	 */
 	virtual void transform(){
 		transformedImage = sourceImage;
 	}
@@ -33,21 +37,30 @@ public:
 
 	Transporter(){}
 
-	void setHostSourceImage(float * sourceImage){
+	void setSource(float * sourceImage){
 		this->sourceImage = sourceImage;
 	}
 
 	float * getDest(){
-		return dest;
+		return destImage;
 	}
 
+	/**x
+	 * inheriting classes should override this to
+	 * call transform and set the destinationImage
+	 */
 	virtual void transport(){
 		transform();
+		destImage = transformedImage;
 	}
 
 };
 
 
+/** Transforms the image to align with node regions.
+ * Drente destin needs this, DavisDestin does not because it already
+ * arranges the input for its nodes.
+ */
 class ImageTransporter : public Transporter {
 private:
 	const int nodes_wide;

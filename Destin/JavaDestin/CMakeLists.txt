@@ -15,7 +15,7 @@ if(SWIG_FOUND AND highgui)
         SET(CMAKE_SWIG_OUTDIR ./gen_src/javadestin )            
         SWIG_ADD_MODULE(destinjava java SwigDestinJavaBindings.i )
         
-        SWIG_LINK_LIBRARIES(destinjava highgui destinalt )
+        SWIG_LINK_LIBRARIES(destinjava highgui destinalt common )
     
     else(JNI_FOUND)
         message("Couldn't find jni. Is a jdk installed? Not building java interfaces.")

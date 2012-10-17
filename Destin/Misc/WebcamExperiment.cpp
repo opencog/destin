@@ -22,7 +22,7 @@ int main(int argc, char ** argv){
     float * beliefs;
     while(vs.grab()){
 
-        t.setHostSourceImage(vs.getOutput());
+        t.setSource(vs.getOutput());
         t.transport(); //move video from host to card
 
         network.doDestin(t.getDest());

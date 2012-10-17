@@ -89,7 +89,7 @@ public class VideoExperiment implements IExperiment {
 	}
     public static void main(String[] argv) throws InterruptedException {
         try {
-            new VideoExperiment(new NetworkFactory(true)).start();
+            new VideoExperiment(new NetworkFactory()).start();
         } catch (Exception e) {
             e.printStackTrace();
         }

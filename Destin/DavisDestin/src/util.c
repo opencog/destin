@@ -136,13 +136,13 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     d->nInputPipeline = nInputPipeline;
 
-    // allocate node pointers on host and device
+    // allocate node pointers on host
     MALLOC(d->nodes, Node, nNodes);
 
     // allocate space for inputs to nodes
     MALLOC(d->inputPipeline, float, nInputPipeline);
 
-    // allocate space for beliefs for nodes on host and device
+    // allocate space for beliefs for nodes on host
     MALLOC(d->belief, float, nBeliefs);
 
     d->nBeliefs = nBeliefs;

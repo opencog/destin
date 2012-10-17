@@ -14,7 +14,7 @@
  */
 package javadestin;
 public class Dashboard extends javax.swing.JFrame {
-	IExperiment exp = new VideoExperiment( new NetworkFactory(false));
+	IExperiment exp = new VideoExperiment( new NetworkFactory());
 	
 	/** Creates new form Dashboard */
 	public Dashboard() {

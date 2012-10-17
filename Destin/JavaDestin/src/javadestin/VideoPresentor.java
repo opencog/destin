@@ -27,8 +27,7 @@ public class VideoPresentor implements IPresentor {
 		}
 		
 		while(!isStopped && source.grab()){
-			
-			inputTrans.setHostSourceImage(source.getOutput());
+			inputTrans.setSource(source.getOutput());
 			
 			//arrange pixel groups to match input node regions
 			//and copy the array to the device
