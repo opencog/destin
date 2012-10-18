@@ -578,9 +578,9 @@ void InitNode
     for( i=0; i < nb; i++ )
     {
         // init belief (node output)
-        node->pBelief[i] = 1 / nb;
-        node->beliefEuc[i] = 1 / nb;
-        node->beliefMal[i] = 1 / nb;
+        node->pBelief[i] = 1 / (float)nb;
+        node->beliefEuc[i] = 1 / (float)nb;
+        node->beliefMal[i] = 1 / (float)nb;
         node->nCounts[i] = 0;
 
         // init starv trace to one
