@@ -27,6 +27,12 @@ int TEST_HAS_FAILURES = false;
     }\
 }\
 
+#define assertFloatEquals( expected, actual )\
+    if( (expected) != (actual)  ){\
+        printf("assertFloatEquals FAILED, line: %i, expected: %f, actual: %f\n", __LINE__, expected, actual);\
+        return 1;\
+    }\
+
 bool _assertFloatArrayEquals(float * expected, float * actual, int length){
     int i;
     for(i = 0 ; i < length ; i++){
@@ -45,4 +51,13 @@ if( ! _assertFloatArrayEquals( (exp), (act), (len)) ){\
     return 1;\
 }\
 
+
+void printFloatArray(float * array, int length){
+    int i;
+    printf("float array: ");
+    for(i = 0; i < length - 1 ; i++){
+        printf("%i: %f, ", i,array[i]);
+    }
+    printf("%i: %f\n",i,array[i]);
+}
 #endif
