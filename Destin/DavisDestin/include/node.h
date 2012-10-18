@@ -24,7 +24,7 @@ typedef struct Node {
     uint     genWinner;     // winning centroid index for generative procedure
 
     // node statistics
-    float * mu;             // centroid locations
+    float * mu;             // centroid locations ( length ns-nc )
     float * sigma;          // centroid variances
     float * starv;          // centroid starvation coefficients
 
@@ -37,11 +37,11 @@ typedef struct Node {
     uint  * inputOffsets;   // offsets for each pixel taken from framePtr for this node
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
-                            // belief, and parent's previous belief
+                            // belief, and parent's previous belief ( length ns-nc )
     float *genObservation;
     
     // node beliefs
-    float * beliefEuc;      // belief (euclidean distance)
+    float * beliefEuc;      // belief (euclidean distance), length nb
     float * beliefMal;      // belief (malhanobis distance)
     float * pBelief;        // previous belief (euclidean)
     float * parent_pBelief; // parent previous belief
