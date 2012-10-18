@@ -663,6 +663,62 @@ void GenerateInputFromBelief( Destin *d, float *frame )
      */
 }
 
+
+
+void DisplayLayerFeatures( Destin *d, int layer, int node_start, int nodes )
+{
+    uint i, j, n, u, b, sqrtPatch;
+
+    uint width, height;
+
+    Node * startNode = GetNodeFromDestin(d, layer, 0,0);
+    Node * node;
+
+    sqrtPatch = (uint) sqrt(startNode->ni);
+    int ncount = nodes == 0 ? d->layerSize[layer] : nodes;
+
+    height = ncount * sqrtPatch;
+    width = startNode->nb * sqrtPatch;
+
+    float *frame;
+
+    MALLOC( frame, float, width*height );
+
+    for( n=node_start; n < node_start + ncount; n++ )
+    {
+        node = &d->nodes[d->nodeRef[layer][n]];
+        for( b=0; b < node->nb; b++ )
+        {
+            for( u=0, i=0; i < sqrtPatch; i++ )
+            {
+                for( j=0; j < sqrtPatch; j++, u++ )
+                {
+                    frame[(n * sqrtPatch + i) * sqrtPatch * node->nb + j + b * sqrtPatch ] = node->mu[b * node->ns + u];
+                }
+            }
+        }
+    }
+
+    CvSize size;
+    size.height = height;
+    size.width = width;
+    IplImage *featuresOut = cvCreateImageHeader(size, IPL_DEPTH_32F, 1);
+    featuresOut->imageData = (char *) frame;
+    featuresOut->imageDataOrigin = featuresOut->imageData;
+
+    size.height = height * 2;
+    size.width = width * 2;
+    IplImage *bigImg = cvCreateImage(size, IPL_DEPTH_32F, 1);
+    cvResize(featuresOut, bigImg, CV_INTER_CUBIC);
+
+    cvShowImage("Features!!", bigImg);
+
+    cvReleaseImageHeader(&featuresOut);
+    cvReleaseImage(&bigImg);
+
+    FREE( frame );
+}
+
 void DisplayFeatures( Destin *d )
 {
     uint i, j, n, u, b, sqrtPatch;

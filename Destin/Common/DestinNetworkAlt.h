@@ -177,6 +177,12 @@ public:
         Node * hostnode = GetNodeFromDestin(destin, layer, row, col);
         return hostnode->beliefEuc;
     }
+    Destin * getNetwork(){
+        return destin;
+    }
+    void displayFeatures(int layer, int node_start, int nodes){
+        DisplayLayerFeatures(destin, layer, node_start, nodes);
+    }
 };
 
 #endif /* DESTINNETWORKALT_H_ */

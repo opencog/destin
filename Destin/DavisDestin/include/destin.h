@@ -101,6 +101,16 @@ void DisplayFeatures(
                     Destin *
         );
 
+/**
+ * same as DisplayFeatures but for other layer than 0
+ */
+void DisplayLayerFeatures(
+                    Destin *,
+                    int layer,          // layer to show features for
+                    int node_start,     // node start
+                    int nodes           // number of nodes in the layer to show, if 0 then show them all
+        );
+
 void ClearBeliefs(                      // cleanse the pallette
                   Destin *              // pointer to destin object
                  );
