@@ -1,6 +1,8 @@
 #ifndef INETWORK_H
 #define INETWORK_H
 
+#include <stdio.h>
+
 class DestinIterationFinishedCallback;
 
 class INetwork {
@@ -14,6 +16,24 @@ public:
     virtual void setIsPOSTraining(bool training)=0;
     virtual int getBeliefsPerNode(int layer)=0;
     virtual float * getNodeBeliefs(int layer, int row, int col)=0;
+
+    void printBeliefGraph(int layer, int row, int col){
+        float * b = getNodeBeliefs(layer, row, col);
+        int nb = getBeliefsPerNode(layer);
+        int barCharWidth = 40;
+        for(int i = 0 ; i < nb ; i++){
+            printf("%i: %f: ",i,b[i]);
+            int width =  barCharWidth * b[i];
+            if(width > barCharWidth || width < 0){
+                printf("invalid belief\n");
+                return;
+            }
+            for(int j = 0 ; j < width ; j++ ){
+                printf("X");
+            }
+            printf("\n");
+        }
+    }
 
 };
 #endif

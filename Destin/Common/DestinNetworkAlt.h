@@ -33,7 +33,7 @@ enum SupportedImageWidths {
 };
 #define MAX_IMAGE_WIDTH 512
 
-class destin_network_alt: public INetwork {
+class DestinNetworkAlt: public INetwork {
 
 private:
     Destin * destin;
@@ -71,7 +71,7 @@ private:
     }
 
 public:
-    destin_network_alt(SupportedImageWidths width, unsigned int layers,
+    DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [] ) :
             training(true),
             beta(.01),
@@ -121,7 +121,7 @@ public:
 
     }
 
-    virtual ~destin_network_alt() {
+    virtual ~DestinNetworkAlt() {
         if(destin!=NULL){
             DestroyDestin(destin);
             destin = NULL;
@@ -174,8 +174,8 @@ public:
     }
 
     float * getNodeBeliefs(int layer, int row, int col){
-        Node * hostnode = GetNodeFromDestin(destin, layer, row, col);
-        return hostnode->beliefEuc;
+        Node * node = GetNodeFromDestin(destin, layer, row, col);
+        return node->beliefEuc;
     }
     Destin * getNetwork(){
         return destin;
