@@ -24,4 +24,6 @@ ADD_LIBRARY( destinalt SHARED src/destin.c src/node.c src/util.c )
 TARGET_LINK_LIBRARIES( destin destinalt cxcore cv highgui )
 SET_TARGET_PROPERTIES( destin PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin )
 
-
+ADD_EXECUTABLE( test test/test.c )
+TARGET_LINK_LIBRARIES( test destinalt cxcore cv highgui )
+SET_TARGET_PROPERTIES( test PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin )

@@ -203,14 +203,17 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                 {
                     bias = m*nCols*inputSizeSqRoot + n*inputSizeSqRoot;
                     inputOffsets[i+0][innerIdx] = bias + a*nCols+b;
-                    inputOffsets[i+1][innerIdx] = bias + a*nCols+b+inputSizeSqRoot;
-                    inputOffsets[i+2][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b;
-                    inputOffsets[i+3][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b+inputSizeSqRoot;
+                    if(nInputNodes > 1){ //fix for 1 node 1 layer network
+                        inputOffsets[i+1][innerIdx] = bias + a*nCols+b+inputSizeSqRoot;
+                        inputOffsets[i+2][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b;
+                        inputOffsets[i+3][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b+inputSizeSqRoot;
+                    }
                 }
             }
         }
     }
 
+    int nParentBeliefs = nl > 1 ? nb[1] : 0; //allow 1 layer 1 node networks for testing
     // initialize zero-layer nodes
     for( n=0, i=0, bOffset = 0; i < d->layerSize[0]; i++, n++ )
     {
@@ -218,7 +221,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                     n,
                     ni,
                     nb[0],
-                    nb[1],
+                    nParentBeliefs,
                     nc,
                     starvCoeff,
                     beta,
@@ -241,9 +244,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         maxNb = nb[0];
     }
 
-    if( ni + nb[0] + nb[1] > maxNs )
+    if( ni + nb[0] + nParentBeliefs > maxNs )
     {
-        maxNs = ni + nb[0] + nb[1];
+        maxNs = ni + nb[0] + nParentBeliefs;
     }
 
     // init the train mask (determines which layers should be training)

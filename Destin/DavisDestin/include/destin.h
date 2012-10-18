@@ -40,7 +40,7 @@ Destin * CreateDestin(                  // create destin from a config file
         );
 
 Destin * InitDestin(                    // initialize Destin.
-                    uint,               // input dimensionality for first layer
+                    uint,               // input dimensionality for first layer, input must be square
                     uint,               // number of layers
                     uint *,             // belief dimensionality for each layer
                     uint,               // number of classes

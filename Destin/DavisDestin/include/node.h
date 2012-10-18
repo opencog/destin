@@ -9,10 +9,10 @@ typedef struct Node {
     /* HOST VARIABLES BEGIN */
 
     // node parameters
-    uint     nb;            // number of beliefs
-    uint     ni;            // number of inputs
-    uint     ns;            // number of states
-    uint     np;            // number of beliefs for parent
+    uint     nb;            // number of beliefs ( number of centroids )
+    uint     ni;            // number of inputs ( dimensionality of input vector)
+    uint     ns;            // number of states ( dimensionality of centroids) = ni+nb+np+nc;
+    uint     np;            // number of beliefs (centroids) for parent
     uint     nc;            // number of classes
     float   starvCoeff;     // starvation coefficient
     float   beta;           // sigma update weight (centroid variance)
