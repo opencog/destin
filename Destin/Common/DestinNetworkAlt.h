@@ -20,6 +20,7 @@ extern "C" {
 }
 
 #include "DestinIterationFinishedCallback.h"
+#include <exception>
 
 enum SupportedImageWidths {
     W4 = 4,     //1
@@ -174,14 +175,46 @@ public:
     }
 
     float * getNodeBeliefs(int layer, int row, int col){
-        Node * node = GetNodeFromDestin(destin, layer, row, col);
-        return node->beliefEuc;
+        return getNode(layer, row, col)->beliefEuc;
     }
+    Node * getNode(int layer, int row, int col){
+        Node * n = GetNodeFromDestin(destin, layer, row, col);
+        if(n == NULL){
+            throw std::logic_error("could't getNode");
+        }
+        return n;
+    }
+
     Destin * getNetwork(){
         return destin;
     }
     void displayFeatures(int layer, int node_start, int nodes){
         DisplayLayerFeatures(destin, layer, node_start, nodes);
+    }
+
+    /** print given node's centroid's locations
+     *  The Centroids consists of 3 main parts, the dimensions which cluster
+     *  on the nodes input, the dimensions which cluster on its previous belief
+     *  and the dimensions which cluster on the parents previous belief.
+     */
+    void printNodeCentroidPositions(int layer, int row, int col){
+        Node * n = getNode(layer, row, col);
+        for(int centroid  = 0 ; centroid < n->nb ; centroid++){
+            printf("centroid %i: input ", centroid);
+            int dimension;
+            for(dimension = 0 ; dimension < n->ni ; dimension++){
+                printf("%.5f ", n->mu[centroid*n->ns + dimension]);
+            }
+            printf(" self ");
+            for(int end = dimension + n->nb ; dimension < end ; dimension++){
+                printf("%.5f ", n->mu[centroid*n->ns + dimension]);
+            }
+            printf(" parent ");
+            for(int end = dimension + n->np ; dimension < end ; dimension++){
+                printf("%.5f ", n->mu[centroid*n->ns + dimension]);
+            }
+            printf("\n");
+        }
     }
 };
 
