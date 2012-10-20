@@ -30,20 +30,23 @@ bool VideoSource::grab() {
 			cv::Canny(greyscaled_frame, greyscaled_frame, 0, 30, 3); // apply edge detection
 		}
 
-		cv::imshow( DESTIN_VIDEO_WINDOW_TITLE, greyscaled_frame); //show video to output window
+        if(showWindow){
+            cv::imshow( DESTIN_VIDEO_WINDOW_TITLE, greyscaled_frame); //show video to output window
+        }
 
 		// some strange issues with waitkey, see http://opencv.willowgarage.com/wiki/documentation/c/highgui/WaitKey
 		//Needs this so it gives time for the computer to update. If its too small, it wont be drawn at all,
 		//if its too high, then the frames per seconds drops.
 
-		if(cv::waitKey(5)>=0){ //stop the video when a key is pressed
+		if(showWindow && cv::waitKey(5)>=0){ //stop the video when a key is pressed
 			return false;
 		}
 		return true;
 	} else {
+	    //this logic rewinds the video to the beginning if it can.
 	    if(cap->get(CV_CAP_PROP_FRAME_COUNT) > 0){
 	        if(cap->get(CV_CAP_PROP_POS_AVI_RATIO) > 0.9){   // if reached near end of video
-	            cap->set(CV_CAP_PROP_POS_FRAMES,0);         // move to begining
+	            cap->set(CV_CAP_PROP_POS_FRAMES,0);         // move to beginning
 	            if(cap->grab()){                            // if can get a frame
 	                cout << "video rewind " << endl;
 	                return this->grab();                    // get the next frame

@@ -42,6 +42,8 @@ private:
 #define DESTIN_VIDEO_WINDOW_TITLE  "DeSTIN Input Video"
 
 	bool edge_detection; //if true shows video in edge detection mode ( shows image outlines)
+
+    bool showWindow; //shows video or webcam input in window for user. 
 	/**
 	 * convert - converts from an OpenCV Mat greyscal 8bit uchar image into
 	 * a float array where each element is normalized to 0 to 1.0, with 1,0 being black.
@@ -80,7 +82,7 @@ public:
 	 *
 	 */
 	VideoSource(bool use_device, std::string video_file, int dev_no = 0) :
-		target_size(512, 512), edge_detection(false) {
+		target_size(512, 512), edge_detection(false), showWindow(false) {
 
 		float_frame = new float[target_size.area()];
 		stringstream mess;
@@ -137,6 +139,7 @@ public:
 	//see http://opencv.willowgarage.com/documentation/cpp/user_interface.html#cv-namedwindow
 	void enableDisplayWindow() {//don't know how to unshow it yet
 		cv::namedWindow(DESTIN_VIDEO_WINDOW_TITLE);
+        showWindow = true;
 	}
 
 	/**
