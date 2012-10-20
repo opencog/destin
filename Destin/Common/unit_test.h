@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <stdarg.h>
+#include <stdlib.h>
 
 int TEST_HAS_FAILURES = false;
 
@@ -51,9 +53,10 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, int l
 }
 
 
-#define assertFloatArrayEquals( exp, act, len )\
-if( ! _assertFloatArrayEquals( (exp), (act), (len), __LINE__ ) ){\
-    return 1;\
+#define assertFloatArrayEquals( exp, act, len ){\
+    if( ! _assertFloatArrayEquals( (exp), (act), (len), __LINE__ ) ){\
+        return 1;\
+    }\
 }\
 
 
@@ -65,4 +68,39 @@ void printFloatArray(float * array, int length){
     }
     printf("%i: %f\n",i,array[i]);
 }
+
+
+/** converts arguments into an array which is returned.
+ *
+ * argc: how many arguments passed
+ * Be sure to write float constants. To pass 1 for example, write 1.0 or they
+ * will be skipped or other errors may occur
+ *
+ * user takes ownership of array.
+ */
+float * toFloatArray(long c, ...) {
+
+    //compiler note: ‘float’ is promoted to ‘double’ when passed through ‘...’
+    //so have to start with double then cast to float
+    float * a = (float *)malloc(c * sizeof(float));
+
+    if(a==NULL){
+        printf("toArray error\n");
+        exit(1);
+    }
+    va_list arg_list;
+
+    va_start(arg_list, c);
+    int arg_count = 0;
+    int i;
+    for ( i = 0; i < c; i++ ){
+        double d = va_arg(arg_list, double);
+        a[i] = d;
+        printf("%f\n",a[i]);
+    }
+    va_end(arg_list);
+
+    return a;
+}
+
 #endif
