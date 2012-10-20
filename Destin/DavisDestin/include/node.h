@@ -4,6 +4,8 @@
 #include "macros.h"
 #include "destin.h"
 
+
+
 /* Node Struct Definition */
 typedef struct Node {
     /* HOST VARIABLES BEGIN */
@@ -24,7 +26,7 @@ typedef struct Node {
     uint     genWinner;     // winning centroid index for generative procedure
 
     // node statistics
-    float * mu;             // centroid locations ( length ns-nc )
+    float * mu;             // centroid locations ( a table nb x ns  )
     float * sigma;          // centroid variances
     float * starv;          // centroid starvation coefficients
 
@@ -37,7 +39,7 @@ typedef struct Node {
     uint  * inputOffsets;   // offsets for each pixel taken from framePtr for this node
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
-                            // belief, and parent's previous belief ( length ns-nc )
+                            // belief, and parent's previous belief ( length ni+nb+np )
     float *genObservation;
     
     // node beliefs

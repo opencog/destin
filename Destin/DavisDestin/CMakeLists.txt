@@ -13,7 +13,7 @@ IF (CMAKE_BUILD_TYPE STREQUAL "")
 	SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
-INCLUDE_DIRECTORIES( include )
+INCLUDE_DIRECTORIES( include ../Common )
 
 
 ADD_EXECUTABLE(destin src/destin_mnist.c )    

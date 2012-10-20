@@ -1,7 +1,9 @@
 
-#include "test.h"
+#include "unit_test.h"
 #include "destin.h"
 #include <stdio.h>
+
+#include <float.h>
 
 int testInit(){
 
@@ -52,7 +54,7 @@ int testForumateStages(){
     uint ni, nl;
     ni = 1; //one dimensional centroid
     nl = 1;
-    uint nb [] = {1}; //1 centroid
+    uint nb [] = {2}; //2 centroids
     uint nc = 0; // 0 classes
     float beta = 1;
     float lambda = 1;
@@ -73,7 +75,7 @@ int testForumateStages(){
     assertTrue(n->nb == nb[0]);
     assertTrue(n->np == 0); //no parents
     assertTrue(n->ns == (ni+nb[0]+0+nc));
-    assertTrue(n->ns == 2);
+    assertTrue(n->ns == 3);
     assertTrue(n->nc == 0); //# of classes
 
     assertTrue( n->inputOffsets != NULL);
@@ -81,10 +83,17 @@ int testForumateStages(){
     //get observation for the first node
     GetObservation( d->nodes, image, nid );
     //ni,previous belief * gamma,parent_prev_belief, class vector
-    float expected [] = { /*input */ 0.55, 1 /*prev belief, parent belief, class vector*/};
-    assertFloatArrayEquals(expected, n->observation,2);
+    float exp1 [] = { /*input */ 0.55,
+            0.5, 0.5 /*prev belief initialized to uniform  */
+            /* parent belief, class vector*/};
+    assertFloatArrayEquals(exp1, n->observation,3);
 
     CalculateDistances( d->nodes, nid );
+
+    float exp_belief [] = {};
+
+    //assertFloatArrayEquals(exp_belief,n->beliefEuc, nb[0] );
+
 
     NormalizeBeliefGetWinner( d->nodes, nid );
     UpdateWinner( d->nodes, d->inputLabel, nid );
@@ -97,14 +106,14 @@ int testForumateStages(){
 
 int shouldFail(){
     assertTrue(1==2);
-    return 1;
+    return 0;
 }
 
 int main(int argc, char ** argv ){
     //RUN( shouldFail );
+
     RUN( testInit );
     RUN( testFormulateNotCrash );
     RUN( testForumateStages );
-
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }

@@ -1,5 +1,5 @@
-#ifndef test_h
-#define test_h
+#ifndef unit_test_h
+#define unit_test_h
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -33,11 +33,16 @@ int TEST_HAS_FAILURES = false;
         return 1;\
     }\
 
-bool _assertFloatArrayEquals(float * expected, float * actual, int length){
+bool _assertFloatArrayEquals(float * expected, float * actual, int length, int line){
     int i;
+    if(length <= 0 ){
+        printf("assertFloatArrayEquals FAILED, line: %i, negative or zero array length: %i", line, length);
+        return false;
+    }
+
     for(i = 0 ; i < length ; i++){
         if(expected[i] != actual[i]){
-            printf("assertFloatArrayEquals FAILED, line: %i, on index %i with array length %i\n", __LINE__, i, length );
+            printf("assertFloatArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
             printf("expected: %f, actual: %f\n", expected[i], actual[i]);
             return false;
         }
@@ -47,7 +52,7 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length){
 
 
 #define assertFloatArrayEquals( exp, act, len )\
-if( ! _assertFloatArrayEquals( (exp), (act), (len)) ){\
+if( ! _assertFloatArrayEquals( (exp), (act), (len), __LINE__ ) ){\
     return 1;\
 }\
 
