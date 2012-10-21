@@ -6,11 +6,11 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <math.h>
 
 int TEST_HAS_FAILURES = false;
 
-#define RUN( f )                            \
-{                                           \
+#define RUN( f ){                           \
     printf("Running " #f "\n");             \
     int r = f();                            \
     if(r != 0){                             \
@@ -35,7 +35,7 @@ int TEST_HAS_FAILURES = false;
         return 1;\
     }\
 
-bool _assertFloatArrayEquals(float * expected, float * actual, int length, int line){
+bool _assertFloatArrayEquals(float * expected, float * actual, int length, double epsilon, int line){
     int i;
     if(length <= 0 ){
         printf("assertFloatArrayEquals FAILED, line: %i, negative or zero array length: %i", line, length);
@@ -43,9 +43,9 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, int l
     }
 
     for(i = 0 ; i < length ; i++){
-        if(expected[i] != actual[i]){
+        if(fabs( expected[i] - actual[i]) > epsilon ){
             printf("assertFloatArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
-            printf("expected: %f, actual: %f\n", expected[i], actual[i]);
+            printf("expected: %f, actual: %f\n, difference: %e", expected[i], actual[i], expected[i] - actual[i]);
             return false;
         }
     }
@@ -54,7 +54,16 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, int l
 
 
 #define assertFloatArrayEquals( exp, act, len ){\
-    if( ! _assertFloatArrayEquals( (exp), (act), (len), __LINE__ ) ){\
+    if( ! _assertFloatArrayEquals( (exp), (act), (len), 0.0, __LINE__ ) ){\
+        return 1;\
+    }\
+}\
+
+/** same as assertFloatArrayEquals but asserts true if difference is less than epsilon
+ *
+ */
+#define assertFloatArrayEqualsE( exp, act, len, epsilon ){\
+    if( ! _assertFloatArrayEquals( (exp), (act), (len), epsilon, __LINE__ ) ){\
         return 1;\
     }\
 }\
@@ -96,7 +105,6 @@ float * toFloatArray(long c, ...) {
     for ( i = 0; i < c; i++ ){
         double d = va_arg(arg_list, double);
         a[i] = d;
-        printf("%f\n",a[i]);
     }
     va_end(arg_list);
 
