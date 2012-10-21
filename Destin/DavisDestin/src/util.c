@@ -10,6 +10,7 @@
 #include "node.h"
 #include "destin.h"
 
+
 // create a destin instantiation from a file
 Destin * CreateDestin( char *filename ) {
     Destin *newDestin;
@@ -590,7 +591,7 @@ void InitNode
         for(j=0; j < ns; j++)
         {
             node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
-            node->sigma[i*ns+j] = 0.00001;
+            node->sigma[i*ns+j] = INIT_SIGMA;
         }
     }
 

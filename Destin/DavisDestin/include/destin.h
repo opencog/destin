@@ -5,6 +5,8 @@
 #include "macros.h"
 #include "node.h"
 
+#define INIT_SIGMA 0.00001
+
 /* Destin Struct Definition */
 typedef struct Destin {
     uint nInputPipeline;                // number of beliefs to copy to next nodes' input
