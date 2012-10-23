@@ -34,6 +34,8 @@ To build java bindings, a JDK and SWIG is required.
 To build DrentheDestin, CUDA SDK is required. 
 
 Building:
+
     $ cd Destin
     $ cmake . 
     $ make
+
