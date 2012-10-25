@@ -138,7 +138,7 @@ public:
 	 */
 	//see http://opencv.willowgarage.com/documentation/cpp/user_interface.html#cv-namedwindow
 	void enableDisplayWindow() {//don't know how to unshow it yet
-		cv::namedWindow(DESTIN_VIDEO_WINDOW_TITLE);
+		cv::namedWindow(DESTIN_VIDEO_WINDOW_TITLE, CV_WINDOW_AUTOSIZE);
         showWindow = true;
 	}
 
