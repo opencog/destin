@@ -69,11 +69,34 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
     }\
 }\
 
+
+#define ut_varags_to_array( dest, last_fixed_argument, length ){\
+    va_list arg_list;\
+    va_start(arg_list, last_fixed_argument);\
+    int i;\
+    for ( i = 0; i < length; i++ ){\
+        dest[i] = va_arg(arg_list, double);\
+    }\
+    va_end(arg_list);\
+}\
+
 /** same as assertFloatArrayEquals but asserts true if difference is less than epsilon
  *
  */
 #define assertFloatArrayEqualsE( exp, act, len, epsilon ){\
     if( ! _assertFloatArrayEquals( (exp), (act), (len), epsilon, __LINE__ ) ){\
+        return 1;\
+    }\
+}\
+
+bool _assertFloatArrayEqualsEV(float *actual, float epsilon, int len, int line, ...){
+    float expected[len];
+    ut_varags_to_array(expected, line, len);
+    return _assertFloatArrayEquals(expected, actual, len, epsilon, line );
+}
+
+#define assertFloatArrayEqualsEV( act, epsilon, len, args... ){\
+    if(! _assertFloatArrayEqualsEV(act, epsilon, len, __LINE__, args )){\
         return 1;\
     }\
 }\
@@ -91,20 +114,15 @@ void printFloatArray(float * array, int length){
 
 
 
-#define ut_varags_to_array( dest, last_fixed, length ){\
-	va_list arg_list;\
-	va_start(arg_list, last_fixed);\
-	int i;\
-	for ( i = 0; i < length; i++ ){\
-		dest[i] = va_arg(arg_list, double);\
-	}\
-	va_end(arg_list);\
-}\
 
+
+/** assigns the dest array the float values pass as arguments
+ * CAUTION: Be sure to write float constants. To pass 1 for example, write 1.0
+ * and not 1 or they will be skipped or other errors may occur
+ *
+ * @length - number of float elements passed in.
+ */
 void assignFloatArray(float * dest, int length, ...){
-
-    //compiler note: ‘float’ is promoted to ‘double’ when passed through ‘...’
-    //so have to start with double then cast to float
 
 	ut_varags_to_array(dest, length, length);
 }

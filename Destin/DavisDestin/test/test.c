@@ -94,30 +94,29 @@ int testForumateStages(){
     assertFloatArrayEquals( expected_obs , n->observation,3);
 
 
-    memcpy( &n->mu[0 * n->ns], toFloatArray(3, 0.5, 0.5, 0.5), sizeof(float) * 3);
-    memcpy( &n->mu[1 * n->ns], toFloatArray(3, 0.0, 0.5, 1.0), sizeof(float) * 3);
+    assignFloatArray(&n->mu[0 * n->ns], 3, 0.5, 0.5, 0.5);
+    assignFloatArray(&n->mu[1 * n->ns], 3, 0.0, 0.5, 1.0);
 
     //TODO: yea toFloatArray is a memory leak, but only a small one :D
     //will eventually make it clean itself up.
-    assertFloatArrayEquals( toFloatArray(2, 1.0,1.0), n->starv,2 );
+    assertFloatArrayEqualsEV(n->starv, 1e-12, 2, 1.0,1.0);
 
-    assertFloatArrayEquals( toFloatArray(2, 0.5, 0.5), n->beliefEuc, 2 );
+    assertFloatArrayEqualsEV(n->beliefEuc, 1e-12, 2, 0.5, 0.5);
     CalculateDistances( d->nodes, nid );
 
-    assertFloatArrayEqualsE( toFloatArray(2, 20.0, 1.345345588),n->beliefEuc, 2, .00001 );
-
+    assertFloatArrayEqualsEV( n->beliefEuc, 1e-5, 2, 20.0, 1.345345588);
 
     NormalizeBeliefGetWinner( d->nodes, nid );
-    assertFloatArrayEqualsE( toFloatArray(2, 0.7055658715, 0.29443412),n->beliefEuc, 2, 0.000001 );
-    assertFloatArrayEqualsE( toFloatArray(2, 0.7055658715, 0.29443412),n->pBelief, 2, 0.000001 );
+    assertFloatArrayEqualsEV( n->beliefEuc, 1e-7, 2, 0.7055658715, 0.29443412);
+    assertFloatArrayEqualsEV( n->pBelief, 1e-7, 2, 0.7055658715, 0.29443412);
 
     assertTrue(INIT_SIGMA == 0.00001);
-    //TODO: combine toFloatArray and assertFloatArrayEquals
-    assertFloatArrayEquals(toFloatArray(6, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA ), n->sigma, 6);
+    assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
     UpdateWinner( d->nodes, d->inputLabel, nid );
     assertTrue( n->winner == 0 );
-    assertFloatArrayEqualsE(toFloatArray(6, 0.00001249, 0.00000999, 0.00000999, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA ), n->sigma, 6, 1e-12);
-    assertFloatArrayEqualsE(toFloatArray(2, 1.0, 0.9), n->starv, 2, 0.0);
+    assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, 0.00001249, 0.00000999, 0.00000999, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
+    UpdateStarvation(d->nodes, nid);
+    assertFloatArrayEqualsEV(n->starv, 0.0, 2, 1.0, 0.9);
     DestroyDestin(d);
 
     return 0;
@@ -129,13 +128,21 @@ int shouldFail(){
 }
 
 
-int testVarArgs(void)
-{
+
+int testVarArgs(void){
+    //test some of the unit test functions and macros
    printFloatArray(toFloatArray(3, 9.0, 8.0, 7.0), 3);
    float *f = toFloatArray(2,1.2, 1.4);
 
    assertFloatEquals(1.2, f[0],1e-7);
    assertFloatEquals(1.4, f[1],1e-7);
+
+   assignFloatArray(f, 2, 0.2,0.3);
+   assertFloatEquals(.2, f[0],1e-7);
+   assertFloatEquals(.3, f[1],1e-7);
+
+   assertFloatArrayEqualsEV(f, 1e-7, 2, 0.2, 0.3  );
+   free(f);
    return 0;
 }
 
@@ -143,7 +150,7 @@ int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
 
-    RUN(testVarArgs);
+    RUN( testVarArgs );
     RUN( testInit );
     RUN( testFormulateNotCrash );
     RUN( testForumateStages );
