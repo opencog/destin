@@ -72,6 +72,9 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
+bool MakeUniform(Destin * d){
+	return false;
+}
 
 Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements )
 {

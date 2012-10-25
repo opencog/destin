@@ -372,6 +372,7 @@ void FormulateBelief( Destin *d, float *image )
             if( d->layerMask[l] == 1 )
             {
                 UpdateWinner( d->nodes, d->inputLabel, n );
+                UpdateStarvation(d->nodes, n);
                 d->muSumSqDiff += d->nodes[n].muSqDiff;
             }
         }

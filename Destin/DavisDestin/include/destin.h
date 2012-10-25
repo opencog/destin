@@ -7,6 +7,7 @@
 
 #define INIT_SIGMA 0.00001
 
+
 /* Destin Struct Definition */
 typedef struct Destin {
     uint nInputPipeline;                // number of beliefs to copy to next nodes' input
@@ -35,7 +36,6 @@ typedef struct Destin {
 } Destin  ;
 /* Destin Struct Definition End */
 
-
 /* Destin Functions Begin */
 Destin * CreateDestin(                  // create destin from a config file
                     char *              // filename
@@ -53,6 +53,11 @@ Destin * InitDestin(                    // initialize Destin.
                     float,              // starv coeff
                     uint                // number of movements per digit presentation
                 );
+
+
+bool MakeUniform(						// transform this network so that all nodes in a layer share the same centroids
+					Destin * d
+);
 
 void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
                     Destin *            // initialized destin pointer

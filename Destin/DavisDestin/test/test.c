@@ -146,6 +146,44 @@ int testVarArgs(void){
    return 0;
 }
 
+int testUniform(){
+    uint ni = 1; //input layer nodes cluster on 1 pixel input.
+    uint nl = 2;
+    uint nb [] = {4,4}; //4 shared centroids per layer
+    uint nc = 0; // 0 classes
+    float beta = 0.001;
+    float lambda = 1;
+    float gamma = 1;
+    float temperature [] = {10};
+    float starvCoef = 0.1;
+    uint nMovements = 0;
+
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements);
+    assertTrue(MakeUniform(d)); //should repoint the node->mu pointers to the global mu list
+
+    //should handle being made uniform twice
+    assertTrue( MakeUniform(d));
+
+    float image []  = {.11,.22,.33,.44};//1 pixel for each of the 4 bottom layer nodes
+
+    Node * n = &d->nodes[0];
+    GetObservation( d->nodes, image, 0); //get observation for node 0 only
+    assertFloatEquals( 0.11, n->observation[0], 1e-8);
+
+    assignFloatArray(n->mu, 4, 0.5, 0.6, 0.7, 0.8);
+    CalculateDistances(d->nodes, 0);
+
+    NormalizeBeliefGetWinner( d->nodes, 0);//dont think need to change
+
+    UpdateWinner( d->nodes, d->inputLabel, 0 );
+
+    Uniform_UpdateStarvation(d->nodes, 0);
+
+
+    DestroyDestin(d);
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
@@ -154,5 +192,6 @@ int main(int argc, char ** argv ){
     RUN( testInit );
     RUN( testFormulateNotCrash );
     RUN( testForumateStages );
+    RUN( testUniform );
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }

@@ -48,7 +48,8 @@ typedef struct Node {
     float * pBelief;        // previous belief (euclidean)
     float * parent_pBelief; // parent previous belief
 
-    struct Node ** children;       // array of 4 child node pointers
+    struct Node ** children;// array of 4 child node pointers
+    uint layer;				// layer this node belongs to
 
     /* HOST VARIABLES END */
 } Node;
