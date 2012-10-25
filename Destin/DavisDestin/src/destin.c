@@ -3,6 +3,8 @@
 #include<math.h>
 #include<string.h>
 
+#include<quadmath.h>
+
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 
@@ -404,35 +406,48 @@ uint GenFromPMF( float *pmf, uint len )
     return i;
 }
 
+#define __special double
+
 // box-muller normal rng
-__float128 NormRND(__float128 m, __float128 s)
+__special NormRND(__special m, __special s)
 {
-    __float128 u1,u2;
+    __special u1,u2;
 
-    u1 = (__float128) rand() / RAND_MAX;
-    u2 = (__float128) rand() / RAND_MAX;
+    u1 = (__special) rand() / RAND_MAX;
+    u2 = (__special) rand() / RAND_MAX;
 
-    return sqrt(-2*log(u1)) * cos(2*M_PI*u2) * s + m;
+    __special val = sqrt(-2*log(u1)) * cos(2*M_PI*u2) * s + m;
+
+    return val;
 }
 
-void Boltzmannize( Node *n, __float128 *b )
+#define KAHAN(sum, input, y, t, c)  \
+    y = input - c;                  \
+    t = sum + y;                    \
+    c = (t - sum) - y;              \
+    sum = t;
+
+void Boltzmannize( Node *n, __special *b )
 {
     uint i;
 
-    __float128 maxBoltz = 0;
+    __special maxBoltz = 0;
     for( i=0; i < n->nb; i++ )
     {
-        if( b[i] * (__float128) n->temp > maxBoltz )
+        if( b[i] * (__special) n->temp > maxBoltz )
         {
-            maxBoltz = b[i] * (__float128) n->temp;
+            maxBoltz = b[i] * (__special) n->temp;
         }
     }
     
-    __float128 boltzSum = 0;
+    __special boltzSum = 0;
+    __special comp = 0;
+    __special t, y;
+
     for( i=0; i < n->nb; i++ )
     {
-        b[i] = exp( (__float128) n->temp * b[i] - maxBoltz);
-        boltzSum += b[i];
+        b[i] = exp( (__special) n->temp * b[i] - maxBoltz);
+        KAHAN( boltzSum, b[i], y, t, comp );
     }
 
 
@@ -442,26 +457,33 @@ void Boltzmannize( Node *n, __float128 *b )
     }
 }
 
-void CalculateBelief( Node *n, __float128 *x, __float128 *b )
+void CalculateBelief( Node *n, __special *x, __special *b )
 {
     uint i, j;
-    __float128 bSum, bDiff, bNorm;
+    __special bSum, bDiff, bNorm;
 
     bNorm = 0;
+
+    __special outerComp = 0;
+    __special outerT, outerY;
+
     for( i=0; i < n->nb; i++ )
     {
         bSum = 0;
+        __special innerComp = 0;
+        __special innerT, innerY;
+
         for( j=0; j < n->ns - n->nc; j++ )
         {
-            bDiff = x[j] - (__float128) n->mu[i*n->ns + j];
+            bDiff = x[j] - (__special) n->mu[i*n->ns + j];
             bDiff *= bDiff;
-            bDiff *= (__float128) n->starv[i];
+            bDiff *= (__special) n->starv[i];
 
-            bSum += bDiff / (__float128) n->sigma[i*n->ns+j];
+            KAHAN( bSum, bDiff, innerY, innerT, innerComp );
         }
         b[i] = 1 / sqrt(bSum);
 
-        bNorm += b[i];
+        KAHAN( bNorm, b[i], outerY, outerT, outerComp );
     }
 
     for( i=0; i < n->nb; i++ )
@@ -472,96 +494,229 @@ void CalculateBelief( Node *n, __float128 *x, __float128 *b )
     Boltzmannize( n, b );
 }
 
-__float128 BeliefMSE( uint n, __float128 *b, __float128 *bx )
+__special BeliefMSE( uint n, __special *b, __special *bx )
 {
     uint i;
-    __float128 diff;
-    __float128 mse = 0;
+    __special diff;
+    __special mse = 0;
+    __special comp = 0;
+    __special t, y;
 
     for( i=0; i < n; i++ )
     {
         diff = b[i] - bx[i];
-        mse += diff * diff;
+        diff *= diff;
+
+        KAHAN( mse, diff, y, t, comp );
     }
 
     return mse;
+}
+
+void ConstrainInput( Node *nTmp, __special *x )
+{
+    if( nTmp->ni % 4 != 0 )
+        fprintf(stderr, "there was a porblm\n");
+
+    uint nc = nTmp->ni / 4;
+
+    uint nOffset;
+    uint n, i;
+    float norm;
+    for( n=0; n < 4; n++ )
+    {
+        norm = 0;
+
+        nOffset = n*nc;
+
+        for( i=0; i < nc; i++ )
+        {
+            if( x[nOffset+i] < 0 ) x[nOffset+i] *= -1;
+            if( x[nOffset+i] > 1 ) x[nOffset+i] = 1;
+            norm += x[nOffset+i];
+        }
+        for( i=0; i < nc; i++ )
+        {
+            x[nOffset+i] /= norm;
+        }
+    }
+    
+    norm = 0;
+
+    nOffset = nTmp->ni;
+
+    for( i=0; i < nTmp->nb; i++ )
+    {
+        if( x[nOffset+i] < 0 ) x[nOffset+i] *= -1;
+        if( x[nOffset+i] > 1 ) x[nOffset+i] = 1;
+        norm += x[nOffset + i];
+    }
+    
+    for( i=0; i < nTmp->nb; i++ )
+    {
+        x[nOffset + i] /= norm;
+    }
+    
+    nOffset = nTmp->ni + nTmp->nb;
+    for( i=0; i < nTmp->np; i++ )
+    {
+        if( x[nOffset+i] < 0 ) x[nOffset+i] *= -1;
+        if( x[nOffset+i] > 1 ) x[nOffset+i] = 1;
+        norm += x[nOffset + i];
+    }
+    
+    for( i=0; i < nTmp->np; i++ )
+    {
+        x[nOffset + i] /= norm;
+    }
 }
 
 // generate a belief sample by metropolis
 void SampleInputFromBelief( Node *n, float *xf )
 {
     uint i, j;
-    __float128 x[n->ns];
-    __float128 xGrad[n->ns];
+    __special x[n->ns];
+    __special xGrad[n->ns];
 
-    __float128 xEpsP[n->ns];
-    __float128 xEpsN[n->ns];
+    __special xEpsP[n->ns];
+    __special xEpsN[n->ns];
 
-    __float128 pBelief[n->nb];
-    __float128 bx[n->nb];
-    __float128 bxEps[n->nb];
+    __special pBelief[n->nb];
+    __special bx[n->nb];
+    __special bxEps[n->nb];
 
-    __float128 bMSE, bEpsPMSE, bEpsNMSE;
+    __special bMSE, bEpsPMSE, bEpsNMSE;
 
-    __float128 gradEps = 1e-8;
-    __float128 gradEpsInv = 2e8;
+    __special gradEps = 1e-9;
 
     uint nIts, nit;
 
-    nIts = 5;
+    nIts = 50; 
 
-    for( i=0; i < n->nb; i++ )
+    // init x to fuzzy distance of winning centroid
+    for( i=0; i < n->ns; i++ )
     {
-        pBelief[i] = (__float128) n->pBelief[i];
-    }
+        x[i] = NormRND(n->mu[n->genWinner*n->ns+i], 0.1);//n->sigma[n->genWinner*n->ns+i]);
 
-        // init x to fuzzy distance of winning centroid
+        if( x[i] > 1 ) x[i] = 1;
+        if( x[i] < 0 ) x[i] = 0;
+    }
+    
+    for( i=0; i < n->nb; i++) 
+    {
+        pBelief[i] = (__special) n->pBelief[i];
+    }
+    //printf("\n");
+
+
+    __special g;
+
+    ConstrainInput( n, x );
+    
+    CalculateBelief( n, x, bx );
+    bMSE = BeliefMSE( n->nb, bx, pBelief );
+    for( nit=0; nit < nIts; nit++ )
+    {
+
+        /*
+        printf("pBelief:\n");
+        for( i=0; i < n->nb; i++ )
+        {
+            printf("%0.3f ", pBelief[i]);
+        }
+        printf("\n");
+        printf("bx:\n");
+        for( i=0; i < n->nb; i++ )
+        {
+            printf("%0.3f ", bx[i]);
+        }
+        printf("\n");
+        printf("x:\n");
         for( i=0; i < n->ns; i++ )
         {
-            x[i] = NormRND(n->mu[n->genWinner*n->ns+i], 0.01);//n->sigma[n->genWinner*n->ns+i]);
-
-            if( x[i] > 1 ) x[i] = 1;
-            if( x[i] < 0 ) x[i] = 0;
+            printf("%0.3f ", x[i]);
         }
+        printf("\n");
+        */
+
+        for( i=0; i < n->ns; i++ )
+        {
+            for( j=0; j < n->ns; j++ )
+            {
+                xEpsN[j] = x[j];
+                xEpsP[j] = x[j];
+            }
+            xEpsN[i] -= gradEps;
+            xEpsP[i] += gradEps;
+
+            CalculateBelief( n, xEpsP, bxEps );
+            bEpsPMSE = BeliefMSE( n->nb, bxEps, pBelief );
+            CalculateBelief( n, xEpsN, bxEps );
+            bEpsNMSE = BeliefMSE( n->nb, bxEps, pBelief );
+
+            xGrad[i] = (bEpsPMSE - bEpsNMSE) / (2*gradEps);
+        }
+        
         CalculateBelief( n, x, bx );
         bMSE = BeliefMSE( n->nb, bx, pBelief );
+        
+        printf("%f\n", bMSE);
 
-        __float128 g = 10;
-
-        for( nit=0; nit < nIts; nit++ )
+        g = 0.001;
+        __special xTmp[n->ns];
+        __special gMSE = bMSE;
+        __special prev_gMSE = bMSE;
+        while( true )
         {
             for( i=0; i < n->ns; i++ )
             {
-                for( j=0; j < n->ns; j++ )
-                {
-                    xEpsN[j] = x[j];
-                    xEpsP[j] = x[j];
-                }
-                xEpsN[i] -= gradEps;
-                xEpsP[i] += gradEps;
-
-                CalculateBelief( n, xEpsN, bxEps );
-                bEpsNMSE = BeliefMSE( n->nb, bxEps, pBelief );
-                
-                CalculateBelief( n, xEpsP, bxEps );
-                bEpsPMSE = BeliefMSE( n->nb, bxEps, pBelief );
-
-                xGrad[i] = (bEpsPMSE - bEpsNMSE) * gradEpsInv;
+                xTmp[i] = x[i];
             }
+
             for( i=0; i < n->ns; i++ )
             {
-                x[i] -= g * xGrad[i];
+                xTmp[i] -= g * xGrad[i];
             }
 
-            CalculateBelief( n, x, bx );
-            bMSE = BeliefMSE( n->nb, bx, pBelief );
+            __special bxTmp[n->nb];
+
+            CalculateBelief( n, xTmp, bxTmp );
+            gMSE = BeliefMSE( n->nb, bxTmp, pBelief );
+            
+            if( gMSE > bMSE || gMSE > prev_gMSE || g > 16 ) break;
+            
+            prev_gMSE = gMSE;
+            g *= 2;
         }
+
+        g /= 2;
 
         for( i=0; i < n->ns; i++ )
         {
-            xf[i] = (float) x[i];
-            n->genObservation[i] = xf[i];
+            x[i] -= g * xGrad[i];
         }
+
+        ConstrainInput( n, x );
+    }
+
+    printf("bx:\n");
+    for( i=0; i < n->nb; i++ )
+    {
+        printf("%0.3f ", bx[i]);
+    }
+    printf("\n");
+    printf("final x:\n");
+    for( i=0; i < n->ns; i++ )
+    {
+        printf("%0.3f ", x[i]);
+    }
+    printf("\n");
+
+    for( i=0; i < n->ns; i++ )
+    {
+        xf[i] = (float) x[i];
+        n->genObservation[i] = xf[i];
+    }
 }
 
 void GenerateInputFromBelief( Destin *d, float *frame )
@@ -593,15 +748,9 @@ void GenerateInputFromBelief( Destin *d, float *frame )
                 float maxBelief = 0;
                 uint genWinner = 0;
 
-                /*
-                   float norm = 0;
-                   for( j=0; j < nTmp->children[i]->nb; j++ )
-                   norm += sampledInput[muCol+j];
-                 */
-
                 for( j=0; j < nTmp->children[i]->nb; j++ )
                 {
-                    nTmp->children[i]->pBelief[j] = sampledInput[muCol+j];// / norm;
+                    nTmp->children[i]->pBelief[j] = sampledInput[muCol+j];
                     if( nTmp->children[i]->pBelief[j] > maxBelief )
                     {
                         genWinner = j;
@@ -654,11 +803,11 @@ void GenerateInputFromBelief( Destin *d, float *frame )
         frame[i] /= frameMax;
     }
 
-    /*
     // feed frame up
+    /*
     for( i=0; i < d->nLayers; i++ )
     {
-    FormulateBelief( d, frame );
+        FormulateBelief( d, frame );
     }
      */
 }
