@@ -115,7 +115,7 @@ int testForumateStages(){
     UpdateWinner( d->nodes, d->inputLabel, nid );
     assertTrue( n->winner == 0 );
     assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, 0.00001249, 0.00000999, 0.00000999, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
-    UpdateStarvation(d->nodes, nid);
+    //UpdateStarvation(d->nodes, nid);
     assertFloatArrayEqualsEV(n->starv, 0.0, 2, 1.0, 0.9);
     DestroyDestin(d);
 
