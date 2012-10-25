@@ -117,6 +117,7 @@ public:
                 starv_coef,
                 num_movements
          );
+        ClearBeliefs(destin);
 
         isTraining(true);
 
