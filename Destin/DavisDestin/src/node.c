@@ -38,14 +38,16 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
         }
     }
 
+    // set these to uniform for now.
+    // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
     for( i=0; i < nb; i++ )
     {
-        n->observation[i+ni] = n->pBelief[i] * n->gamma;
+        n->observation[i+ni] = 1 / (float) nb; //n->pBelief[i] * n->gamma;
     }
 
     for( i=0; i < np; i++ )
     {
-        n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
+        n->observation[i+ni+nb] = 1 / (float) np; // n->parent_pBelief[i] * n->lambda;
     }
 
     for( i=0; i < nc; i++ )
@@ -166,7 +168,7 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
         n->beliefEuc[i] /= boltzEuc;
         n->beliefMal[i] /= boltzMal;
 
-        n->pBelief[i] = n->beliefMal[i];
+        n->pBelief[i] = n->beliefEuc[i];
     }
 
     n->winner = maxEucIdx;
@@ -176,37 +178,70 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 // CPU implementation for UpdateWinner kernel
 void UpdateWinner( Node *n, uint *label, uint nIdx )
 {
+    // whoa!  zero comments here -- my bad
+
+    // grab the node we want to work with.  this is a carryover
+    // from the kernel behavior -- kind of like n = &n[blockIdx.x].
+    // we could just pass a pointer to the node we actually want.
     n = &n[nIdx];
 
+    // just an iterator
     uint i;
+
+    // gets the row offset for the mu/sigma matrices to update
     uint winnerOffset = n->winner*n->ns;
+
+    // the difference between an element of the observation and
+    // an element of the mu matrix
     float delta;
 
+    // increment number of counts for winning centroid.
     n->nCounts[n->winner]++;
 
+    // keeps track of squared error for a node.  added together
+    // with the sq. err. for all the other nodes in the network,
+    // it gives you a feel for when the network approaches
+    // convergence.
     n->muSqDiff = 0;
 
+    // this is the offset in the observation vector where
+    // the class labels start.
     uint ncStart = n->ni + n->nb + n->np;
 
     for( i=0; i < n->ns; i++ )
     {
+        // if we are less than ncStart, we are not looking at
+        // class labels.
         if( i < ncStart )
         {
             delta = n->observation[i] - n->mu[winnerOffset+i];
+
+        // otherwise, use the class label to move the last n_c
+        // components of the winning centroid
         } else {
             delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
         }
 
+        // calculate how much we move the centroid.  the 1 / nCounts
+        // term can be switched out for a different learning rate
+        // whether fixed or adaptive.
         float dTmp = (1 / (float) n->nCounts[n->winner]) * delta;
 
+        // move the winning centroid
         n->mu[winnerOffset+i] += dTmp;
+
+        // increment the sq. difference
         n->muSqDiff += dTmp * dTmp;
 
+        // update the variance of the winning centroid
         n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);
     }
     
+    // update the starvation trace
     for( i=0; i < n->nb; i++ )
     {
-        n->starv[i] = n->starv[i] * (1 - n->starvCoeff) + n->starvCoeff * (i == n->winner);
+//        n->starv[i] = n->starv[i] * (1 - n->starvCoeff) + n->starvCoeff * (i == n->winner);
+        n->starv[i] *= 1 - n->starvCoeff;
     }
+    n->starv[n->winner] = 1;
 }
