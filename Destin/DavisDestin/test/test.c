@@ -132,6 +132,10 @@ int shouldFail(){
 int testVarArgs(void)
 {
    printFloatArray(toFloatArray(3, 9.0, 8.0, 7.0), 3);
+   float *f = toFloatArray(2,1.2, 1.4);
+
+   assertFloatEquals(1.2, f[0],1e-7);
+   assertFloatEquals(1.4, f[1],1e-7);
    return 0;
 }
 

@@ -8,7 +8,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-int TEST_HAS_FAILURES = false;
+
+int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests have failed
 
 #define RUN( f ){                           \
     printf("Running " #f "\n");             \
@@ -29,11 +30,20 @@ int TEST_HAS_FAILURES = false;
     }\
 }\
 
-#define assertFloatEquals( expected, actual )\
-    if( (expected) != (actual)  ){\
-        printf("assertFloatEquals FAILED, line: %i, expected: %f, actual: %f\n", __LINE__, expected, actual);\
+#define assertFalse( E)\
+{\
+    if( ( E )  ){\
+        printf("assertFalse FAILED, line: %i, expression: " #E "\n", __LINE__);\
         return 1;\
     }\
+}\
+
+#define assertFloatEquals( expected, actual, epsilon ){\
+    if( fabs(expected - actual ) > epsilon  ){\
+        printf("assertFloatEquals FAILED, line: %i, expected: %f, actual: %f, difference: %e\n", __LINE__, expected, actual, (expected - actual));\
+        return 1;\
+    }\
+}\
 
 bool _assertFloatArrayEquals(float * expected, float * actual, int length, double epsilon, int line){
     int i;
@@ -45,7 +55,7 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
     for(i = 0 ; i < length ; i++){
         if(fabs( expected[i] - actual[i]) > epsilon ){
             printf("assertFloatArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
-            printf("expected: %f, actual: %f\n, difference: %e", expected[i], actual[i], expected[i] - actual[i]);
+            printf("expected: %f, actual: %f, difference: %e\n", expected[i], actual[i], expected[i] - actual[i]);
             return false;
         }
     }
@@ -79,11 +89,32 @@ void printFloatArray(float * array, int length){
 }
 
 
+
+
+#define ut_varags_to_array( dest, last_fixed, length ){\
+	va_list arg_list;\
+	va_start(arg_list, last_fixed);\
+	int i;\
+	for ( i = 0; i < length; i++ ){\
+		dest[i] = va_arg(arg_list, double);\
+	}\
+	va_end(arg_list);\
+}\
+
+void assignFloatArray(float * dest, int length, ...){
+
+    //compiler note: ‘float’ is promoted to ‘double’ when passed through ‘...’
+    //so have to start with double then cast to float
+
+	ut_varags_to_array(dest, length, length);
+}
+
 /** converts arguments into an array which is returned.
  *
+ * CAUTION: Be sure to write float constants. To pass 1 for example, write 1.0
+ * and not 1 or they will be skipped or other errors may occur
+ *
  * argc: how many arguments passed
- * Be sure to write float constants. To pass 1 for example, write 1.0 or they
- * will be skipped or other errors may occur
  *
  * user takes ownership of array.
  */
@@ -97,18 +128,11 @@ float * toFloatArray(long c, ...) {
         printf("toArray error\n");
         exit(1);
     }
-    va_list arg_list;
 
-    va_start(arg_list, c);
-    int arg_count = 0;
-    int i;
-    for ( i = 0; i < c; i++ ){
-        double d = va_arg(arg_list, double);
-        a[i] = d;
-    }
-    va_end(arg_list);
+    ut_varags_to_array(a, c, c);
 
     return a;
 }
+
 
 #endif
