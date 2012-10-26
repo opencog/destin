@@ -69,7 +69,11 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
     }\
 }\
 
-
+/** Fills dest array with caller's of this macro recieved arguments
+ * last_fixed_argument - plain text of the last fixed argument passed to
+ * the caller function, which will not be put into dest array
+ * length - length of the arguments array
+ */
 #define ut_varags_to_array( dest, last_fixed_argument, length ){\
     va_list arg_list;\
     va_start(arg_list, last_fixed_argument);\
@@ -81,7 +85,6 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
 }\
 
 /** same as assertFloatArrayEquals but asserts true if difference is less than epsilon
- *
  */
 #define assertFloatArrayEqualsE( exp, act, len, epsilon ){\
     if( ! _assertFloatArrayEquals( (exp), (act), (len), epsilon, __LINE__ ) ){\
@@ -110,10 +113,6 @@ void printFloatArray(float * array, int length){
     }
     printf("%i: %f\n",i,array[i]);
 }
-
-
-
-
 
 
 /** assigns the dest array the float values pass as arguments
