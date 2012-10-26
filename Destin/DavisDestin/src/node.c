@@ -236,8 +236,12 @@ void UpdateWinner( Node *n, uint *label, uint nIdx )
         // update the variance of the winning centroid
         n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);
     }
-    
-    // update the starvation trace
+}
+
+void UpdateStarvation(Node *n, uint nIdx)
+{
+    n = &n[nIdx];
+    int i;
     for( i=0; i < n->nb; i++ )
     {
 //        n->starv[i] = n->starv[i] * (1 - n->starvCoeff) + n->starvCoeff * (i == n->winner);
@@ -245,3 +249,9 @@ void UpdateWinner( Node *n, uint *label, uint nIdx )
     }
     n->starv[n->winner] = 1;
 }
+
+void Uniform_UpdateStarvation(Node *n, uint nIdx)
+{
+
+}
+

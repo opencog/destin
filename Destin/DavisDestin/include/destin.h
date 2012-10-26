@@ -32,7 +32,10 @@ typedef struct Destin {
     uint        * layerSize;            // size for each layer ( nodes per layer )
     uint        * layerMask;
 
-    int     ** nodeRef;                 // allows easy indexing of nodes by layer, row, and col
+    int         ** nodeRef;             // allows easy indexing of nodes by layer, row, and col
+    bool        isUniform;              // internal flag to determine if this destin has been made uniform
+                                        // which means all nodes in a layer share their centroids
+
 } Destin  ;
 /* Destin Struct Definition End */
 
@@ -51,13 +54,10 @@ Destin * InitDestin(                    // initialize Destin.
                     float,              // gamma coeff
                     float *,            // temperature for each layer
                     float,              // starv coeff
-                    uint                // number of movements per digit presentation
+                    uint,               // number of movements per digit presentation
+                    bool                // is uniform - if nodes in a layer share one list of centroids
                 );
 
-
-bool MakeUniform(						// transform this network so that all nodes in a layer share the same centroids
-					Destin * d
-);
 
 void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
                     Destin *            // initialized destin pointer

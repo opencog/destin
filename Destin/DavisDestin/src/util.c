@@ -62,7 +62,8 @@ Destin * CreateDestin( char *filename ) {
     fscanf(configFile, "%f", &starvCoeff);
     printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n", beta, lambda, gamma, starvCoeff);
 
-    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements);
+    bool isUniform = false;
+    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
 
     fclose(configFile);
 
@@ -72,11 +73,7 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
-bool MakeUniform(Destin * d){
-	return false;
-}
-
-Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements )
+Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform )
 {
     uint nNodes, nInputPipeline;
     uint i, l, nBeliefs, maxNb, maxNs;
@@ -92,7 +89,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->nLayers = nl;
 
     d->nMovements = nMovements;
-    
+    d->isUniform = isUniform;
     MALLOC(d->inputLabel, uint, nc);
     for( i=0; i < nc; i++ )
     {
@@ -217,7 +214,16 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         }
     }
 
-    int nParentBeliefs = nl > 1 ? nb[1] : 0; //allow 1 layer 1 node networks for testing
+    uint np = nl > 1 ? nb[1] : 0; //allow 1 layer 1 node networks for testing
+    float * sharedCentroids;
+
+    // calculate the state dimensionality (number of inputs + number of beliefs)
+    uint ns = ni + nb[0] + np + nc;
+    if(isUniform){
+        MALLOC(sharedCentroids, float, nb[0]*ns);
+    }else{
+        sharedCentroids = NULL;
+    }
     // initialize zero-layer nodes
     for( n=0, i=0, bOffset = 0; i < d->layerSize[0]; i++, n++ )
     {
@@ -225,8 +231,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                     n,
                     ni,
                     nb[0],
-                    nParentBeliefs,
+                    np,
                     nc,
+                    ns,
                     starvCoeff,
                     beta,
                     gamma,
@@ -235,7 +242,8 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                     &d->nodes[n],
                     inputOffsets[n],
                     NULL,
-                    &d->belief[bOffset]
+                    &d->belief[bOffset],
+                    sharedCentroids
                     );
 
         // increment belief offset
@@ -248,9 +256,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         maxNb = nb[0];
     }
 
-    if( ni + nb[0] + nParentBeliefs > maxNs )
+    if( ni + nb[0] + np > maxNs )
     {
-        maxNs = ni + nb[0] + nParentBeliefs;
+        maxNs = ni + nb[0] + np;
     }
 
     // init the train mask (determines which layers should be training)
@@ -276,16 +284,26 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
             maxNs = 4*nb[l-1] + nb[l] + np;
         }
 
+        float * sharedCentroids;
+
+        // calculate the state dimensionality (number of inputs + number of beliefs)
+        uint ns = nb[l-1]*4 + nb[l] + np + nc;
+        if(isUniform){
+            MALLOC(sharedCentroids, float, ns*nb[l]);
+        }else{
+            sharedCentroids = NULL;
+        }
 
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
             InitNode
                     (   
                         n, 
-                        nb[l-1]*4, 
+                        nb[l-1]*4,
                         nb[l],
                         np,
                         nc,
+                        ns,
                         starvCoeff, 
                         beta, 
                         gamma,
@@ -294,7 +312,8 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                         &d->nodes[n], 
                         NULL,
                         &d->inputPipeline[iOffset],
-                        &d->belief[bOffset]
+                        &d->belief[bOffset],
+                        sharedCentroids
                     );
             MALLOC( d->nodes[n].children, Node *, 4 );
 
@@ -378,8 +397,20 @@ void DestroyDestin( Destin * d )
 {
     uint i;
 
+    if(d->isUniform){
+        for(i = 0 ; i < d->nLayers; d++){
+            //since all nodes in a layer share the same centroids
+            //then only need to free mu once per layer
+            FREE(GetNodeFromDestin(d, i, 0,0)->mu);
+        }
+    }
     for( i=0; i < d->nNodes; i++ )
     {
+        if(d->isUniform){
+            //mu already been free'd so set it to NULL so the free in DestroyNode doesn't break.
+            d->nodes[i].mu = NULL;
+            //TODO: check that this works
+        }
         DestroyNode( &d->nodes[i] );
     }
 
@@ -427,6 +458,8 @@ void SaveDestin( Destin *d, char *filename )
         fprintf(stderr, "Error: Cannot open %s", filename);
         return;
     }
+    //TODO: save the isUniform field
+    //TODO: how about the noderef? check that all fields are being saved
 
     // write destin hierarchy information to disk
     fwrite(&d->nMovements, sizeof(uint), 1, dFile);
@@ -500,7 +533,8 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(&gamma, sizeof(float), 1, dFile);
     fread(&starvCoeff, sizeof(float), 1, dFile);
     
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements);
+    bool isUniform = false; //TODO: needs to be included in config file
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, false);
 
     for( i=0; i < d->nNodes; i++ )
     {
@@ -524,6 +558,7 @@ void InitNode
     uint         nb,
     uint         np,
     uint         nc,
+    uint         ns,
     float       starvCoeff,
     float       beta,
     float       gamma,
@@ -532,12 +567,10 @@ void InitNode
     Node        *node,
     uint        *inputOffsets,
     float       *input_host,
-    float       *belief_host
+    float       *belief_host,
+    float       *sharedCentroids
     )
 {
-
-    // calculate the state dimensionality (number of inputs + number of beliefs)
-    uint ns = ni+nb+np+nc;
 
     // Initialize node parameters
     node->nb            = nb;
@@ -552,7 +585,13 @@ void InitNode
     node->temp          = temp;
     node->winner        = 0;
 
-    MALLOC( node->mu, float, nb*ns );
+    if(sharedCentroids == NULL){
+        //not uniform so each node gets own centroids
+        MALLOC( node->mu, float, nb*ns );
+    }else{
+        node->mu = sharedCentroids;
+    }
+
     MALLOC( node->sigma, float, nb*ns );
     MALLOC( node->starv, float, nb );
     MALLOC( node->beliefEuc, float, nb );
@@ -606,7 +645,7 @@ void InitNode
 }
 
 // deallocate the node.
-void DestroyNode( Node *n )
+void DestroyNode( Node *n)
 {
     // free host data
     FREE( n->mu );

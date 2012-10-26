@@ -18,9 +18,9 @@ int testInit(){
     float temperature [] = {1};
     float starvCoef = 0.1;
     uint nMovements = 0;
-
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements);
-
+    bool isUniform = false;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    //TODO: need to fix free for uniform
     DestroyDestin(d);
 
     return 0;
@@ -39,8 +39,8 @@ int testFormulateNotCrash(){
     float temperature [] = {1};
     float starvCoef = 0.1;
     uint nMovements = 0;
-
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements);
+    bool isUniform = false;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
 
     float image [] = {0.0};
     FormulateBelief(d, image );
@@ -62,8 +62,8 @@ int testForumateStages(){
     float temperature [] = {1};
     float starvCoef = 0.1;
     uint nMovements = 0;
-
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements);
+    bool isUniform = false;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
 
     float image [] = {0.55};
     int nid = 0; //node index
@@ -99,7 +99,7 @@ int testForumateStages(){
 
     //TODO: yea toFloatArray is a memory leak, but only a small one :D
     //will eventually make it clean itself up.
-    assertFloatArrayEqualsEV(n->starv, 1e-12, 2, 1.0,1.0);
+    assertFloatArrayEqualsEV(n->starv, 1e-12, 2, 1.0,1.0);//starv is initalized to 1.0
 
     assertFloatArrayEqualsEV(n->beliefEuc, 1e-12, 2, 0.5, 0.5);
     CalculateDistances( d->nodes, nid );
@@ -115,7 +115,7 @@ int testForumateStages(){
     UpdateWinner( d->nodes, d->inputLabel, nid );
     assertTrue( n->winner == 0 );
     assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, 0.00001249, 0.00000999, 0.00000999, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
-    //UpdateStarvation(d->nodes, nid);
+    UpdateStarvation(d->nodes, nid);
     assertFloatArrayEqualsEV(n->starv, 0.0, 2, 1.0, 0.9);
     DestroyDestin(d);
 
@@ -146,6 +146,7 @@ int testVarArgs(void){
    return 0;
 }
 
+
 int testUniform(){
     uint ni = 1; //input layer nodes cluster on 1 pixel input.
     uint nl = 2;
@@ -157,21 +158,45 @@ int testUniform(){
     float temperature [] = {10};
     float starvCoef = 0.1;
     uint nMovements = 0;
+    bool isUniform = true;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    assertTrue(d->isUniform);
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements);
-    assertTrue(MakeUniform(d)); //should repoint the node->mu pointers to the global mu list
-
-    //should handle being made uniform twice
-    assertTrue( MakeUniform(d));
-
-    float image []  = {.11,.22,.33,.44};//1 pixel for each of the 4 bottom layer nodes
+    float image []  = {.11,.22,.88,.99};//1 pixel for each of the 4 bottom layer nodes
 
     Node * n = &d->nodes[0];
-    GetObservation( d->nodes, image, 0); //get observation for node 0 only
-    assertFloatEquals( 0.11, n->observation[0], 1e-8);
+    int nid;
+    for(nid = 0; nid < 4 ; nid++){
+        GetObservation( d->nodes, image, nid); //get observation for node 0 only
+    }
+    //spot check observations were made
+    assertFloatEquals( 0.11, d->nodes[0].observation[0], 1e-8);
+    assertFloatEquals( 0.99, d->nodes[3].observation[0], 1e-8);
 
-    assignFloatArray(n->mu, 4, 0.5, 0.6, 0.7, 0.8);
-    CalculateDistances(d->nodes, 0);
+    //set centroid locations
+    assignFloatArray(n->mu, 4, 0.05, 0.06, 0.86, 0.95);//all nodes point to the same centroids in a layer
+
+
+    //make sure the mu pointers are shared between nodes
+    assertTrue( d->nodes[0].mu == d->nodes[1].mu );
+    assertFloatArrayEqualsEV(d->nodes[0].mu, 1e-8, 4, 0.05, 0.06, 0.86, 0.95 );
+    assertFloatArrayEqualsEV(d->nodes[1].mu, 1e-8, 4, 0.05, 0.06, 0.86, 0.95 );
+    assertFloatArrayEqualsEV(d->nodes[2].mu, 1e-8, 4, 0.05, 0.06, 0.86, 0.95 );
+    assertFloatArrayEqualsEV(d->nodes[3].mu, 1e-8, 4, 0.05, 0.06, 0.86, 0.95 );
+
+    //but not shared between layers
+    assertFalse( d->nodes[0].mu == d->nodes[4].mu );
+
+    //continue processing
+    for(nid = 0; nid < 4 ; nid++){
+        CalculateDistances(d->nodes, nid);
+    }
+
+    assertFloatEquals( 0.11 - 0.05, d->nodes[0].beliefEuc[0], 1e-8);
+    assertFloatEquals( 0.22 - 0.06, d->nodes[1].beliefEuc[0], 1e-8);
+    assertFloatEquals( 0.88 - 0.86, d->nodes[2].beliefEuc[0], 1e-8);
+    assertFloatEquals( 0.99 - 0.95, d->nodes[3].beliefEuc[0], 1e-8);
+
 
     NormalizeBeliefGetWinner( d->nodes, 0);//dont think need to change
 
@@ -184,14 +209,14 @@ int testUniform(){
     return 0;
 }
 
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
-
-    RUN( testVarArgs );
-    RUN( testInit );
-    RUN( testFormulateNotCrash );
-    RUN( testForumateStages );
-    RUN( testUniform );
+    RUN(testVarArgs);
+    RUN(testInit);
+    RUN(testFormulateNotCrash);
+    RUN(testForumateStages);
+    RUN(testUniform);
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }
