@@ -104,7 +104,7 @@ public:
         float starv_coef = 0.001;
 
         uint num_movements = 0; //this class does not use movements
-
+	bool isUniform = false; //wheter nodes in a layer share centroids
         destin = InitDestin(
                 input_dimensionality,
                 layers,
@@ -115,7 +115,8 @@ public:
                 gamma,
                 temperatures,
                 starv_coef,
-                num_movements
+                num_movements,
+		isUniform
          );
         ClearBeliefs(destin);
 
