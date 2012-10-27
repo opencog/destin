@@ -398,22 +398,24 @@ void DestroyDestin( Destin * d )
     uint i;
 
     if(d->isUniform){
-        for(i = 0 ; i < d->nLayers; d++){
+        for(i = 0 ; i < d->nLayers; i++)
+        {
             //since all nodes in a layer share the same centroids
-            //then only need to free mu once per layer
+            //then this only need to free mu once per layer
             FREE(GetNodeFromDestin(d, i, 0,0)->mu);
         }
     }
+    
     for( i=0; i < d->nNodes; i++ )
     {
-        if(d->isUniform){
-            //mu already been free'd so set it to NULL so the free in DestroyNode doesn't break.
+        if(d->isUniform)
+        {
+            //mu already been freed so set it to NULL 
             d->nodes[i].mu = NULL;
-            //TODO: check that this works
         }
+        
         DestroyNode( &d->nodes[i] );
     }
-
     FREE(d->temp);
     FREE(d->nb);
     FREE(d->nodes);
@@ -421,7 +423,6 @@ void DestroyDestin( Destin * d )
     FREE(d->inputPipeline);
     FREE(d->belief);
     FREE(d->layerSize);
-
     for( i=0; i < d->nLayers; i++ )
     {
         FREE( d->nodeRef[i] );
@@ -647,8 +648,11 @@ void InitNode
 // deallocate the node.
 void DestroyNode( Node *n)
 {
-    // free host data
-    FREE( n->mu );
+    //use free here instead of FREE so it doesn't fail on NULL 
+    //in case it is part of a uniform destin network which
+    //would already have mu free'd
+    free( n->mu ); 
+    
     FREE( n->sigma );
     FREE( n->starv );
     FREE( n->beliefEuc );

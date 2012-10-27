@@ -20,7 +20,11 @@ int testInit(){
     uint nMovements = 0;
     bool isUniform = false;
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
-    //TODO: need to fix free for uniform
+    DestroyDestin(d);
+    
+    //test uniform destin init
+    isUniform = true;
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
     DestroyDestin(d);
 
     return 0;
