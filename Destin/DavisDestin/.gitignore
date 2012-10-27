@@ -10,3 +10,4 @@ CMakeCache.txt
 bin/
 cmake_install.cmake
 libdestinalt.so
+*~
