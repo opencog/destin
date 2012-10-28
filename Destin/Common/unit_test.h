@@ -151,5 +151,21 @@ float * toFloatArray(long c, ...) {
     return a;
 }
 
+bool _assertIntEquals( int expected, int actual, int line){
+    if( expected == actual ){
+        return true;
+    }else{
+        printf("assertIntEquals FAILED, line %i, expected: %i, actual: %i\n", line, expected, actual );
+        return false;
+    }
+
+}
+
+#define assertIntEquals( expected, actual){\
+    if( ! _assertIntEquals(expected, actual, __LINE__ )){\
+        return 1;\
+    }\
+}\
+
 
 #endif

@@ -187,10 +187,10 @@ int testUniform(){
     //nb = 4, ns = 9
     //all nodes point to the same centroids in a layer for uniform destin
     assignFloatArray(n->mu, 4 * 9, 
-        0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
-        0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 
-        0.86, 0.86, 0.86, 0.86, 0.86, 0.86, 0.86, 0.86, 0.86,
-        0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95);
+        0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,  
+        0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 
+        0.95, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);
 
 
     //make sure the mu pointers are shared between nodes
@@ -200,36 +200,43 @@ int testUniform(){
     assertFalse( d->nodes[0].mu == d->nodes[4].mu );
 
     //continue processing
-    for(nid = 0; nid < 4 ; nid++){
+    for(nid = 0; nid < 5 ; nid++){
         CalculateDistances(d->nodes, nid);
     }
 
     //manually calculate distance for node 0, centroid 0
     float c1 = 0.05;
     float c2 = 0.11;
-    float dist = sqrt( (c2  - c1) * (c2 - c1) + ( .25 - c1 ) * (.25 - c1) * 8 );
-    assertFloatEquals( 1.0 / dist, d->nodes[0].beliefEuc[0], 5e-8);
+    float dist = sqrt( (c2  - c1) * (c2 - c1) );
+    assertFloatEquals( 1.0 / dist, d->nodes[0].beliefEuc[0], 9e-7);
     
     //manually calculate distance for node 0, centroid 3
     c1 = 0.95;
-    dist = sqrt( (c2  - c1) * (c2 - c1) + ( .25 - c1 ) * (.25 - c1) * 8 );
-    assertFloatEquals( 1.0 / dist, d->nodes[0].beliefEuc[3], 7e-8);
+    dist = sqrt( (c2  - c1) * (c2 - c1) );
+    assertFloatEquals( 1.0 / dist, d->nodes[0].beliefEuc[3], 6e-8);
     
     //manually calculate distance for node 3, centroid 0
     c1 = 0.05;
     c2 = 0.99;
-    dist = sqrt( (c2  - c1) * (c2 - c1) + ( .25 - c1 ) * (.25 - c1) * 8 );
-    assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[0], 1e-7);
+    dist = sqrt( (c2  - c1) * (c2 - c1));
+    assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[0], 2e-8);
     
     //manually calculate distance for node 3, centroid 3
     c1 = 0.95;
     c2 = 0.99;
-    dist = sqrt( (c2  - c1) * (c2 - c1) + ( .25 - c1 ) * (.25 - c1) * 8 );
-    assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[3], 5e-8);
+    dist = sqrt( (c2  - c1) * (c2 - c1));
+    assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[3], 6e-8);
 
 
-    //NormalizeBeliefGetWinner( d->nodes, 0);//dont think need to change
-
+    for(nid = 0 ; nid < 5 ; nid++){
+        NormalizeBeliefGetWinner( d->nodes, nid);
+    }
+        
+    assertIntEquals(1, n[0].winner);
+    assertIntEquals(1, n[1].winner);
+    assertIntEquals(2, n[2].winner);
+    assertIntEquals(3, n[3].winner);
+    
     //UpdateWinner( d->nodes, d->inputLabel, 0 );
 
     //Uniform_UpdateStarvation(d->nodes, 0);
