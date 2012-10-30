@@ -229,6 +229,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     {
         InitNode( 
                     n,
+                    d,
                     ni,
                     nb[0],
                     np,
@@ -299,6 +300,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
             InitNode
                     (   
                         n, 
+                        d,
                         nb[l-1]*4,
                         nb[l],
                         np,
@@ -555,6 +557,7 @@ Destin * LoadDestin( Destin *d, char *filename )
 void InitNode
     (
     uint         nodeIdx,
+    Destin *     d,
     uint         ni,
     uint         nb,
     uint         np,
@@ -574,6 +577,7 @@ void InitNode
 {
 
     // Initialize node parameters
+    node->d             = d;
     node->nb            = nb;
     node->ni            = ni;
     node->np            = np;

@@ -2,14 +2,12 @@
 #define __NODE_H
 
 #include "macros.h"
-#include "destin.h"
-
 
 
 /* Node Struct Definition */
 typedef struct Node {
     /* HOST VARIABLES BEGIN */
-
+	struct Destin *  d;			// referece to parent destin network
     // node parameters
     uint     nb;            // number of beliefs ( number of centroids )
     uint     ni;            // number of inputs ( dimensionality of input vector)
@@ -57,6 +55,7 @@ typedef struct Node {
 /* Node Functions Begin */
 void  InitNode(                         // initialize a node.
                  uint,                  // node index
+                 struct Destin *,              // reference to parent destin network
                  uint,                  // belief dimensionality (# centroids)
                  uint,                  // input dimensionality (# input values)
                  uint,                  // parent belief dimensionality
