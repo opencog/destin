@@ -101,8 +101,7 @@ int testForumateStages(){
     assignFloatArray(&n->mu[0 * n->ns], 3, 0.5, 0.5, 0.5);
     assignFloatArray(&n->mu[1 * n->ns], 3, 0.0, 0.5, 1.0);
 
-    //TODO: yea toFloatArray is a memory leak, but only a small one :D
-    //will eventually make it clean itself up.
+
     assertFloatArrayEqualsEV(n->starv, 1e-12, 2, 1.0,1.0);//starv is initalized to 1.0
 
     assertFloatArrayEqualsEV(n->beliefEuc, 1e-12, 2, 0.5, 0.5);
@@ -116,7 +115,8 @@ int testForumateStages(){
 
     assertTrue(INIT_SIGMA == 0.00001);
     assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
-    UpdateWinner( d->nodes, d->inputLabel, nid );
+    CalcCentroidMovement( d->nodes, d->inputLabel, nid );
+    MoveCentroids(d->nodes, nid);
     assertTrue( n->winner == 0 );
     assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, 0.00001249, 0.00000999, 0.00000999, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
     UpdateStarvation(d->nodes, nid);
@@ -135,6 +135,9 @@ int shouldFail(){
 
 int testVarArgs(void){
     //test some of the unit test functions and macros
+    
+   //TODO: yea toFloatArray is a memory leak, but only a small one :D
+   //will eventually make it clean itself up.
    printFloatArray(toFloatArray(3, 9.0, 8.0, 7.0), 3);
    float *f = toFloatArray(2,1.2, 1.4);
 
@@ -231,13 +234,14 @@ int testUniform(){
     for(nid = 0 ; nid < 5 ; nid++){
         NormalizeBeliefGetWinner( d->nodes, nid);
     }
-        
+    
+    //check that the right centroids won
     assertIntEquals(1, n[0].winner);
     assertIntEquals(1, n[1].winner);
     assertIntEquals(2, n[2].winner);
     assertIntEquals(3, n[3].winner);
     
-    //UpdateWinner( d->nodes, d->inputLabel, 0 );
+    //CalcCentroidMovement( d->nodes, d->inputLabel, 0 );
 
     //Uniform_UpdateStarvation(d->nodes, 0);
 

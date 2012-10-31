@@ -49,6 +49,7 @@ typedef struct Node {
     struct Node ** children;// array of 4 child node pointers
     uint layer;				// layer this node belongs to
 
+    float * delta;           // vector that stores difference between observation and mu shared centroid vector
     /* HOST VARIABLES END */
 } Node;
 
@@ -93,10 +94,17 @@ void NormalizeBeliefGetWinner(
                     uint                // node index
                 );
 
-void UpdateWinner(
+
+void CalcCentroidMovement(
                     Node *,             // pointer to list of nodes
                     uint *,             // pointer to current class label
                     uint                // node index
                 );
 
+void MoveCentroids(
+                    Node *,             // pointer to list of nodes
+                    uint                // node index
+                );
+ 
+ 
 #endif

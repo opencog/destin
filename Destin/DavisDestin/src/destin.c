@@ -371,7 +371,8 @@ void FormulateBelief( Destin *d, float *image )
             NormalizeBeliefGetWinner( d->nodes, n );
             if( d->layerMask[l] == 1 )
             {
-                UpdateWinner( d->nodes, d->inputLabel, n );
+                CalcCentroidMovement( d->nodes, d->inputLabel, n );
+                MoveCentroids( d->nodes,n );
                 UpdateStarvation(d->nodes, n);
                 d->muSumSqDiff += d->nodes[n].muSqDiff;
             }

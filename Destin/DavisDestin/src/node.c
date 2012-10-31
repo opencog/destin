@@ -175,8 +175,8 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     n->genWinner = maxMalIdx;
 }
 
-// CPU implementation for UpdateWinner kernel
-void UpdateWinner( Node *n, uint *label, uint nIdx )
+
+void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
 {
     // whoa!  zero comments here -- my bad
 
@@ -222,11 +222,25 @@ void UpdateWinner( Node *n, uint *label, uint nIdx )
             delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
         }
 
+        n->delta[i] = delta;
+    }
+}
+
+void MoveCentroids( Node *n, uint nIdx ){
+    n = &n[nIdx];
+    
+    // gets the row offset for the mu/sigma matrices to update
+    uint winnerOffset = n->winner*n->ns;  
+    
+    int i;
+    for(i = 0 ; i < n->ns ; i++){   
         // calculate how much we move the centroid.  the 1 / nCounts
         // term can be switched out for a different learning rate
         // whether fixed or adaptive.
+        float delta = n->delta[i];
         float dTmp = (1 / (float) n->nCounts[n->winner]) * delta;
 
+      
         // move the winning centroid
         n->mu[winnerOffset+i] += dTmp;
 
@@ -234,9 +248,9 @@ void UpdateWinner( Node *n, uint *label, uint nIdx )
         n->muSqDiff += dTmp * dTmp;
 
         // update the variance of the winning centroid
-        n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);
+        n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);    
     }
-}
+}   
 
 void UpdateStarvation(Node *n, uint nIdx)
 {

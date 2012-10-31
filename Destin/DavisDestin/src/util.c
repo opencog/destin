@@ -204,7 +204,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                 {
                     bias = m*nCols*inputSizeSqRoot + n*inputSizeSqRoot;
                     inputOffsets[i+0][innerIdx] = bias + a*nCols+b;
-                    if(nInputNodes > 1){ //fix for 1 node 1 layer network
+                    if(nInputNodes > 1){ //case for 1 node 1 layer network
                         inputOffsets[i+1][innerIdx] = bias + a*nCols+b+inputSizeSqRoot;
                         inputOffsets[i+2][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b;
                         inputOffsets[i+3][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b+inputSizeSqRoot;
@@ -604,6 +604,7 @@ void InitNode
     MALLOC( node->observation, float, ns );
     MALLOC( node->genObservation, float, ns );
     MALLOC( node->nCounts, long, nb );
+    MALLOC( node->delta, float, ns);
 
     node->children = NULL;
 
@@ -654,7 +655,7 @@ void DestroyNode( Node *n)
 {
     //use free here instead of FREE so it doesn't fail on NULL 
     //in case it is part of a uniform destin network which
-    //would already have mu free'd
+    //would already have mu freed
     free( n->mu ); 
     
     FREE( n->sigma );
@@ -664,6 +665,7 @@ void DestroyNode( Node *n)
     FREE( n->observation );
     FREE( n->genObservation );
     FREE( n->nCounts );
+    FREE( n->delta );
 
     if( n->children != NULL )
     {
