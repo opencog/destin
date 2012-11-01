@@ -148,6 +148,13 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     d->nBeliefs = nBeliefs;
 
+    // allocate for each layer an array of size number = n centroids for that layer
+    // that counts how many nodes in a layer pick the given centroid as winner.
+    MALLOC(d->sharedCentroidsWinCounts, uint *, d->nLayers);
+    for(l = 0 ; l < d->nLayers ; l++){
+        MALLOC( d->sharedCentroidsWinCounts[l], uint, d->nb[l]);
+    }
+    
     // init belief and input offsets (pointers to big belief and input chunks we
     // allocated above)
     bOffset = 0;
@@ -331,6 +338,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
+
     //setup book keeping to be able to look up nodes by row col and layer
 
     int layerSize;
@@ -360,6 +368,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     MALLOC( d->nodeRef[d->nLayers - 1], int, 1 );
     d->nodeRef[l][0] = d->nNodes - 1;
 
+    
 
     for( i=0; i < nInputNodes; i++ )
     {
@@ -412,7 +421,7 @@ void DestroyDestin( Destin * d )
     {
         if(d->isUniform)
         {
-            //mu already been freed so set it to NULL 
+            //mu already has been freed so set it to NULL 
             d->nodes[i].mu = NULL;
         }
         
@@ -425,10 +434,15 @@ void DestroyDestin( Destin * d )
     FREE(d->inputPipeline);
     FREE(d->belief);
     FREE(d->layerSize);
+    
     for( i=0; i < d->nLayers; i++ )
     {
         FREE( d->nodeRef[i] );
+        FREE( d->sharedCentroidsWinCounts[i] );
     }
+    
+    FREE( d->sharedCentroidsWinCounts);
+    
     FREE(d);
 }
 

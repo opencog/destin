@@ -35,6 +35,7 @@ typedef struct Destin {
     int         ** nodeRef;             // allows easy indexing of nodes by layer, row, and col
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
                                         // which means all nodes in a layer share their centroids
+    uint        ** sharedCentroidsWinCounts; //counts how many nodes in a layer pick the given centroid as winner
 
 } Destin  ;
 /* Destin Struct Definition End */
