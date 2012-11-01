@@ -18,8 +18,16 @@ vision experiments.
 So to get the beliefs more reactive again I reverted the starvation trace
 coefficient to be higher, turned off applying the bolzman distribution to the
 beliefs and  set the learning rate to be fixed (not going got check that in
-because I dont want to mess up Andrew's experiments, but I suppose we
-can make that stuff configurable which some already is). Basically
-there's lots of factors to play around with. 
+because I dont want to mess up Andrew's experiments, but I suppose we can make
+that stuff configurable which some already is). Basically there's lots of
+factors to play around with. 
 
 Going to move on again to implementing uniform destin.
+
+10/21 - 10/30/2012
+------------------
+Making good progress on uniform destin. Continued updating unit test, somewhat
+following test driven development. Nodes are using the shared centroids to
+compare their inputs with. Working through the logic to average centroid update
+vectors in case multiple nodes choose the same shared centroid to update. Also
+working through the logic on the starvation trace.
