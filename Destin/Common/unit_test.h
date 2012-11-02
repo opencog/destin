@@ -79,6 +79,40 @@ bool _assertIntArrayEquals(int * expected, int * actual, int length, int line){
     return true;
 }
 
+bool _assertLongArrayEquals(long * expected, long * actual, int length, int line){
+    int i;
+    if(length <= 0 ){
+        printf("assertLongArrayEquals FAILED, line: %i, negative or zero array length: %i", line, length);
+        return false;
+    }
+
+    for(i = 0 ; i < length ; i++){
+        if( expected[i] != actual[i] ){
+            printf("assertLongArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
+            printf("expected: %li, actual: %li\n", expected[i], actual[i]);
+            return false;
+        }
+    }
+    return true;
+}
+
+bool _assertBoolArrayEquals(bool * expected, bool * actual, int length, int line){
+    int i;
+    if(length <= 0 ){
+        printf("assertBoolArrayEquals FAILED, line: %i, negative or zero array length: %i", line, length);
+        return false;
+    }
+
+    for(i = 0 ; i < length ; i++){
+        if( expected[i] != actual[i] ){
+            printf("assertBoolArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
+            printf("expected: %s, actual: %s\n", expected[i] ? "true" : "false", actual[i] ? "true": "false");
+            return false;
+        }
+    }
+    return true;
+}
+
 
 #define assertFloatArrayEquals( exp, act, len ){\
     if( ! _assertFloatArrayEquals( (exp), (act), (len), 0.0, __LINE__ ) ){\
@@ -129,11 +163,36 @@ bool _assertIntArrayEqualsEV(int *actual, int len, int line, ...){
     return _assertIntArrayEquals(expected, actual, len, line );
 }
 
+bool _assertLongArrayEqualsEV(long *actual, int len, int line, ...){
+    long expected[len];
+    ut_varags_to_array(expected, line, len, long);
+    return _assertLongArrayEquals(expected, actual, len, line );
+}
+
+bool _assertBoolArrayEqualsEV(bool *actual, int len, int line, ...){
+    bool expected[len];
+    ut_varags_to_array(expected, line, len, int); //use int because bool is promoted to int by compiler
+    return _assertBoolArrayEquals(expected, actual, len, line );
+}
+
 #define assertIntArrayEqualsEV( act, len, expecteds... ){\
     if(! _assertIntArrayEqualsEV(act, len, __LINE__, expecteds )){\
         return 1;\
     }\
 }\
+
+#define assertLongArrayEqualsEV( act, len, expecteds... ){\
+    if(! _assertLongArrayEqualsEV(act, len, __LINE__, expecteds )){\
+        return 1;\
+    }\
+}\
+
+#define assertBoolArrayEqualsEV( act, len, expecteds... ){\
+    if(! _assertBoolArrayEqualsEV(act, len, __LINE__, expecteds )){\
+        return 1;\
+    }\
+}\
+
 
 void printFloatArray(float * array, int length){
     int i;
