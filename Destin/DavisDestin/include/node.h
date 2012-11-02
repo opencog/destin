@@ -47,7 +47,6 @@ typedef struct Node {
     float * parent_pBelief; // parent previous belief
 
     struct Node ** children;// array of 4 child node pointers
-    uint layer;				// layer this node belongs to
 
     float * delta;           // vector that stores difference between observation and mu shared centroid vector
     /* HOST VARIABLES END */
