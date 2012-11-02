@@ -149,6 +149,11 @@ int testVarArgs(void){
    assertFloatEquals(.3, f[1],1e-7);
 
    assertFloatArrayEqualsEV(f, 1e-7, 2, 0.2, 0.3  );
+
+   int an_array[] = {2, 4, 6, 8};
+
+   assertIntArrayEqualsEV(an_array, 4, 2, 4, 6, 8);
+
    free(f);
    return 0;
 }

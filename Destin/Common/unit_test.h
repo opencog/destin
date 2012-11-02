@@ -62,6 +62,23 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
     return true;
 }
 
+bool _assertIntArrayEquals(int * expected, int * actual, int length, int line){
+    int i;
+    if(length <= 0 ){
+        printf("assertIntArrayEquals FAILED, line: %i, negative or zero array length: %i", line, length);
+        return false;
+    }
+
+    for(i = 0 ; i < length ; i++){
+        if( expected[i] != actual[i] ){
+            printf("assertIntArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
+            printf("expected: %i, actual: %i\n", expected[i], actual[i]);
+            return false;
+        }
+    }
+    return true;
+}
+
 
 #define assertFloatArrayEquals( exp, act, len ){\
     if( ! _assertFloatArrayEquals( (exp), (act), (len), 0.0, __LINE__ ) ){\
@@ -74,12 +91,12 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
  * the caller function, which will not be put into dest array
  * length - length of the arguments array
  */
-#define ut_varags_to_array( dest, last_fixed_argument, length ){\
+#define ut_varags_to_array( dest, last_fixed_argument, length, the_type ){\
     va_list arg_list;\
     va_start(arg_list, last_fixed_argument);\
     int i;\
     for ( i = 0; i < length; i++ ){\
-        dest[i] = va_arg(arg_list, double);\
+        dest[i] = va_arg(arg_list, the_type);\
     }\
     va_end(arg_list);\
 }\
@@ -94,9 +111,11 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
 
 bool _assertFloatArrayEqualsEV(float *actual, float epsilon, int len, int line, ...){
     float expected[len];
-    ut_varags_to_array(expected, line, len);
+    ut_varags_to_array(expected, line, len, double);
     return _assertFloatArrayEquals(expected, actual, len, epsilon, line );
 }
+
+
 
 #define assertFloatArrayEqualsEV( act, epsilon, len, args... ){\
     if(! _assertFloatArrayEqualsEV(act, epsilon, len, __LINE__, args )){\
@@ -104,6 +123,17 @@ bool _assertFloatArrayEqualsEV(float *actual, float epsilon, int len, int line, 
     }\
 }\
 
+bool _assertIntArrayEqualsEV(int *actual, int len, int line, ...){
+    int expected[len];
+    ut_varags_to_array(expected, line, len, int);
+    return _assertIntArrayEquals(expected, actual, len, line );
+}
+
+#define assertIntArrayEqualsEV( act, len, expecteds... ){\
+    if(! _assertIntArrayEqualsEV(act, len, __LINE__, expecteds )){\
+        return 1;\
+    }\
+}\
 
 void printFloatArray(float * array, int length){
     int i;
@@ -123,7 +153,7 @@ void printFloatArray(float * array, int length){
  */
 void assignFloatArray(float * dest, int length, ...){
 
-	ut_varags_to_array(dest, length, length);
+    ut_varags_to_array(dest, length, length, double);
 }
 
 /** converts arguments into an array which is returned.
@@ -146,7 +176,7 @@ float * toFloatArray(long c, ...) {
         exit(1);
     }
 
-    ut_varags_to_array(a, c, c);
+    ut_varags_to_array(a, c, c, double);
 
     return a;
 }
