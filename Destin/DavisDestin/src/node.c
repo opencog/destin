@@ -137,41 +137,46 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     
     float maxBoltzEuc = 0;
     float maxBoltzMal = 0;
-
+    bool boltzman = false;
     // normalize beliefs to sum to 1
     for( i=0; i < n->nb; i++ )
     {
         n->beliefEuc[i] = ( normEuc < EPSILON ) ? (1 / (float) n->nb) : (n->beliefEuc[i] / normEuc);
         n->beliefMal[i] = ( normMal < EPSILON ) ? (1 / (float) n->nb) : (n->beliefMal[i] / normMal);
 
-        // get maximum temp to normalize boltz normalization
-        if( n->beliefEuc[i] * n->temp > maxBoltzEuc )
-            maxBoltzEuc = n->beliefEuc[i] * n->temp;
-        if( n->beliefMal[i] * n->temp > maxBoltzMal )
-            maxBoltzMal = n->beliefMal[i] * n->temp;
+        if(boltzman){
 
-        //n->pBelief[i] = n->beliefMal[i];
+            // get maximum temp to normalize boltz normalization
+            if( n->beliefEuc[i] * n->temp > maxBoltzEuc )
+                maxBoltzEuc = n->beliefEuc[i] * n->temp;
+            if( n->beliefMal[i] * n->temp > maxBoltzMal )
+                maxBoltzMal = n->beliefMal[i] * n->temp;
+        }else{
+            n->pBelief[i] = n->beliefMal[i];
+        }
+
     }
+    if(boltzman){
+        // boltzmann
+        float boltzEuc = 0;
+        float boltzMal = 0;
 
-    // boltzmann
-    float boltzEuc = 0;
-    float boltzMal = 0;
+        for( i=0; i < n->nb; i++ )
+        {
+            n->beliefEuc[i] = exp(n->temp * n->beliefEuc[i] - maxBoltzEuc);
+            n->beliefMal[i] = exp(n->temp * n->beliefMal[i] - maxBoltzMal);
 
-    for( i=0; i < n->nb; i++ )
-    {
-        n->beliefEuc[i] = exp(n->temp * n->beliefEuc[i] - maxBoltzEuc);
-        n->beliefMal[i] = exp(n->temp * n->beliefMal[i] - maxBoltzMal);
+            boltzEuc += n->beliefEuc[i];
+            boltzMal += n->beliefMal[i];
+        }
 
-        boltzEuc += n->beliefEuc[i];
-        boltzMal += n->beliefMal[i];
-    }
+        for( i=0; i < n->nb; i++ )
+        {
+            n->beliefEuc[i] /= boltzEuc;
+            n->beliefMal[i] /= boltzMal;
 
-    for( i=0; i < n->nb; i++ )
-    {
-        n->beliefEuc[i] /= boltzEuc;
-        n->beliefMal[i] /= boltzMal;
-
-        n->pBelief[i] = n->beliefEuc[i];
+            n->pBelief[i] = n->beliefEuc[i];
+        }
     }
 
     n->winner = maxEucIdx;
