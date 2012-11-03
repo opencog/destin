@@ -102,7 +102,7 @@ public:
             throw std::logic_error("Image width does not match the given number of layers.");
         }
         uint n_classes = 0;//doesn't look like its used
-        float starv_coef = 0.001;
+        float starv_coef = 0.05;
 
         uint num_movements = 0; //this class does not use movements
         bool isUniform = true; //wheter nodes in a layer share centroids
