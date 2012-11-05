@@ -1,5 +1,5 @@
 #The name of the project
-PROJECT(DeSTIN_CUDA_Alt)
+PROJECT(DavisDestin)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
