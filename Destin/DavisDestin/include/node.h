@@ -29,8 +29,7 @@ typedef struct Node {
     float * starv;          // centroid starvation coefficients
 
     float   muSqDiff;
-
-    long  * nCounts;        // number of observation counts
+    long  * nCounts;        // number of observation counts. How many times each centroid is picked as winner over all iterations.
     
     // node input
     float * input;          // input pointer (null for input layer nodes)

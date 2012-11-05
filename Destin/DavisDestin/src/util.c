@@ -12,6 +12,7 @@
 
 
 // create a destin instantiation from a file
+//TODO: update to work with uniform destin
 Destin * CreateDestin( char *filename ) {
     Destin *newDestin;
 

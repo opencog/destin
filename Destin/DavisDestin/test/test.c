@@ -20,12 +20,16 @@ int testInit(){
     uint nMovements = 0;
     bool isUniform = false;
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    printf("inited non uniform\n");
     DestroyDestin(d);
+    printf("destroyed non uniform\n");
     
     //test uniform destin init
     isUniform = true;
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    printf("Inited uniform.\n");
     DestroyDestin(d);
+    printf("destroyed uniform.\n");
 
     return 0;
 }
@@ -150,9 +154,15 @@ int testVarArgs(void){
 
    assertFloatArrayEqualsEV(f, 1e-7, 2, 0.2, 0.3  );
 
-   int an_array[] = {2, 4, 6, 8};
+   int an_int_array[] = {2, 4, 6, 8};
+   assertIntArrayEqualsEV(an_int_array, 4, 2, 4, 6, 8);
 
-   assertIntArrayEqualsEV(an_array, 4, 2, 4, 6, 8);
+   long a_long_array[] = {3, 6, 9, 12};
+   assertLongArrayEqualsEV(a_long_array, 4, 3, 6, 9, 12);
+
+   bool a_bool_array[] = {false, false, true, true};
+   assertBoolArrayEqualsEV(a_bool_array, 4, false, false, true, true);
+
 
    free(f);
    return 0;
