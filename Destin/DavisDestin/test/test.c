@@ -189,8 +189,19 @@ int testUniform(){
     float image []  = {.11,.22,.88,.99};//1 pixel for each of the 4 bottom layer nodes
 
     Node * n = &d->nodes[0];
+
+    //set centroid locations
+    //mu is a table nb x ns. ns = ni + nb + np + nc
+    //nb = 4 (centroids), ns = 9
+    //all nodes point to the same centroids in a layer for uniform destin
+    assignFloatArray(n->mu, 4 * 9,
+        0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        0.95, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);
+
     int nid;
-    for(nid = 0; nid < 4 ; nid++){
+    for(nid = 0; nid < 5 ; nid++){
         GetObservation( d->nodes, image, nid); //get observation for node 0 only
     }
     //spot check observations were made
@@ -202,17 +213,6 @@ int testUniform(){
     assertFloatArrayEqualsEV(n[2].observation, 1e-12, 1+4+4+0, 0.88, 0.25, 0.25, 0.25, 0.25, 0.25 , 0.25 , 0.25 , 0.25);
     assertFloatArrayEqualsEV(n[3].observation, 1e-12, 1+4+4+0, 0.99, 0.25, 0.25, 0.25, 0.25, 0.25 , 0.25 , 0.25 , 0.25);
    
-
-    //set centroid locations
-    //mu is a table nb x ns. ns = ni + nb + np + nc
-    //nb = 4 (centroids), ns = 9
-    //all nodes point to the same centroids in a layer for uniform destin
-    assignFloatArray(n->mu, 4 * 9, 
-        0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
-        0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,  
-        0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 
-        0.95, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);
-
 
     //make sure the mu pointers are shared between nodes
     assertTrue( d->nodes[0].mu == d->nodes[3].mu );
