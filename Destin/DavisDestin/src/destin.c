@@ -12,6 +12,7 @@
 #include "node.h"
 #include "destin.h"
 
+
 #define NITS 20000
 #define NMEANS 1
 
@@ -361,6 +362,10 @@ void FormulateBelief( Destin *d, float *image )
 
     d->muSumSqDiff = 0;
 
+    if(d->isUniform){
+        ClearSharedCentroidsDidWin(d);
+    }
+
     for( n=0, l=0; l < d->nLayers; l++ )
     {
         for( i=0; i < d->layerSize[l]; i++, n++ )
@@ -372,9 +377,15 @@ void FormulateBelief( Destin *d, float *image )
             if( d->layerMask[l] == 1 )
             {
                 CalcCentroidMovement( d->nodes, d->inputLabel, n );
-                MoveCentroids( d->nodes,n );
-                UpdateStarvation(d->nodes, n);
-                d->muSumSqDiff += d->nodes[n].muSqDiff;
+                if(d->isUniform){
+                    Uniform_AverageDeltas(d->nodes, n);
+                    //TODO: add in starvation and muSumSqDiff
+                    //TODO: sharedSigma
+                }else{
+                    MoveCentroids( d->nodes,n );
+                    UpdateStarvation(d->nodes, n);
+                    d->muSumSqDiff += d->nodes[n].muSqDiff;
+                }
             }
         }
     }
@@ -965,4 +976,21 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
     // grab the node index
     uint nIdx = d->nodeRef[l][r*layerSizeSqRoot+c];
     return &d->nodes[nIdx];
+}
+
+// increment number of counts for winning centroid.
+void ClearSharedCentroidsDidWin(Destin * d){
+    //TODO: make this work for uniform destin
+    //TODO: use memset to zero memory instead
+    int l, c, ns, s;
+    for(l = 0 ; l < d->nLayers ; l++){
+        ns = GetNodeFromDestin(d,l,0,0)->ns;
+        for(c = 0 ; c < d->nb[l]; c++){
+            d->sharedCentroidsWinCounts[l][c] = 0;
+            for(s = 0 ; s < ns ;s++){
+                d->ssds[l][c*ns + s] = 0;
+            }
+        }
+    }
+    return;
 }

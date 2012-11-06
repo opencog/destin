@@ -185,6 +185,7 @@ int testUniform(){
     assertTrue(d->isUniform);
 
 
+
     float image []  = {.11,.22,.88,.99};//1 pixel for each of the 4 bottom layer nodes
 
     Node * n = &d->nodes[0];
@@ -196,13 +197,15 @@ int testUniform(){
     assertFloatEquals( 0.11, d->nodes[0].observation[0], 1e-8);
     assertFloatEquals( 0.99, d->nodes[3].observation[0], 1e-8);
     
-    assertFloatArrayEqualsEV(n->observation, 1e-12, 1+4+4+0, 0.11, 0.25, 0.25, 0.25, 0.25, 0.25 , 0.25 , 0.25 , 0.25);
+    assertFloatArrayEqualsEV(n[0].observation, 1e-12, 1+4+4+0, 0.11, 0.25, 0.25, 0.25, 0.25, 0.25 , 0.25 , 0.25 , 0.25);
+    assertFloatArrayEqualsEV(n[1].observation, 1e-12, 1+4+4+0, 0.22, 0.25, 0.25, 0.25, 0.25, 0.25 , 0.25 , 0.25 , 0.25);
+    assertFloatArrayEqualsEV(n[2].observation, 1e-12, 1+4+4+0, 0.88, 0.25, 0.25, 0.25, 0.25, 0.25 , 0.25 , 0.25 , 0.25);
     assertFloatArrayEqualsEV(n[3].observation, 1e-12, 1+4+4+0, 0.99, 0.25, 0.25, 0.25, 0.25, 0.25 , 0.25 , 0.25 , 0.25);
    
 
     //set centroid locations
     //mu is a table nb x ns. ns = ni + nb + np + nc
-    //nb = 4, ns = 9
+    //nb = 4 (centroids), ns = 9
     //all nodes point to the same centroids in a layer for uniform destin
     assignFloatArray(n->mu, 4 * 9, 
         0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
@@ -245,19 +248,59 @@ int testUniform(){
     dist = sqrt( (c2  - c1) * (c2 - c1));
     assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[3], 6e-8);
 
-
+    ClearSharedCentroidsDidWin(d);
+    assertLongArrayEqualsEV( d->ssPersistWinCounts[0], 4, 0L, 0L, 0L, 0L );
     for(nid = 0 ; nid < 5 ; nid++){
         NormalizeBeliefGetWinner( d->nodes, nid);
     }
-    
+
+    //centroid 0 wasn't chosen by any nodes, centroid 1 was chosen by 2 nodes but
+    //the win count for a shared centriod only increments by 1 even if multiple nodes
+    //pick it as winner
+    assertLongArrayEqualsEV( d->ssPersistWinCounts[0], 4, 0L, 1L, 1L, 1L );
+
     //check that the right centroids won
     assertIntEquals(1, n[0].winner);
     assertIntEquals(1, n[1].winner);
     assertIntEquals(2, n[2].winner);
     assertIntEquals(3, n[3].winner);
     
-    //CalcCentroidMovement( d->nodes, d->inputLabel, 0 );
+    for(nid = 0 ; nid < 5 ; nid++){
+        CalcCentroidMovement( d->nodes, d->inputLabel, nid );
+    }
+    
+    //check that deltas were created propertly
+    //node 0 has winner 1
+    //delta is observation vector - winning mu vector
+    assertFloatArrayEqualsEV(n[0].delta, 1e-12, 9, 0.11 - 0.06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    assertFloatArrayEqualsEV(n[1].delta, 1e-12, 9, 0.22 - 0.06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    assertFloatArrayEqualsEV(n[2].delta, 2e-8,  9, 0.88 - 0.86, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    assertFloatArrayEqualsEV(n[3].delta, 3e-8,  9, 0.99 - 0.95, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
+    //TODO: update FormulateBeliefs to call Uniform_MoveCentroids instead of MoveCentroids
+    //TODO: test top node
+    //TODO: test feedback over multiple iterations
+    //TODO: rename unit test array equals macros
+
+    for(nid = 0 ; nid < 5 ; nid++){
+        Uniform_AverageDeltas(d->nodes, nid);
+    }
+
+
+    float layer0SharedSigma[nb[0] * d->nodes[0].ns];
+    float layer1SharedSigma[nb[1] * d->nodes[1].ns];
+    Uniform_ApplyDeltas(d, 0, layer0SharedSigma);
+    Uniform_ApplyDeltas(d, 1, layer1SharedSigma);
+
+    assertTrue(n[0].nCounts == NULL); //these are null in uniform destin
+
+    //check that the shared centroids were moved to the correct positions
+    assertFloatArrayEqualsEV(n[0].mu, 2e-8, 4 * 9,
+        0.05,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 0, unchanged because it wasn't a winner
+        0.165, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 1, averaged because two nodes picked it
+                                                                   //averaged between node 0 and node 1 observations, .11 and .22 = .165
+        0.88,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //moved directly to node 2 observation because only node 2 picked it
+        0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
     //Uniform_UpdateStarvation(d->nodes, 0);
 
 

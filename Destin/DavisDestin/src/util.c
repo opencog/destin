@@ -149,13 +149,23 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     d->nBeliefs = nBeliefs;
 
-    // allocate for each layer an array of size number = n centroids for that layer
-    // that counts how many nodes in a layer pick the given centroid as winner.
-    MALLOC(d->sharedCentroidsWinCounts, uint *, d->nLayers);
-    for(l = 0 ; l < d->nLayers ; l++){
-        MALLOC( d->sharedCentroidsWinCounts[l], uint, d->nb[l]);
+    if(isUniform){
+        //TODO: init these to 0 and false
+        // allocate for each layer an array of size number = n centroids for that layer
+        // that counts how many nodes in a layer pick the given centroid as winner.
+        MALLOC(d->sharedCentroidsWinCounts, uint *, d->nLayers);
+
+        MALLOC(d->ssPersistWinCounts, long *, d->nLayers);
+
+        for(l = 0 ; l < d->nLayers ; l++){
+            MALLOC( d->sharedCentroidsWinCounts[l], uint, d->nb[l]);
+            MALLOC( d->ssPersistWinCounts[l], long, d->nb[l] );
+            for(i = 0 ; i < d->nb[l]; i++){
+                d->ssPersistWinCounts[l][i] = 0;
+            }
+        }
     }
-    
+
     // init belief and input offsets (pointers to big belief and input chunks we
     // allocated above)
     bOffset = 0;
@@ -232,12 +242,21 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     }else{
         sharedCentroids = NULL;
     }
+
+    //sharedCentroidsDeltaScratch
+    if(isUniform){
+        //used to calculate the shared centroid delta averages
+        MALLOC(d->ssds, float *, d->nLayers);
+        MALLOC(d->ssds[0], float, ns*nb[0]);//the rest are allocated later
+    }
+
     // initialize zero-layer nodes
     for( n=0, i=0, bOffset = 0; i < d->layerSize[0]; i++, n++ )
     {
         InitNode( 
                     n,
                     d,
+                    0,
                     ni,
                     nb[0],
                     np,
@@ -298,17 +317,19 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         // calculate the state dimensionality (number of inputs + number of beliefs)
         uint ns = nb[l-1]*4 + nb[l] + np + nc;
         if(isUniform){
+            MALLOC(d->ssds[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
         }else{
             sharedCentroids = NULL;
         }
 
+
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            InitNode
-                    (   
+            InitNode(
                         n, 
                         d,
+                        l,
                         nb[l-1]*4,
                         nb[l],
                         np,
@@ -415,7 +436,14 @@ void DestroyDestin( Destin * d )
             //since all nodes in a layer share the same centroids
             //then this only need to free mu once per layer
             FREE(GetNodeFromDestin(d, i, 0,0)->mu);
+
+            FREE(d->ssds[i]);
+            FREE(d->sharedCentroidsWinCounts[i]); //TODO: should be condionally alloced and delloc based of if using uniform destin
+            FREE(d->ssPersistWinCounts[i]);
         }
+        FREE(d->ssds);
+        FREE(d->sharedCentroidsWinCounts);
+        FREE(d->ssPersistWinCounts);
     }
     
     for( i=0; i < d->nNodes; i++ )
@@ -425,9 +453,10 @@ void DestroyDestin( Destin * d )
             //mu already has been freed so set it to NULL 
             d->nodes[i].mu = NULL;
         }
-        
+
         DestroyNode( &d->nodes[i] );
     }
+
     FREE(d->temp);
     FREE(d->nb);
     FREE(d->nodes);
@@ -438,12 +467,10 @@ void DestroyDestin( Destin * d )
     
     for( i=0; i < d->nLayers; i++ )
     {
-        FREE( d->nodeRef[i] );
-        FREE( d->sharedCentroidsWinCounts[i] );
+        FREE(d->nodeRef[i]);
     }
-    
-    FREE( d->sharedCentroidsWinCounts);
-    
+    FREE(d->nodeRef);
+
     FREE(d);
 }
 
@@ -552,7 +579,7 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(&starvCoeff, sizeof(float), 1, dFile);
     
     bool isUniform = false; //TODO: needs to be included in config file
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, false);
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
 
     for( i=0; i < d->nNodes; i++ )
     {
@@ -573,6 +600,7 @@ void InitNode
     (
     uint         nodeIdx,
     Destin *     d,
+    uint         layer,
     uint         ni,
     uint         nb,
     uint         np,
@@ -604,6 +632,7 @@ void InitNode
     node->gamma         = gamma;
     node->temp          = temp;
     node->winner        = 0;
+    node->layer         = layer;
 
     if(sharedCentroids == NULL){
         //not uniform so each node gets own centroids
@@ -618,7 +647,14 @@ void InitNode
     MALLOC( node->beliefMal, float, nb );
     MALLOC( node->observation, float, ns );
     MALLOC( node->genObservation, float, ns );
-    MALLOC( node->nCounts, long, nb );
+
+    if(d->isUniform){
+        //uniform destin uses shared counts
+        node->nCounts = NULL;
+    }else{
+        MALLOC( node->nCounts, long, nb );
+    }
+
     MALLOC( node->delta, float, ns);
 
     node->children = NULL;
@@ -645,7 +681,10 @@ void InitNode
         node->pBelief[i] = 1 / (float)nb;
         node->beliefEuc[i] = 1 / (float)nb;
         node->beliefMal[i] = 1 / (float)nb;
-        node->nCounts[i] = 0;
+
+        if(!d->isUniform){
+            node->nCounts[i] = 0;
+        }
 
         // init starv trace to one
         node->starv[i] = 1.0f;
@@ -668,10 +707,9 @@ void InitNode
 // deallocate the node.
 void DestroyNode( Node *n)
 {
-    //use free here instead of FREE so it doesn't fail on NULL 
-    //in case it is part of a uniform destin network which
-    //would already have mu freed
-    free( n->mu ); 
+
+    free( n->mu );  //using free instead of FREE here so it doesn't fail on NULL
+    //in case it is part of a uniform destin network which would already have mu freed
     
     FREE( n->sigma );
     FREE( n->starv );
@@ -679,7 +717,11 @@ void DestroyNode( Node *n)
     FREE( n->beliefMal );
     FREE( n->observation );
     FREE( n->genObservation );
-    FREE( n->nCounts );
+
+    if(n->nCounts != NULL){
+        FREE( n->nCounts );
+    }
+
     FREE( n->delta );
 
     if( n->children != NULL )

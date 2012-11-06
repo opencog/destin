@@ -48,13 +48,15 @@ typedef struct Node {
     struct Node ** children;// array of 4 child node pointers
 
     float * delta;           // vector that stores difference between observation and mu shared centroid vector
+    uint    layer;          // layer this node belongs in
     /* HOST VARIABLES END */
 } Node;
 
 /* Node Functions Begin */
 void  InitNode(                         // initialize a node.
                  uint,                  // node index
-                 struct Destin *,              // reference to parent destin network
+                 struct Destin *,       // reference to parent destin network
+                 uint,                  // layer this node belongs to
                  uint,                  // belief dimensionality (# centroids)
                  uint,                  // input dimensionality (# input values)
                  uint,                  // parent belief dimensionality
@@ -104,5 +106,8 @@ void MoveCentroids(
                     uint                // node index
                 );
  
- 
+void Uniform_AverageDeltas(
+                    Node *,
+                    uint
+                );
 #endif

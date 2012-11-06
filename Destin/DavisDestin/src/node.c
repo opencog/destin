@@ -172,6 +172,20 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     }
 
     n->winner = maxEucIdx;
+
+    //TODO: test that this works for non uniform
+    if(n->d->isUniform){
+        //TODO: test n->layer
+
+        long c =  ++n->d->sharedCentroidsWinCounts[n->layer][n->winner];
+
+        if( c == 1){//only increment this once even if multiple nodes pick this shared centroid
+            n->d->ssPersistWinCounts[n->layer][n->winner]++;
+        }
+
+    }
+
+
     n->genWinner = maxMalIdx;
 }
 
@@ -194,9 +208,6 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
     // the difference between an element of the observation and
     // an element of the mu matrix
     float delta;
-
-    // increment number of counts for winning centroid.
-    n->nCounts[n->winner]++;
 
     // keeps track of squared error for a node.  added together
     // with the sq. err. for all the other nodes in the network,
@@ -221,17 +232,53 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
         } else {
             delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
         }
-
         n->delta[i] = delta;
     }
+    return;
+}
+
+//average the deltas and multiply them by the shared ncounts
+void Uniform_AverageDeltas(Node * n, uint nIdx){
+    n = &n[nIdx];
+    uint s;
+
+    for(s = 0; s < n->ns ; s++){
+        //TODO: resize ssds
+        n->d->ssds[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)n->d->sharedCentroidsWinCounts[n->layer][n->winner];
+    }
+    return;
+}
+
+void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
+    //TODO: make sure this is thread safe
+    uint c, s, ns;
+    float diff, t, dt;
+    for(c = 0 ; c < d->nb[layer]; c++){
+        t =  1.0 / (float)d->ssPersistWinCounts[layer][c];
+        Node * n = GetNodeFromDestin(d, layer, 0,0);
+        ns = n->ns;
+        for(s = 0 ; s < ns ; s++){
+            //move the centroid with the averaged delta
+            dt = d->ssds[layer][c * ns + s];
+            diff = dt * t;
+            n->mu[c * ns + s] += diff;
+            n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
+            //TODO: write unit test for layerSharedSigma
+            layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
+        }
+    }
+    return;
 }
 
 void MoveCentroids( Node *n, uint nIdx ){
     n = &n[nIdx];
     
     // gets the row offset for the mu/sigma matrices to update
-    uint winnerOffset = n->winner*n->ns;  
-    
+    uint winnerOffset = n->winner*n->ns;
+
+    // increment number of counts for winning centroid.
+    n->nCounts[n->winner]++;
+
     int i;
     for(i = 0 ; i < n->ns ; i++){   
         // calculate how much we move the centroid.  the 1 / nCounts
@@ -240,7 +287,6 @@ void MoveCentroids( Node *n, uint nIdx ){
         float delta = n->delta[i];
         float dTmp = (1 / (float) n->nCounts[n->winner]) * delta;
 
-      
         // move the winning centroid
         n->mu[winnerOffset+i] += dTmp;
 
