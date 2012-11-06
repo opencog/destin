@@ -38,6 +38,7 @@ typedef struct Destin {
     uint        ** sharedCentroidsWinCounts; //counts how many nodes in a layer pick the given centroid as winner in one call of ForumateBeliefs
     float       ** ssds;                //sharedCentroidsDeltaScratch. TODO: allocate and free properly.
     long        ** ssPersistWinCounts;   //shared centroid persistent wincounts keeps track how many times the shared centroids win over the lifetime of the destin network.
+    float       ** ssSigma;             //shared centroids sigma
 
 } Destin  ;
 /* Destin Struct Definition End */

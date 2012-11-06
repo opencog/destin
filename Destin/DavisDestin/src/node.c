@@ -70,6 +70,8 @@ void CalculateDistances( Node *n, uint nIdx )
     uint ns = n->ns;
     uint nc = n->nc;
 
+    float * sigma = n->d->isUniform ? n->d->ssSigma[n->layer] : n->sigma;
+
    // iterate over each belief
     for( i=0; i < n->nb; i++ )
     {
@@ -86,7 +88,7 @@ void CalculateDistances( Node *n, uint nIdx )
             delta *= n->starv[i];
 
             sumEuc += delta;
-            sumMal += delta / n->sigma[bRow+j];
+            sumMal += delta / sigma[bRow+j];
         }
 
         n->genObservation[i] = sumMal;

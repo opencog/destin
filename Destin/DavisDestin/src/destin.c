@@ -388,6 +388,9 @@ void FormulateBelief( Destin *d, float *image )
                 }
             }
         }
+        if(d->isUniform){
+            Uniform_ApplyDeltas(d, l, d->ssSigma[l] );
+        }
     }
 
     // copy node's belief to parent node's input

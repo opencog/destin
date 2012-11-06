@@ -248,6 +248,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         //used to calculate the shared centroid delta averages
         MALLOC(d->ssds, float *, d->nLayers);
         MALLOC(d->ssds[0], float, ns*nb[0]);//the rest are allocated later
+
+        MALLOC(d->ssSigma, float *, d->nLayers);
+        MALLOC(d->ssSigma[0], float, ns*nb[0]);//the rest are allocated later
     }
 
     // initialize zero-layer nodes
@@ -319,6 +322,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         if(isUniform){
             MALLOC(d->ssds[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
+            MALLOC(d->ssSigma[l], float, ns*nb[l]);
         }else{
             sharedCentroids = NULL;
         }
@@ -440,10 +444,12 @@ void DestroyDestin( Destin * d )
             FREE(d->ssds[i]);
             FREE(d->sharedCentroidsWinCounts[i]); //TODO: should be condionally alloced and delloc based of if using uniform destin
             FREE(d->ssPersistWinCounts[i]);
+            FREE(d->ssSigma[i]);
         }
         FREE(d->ssds);
         FREE(d->sharedCentroidsWinCounts);
         FREE(d->ssPersistWinCounts);
+        FREE(d->ssSigma);
     }
     
     for( i=0; i < d->nNodes; i++ )
@@ -641,7 +647,6 @@ void InitNode
         node->mu = sharedCentroids;
     }
 
-    MALLOC( node->sigma, float, nb*ns );
     MALLOC( node->starv, float, nb );
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
@@ -651,8 +656,10 @@ void InitNode
     if(d->isUniform){
         //uniform destin uses shared counts
         node->nCounts = NULL;
+        node->sigma = NULL;
     }else{
         MALLOC( node->nCounts, long, nb );
+        MALLOC( node->sigma, float, nb*ns );
     }
 
     MALLOC( node->delta, float, ns);
@@ -693,7 +700,13 @@ void InitNode
         for(j=0; j < ns; j++)
         {
             node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
-            node->sigma[i*ns+j] = INIT_SIGMA;
+            if(d->isUniform){
+                //TODO: all the nodes in the layer are initing the same shared sigma vectors, may
+                //want to initialize this outside of the node
+                node->d->ssSigma[layer][i * ns + j] = INIT_SIGMA;
+            }else{
+                node->sigma[i*ns+j] = INIT_SIGMA;
+            }
         }
     }
 
@@ -707,20 +720,18 @@ void InitNode
 // deallocate the node.
 void DestroyNode( Node *n)
 {
-
-    free( n->mu );  //using free instead of FREE here so it doesn't fail on NULL
-    //in case it is part of a uniform destin network which would already have mu freed
     
-    FREE( n->sigma );
+    if(!n->d->isUniform){
+        FREE( n->mu );
+        FREE( n->sigma );
+        FREE( n->nCounts );
+    }
+
     FREE( n->starv );
     FREE( n->beliefEuc );
     FREE( n->beliefMal );
     FREE( n->observation );
     FREE( n->genObservation );
-
-    if(n->nCounts != NULL){
-        FREE( n->nCounts );
-    }
 
     FREE( n->delta );
 
