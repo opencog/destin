@@ -53,7 +53,7 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
     }
 
     for(i = 0 ; i < length ; i++){
-        if(fabs( expected[i] - actual[i]) > epsilon ){
+        if(isnan(expected[i]) || isnan(actual[i]) || fabs( expected[i] - actual[i]) > epsilon ){
             printf("assertFloatArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
             printf("expected: %f, actual: %f, difference: %e\n", expected[i], actual[i], expected[i] - actual[i]);
             return false;
