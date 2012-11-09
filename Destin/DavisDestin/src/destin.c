@@ -358,17 +358,23 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
 // run an iteration with the CPU implementations of the kernels
 void FormulateBelief( Destin *d, float *image )
 {
-    uint n, l, i;
+    uint n, l;
 
     d->muSumSqDiff = 0;
 
     if(d->isUniform){
         ClearSharedCentroidsDidWin(d);
     }
-
-    for( n=0, l=0; l < d->nLayers; l++ )
+    uint n_start, n_end;
+    n_start = 0;
+    n_end = 0;
+    
+    for(l = 0; l < d->nLayers; l++ )
     {
-        for( i=0; i < d->layerSize[l]; i++, n++ )
+        n_start = n_end;
+        n_end = n_start + d->layerSize[l];
+        
+        for(n = n_start; n < n_end; n++ )
         {
             GetObservation( d->nodes, image, n );
             CalculateDistances( d->nodes, n );
@@ -377,18 +383,17 @@ void FormulateBelief( Destin *d, float *image )
             if( d->layerMask[l] == 1 )
             {
                 CalcCentroidMovement( d->nodes, d->inputLabel, n );
-                if(d->isUniform){
-                    Uniform_AverageDeltas(d->nodes, n);
-                    //TODO: add in starvation and muSumSqDiff
-                    //TODO: sharedSigma
-                }else{
+                if(!d->isUniform){
                     MoveCentroids( d->nodes,n );
                     UpdateStarvation(d->nodes, n);
                     d->muSumSqDiff += d->nodes[n].muSqDiff;
                 }
             }
         }
-        if(d->isUniform){
+        if(d->isUniform && d->layerMask[l] == 1  ){
+            for(n = n_start ; n < n_end ; n++){
+                Uniform_AverageDeltas(d->nodes, n);
+            }
             Uniform_ApplyDeltas(d, l, d->ssSigma[l] );
         }
     }

@@ -20,6 +20,7 @@ int testInit(){
     uint nMovements = 0;
     bool isUniform = false;
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+
     printf("inited non uniform\n");
     DestroyDestin(d);
     printf("destroyed non uniform\n");
@@ -27,6 +28,7 @@ int testInit(){
     //test uniform destin init
     isUniform = true;
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+
     printf("Inited uniform.\n");
     DestroyDestin(d);
     printf("destroyed uniform.\n");
@@ -72,7 +74,7 @@ int testForumateStages(){
     uint nMovements = 0;
     bool isUniform = false;
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
-
+    d->layerMask[0] = 1;
     float image [] = {0.55};
     int nid = 0; //node index
 
@@ -277,7 +279,6 @@ int testUniform(){
     assertFloatArrayEqualsEV(n[2].delta, 2e-8,  9, 0.88 - 0.86, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     assertFloatArrayEqualsEV(n[3].delta, 3e-8,  9, 0.99 - 0.95, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-    //TODO: update FormulateBeliefs to call Uniform_MoveCentroids instead of MoveCentroids
     //TODO: test top node
     //TODO: test feedback over multiple iterations
     //TODO: rename unit test array equals macros
@@ -286,7 +287,15 @@ int testUniform(){
         Uniform_AverageDeltas(d->nodes, nid);
     }
 
-
+    
+    assertIntArrayEqualsEV(d->sharedCentroidsWinCounts[0], nb[0], 0, 2, 1, 1);
+    assertFloatArrayEqualsEV(d->ssds[0], 3e-8, nb[0] * d->nodes[0].ns,
+        0.0,                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //average delta for shared centroid 0
+        ((0.11 - 0.06) + (0.22 - 0.06)) / 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        ( 0.88 - 0.86 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        ( 0.99 - 0.95 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);//average delta for shared centroid 3
+    
+    
     float layer0SharedSigma[nb[0] * d->nodes[0].ns];
     float layer1SharedSigma[nb[1] * d->nodes[1].ns];
     Uniform_ApplyDeltas(d, 0, layer0SharedSigma);
@@ -308,6 +317,57 @@ int testUniform(){
     return 0;
 }
 
+//same setup as testUniform, but call the main FormulateBelief function to make sure it calls everything in the correct order.
+int testUniformFormulate(){
+
+    uint ni = 1; //input layer nodes cluster on 1 pixel input.
+    uint nl = 2;
+    uint nb [] = {4,4}; //4 shared centroids per layer
+    uint nc = 0; // 0 classes
+    float beta = 0.001;
+    float lambda = 1;
+    float gamma = 1;
+    float temperature [] = {10, 10};
+    float starvCoef = 0.1;
+    uint nMovements = 0;
+    bool isUniform = true;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    d->layerMask[0] = 1; //turn on cluster training
+    d->layerMask[1] = 1;
+
+    float image []  = {.11,.22,.88,.99};//1 pixel for each of the 4 bottom layer nodes
+
+    Node * n = &d->nodes[0];
+
+    //set centroid locations
+    //mu is a table nb x ns. ns = ni + nb + np + nc
+    //nb = 4 (centroids), ns = 9
+    //all nodes point to the same centroids in a layer for uniform destin
+    assignFloatArray(n->mu, 4 * 9,
+        0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        0.95, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);
+
+    FormulateBelief(d, image);
+
+
+    //check that the shared centroids were moved to the correct positions
+    assertFloatArrayEqualsEV(n->mu, 2e-8, 4 * 9,
+        0.05,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 0, unchanged because it wasn't a winner
+        0.165, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 1, averaged because two nodes picked it
+                                                                   //averaged between node 0 and node 1 observations, .11 and .22 = .165
+        0.88,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //moved directly to node 2 observation because only node 2 picked it
+        0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
+
+    DestroyDestin(d);
+    return 0;
+}
+
+int testNan(){
+    
+    return 0;
+}
 
 int main(int argc, char ** argv ){
 
@@ -317,5 +377,6 @@ int main(int argc, char ** argv ){
     RUN(testFormulateNotCrash);
     RUN(testForumateStages);
     RUN(testUniform);
+    RUN(testUniformFormulate);
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }

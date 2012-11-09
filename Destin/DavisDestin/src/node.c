@@ -244,19 +244,23 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
     n = &n[nIdx];
     uint s;
 
+    int count;
     for(s = 0; s < n->ns ; s++){
-        //TODO: resize ssds
-        n->d->ssds[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)n->d->sharedCentroidsWinCounts[n->layer][n->winner];
+        count = n->d->sharedCentroidsWinCounts[n->layer][n->winner];
+        if(count > 0){
+            n->d->ssds[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
+        }
     }
     return;
 }
 
 void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     //TODO: make sure this is thread safe
-    uint c, s, ns;
+    uint c, s, ns, wincount;
     float diff, t, dt;
     for(c = 0 ; c < d->nb[layer]; c++){
-        t =  1.0 / (float)d->ssPersistWinCounts[layer][c];
+        wincount = d->ssPersistWinCounts[layer][c];
+        t = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
         Node * n = GetNodeFromDestin(d, layer, 0,0);
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){
