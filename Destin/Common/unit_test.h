@@ -39,7 +39,7 @@ int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests ha
 }\
 
 #define assertFloatEquals( expected, actual, epsilon ){\
-    if( fabs(expected - actual ) > epsilon  ){\
+    if( isnan(expected) || isnan(actual) || fabs(expected - actual ) > epsilon  ){\
         printf("assertFloatEquals FAILED, line: %i, expected: %f, actual: %f, difference: %e\n", __LINE__, expected, actual, (expected - actual));\
         return 1;\
     }\
@@ -181,6 +181,7 @@ bool _assertBoolArrayEqualsEV(bool *actual, int len, int line, ...){
     }\
 }\
 
+//must write long constants as 1L, 2L ect.
 #define assertLongArrayEqualsEV( act, len, expecteds... ){\
     if(! _assertLongArrayEqualsEV(act, len, __LINE__, expecteds )){\
         return 1;\
@@ -220,7 +221,7 @@ void assignFloatArray(float * dest, int length, ...){
  * CAUTION: Be sure to write float constants. To pass 1 for example, write 1.0
  * and not 1 or they will be skipped or other errors may occur
  *
- * argc: how many arguments passed
+ * @param c: how many arguments passed
  *
  * user takes ownership of array.
  */
