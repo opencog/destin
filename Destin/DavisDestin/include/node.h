@@ -110,4 +110,18 @@ void Uniform_AverageDeltas(
                     Node *,
                     uint
                 );
+
+void UpdateStarvation(
+                    Node *,
+                    uint
+                );
+
+void Uniform_UpdateStarvation(
+                    struct Destin  *,
+                    uint,               // layer
+                    float * ,           // shared starvation vector for given layer
+                    uint * ,            // shared centroids win counts vector for given layer
+                    float               // starvation coefficient
+                );
+
 #endif

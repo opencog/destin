@@ -71,6 +71,7 @@ void CalculateDistances( Node *n, uint nIdx )
     uint nc = n->nc;
 
     float * sigma = n->d->isUniform ? n->d->ssSigma[n->layer] : n->sigma;
+    float * starv = n->d->isUniform ? n->d->u_starv[n->layer] : n->starv;
 
    // iterate over each belief
     for( i=0; i < n->nb; i++ )
@@ -85,7 +86,7 @@ void CalculateDistances( Node *n, uint nIdx )
             delta = n->observation[j] - n->mu[bRow+j];
 
             delta *= delta;
-            delta *= n->starv[i];
+            delta *= starv[i];
 
             sumEuc += delta;
             sumMal += delta / sigma[bRow+j];
@@ -316,8 +317,15 @@ void UpdateStarvation(Node *n, uint nIdx)
     n->starv[n->winner] = 1;
 }
 
-void Uniform_UpdateStarvation(Node *n, uint nIdx)
+void Uniform_UpdateStarvation(Destin * d, uint layer, float * sharedStarvation, uint * sharedCentroidsWinCounts, float starvCoeff)
 {
+    uint i, nb = d->nb[layer];
+    for(i = 0; i < nb ; i++){
+        sharedStarvation[i] *= 1 - starvCoeff;
+        if(sharedCentroidsWinCounts[i] > 0){
+            sharedStarvation[i] = 1;
+        }
+    }
 
 }
 

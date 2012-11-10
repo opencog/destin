@@ -154,14 +154,19 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         // allocate for each layer an array of size number = n centroids for that layer
         // that counts how many nodes in a layer pick the given centroid as winner.
         MALLOC(d->sharedCentroidsWinCounts, uint *, d->nLayers);
-
         MALLOC(d->ssPersistWinCounts, long *, d->nLayers);
+
+        // layer shared centroid starvation vectors
+        MALLOC(d->u_starv, float *, d->nLayers);
 
         for(l = 0 ; l < d->nLayers ; l++){
             MALLOC( d->sharedCentroidsWinCounts[l], uint, d->nb[l]);
             MALLOC( d->ssPersistWinCounts[l], long, d->nb[l] );
+            MALLOC( d->u_starv[l], float, d->nb[l]);
+
             for(i = 0 ; i < d->nb[l]; i++){
                 d->ssPersistWinCounts[l][i] = 0;
+                d->u_starv[l][i] = 1;
             }
         }
     }
@@ -445,11 +450,13 @@ void DestroyDestin( Destin * d )
             FREE(d->sharedCentroidsWinCounts[i]); //TODO: should be condionally alloced and delloc based of if using uniform destin
             FREE(d->ssPersistWinCounts[i]);
             FREE(d->ssSigma[i]);
+            FREE(d->u_starv[i]);
         }
         FREE(d->ssds);
         FREE(d->sharedCentroidsWinCounts);
         FREE(d->ssPersistWinCounts);
         FREE(d->ssSigma);
+        FREE(d->u_starv);
     }
     
     for( i=0; i < d->nNodes; i++ )
@@ -647,7 +654,6 @@ void InitNode
         node->mu = sharedCentroids;
     }
 
-    MALLOC( node->starv, float, nb );
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
     MALLOC( node->observation, float, ns );
@@ -658,6 +664,7 @@ void InitNode
         node->nCounts = NULL;
         node->sigma = NULL;
     }else{
+        MALLOC( node->starv, float, nb );
         MALLOC( node->nCounts, long, nb );
         MALLOC( node->sigma, float, nb*ns );
     }
@@ -691,17 +698,16 @@ void InitNode
 
         if(!d->isUniform){
             node->nCounts[i] = 0;
+            // init starv trace to one
+            node->starv[i] = 1.0f;
         }
-
-        // init starv trace to one
-        node->starv[i] = 1.0f;
 
         // init mu and sigma
         for(j=0; j < ns; j++)
         {
             node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
             if(d->isUniform){
-                //TODO: all the nodes in the layer are initing the same shared sigma vectors, may
+                //TODO: all the nodes in the layer are initing the same shared sigma vectors redundantly, may
                 //want to initialize this outside of the node
                 node->d->ssSigma[layer][i * ns + j] = INIT_SIGMA;
             }else{
@@ -725,9 +731,9 @@ void DestroyNode( Node *n)
         FREE( n->mu );
         FREE( n->sigma );
         FREE( n->nCounts );
+        FREE( n->starv );
     }
 
-    FREE( n->starv );
     FREE( n->beliefEuc );
     FREE( n->beliefMal );
     FREE( n->observation );

@@ -395,6 +395,7 @@ void FormulateBelief( Destin *d, float *image )
                 Uniform_AverageDeltas(d->nodes, n);
             }
             Uniform_ApplyDeltas(d, l, d->ssSigma[l] );
+            Uniform_UpdateStarvation(d, l, d->u_starv[l], d->sharedCentroidsWinCounts[l], d->nodes[0].starvCoeff );
         }
     }
 

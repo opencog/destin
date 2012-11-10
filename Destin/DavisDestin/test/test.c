@@ -360,6 +360,9 @@ int testUniformFormulate(){
         0.88,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //moved directly to node 2 observation because only node 2 picked it
         0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
 
+    assertFloatArrayEqualsEV(d->u_starv[0], 1e-12, 4,
+        1.0 - starvCoef, 1.0, 1.0, 1.0);
+
     DestroyDestin(d);
     return 0;
 }
