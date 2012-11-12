@@ -384,17 +384,23 @@ void FormulateBelief( Destin *d, float *image )
             {
                 CalcCentroidMovement( d->nodes, d->inputLabel, n );
                 if(!d->isUniform){
+                    //apply the deltas to move the centroids
                     MoveCentroids( d->nodes,n );
                     UpdateStarvation(d->nodes, n);
+
+                    //TODO: update muSumSqDiff for uniform destin
                     d->muSumSqDiff += d->nodes[n].muSqDiff;
                 }
             }
         }
         if(d->isUniform && d->layerMask[l] == 1  ){
             for(n = n_start ; n < n_end ; n++){
+                //average shared centroids movements
                 Uniform_AverageDeltas(d->nodes, n);
             }
+            //move the shared centroids
             Uniform_ApplyDeltas(d, l, d->uf_sigma[l] );
+            //update shared centroids starvation
             Uniform_UpdateStarvation(d, l, d->uf_starv[l], d->uf_winCounts[l], d->nodes[0].starvCoeff );
         }
     }
