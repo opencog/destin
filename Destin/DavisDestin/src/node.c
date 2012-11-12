@@ -178,7 +178,6 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 
     //TODO: test that this works for non uniform
     if(n->d->isUniform){
-        //TODO: test n->layer
 
         long c =  ++n->d->uf_winCounts[n->layer][n->winner];
 

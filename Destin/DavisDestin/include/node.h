@@ -24,6 +24,7 @@ typedef struct Node {
     uint     genWinner;     // winning centroid index for generative procedure
 
     // node statistics
+    //TODO: make a uf_mu for uniform shared centroids instead of treating it differently
     float * mu;             // centroid locations ( a table nb x ns  )
     float * sigma;          // centroid variances
     float * starv;          // centroid starvation coefficients
@@ -105,15 +106,21 @@ void MoveCentroids(
                     Node *,             // pointer to list of nodes
                     uint                // node index
                 );
- 
-void Uniform_AverageDeltas(
-                    Node *,
-                    uint
-                );
 
 void UpdateStarvation(
-                    Node *,
-                    uint
+                    Node *,             // pointer to list of nodes
+                    uint                // node index
+                );
+ 
+void Uniform_AverageDeltas(
+                    Node *,             // pointer to list of nodes
+                    uint                // node index
+                );
+
+void Uniform_ApplyDeltas(
+                    struct Destin *,
+                    uint ,              // layer
+                    float *             // layerSharedSigma
                 );
 
 void Uniform_UpdateStarvation(

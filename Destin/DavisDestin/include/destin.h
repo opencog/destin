@@ -40,7 +40,7 @@ typedef struct Destin {
     uint        ** uf_winCounts;        //counts how many nodes in a layer pick the given centroid as winner in one call of ForumateBeliefs
     float       ** uf_avgDelta;         //used to average node centroid movement vectors
     long        ** uf_persistWinCounts; //keeps track how many times the shared centroids win over the lifetime of the training the destin network.
-    float       ** uf_sigma;            //shared centroids sigma
+    float       ** uf_sigma;            //shared centroids sigma, one array per layer of size nb x ns
     float       ** uf_starv;             //shared centroids starvation
 
 } Destin  ;
