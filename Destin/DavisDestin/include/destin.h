@@ -35,12 +35,13 @@ typedef struct Destin {
     int         ** nodeRef;             // allows easy indexing of nodes by layer, row, and col
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
                                         // which means all nodes in a layer share their centroids
-    //TODO: rename shared variables to being with u, or put in own structures
-    uint        ** sharedCentroidsWinCounts; //counts how many nodes in a layer pick the given centroid as winner in one call of ForumateBeliefs
-    float       ** ssds;                //sharedCentroidsDeltaScratch. TODO: allocate and free properly.
-    long        ** ssPersistWinCounts;   //shared centroid persistent wincounts keeps track how many times the shared centroids win over the lifetime of the destin network.
-    float       ** ssSigma;             //shared centroids sigma
-    float       ** u_starv;              //uniform shared centroids starvation
+
+    //uniform destin shared centroid variables
+    uint        ** uf_winCounts;        //counts how many nodes in a layer pick the given centroid as winner in one call of ForumateBeliefs
+    float       ** uf_avgDelta;         //used to average node centroid movement vectors
+    long        ** uf_persistWinCounts; //keeps track how many times the shared centroids win over the lifetime of the training the destin network.
+    float       ** uf_sigma;            //shared centroids sigma
+    float       ** uf_starv;             //shared centroids starvation
 
 } Destin  ;
 /* Destin Struct Definition End */

@@ -251,7 +251,7 @@ int testUniform(){
     assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[3], 6e-8);
 
     ClearSharedCentroidsDidWin(d);
-    assertLongArrayEqualsEV( d->ssPersistWinCounts[0], 4, 0L, 0L, 0L, 0L );
+    assertLongArrayEqualsEV( d->uf_persistWinCounts[0], 4, 0L, 0L, 0L, 0L );
     for(nid = 0 ; nid < 5 ; nid++){
         NormalizeBeliefGetWinner( d->nodes, nid);
     }
@@ -259,7 +259,7 @@ int testUniform(){
     //centroid 0 wasn't chosen by any nodes, centroid 1 was chosen by 2 nodes but
     //the win count for a shared centriod only increments by 1 even if multiple nodes
     //pick it as winner
-    assertLongArrayEqualsEV( d->ssPersistWinCounts[0], 4, 0L, 1L, 1L, 1L );
+    assertLongArrayEqualsEV( d->uf_persistWinCounts[0], 4, 0L, 1L, 1L, 1L );
 
     //check that the right centroids won
     assertIntEquals(1, n[0].winner);
@@ -288,8 +288,8 @@ int testUniform(){
     }
 
     
-    assertIntArrayEqualsEV(d->sharedCentroidsWinCounts[0], nb[0], 0, 2, 1, 1);
-    assertFloatArrayEqualsEV(d->ssds[0], 3e-8, nb[0] * d->nodes[0].ns,
+    assertIntArrayEqualsEV(d->uf_winCounts[0], nb[0], 0, 2, 1, 1);
+    assertFloatArrayEqualsEV(d->uf_avgDelta[0], 3e-8, nb[0] * d->nodes[0].ns,
         0.0,                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //average delta for shared centroid 0
         ((0.11 - 0.06) + (0.22 - 0.06)) / 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         ( 0.88 - 0.86 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -360,7 +360,7 @@ int testUniformFormulate(){
         0.88,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //moved directly to node 2 observation because only node 2 picked it
         0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
 
-    assertFloatArrayEqualsEV(d->u_starv[0], 1e-12, 4,
+    assertFloatArrayEqualsEV(d->uf_starv[0], 1e-12, 4,
         1.0 - starvCoef, 1.0, 1.0, 1.0);
 
     DestroyDestin(d);

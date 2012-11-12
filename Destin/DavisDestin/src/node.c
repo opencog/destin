@@ -70,8 +70,8 @@ void CalculateDistances( Node *n, uint nIdx )
     uint ns = n->ns;
     uint nc = n->nc;
 
-    float * sigma = n->d->isUniform ? n->d->ssSigma[n->layer] : n->sigma;
-    float * starv = n->d->isUniform ? n->d->u_starv[n->layer] : n->starv;
+    float * sigma = n->d->isUniform ? n->d->uf_sigma[n->layer] : n->sigma;
+    float * starv = n->d->isUniform ? n->d->uf_starv[n->layer] : n->starv;
 
    // iterate over each belief
     for( i=0; i < n->nb; i++ )
@@ -180,10 +180,10 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     if(n->d->isUniform){
         //TODO: test n->layer
 
-        long c =  ++n->d->sharedCentroidsWinCounts[n->layer][n->winner];
+        long c =  ++n->d->uf_winCounts[n->layer][n->winner];
 
         if( c == 1){//only increment this once even if multiple nodes pick this shared centroid
-            n->d->ssPersistWinCounts[n->layer][n->winner]++;
+            n->d->uf_persistWinCounts[n->layer][n->winner]++;
         }
 
     }
@@ -247,9 +247,9 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
 
     int count;
     for(s = 0; s < n->ns ; s++){
-        count = n->d->sharedCentroidsWinCounts[n->layer][n->winner];
+        count = n->d->uf_winCounts[n->layer][n->winner];
         if(count > 0){
-            n->d->ssds[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
+            n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
         }
     }
     return;
@@ -260,13 +260,13 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     uint c, s, ns, wincount;
     float diff, t, dt;
     for(c = 0 ; c < d->nb[layer]; c++){
-        wincount = d->ssPersistWinCounts[layer][c];
+        wincount = d->uf_persistWinCounts[layer][c];
         t = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
         Node * n = GetNodeFromDestin(d, layer, 0,0);
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){
             //move the centroid with the averaged delta
-            dt = d->ssds[layer][c * ns + s];
+            dt = d->uf_avgDelta[layer][c * ns + s];
             diff = dt * t;
             n->mu[c * ns + s] += diff;
             n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff

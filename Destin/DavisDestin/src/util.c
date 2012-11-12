@@ -153,20 +153,20 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         //TODO: init these to 0 and false
         // allocate for each layer an array of size number = n centroids for that layer
         // that counts how many nodes in a layer pick the given centroid as winner.
-        MALLOC(d->sharedCentroidsWinCounts, uint *, d->nLayers);
-        MALLOC(d->ssPersistWinCounts, long *, d->nLayers);
+        MALLOC(d->uf_winCounts, uint *, d->nLayers);
+        MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
 
         // layer shared centroid starvation vectors
-        MALLOC(d->u_starv, float *, d->nLayers);
+        MALLOC(d->uf_starv, float *, d->nLayers);
 
         for(l = 0 ; l < d->nLayers ; l++){
-            MALLOC( d->sharedCentroidsWinCounts[l], uint, d->nb[l]);
-            MALLOC( d->ssPersistWinCounts[l], long, d->nb[l] );
-            MALLOC( d->u_starv[l], float, d->nb[l]);
+            MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
+            MALLOC( d->uf_persistWinCounts[l], long, d->nb[l] );
+            MALLOC( d->uf_starv[l], float, d->nb[l]);
 
             for(i = 0 ; i < d->nb[l]; i++){
-                d->ssPersistWinCounts[l][i] = 0;
-                d->u_starv[l][i] = 1;
+                d->uf_persistWinCounts[l][i] = 0;
+                d->uf_starv[l][i] = 1;
             }
         }
     }
@@ -251,11 +251,11 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     //sharedCentroidsDeltaScratch
     if(isUniform){
         //used to calculate the shared centroid delta averages
-        MALLOC(d->ssds, float *, d->nLayers);
-        MALLOC(d->ssds[0], float, ns*nb[0]);//the rest are allocated later
+        MALLOC(d->uf_avgDelta, float *, d->nLayers);
+        MALLOC(d->uf_avgDelta[0], float, ns*nb[0]);//the rest are allocated later
 
-        MALLOC(d->ssSigma, float *, d->nLayers);
-        MALLOC(d->ssSigma[0], float, ns*nb[0]);//the rest are allocated later
+        MALLOC(d->uf_sigma, float *, d->nLayers);
+        MALLOC(d->uf_sigma[0], float, ns*nb[0]);//the rest are allocated later
     }
 
     // initialize zero-layer nodes
@@ -325,9 +325,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         // calculate the state dimensionality (number of inputs + number of beliefs)
         uint ns = nb[l-1]*4 + nb[l] + np + nc;
         if(isUniform){
-            MALLOC(d->ssds[l], float, ns*nb[l]);
+            MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
-            MALLOC(d->ssSigma[l], float, ns*nb[l]);
+            MALLOC(d->uf_sigma[l], float, ns*nb[l]);
         }else{
             sharedCentroids = NULL;
         }
@@ -446,17 +446,17 @@ void DestroyDestin( Destin * d )
             //then this only need to free mu once per layer
             FREE(GetNodeFromDestin(d, i, 0,0)->mu);
 
-            FREE(d->ssds[i]);
-            FREE(d->sharedCentroidsWinCounts[i]); //TODO: should be condionally alloced and delloc based of if using uniform destin
-            FREE(d->ssPersistWinCounts[i]);
-            FREE(d->ssSigma[i]);
-            FREE(d->u_starv[i]);
+            FREE(d->uf_avgDelta[i]);
+            FREE(d->uf_winCounts[i]); //TODO: should be condionally alloced and delloc based of if using uniform destin
+            FREE(d->uf_persistWinCounts[i]);
+            FREE(d->uf_sigma[i]);
+            FREE(d->uf_starv[i]);
         }
-        FREE(d->ssds);
-        FREE(d->sharedCentroidsWinCounts);
-        FREE(d->ssPersistWinCounts);
-        FREE(d->ssSigma);
-        FREE(d->u_starv);
+        FREE(d->uf_avgDelta);
+        FREE(d->uf_winCounts);
+        FREE(d->uf_persistWinCounts);
+        FREE(d->uf_sigma);
+        FREE(d->uf_starv);
     }
     
     for( i=0; i < d->nNodes; i++ )
@@ -709,7 +709,7 @@ void InitNode
             if(d->isUniform){
                 //TODO: all the nodes in the layer are initing the same shared sigma vectors redundantly, may
                 //want to initialize this outside of the node
-                node->d->ssSigma[layer][i * ns + j] = INIT_SIGMA;
+                node->d->uf_sigma[layer][i * ns + j] = INIT_SIGMA;
             }else{
                 node->sigma[i*ns+j] = INIT_SIGMA;
             }

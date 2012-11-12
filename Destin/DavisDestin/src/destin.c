@@ -394,8 +394,8 @@ void FormulateBelief( Destin *d, float *image )
             for(n = n_start ; n < n_end ; n++){
                 Uniform_AverageDeltas(d->nodes, n);
             }
-            Uniform_ApplyDeltas(d, l, d->ssSigma[l] );
-            Uniform_UpdateStarvation(d, l, d->u_starv[l], d->sharedCentroidsWinCounts[l], d->nodes[0].starvCoeff );
+            Uniform_ApplyDeltas(d, l, d->uf_sigma[l] );
+            Uniform_UpdateStarvation(d, l, d->uf_starv[l], d->uf_winCounts[l], d->nodes[0].starvCoeff );
         }
     }
 
@@ -995,9 +995,9 @@ void ClearSharedCentroidsDidWin(Destin * d){
     for(l = 0 ; l < d->nLayers ; l++){
         ns = GetNodeFromDestin(d,l,0,0)->ns;
         for(c = 0 ; c < d->nb[l]; c++){
-            d->sharedCentroidsWinCounts[l][c] = 0;
+            d->uf_winCounts[l][c] = 0;
             for(s = 0 ; s < ns ;s++){
-                d->ssds[l][c*ns + s] = 0;
+                d->uf_avgDelta[l][c*ns + s] = 0;
             }
         }
     }
