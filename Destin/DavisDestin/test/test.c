@@ -157,13 +157,13 @@ int testVarArgs(void){
    assertFloatArrayEqualsEV(f, 1e-7, 2, 0.2, 0.3  );
 
    int an_int_array[] = {2, 4, 6, 8};
-   assertIntArrayEqualsEV(an_int_array, 4, 2, 4, 6, 8);
+   assertIntArrayEqualsV(an_int_array, 4, 2, 4, 6, 8);
 
    long a_long_array[] = {3, 6, 9, 12};
-   assertLongArrayEqualsEV(a_long_array, 4, 3, 6, 9, 12);
+   assertLongArrayEqualsV(a_long_array, 4, 3, 6, 9, 12);
 
    bool a_bool_array[] = {false, false, true, true};
-   assertBoolArrayEqualsEV(a_bool_array, 4, false, false, true, true);
+   assertBoolArrayEqualsV(a_bool_array, 4, false, false, true, true);
 
 
    free(f);
@@ -251,7 +251,7 @@ int testUniform(){
     assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[3], 6e-8);
 
     Uniform_ResetStats(d);
-    assertLongArrayEqualsEV( d->uf_persistWinCounts[0], 4, 0L, 0L, 0L, 0L );
+    assertLongArrayEqualsV( d->uf_persistWinCounts[0], 4, 0L, 0L, 0L, 0L );
     for(nid = 0 ; nid < 5 ; nid++){
         NormalizeBeliefGetWinner( d->nodes, nid);
     }
@@ -259,7 +259,7 @@ int testUniform(){
     //centroid 0 wasn't chosen by any nodes, centroid 1 was chosen by 2 nodes but
     //the win count for a shared centriod only increments by 1 even if multiple nodes
     //pick it as winner
-    assertLongArrayEqualsEV( d->uf_persistWinCounts[0], 4, 0L, 1L, 1L, 1L );
+    assertLongArrayEqualsV( d->uf_persistWinCounts[0], 4, 0L, 1L, 1L, 1L );
 
     //check that the right centroids won
     assertIntEquals(1, n[0].winner);
@@ -288,7 +288,7 @@ int testUniform(){
     }
 
     
-    assertIntArrayEqualsEV(d->uf_winCounts[0], nb[0], 0, 2, 1, 1);
+    assertIntArrayEqualsV(d->uf_winCounts[0], nb[0], 0, 2, 1, 1);
     assertFloatArrayEqualsEV(d->uf_avgDelta[0], 3e-8, nb[0] * d->nodes[0].ns,
         0.0,                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //average delta for shared centroid 0
         ((0.11 - 0.06) + (0.22 - 0.06)) / 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,

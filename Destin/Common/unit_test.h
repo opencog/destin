@@ -150,46 +150,54 @@ bool _assertFloatArrayEqualsEV(float *actual, float epsilon, int len, int line, 
 }
 
 
-
+/** test float array with epislon and variable arguments
+*/
 #define assertFloatArrayEqualsEV( act, epsilon, len, args... ){\
     if(! _assertFloatArrayEqualsEV(act, epsilon, len, __LINE__, args )){\
         return 1;\
     }\
 }\
 
-bool _assertIntArrayEqualsEV(int *actual, int len, int line, ...){
+bool _assertIntArrayEqualsV(int *actual, int len, int line, ...){
     int expected[len];
     ut_varags_to_array(expected, line, len, int);
     return _assertIntArrayEquals(expected, actual, len, line );
 }
 
-bool _assertLongArrayEqualsEV(long *actual, int len, int line, ...){
+bool _assertLongArrayEqualsV(long *actual, int len, int line, ...){
     long expected[len];
     ut_varags_to_array(expected, line, len, long);
     return _assertLongArrayEquals(expected, actual, len, line );
 }
 
-bool _assertBoolArrayEqualsEV(bool *actual, int len, int line, ...){
+bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
     bool expected[len];
     ut_varags_to_array(expected, line, len, int); //use int because bool is promoted to int by compiler
     return _assertBoolArrayEquals(expected, actual, len, line );
 }
 
-#define assertIntArrayEqualsEV( act, len, expecteds... ){\
-    if(! _assertIntArrayEqualsEV(act, len, __LINE__, expecteds )){\
+
+/** test int array with variable arguments
+*/
+#define assertIntArrayEqualsV( act, len, expecteds... ){\
+    if(! _assertIntArrayEqualsV(act, len, __LINE__, expecteds )){\
         return 1;\
     }\
 }\
 
-//must write long constants as 1L, 2L ect.
-#define assertLongArrayEqualsEV( act, len, expecteds... ){\
-    if(! _assertLongArrayEqualsEV(act, len, __LINE__, expecteds )){\
+/** test long array with variable arguments
+* must write long constants as 1L, 2L ect.
+*/
+#define assertLongArrayEqualsV( act, len, expecteds... ){\
+    if(! _assertLongArrayEqualsV(act, len, __LINE__, expecteds )){\
         return 1;\
     }\
 }\
 
-#define assertBoolArrayEqualsEV( act, len, expecteds... ){\
-    if(! _assertBoolArrayEqualsEV(act, len, __LINE__, expecteds )){\
+/** test boolean array with variable arguments
+*/
+#define assertBoolArrayEqualsV( act, len, expecteds... ){\
+    if(! _assertBoolArrayEqualsV(act, len, __LINE__, expecteds )){\
         return 1;\
     }\
 }\
