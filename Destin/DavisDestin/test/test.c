@@ -250,7 +250,7 @@ int testUniform(){
     dist = sqrt( (c2  - c1) * (c2 - c1));
     assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[3], 6e-8);
 
-    ClearSharedCentroidsDidWin(d);
+    Uniform_ResetStats(d);
     assertLongArrayEqualsEV( d->uf_persistWinCounts[0], 4, 0L, 0L, 0L, 0L );
     for(nid = 0 ; nid < 5 ; nid++){
         NormalizeBeliefGetWinner( d->nodes, nid);

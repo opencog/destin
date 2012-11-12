@@ -363,7 +363,7 @@ void FormulateBelief( Destin *d, float *image )
     d->muSumSqDiff = 0;
 
     if(d->isUniform){
-        ClearSharedCentroidsDidWin(d);
+        Uniform_ResetStats(d);
     }
     uint n_start, n_end;
     n_start = 0;
@@ -988,8 +988,7 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
 }
 
 // increment number of counts for winning centroid.
-void ClearSharedCentroidsDidWin(Destin * d){
-    //TODO: make this work for uniform destin
+void Uniform_ResetStats(Destin * d){
     //TODO: use memset to zero memory instead
     int l, c, ns, s;
     for(l = 0 ; l < d->nLayers ; l++){

@@ -139,8 +139,7 @@ struct Node * GetNodeFromDestin(
                         );
 
 //resets sharedCentroidsDidWin vector for each layer
-//TODO: put into FormulateBelief
-void ClearSharedCentroidsDidWin(
+void Uniform_ResetStats(
                             Destin *
                           );
 
