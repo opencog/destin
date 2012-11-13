@@ -367,8 +367,68 @@ int testUniformFormulate(){
     return 0;
 }
 
-int testNan(){
-    
+int testSaveDestin(){
+    uint ni = 4; //input layer nodes cluster on 4 pixel input.
+    uint nl = 2;
+    uint nb [] = {3,4}; //4 shared centroids per layer
+    uint nc = 6; // 0 classes
+    float beta = 0.001;
+    float lambda = 0.96;
+    float gamma = 0.78;
+    float temperature [] = {7.5, 8.5};
+    float starvCoef = 0.12;
+    uint nMovements = 4;
+    bool isUniform = true;
+
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    d->layerMask[0] = 1;
+    d->layerMask[1] = 1;
+
+    uint maxNs = d->maxNs;
+    uint nBeliefs = d->nBeliefs;
+
+    //random image to apply to mix up the destin states to test serialization
+    float image[ /*ni=*/ 2 * 4 ] = {
+        0.14, 0.23, 0.345, 0.432, 0.534, 0.6454, 0.7124, 0.8094
+    };
+
+    FormulateBelief(d, image);
+    FormulateBelief(d, image);
+    FormulateBelief(d, image);
+
+    float average_delta = d->uf_avgDelta[0][1]; //spot check an element
+    printf("the f: %f\n", average_delta);
+
+    SaveDestin(d, "unit_test_destin.save");
+    DestroyDestin(d);
+
+    d = NULL;//must initialized to NULL or LoadDestin will try to destroy an invalid pointer
+    d = LoadDestin(d, "unit_test_destin.save");
+
+    assertTrue(d->nLayers == 2);
+    assertIntArrayEqualsV(d->nb, 2, 3, 4);
+    assertTrue(d->nc == 6);
+    Node * n = &d->nodes[0];
+
+    assertTrue(n->ni == 4);
+    assertFloatEquals(0.001, n->beta, 1e-10);
+    assertFloatEquals(0.96, n->lambda, 1e-07); //accuracy is not very good
+    assertFloatEquals( 0.78, n->gamma, 3e-8);
+    assertFloatArrayEqualsEV(d->temp, 1e-12, 2, 7.5, 8.5 );
+    assertTrue(n->starvCoeff == starvCoef);
+    assertTrue(d->nMovements == nMovements);
+    assertTrue(d->isUniform == isUniform);
+
+    assertIntArrayEqualsV(d->layerMask, 2, 0, 0); //TODO: layer mask is not saved,should be 1, 1
+    assertIntArrayEqualsV(d->layerSize, 2, 4, 1);
+    assertTrue(d->maxNb == 4);
+    assertTrue(d->maxNs == maxNs);
+    assertTrue(d->muSumSqDiff == 0.0);
+    assertTrue(d->nBeliefs == nBeliefs);
+
+
+
+    //TODO: finish unit testing load and save
     return 0;
 }
 
@@ -381,5 +441,6 @@ int main(int argc, char ** argv ){
     RUN(testForumateStages);
     RUN(testUniform);
     RUN(testUniformFormulate);
+    RUN(testSaveDestin);
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }

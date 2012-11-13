@@ -505,7 +505,7 @@ void ClearBeliefs( Destin *d )
 
 void SaveDestin( Destin *d, char *filename )
 {
-    uint i, j;
+    uint i, l;
     Node *nTmp;
 
     FILE *dFile;
@@ -519,31 +519,50 @@ void SaveDestin( Destin *d, char *filename )
     //TODO: save the isUniform field
     //TODO: how about the noderef? check that all fields are being saved
 
+    //TODO: format to align columns
     // write destin hierarchy information to disk
     fwrite(&d->nMovements, sizeof(uint), 1, dFile);
     fwrite(&d->nc, sizeof(uint), 1, dFile);
     fwrite(&d->nodes[0].ni, sizeof(uint), 1, dFile);
     fwrite(&d->nLayers, sizeof(uint), 1, dFile);
+    fwrite(&d->isUniform, sizeof(bool), 1, dFile);
     fwrite(d->nb, sizeof(uint), d->nLayers, dFile);
 
     // write destin params to disk
     fwrite(d->temp, sizeof(float), d->nLayers, dFile);
-    fwrite(&d->nodes[0].beta, sizeof(float), 1, dFile);
+    fwrite(&d->nodes[0].beta, sizeof(float), 1, dFile); //TODO consider moving these constants to the destin struc
     fwrite(&d->nodes[0].lambda, sizeof(float), 1, dFile);
     fwrite(&d->nodes[0].gamma, sizeof(float), 1, dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float), 1, dFile);
 
-    // write node statistics to disk
-    for( i=0; i < d->nNodes; i++ )
-    {
-        nTmp = &d->nodes[i];
 
-        // write statistics
-        fwrite(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-        fwrite(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-        fwrite(nTmp->starv, sizeof(float), nTmp->nb, dFile);
-        fwrite(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
+    // write node statistics to disk
+
+    if(d->isUniform){
+        for(l = 0 ; l < d->nLayers; l++){
+            nTmp = GetNodeFromDestin(d, l, 0, 0); //get the 0th node of the layer
+            fwrite(nTmp->mu,                    sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
+            fwrite(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile); //TODO: may not need to save this
+            fwrite(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
+            fwrite(d->uf_sigma[l],              sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
+            fwrite(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
+            fwrite(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],               dFile);
+        }
+
+    }else{
+        for( i=0; i < d->nNodes; i++ )
+        {
+            nTmp = &d->nodes[i];
+
+            // write statistics
+            // TODO: set un used variables to NULL when using uniform destin
+            fwrite(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
+            fwrite(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
+            fwrite(nTmp->starv, sizeof(float), nTmp->nb, dFile);
+            fwrite(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
+        }
     }
+
 
     fclose(dFile);
 }
@@ -551,7 +570,7 @@ void SaveDestin( Destin *d, char *filename )
 Destin * LoadDestin( Destin *d, char *filename )
 {
     FILE *dFile;
-    uint i;
+    uint i, l;
     Node *nTmp;
 
     if( d != NULL )
@@ -561,6 +580,7 @@ Destin * LoadDestin( Destin *d, char *filename )
     }
 
     uint nMovements, nc, ni, nl;
+    bool isUniform;
     uint *nb;
 
     float beta, lambda, gamma, starvCoeff;
@@ -578,6 +598,7 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(&nc, sizeof(uint), 1, dFile);
     fread(&ni, sizeof(uint), 1, dFile);
     fread(&nl, sizeof(uint), 1, dFile);
+    fread(&isUniform, sizeof(bool), 1, dFile);
 
     MALLOC(nb, uint, nl);
     MALLOC(temp, float, nl);
@@ -591,18 +612,30 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(&gamma, sizeof(float), 1, dFile);
     fread(&starvCoeff, sizeof(float), 1, dFile);
     
-    bool isUniform = false; //TODO: needs to be included in config file
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
 
-    for( i=0; i < d->nNodes; i++ )
-    {
-        nTmp = &d->nodes[i];
+    if(isUniform){
+        for(l = 0 ; l < d->nLayers; l++){
+            nTmp = GetNodeFromDestin(d, l, 0, 0);
+            fread(nTmp->mu,                    sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
+            fread(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile); //TODO: may not need to save this
+            fread(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
+            fread(d->uf_sigma[l],              sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
+            fread(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
+            fread(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],               dFile);
+        }
 
-        // load statistics
-        fread(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-        fread(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-        fread(nTmp->starv, sizeof(float), nTmp->nb, dFile);
-        fread(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
+    }else{
+        for( i=0; i < d->nNodes; i++ )
+        {
+            nTmp = &d->nodes[i];
+
+            // load statistics
+            fread(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
+            fread(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
+            fread(nTmp->starv, sizeof(float), nTmp->nb, dFile);
+            fread(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
+        }
     }
 
     return d;

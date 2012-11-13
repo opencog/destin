@@ -24,7 +24,7 @@ int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests ha
 
 #define assertTrue( E )\
 {\
-    if(!( E )  ){\
+    if(!( (E) == true )  ){\
         printf("assertTrue FAILED, line: %i, expression: " #E "\n", __LINE__);\
         return 1;\
     }\
@@ -32,7 +32,7 @@ int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests ha
 
 #define assertFalse( E)\
 {\
-    if( ( E )  ){\
+    if( ( (E) != false )  ){\
         printf("assertFalse FAILED, line: %i, expression: " #E "\n", __LINE__);\
         return 1;\
     }\
