@@ -7,9 +7,18 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include <memory.h>
 
 int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests have failed
+
+#define ut_oops(s) { fprintf(stderr, s); exit(1); }
+
+#define UT_MALLOC(s,t,n) {                              \
+    if((s = (t *) malloc(n*sizeof(t))) == NULL) {       \
+        ut_oops("error: malloc()\n");                   \
+    }                                                   \
+}
+
 
 #define RUN( f ){                           \
     printf("Running " #f "\n");             \
@@ -207,9 +216,9 @@ void printFloatArray(float * array, int length){
     int i;
     printf("float array: ");
     for(i = 0; i < length - 1 ; i++){
-        printf("%i: %f, ", i,array[i]);
+        printf("%i: %e, ", i,array[i]);
     }
-    printf("%i: %f\n",i,array[i]);
+    printf("%i: %e\n",i,array[i]);
 }
 
 
@@ -224,6 +233,19 @@ void assignFloatArray(float * dest, int length, ...){
     ut_varags_to_array(dest, length, length, double);
 }
 
+/** assigns the dest unsigned int array with the int values pass as arguments
+ * CAUTION: Be sure to write int constants. To pass 1 for example, write 1
+ * and not 1.0 or they will be skipped or other errors may occur
+ *
+ * @length - number of int elements passed in.
+ */
+void assignUIntArray(uint * dest, int length, ...){
+
+    ut_varags_to_array(dest, length, length, int);
+}
+
+
+
 /** converts arguments into an array which is returned.
  *
  * CAUTION: Be sure to write float constants. To pass 1 for example, write 1.0
@@ -231,7 +253,7 @@ void assignFloatArray(float * dest, int length, ...){
  *
  * @param c: how many arguments passed
  *
- * user takes ownership of array.
+ * @return - newly created array, user is responsible for freeing it.
  */
 float * toFloatArray(long c, ...) {
 
@@ -264,6 +286,26 @@ bool _assertIntEquals( int expected, int actual, int line){
         return 1;\
     }\
 }\
+
+
+
+
+/** Copies and returns a 2 dimenional array.
+* @param src - source 2 dimensional array to copy
+* @param rows - how many child arrays in the parent array, i.e. size of first dimension
+* @param lengths - an array giving the sizes of each of the child arrays which can be different
+* @return - copied array, user is responsible for freeing it when no longer needed.
+*/
+float** copyFloatDim2Array(float** src, int rows, int sizes[]){
+   float ** ret;
+   int r;
+   UT_MALLOC(ret, float *, rows);
+    for(r = 0 ; r < rows ; r++){
+        UT_MALLOC(ret[r], float, sizes[r] );
+        memcpy(ret[r], src[r], sizeof(float) * sizes[r] );
+    }
+    return ret;
+}
 
 
 #endif
