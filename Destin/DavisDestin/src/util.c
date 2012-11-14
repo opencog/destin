@@ -198,7 +198,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     MALLOC(inputOffsets, uint *, d->layerSize[0]);
     for( i=0; i < nInputNodes; i++ )
     {
-        MALLOC(inputOffsets[i], uint, nInputNodes);
+        MALLOC(inputOffsets[i], uint, ni);
     }
 
     // get integer sq root of layersize[0]
