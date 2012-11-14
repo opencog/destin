@@ -4,11 +4,12 @@
 #include <stdio.h>
 
 #include <float.h>
+#include <memory.h>
 
 int testInit(){
 
     uint ni, nl;
-    ni = 2;
+    ni = 16;
     nl = 1;
     uint nb [] = {1}; //1 centroid
     uint nc = 0;
@@ -19,7 +20,20 @@ int testInit(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
+    float image[16] = {
+        .01, .02, .03, .04,
+        .05, .06, .07, .08,
+        .09, .10, .11, .12,
+        .13, .14, .15, .16
+    };
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+
+    Node * n = &d->nodes[0];
+    assertTrue(n->ni == 16);
+    assertFloatEquals(.01, image[n->inputOffsets[0]], 1e-8);
+    assertFloatEquals(.02, image[n->inputOffsets[1]], 1e-8);
+    assertFloatEquals(.16, image[n->inputOffsets[15]], 1e-8);
+
 
     printf("inited non uniform\n");
     DestroyDestin(d);
@@ -367,8 +381,10 @@ int testUniformFormulate(){
     return 0;
 }
 
-int testSaveDestin(){
-    uint ni = 4; //input layer nodes cluster on 4 pixel input.
+int testSaveDestin1(){
+    //test that SaveDestin and LoadDestin are working propertly
+
+    uint ni = 16; //input layer nodes cluster on 4 pixel input.
     uint nl = 2;
     uint nb [] = {3,4}; //4 shared centroids per layer
     uint nc = 6; // 0 classes
@@ -380,29 +396,39 @@ int testSaveDestin(){
     uint nMovements = 4;
     bool isUniform = true;
 
+    uint ns0 = ni + nb[0] + nb[1] + nc;
+    uint ns1 = 4*nb[0] + nb[1] + 0 + nc;
+
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
+
+    assertTrue(ns0 == d->nodes[0].ns);
+    assertTrue(ns1 == d->nodes[4].ns);
 
     uint maxNs = d->maxNs;
     uint nBeliefs = d->nBeliefs;
 
     //random image to apply to mix up the destin states to test serialization
-    float image[ /*ni=*/ 2 * 4 ] = {
-        0.14, 0.23, 0.345, 0.432, 0.534, 0.6454, 0.7124, 0.8094
+    float image[] = {
+        0.14, 0.23, 0.345, 0.432, 0.533, 0.6454, 0.7124, 0.8094, 0.14, 0.21, 0.345, 0.432, 0.534, 0.6454, 0.7124, 0.8094,
+        0.15, 0.23, 0.345, 0.432, 0.532, 0.6454, 0.7127, 0.8094, 0.14, 0.22, 0.345, 0.432, 0.534, 0.6454, 0.7124, 0.8094,
+        0.16, 0.23, 0.345, 0.432, 0.531, 0.6454, 0.7126, 0.8094, 0.14, 0.27, 0.345, 0.432, 0.534, 0.6454, 0.7124, 0.8094,
+        0.17, 0.23, 0.345, 0.432, 0.530, 0.6454, 0.7248, 0.8094, 0.14, 0.24, 0.345, 0.432, 0.534, 0.6454, 0.7124, 0.8094
     };
 
     FormulateBelief(d, image);
     FormulateBelief(d, image);
     FormulateBelief(d, image);
 
-    float average_delta = d->uf_avgDelta[0][1]; //spot check an element
-    printf("the f: %f\n", average_delta);
+
+    //backup uf_aveDelta
+    int sizes[] =  {nb[0]  * ns0, nb[1] * ns1};
+    float ** uf_avgDelta = copyFloatDim2Array(d->uf_avgDelta, 2, sizes);
 
     SaveDestin(d, "unit_test_destin.save");
     DestroyDestin(d);
-
-    d = NULL;//must initialized to NULL or LoadDestin will try to destroy an invalid pointer
+    d = NULL;//must be set to NULL or LoadDestin will try to destroy an invalid pointer
     d = LoadDestin(d, "unit_test_destin.save");
 
     assertTrue(d->nLayers == 2);
@@ -410,7 +436,7 @@ int testSaveDestin(){
     assertTrue(d->nc == 6);
     Node * n = &d->nodes[0];
 
-    assertTrue(n->ni == 4);
+    assertTrue(n->ni == 16);
     assertFloatEquals(0.001, n->beta, 1e-10);
     assertFloatEquals(0.96, n->lambda, 1e-07); //accuracy is not very good
     assertFloatEquals( 0.78, n->gamma, 3e-8);
@@ -426,11 +452,114 @@ int testSaveDestin(){
     assertTrue(d->muSumSqDiff == 0.0);
     assertTrue(d->nBeliefs == nBeliefs);
 
-
-
+    assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
+    assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 0.0  );
+    //printFloatArray(d->uf_avgDelta[0], nb[0] * ns0 );
+    //printFloatArray(d->uf_avgDelta[1], nb[1] * ns1 );
     //TODO: finish unit testing load and save
+
     return 0;
 }
+
+void turnOnMask(Destin * d){
+    int i;
+    for(i = 0 ; i < d->nLayers ;i++){
+        d->layerMask[i] = 1;
+    }
+}
+
+int _testSaveDestin2(bool isUniform){
+    //Test that SaveDestin and LoadDestin are working propertly.
+    //This uses the strategy of checking that the belief outputs are the same
+    //after loading a saved destin and repeating the same input image.
+
+    uint ni = 16; //input layer nodes cluster on 4 pixel input.
+    uint nl = 4;
+    uint nb [] = {3, 4, 2, 4}; //4 shared centroids per layer
+    uint nc = 6; // 0 classes
+    float beta = 0.001;
+    float lambda = 0.56;
+    float gamma = 0.28;
+    float temperature [] = {3.5, 4.5, 5.0, 4.4};
+    float starvCoef = 0.12;
+    uint nMovements = 4;
+    uint i, j;
+
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    turnOnMask(d);
+
+    //generate random images
+    uint image_size = ni * d->layerSize[0];
+    uint nImages = 5;
+    float ** images;
+    MALLOC(images, float *, nImages);
+
+    for(i = 0 ; i < nImages; i++){
+        MALLOC(images[i], float, image_size);
+    }
+
+    for(i = 0 ; i < image_size ; i++){
+        for(j = 0 ; j < nImages ; j++){
+            images[j][i] = (float)rand()  / (float)RAND_MAX;
+        }
+    }
+
+    //mix up destin
+    for(i = 0 ; i < 5; i++){
+        for(j = 0 ; j < nImages ; j++){
+            FormulateBelief(d, images[j]);
+        }
+    }
+
+    //save it
+    SaveDestin(d, "testSaveDestin2.save");
+
+    //mix it up some more
+    for(i = 0 ; i < 10; i++){
+        for(j = 0 ; j < nImages ; j++){
+            FormulateBelief(d, images[j]);
+        }
+    }
+
+    //back up its output state so it can be compared later
+    float * beliefState1;
+    uint nBeliefs = d->nBeliefs;
+    MALLOC(beliefState1, float, d->nBeliefs);
+    memcpy(beliefState1, d->belief, sizeof(float) * d->nBeliefs);
+
+    DestroyDestin(d);
+    d = NULL;
+
+    //restore destin then reapply the same observations, should end up with the same
+    //belief state at the end if it was restored properly
+    d = LoadDestin(d, "testSaveDestin2.save");
+    turnOnMask(d);
+
+    //reapply same observations
+    for(i = 0 ; i < 10; i++){
+        for(j = 0 ; j < nImages ; j++){
+            FormulateBelief(d, images[j]);
+        }
+    }
+
+    assertTrue(d->nBeliefs == nBeliefs);
+    //check that the same observations lead to the same belief outputs
+    assertFloatArrayEquals(beliefState1, d->belief, nBeliefs);
+
+    DestroyDestin(d);
+    for(j = 0 ; j < nImages ; j++){
+        FREE(images[j]);
+    }
+    FREE(images);
+    FREE(beliefState1);
+    return 0;
+}
+
+int testSaveDestin2(){
+    assertTrue(_testSaveDestin2(true) == 0); //is uniform on
+    assertTrue(_testSaveDestin2(false) == 0);//is uniform off
+}
+
 
 int main(int argc, char ** argv ){
 
@@ -441,6 +570,7 @@ int main(int argc, char ** argv ){
     RUN(testForumateStages);
     RUN(testUniform);
     RUN(testUniformFormulate);
-    RUN(testSaveDestin);
+    RUN(testSaveDestin1);
+    RUN(testSaveDestin2);
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }

@@ -34,7 +34,7 @@ typedef struct Node {
     
     // node input
     float * input;          // input pointer (null for input layer nodes)
-    uint  * inputOffsets;   // offsets for each pixel taken from framePtr for this node
+    uint  * inputOffsets;   // offsets for each pixel taken from framePtr for this node. vector of length ni.
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
                             // belief, and parent's previous belief ( length ni+nb+np )

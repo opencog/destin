@@ -63,7 +63,7 @@ Destin * CreateDestin( char *filename ) {
     fscanf(configFile, "%f", &starvCoeff);
     printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n", beta, lambda, gamma, starvCoeff);
 
-    bool isUniform = false;
+    bool isUniform = false; //TODO: make this configurable
     newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
 
     fclose(configFile);
@@ -535,6 +535,8 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->nodes[0].gamma, sizeof(float), 1, dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float), 1, dFile);
 
+    //write belief states
+    fwrite(d->inputPipeline, sizeof(float), d->nInputPipeline, dFile);
 
     // write node statistics to disk
 
@@ -613,6 +615,8 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(&starvCoeff, sizeof(float), 1, dFile);
     
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
+
+    fread(d->inputPipeline,                   sizeof(float),  d->nInputPipeline,      dFile);
 
     if(isUniform){
         for(l = 0 ; l < d->nLayers; l++){
