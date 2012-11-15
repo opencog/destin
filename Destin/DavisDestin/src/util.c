@@ -534,6 +534,7 @@ void SaveDestin( Destin *d, char *filename )
 
     //write belief states
     fwrite(d->inputPipeline, sizeof(float), d->nInputPipeline, dFile);
+    fwrite(d->belief,        sizeof(float), d->nBeliefs,       dFile);
 
     // write node statistics to disk
 
@@ -613,7 +614,8 @@ Destin * LoadDestin( Destin *d, char *filename )
     
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
 
-    fread(d->inputPipeline,                   sizeof(float),  d->nInputPipeline,      dFile);
+    fread(d->inputPipeline, sizeof(float),  d->nInputPipeline, dFile);
+    fread(d->belief,        sizeof(float),  d->nBeliefs,       dFile);
 
     if(isUniform){
         for(l = 0 ; l < d->nLayers; l++){
