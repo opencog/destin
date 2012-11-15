@@ -517,21 +517,20 @@ void SaveDestin( Destin *d, char *filename )
     //TODO: save the isUniform field
     //TODO: how about the noderef? check that all fields are being saved
 
-    //TODO: format to align columns
     // write destin hierarchy information to disk
-    fwrite(&d->nMovements, sizeof(uint), 1, dFile);
-    fwrite(&d->nc, sizeof(uint), 1, dFile);
-    fwrite(&d->nodes[0].ni, sizeof(uint), 1, dFile);
-    fwrite(&d->nLayers, sizeof(uint), 1, dFile);
-    fwrite(&d->isUniform, sizeof(bool), 1, dFile);
-    fwrite(d->nb, sizeof(uint), d->nLayers, dFile);
+    fwrite(&d->nMovements,  sizeof(uint), 1,            dFile);
+    fwrite(&d->nc,          sizeof(uint), 1,            dFile);
+    fwrite(&d->nodes[0].ni, sizeof(uint), 1,            dFile);
+    fwrite(&d->nLayers,     sizeof(uint), 1,            dFile);
+    fwrite(&d->isUniform,   sizeof(bool), 1,            dFile);
+    fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
-    fwrite(d->temp, sizeof(float), d->nLayers, dFile);
-    fwrite(&d->nodes[0].beta, sizeof(float), 1, dFile); //TODO consider moving these constants to the destin struc
-    fwrite(&d->nodes[0].lambda, sizeof(float), 1, dFile);
-    fwrite(&d->nodes[0].gamma, sizeof(float), 1, dFile);
-    fwrite(&d->nodes[0].starvCoeff, sizeof(float), 1, dFile);
+    fwrite(d->temp,                 sizeof(float), d->nLayers,  dFile);
+    fwrite(&d->nodes[0].beta,       sizeof(float), 1,           dFile); //TODO consider moving these constants to the destin struc
+    fwrite(&d->nodes[0].lambda,     sizeof(float), 1,           dFile);
+    fwrite(&d->nodes[0].gamma,      sizeof(float), 1,           dFile);
+    fwrite(&d->nodes[0].starvCoeff, sizeof(float), 1,           dFile);
 
     //write belief states
     fwrite(d->inputPipeline, sizeof(float), d->nInputPipeline, dFile);
@@ -556,10 +555,10 @@ void SaveDestin( Destin *d, char *filename )
 
             // write statistics
             // TODO: set un used variables to NULL when using uniform destin
-            fwrite(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-            fwrite(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-            fwrite(nTmp->starv, sizeof(float), nTmp->nb, dFile);
-            fwrite(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
+            fwrite(nTmp->mu,        sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
+            fwrite(nTmp->sigma,     sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
+            fwrite(nTmp->starv,     sizeof(float),  nTmp->nb,           dFile);
+            fwrite(nTmp->nCounts,   sizeof(long),   nTmp->nb,           dFile);
         }
     }
 
