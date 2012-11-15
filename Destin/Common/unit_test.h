@@ -307,5 +307,23 @@ float** copyFloatDim2Array(float** src, int rows, int sizes[]){
     return ret;
 }
 
+bool _assertNoNans(float * array, int length, int line){
+    int i;
+    for(i = 0 ; i < length ; i++){
+        if(isnan(array[i])){
+            printf("assertNoNans FAILED, line %i, index %i of %i\n", line, i, length);
+            return false;
+        }
+    }
+    return true;
+}
+
+/** assertNoNans - asserts that none of the elements of the float array contain nans
+ */
+#define assertNoNans(float_array, len){\
+    if(! _assertNoNans(float_array, len, __LINE__)){\
+        return 1;\
+    }\
+}\
 
 #endif

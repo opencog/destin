@@ -515,8 +515,10 @@ int _testSaveDestin2(bool isUniform){
     SaveDestin(d, "testSaveDestin2.save");
 
     //mix it up some more
-    for(i = 0 ; i < 10; i++){
+    uint iterations = 50;
+    for(i = 0 ; i < iterations; i++){
         for(j = 0 ; j < nImages ; j++){
+            assertNoNans(d->belief, d->nBeliefs); //test that non nans are occuring
             FormulateBelief(d, images[j]);
         }
     }
@@ -536,7 +538,7 @@ int _testSaveDestin2(bool isUniform){
     turnOnMask(d);
 
     //reapply same observations
-    for(i = 0 ; i < 10; i++){
+    for(i = 0 ; i < iterations; i++){
         for(j = 0 ; j < nImages ; j++){
             FormulateBelief(d, images[j]);
         }

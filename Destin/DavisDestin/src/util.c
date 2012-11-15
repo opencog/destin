@@ -248,7 +248,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         sharedCentroids = NULL;
     }
 
-    //sharedCentroidsDeltaScratch
     if(isUniform){
         //used to calculate the shared centroid delta averages
         MALLOC(d->uf_avgDelta, float *, d->nLayers);
@@ -407,7 +406,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     }
 
     free(inputOffsets);
-
     return d;
 }
 
@@ -712,6 +710,13 @@ void InitNode
 
     // point to the block-allocated space
     node->input = input_host;
+    uint i,j;
+    if(input_host != NULL){
+        for(i = 0 ; i < ni ; i++){
+            node->input[i] = 0.5; //prevent nans caused by uninitialized memory
+        }
+    }
+
     node->pBelief = belief_host;
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
@@ -725,7 +730,6 @@ void InitNode
         node->inputOffsets = NULL;
     }
 
-    uint i,j;
     for( i=0; i < nb; i++ )
     {
         // init belief (node output)
