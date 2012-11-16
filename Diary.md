@@ -31,3 +31,24 @@ following test driven development. Nodes are using the shared centroids to
 compare their inputs with. Working through the logic to average centroid update
 vectors in case multiple nodes choose the same shared centroid to update. Also
 working through the logic on the starvation trace.
+
+10/31 - 11/16/2012
+------------------
+Uniform DeSTIN translation invariance through shared centroids is pretty much
+complete ( see
+http://wiki.opencog.org/w/DestinOpenCog#Uniform_DeSTIN.2C_Part_One )
+
+For each iteration of the DeSTIN algorithm, each node picks a winning centroid
+from the shared pool of centroids for the layer. If multiple nodes from a layer
+pick the same centroid as winner then their movement vectors are averaged and
+then moved at the end. If a shared centroid is picked by at least one node in
+the level then its starvation trace credit is reset. 
+
+The SaveDestin, LoadDestin, and CreateDestin ( loading from a config file) now
+works with uniform destin. To switch between uniform destin and classic destin a
+boolean flag isUniform was added as an argument to InitDestin. 
+
+Unfortunately having shared centroids will require a different parallelization
+strategy when we port it back to CUDA. 
+
+
