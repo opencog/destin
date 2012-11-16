@@ -48,8 +48,8 @@ int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests ha
 }\
 
 #define assertFloatEquals( expected, actual, epsilon ){\
-    if( isnan(expected) || isnan(actual) || fabs(expected - actual ) > epsilon  ){\
-        printf("assertFloatEquals FAILED, line: %i, expected: %f, actual: %f, difference: %e\n", __LINE__, expected, actual, (expected - actual));\
+    if( isnan(expected) || isnan(actual) || fabs((expected) - (actual) ) > epsilon  ){\
+        printf("assertFloatEquals FAILED, line: %i, expected: %f, actual: %f, difference: %e\n", __LINE__, (expected), (actual), ((expected) - (actual)));\
         return 1;\
     }\
 }\

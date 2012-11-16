@@ -324,6 +324,10 @@ int testUniform(){
         0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
     //Uniform_UpdateStarvation(d->nodes, 0);
 
+    float * ad = d->uf_avgDelta[0];
+    //calculate muSqDiff for layer 0
+    float msq = ad[0*9] * ad[0*9] + ad[1*9] * ad[1*9] + ad[2*9] * ad[2*9] + ad[3*9] * ad[3*9];
+    assertFloatEquals(msq, n[0].muSqDiff, 1e-12);
 
     DestroyDestin(d);
     return 0;
@@ -374,6 +378,8 @@ int testUniformFormulate(){
 
     assertFloatArrayEqualsEV(d->uf_starv[0], 1e-12, 4,
         1.0 - starvCoef, 1.0, 1.0, 1.0);
+
+    assertFloatEquals(d->muSumSqDiff, n[0].muSqDiff + n[4].muSqDiff, 1e-12 );
 
     DestroyDestin(d);
     return 0;
@@ -447,7 +453,7 @@ int testSaveDestin1(){
     assertIntArrayEqualsV(d->layerSize, 2, 4, 1);
     assertTrue(d->maxNb == 4);
     assertTrue(d->maxNs == maxNs);
-    assertTrue(d->muSumSqDiff == 0.0);
+    assertFloatEquals(0, d->muSumSqDiff, 0); //it currently resets to 0
     assertTrue(d->nBeliefs == nBeliefs);
 
     assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );

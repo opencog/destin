@@ -97,6 +97,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     d->nMovements = nMovements;
     d->isUniform = isUniform;
+    d->muSumSqDiff = 0;
     MALLOC(d->inputLabel, uint, nc);
     for( i=0; i < nc; i++ )
     {

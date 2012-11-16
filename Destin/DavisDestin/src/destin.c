@@ -388,7 +388,6 @@ void FormulateBelief( Destin *d, float *image )
                     MoveCentroids( d->nodes,n );
                     UpdateStarvation(d->nodes, n);
 
-                    //TODO: update muSumSqDiff for uniform destin
                     d->muSumSqDiff += d->nodes[n].muSqDiff;
                 }
             }
@@ -400,6 +399,8 @@ void FormulateBelief( Destin *d, float *image )
             }
             //move the shared centroids
             Uniform_ApplyDeltas(d, l, d->uf_sigma[l] );
+            // in uniform destin, muSqDiff for the layer is stored in the 0th node of the layer.
+            d->muSumSqDiff += GetNodeFromDestin(d, l, 0, 0)->muSqDiff;
             //update shared centroids starvation
             Uniform_UpdateStarvation(d, l, d->uf_starv[l], d->uf_winCounts[l], d->nodes[0].starvCoeff );
         }
