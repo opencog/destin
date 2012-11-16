@@ -85,6 +85,7 @@ public:
         callback = NULL;
         initTemperatures(layers, centroid_counts);
         temperatures = new float[layers];
+        bool doesBoltzman = true;
         //figure out how many layers are needed to support the given
         //image width.
         bool supported = false;
@@ -116,7 +117,8 @@ public:
                 temperatures,
                 starv_coef,
                 num_movements,
-		isUniform
+                isUniform,
+                doesBoltzman
          );
         ClearBeliefs(destin);
 

@@ -33,6 +33,7 @@ typedef struct Destin {
     uint        * layerMask;
 
     int         ** nodeRef;             // allows easy indexing of nodes by layer, row, and col
+    bool        doesBoltzman;            // flag to determine if the  beliefs are applied with the boltzman distribution
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
                                         // which means all nodes in a layer share their centroids
 
@@ -62,7 +63,8 @@ Destin * InitDestin(                    // initialize Destin.
                     float *,            // temperature for each layer
                     float,              // starv coeff
                     uint,               // number of movements per digit presentation
-                    bool                // is uniform - if nodes in a layer share one list of centroids
+                    bool,               // is uniform - if nodes in a layer share one list of centroids
+                    bool                // if beliefs are applied with a boltzman distribution
                 );
 
 

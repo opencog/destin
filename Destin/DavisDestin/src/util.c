@@ -68,9 +68,15 @@ Destin * CreateDestin( char *filename ) {
     fscanf(configFile, "%u", &iu);
     bool isUniform = iu == 0 ? false : true;
 
-    printf("isUniform: %s beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n", isUniform ? "YES." : "NO.", beta, lambda, gamma, starvCoeff);
+    // applies boltzman distibution
+    // 0 = off, 1 = on
+    uint db;
+    fscanf(configFile, "%u", &db);
+    bool doesBoltzman = db == 0 ? false : true;
+    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
+    printf("isUniform: %s. boltzman: %s.", isUniform ? "YES" : "NO", doesBoltzman ? "YES" : "NO");
 
-    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
+    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, doesBoltzman);
 
     fclose(configFile);
 
@@ -80,7 +86,7 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
-Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform )
+Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, bool doesBoltzman )
 {
     uint nNodes, nInputPipeline;
     uint i, l, nBeliefs, maxNb, maxNs;
@@ -97,6 +103,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     d->nMovements = nMovements;
     d->isUniform = isUniform;
+    d->doesBoltzman = doesBoltzman;
     d->muSumSqDiff = 0;
     MALLOC(d->inputLabel, uint, nc);
     for( i=0; i < nc; i++ )
@@ -527,6 +534,7 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->nodes[0].ni, sizeof(uint), 1,            dFile);
     fwrite(&d->nLayers,     sizeof(uint), 1,            dFile);
     fwrite(&d->isUniform,   sizeof(bool), 1,            dFile);
+    fwrite(&d->doesBoltzman,sizeof(bool), 1,            dFile);
     fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
@@ -583,7 +591,7 @@ Destin * LoadDestin( Destin *d, char *filename )
     }
 
     uint nMovements, nc, ni, nl;
-    bool isUniform;
+    bool isUniform, doesBoltzman;
     uint *nb;
 
     float beta, lambda, gamma, starvCoeff;
@@ -597,11 +605,12 @@ Destin * LoadDestin( Destin *d, char *filename )
     }
 
     // read destin hierarchy information from disk
-    fread(&nMovements, sizeof(uint), 1, dFile);
-    fread(&nc, sizeof(uint), 1, dFile);
-    fread(&ni, sizeof(uint), 1, dFile);
-    fread(&nl, sizeof(uint), 1, dFile);
-    fread(&isUniform, sizeof(bool), 1, dFile);
+    fread(&nMovements,  sizeof(uint), 1, dFile);
+    fread(&nc,          sizeof(uint), 1, dFile);
+    fread(&ni,          sizeof(uint), 1, dFile);
+    fread(&nl,          sizeof(uint), 1, dFile);
+    fread(&isUniform,   sizeof(bool), 1, dFile);
+    fread(&doesBoltzman,sizeof(bool), 1, dFile);
 
     MALLOC(nb, uint, nl);
     MALLOC(temp, float, nl);
@@ -615,7 +624,7 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(&gamma, sizeof(float), 1, dFile);
     fread(&starvCoeff, sizeof(float), 1, dFile);
     
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, doesBoltzman);
 
     fread(d->inputPipeline, sizeof(float),  d->nInputPipeline, dFile);
     fread(d->belief,        sizeof(float),  d->nBeliefs,       dFile);

@@ -137,7 +137,7 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     
     float maxBoltzEuc = 0;
     float maxBoltzMal = 0;
-    bool boltzman = false;
+    bool boltzman = n->d->doesBoltzman;
     // normalize beliefs to sum to 1
     for( i=0; i < n->nb; i++ )
     {

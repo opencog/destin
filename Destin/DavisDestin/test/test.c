@@ -20,13 +20,14 @@ int testInit(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
+    bool doesBoltzman = true;
     float image[16] = {
         .01, .02, .03, .04,
         .05, .06, .07, .08,
         .09, .10, .11, .12,
         .13, .14, .15, .16
     };
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
 
     Node * n = &d->nodes[0];
     assertTrue(n->ni == 16);
@@ -41,7 +42,7 @@ int testInit(){
     
     //test uniform destin init
     isUniform = true;
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
 
     printf("Inited uniform.\n");
     DestroyDestin(d);
@@ -64,7 +65,8 @@ int testFormulateNotCrash(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    bool doesBoltzman = true;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
 
     float image [] = {0.0};
     FormulateBelief(d, image );
@@ -87,7 +89,8 @@ int testForumateStages(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    bool doesBoltzman = true;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
     d->layerMask[0] = 1;
     float image [] = {0.55};
     int nid = 0; //node index
@@ -196,7 +199,8 @@ int testUniform(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    bool doesBoltzman = true;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
     assertTrue(d->isUniform);
 
 
@@ -347,7 +351,8 @@ int testUniformFormulate(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    bool doesBoltzman = true;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
     d->layerMask[0] = 1; //turn on cluster training
     d->layerMask[1] = 1;
 
@@ -399,11 +404,11 @@ int testSaveDestin1(){
     float starvCoef = 0.12;
     uint nMovements = 4;
     bool isUniform = true;
-
+    bool doesBoltzman  = true;
     uint ns0 = ni + nb[0] + nb[1] + nc;
     uint ns1 = 4*nb[0] + nb[1] + 0 + nc;
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
 
@@ -453,7 +458,7 @@ int testSaveDestin1(){
     assertIntArrayEqualsV(d->layerSize, 2, 4, 1);
     assertTrue(d->maxNb == 4);
     assertTrue(d->maxNs == maxNs);
-    assertFloatEquals(0, d->muSumSqDiff, 0); //it currently resets to 0
+    assertFloatEquals(0.0, d->muSumSqDiff, 0); //it currently resets to 0
     assertTrue(d->nBeliefs == nBeliefs);
 
     assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
@@ -484,9 +489,10 @@ int _testSaveDestin2(bool isUniform){
     float temperature [] = {3.5, 4.5, 5.0, 4.4};
     float starvCoef = 0.12;
     uint nMovements = 4;
+    bool doesBoltzman = true;
     uint i, j;
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
     turnOnMask(d);
 
     //generate random images
@@ -578,7 +584,7 @@ int testLoadFromConfig(){
     assertFloatEquals(0.1, n->lambda, 1e-8);
     assertFloatEquals(0.2, n->gamma, 1e-8);
     assertFloatEquals(0.001, n->starvCoeff, 1e-8);
-
+    assertTrue(d->doesBoltzman);
     DestroyDestin(d);
     return 0;
 }
