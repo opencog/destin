@@ -256,17 +256,19 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
 
 void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     uint c, s, ns, wincount;
-    float diff, t, dt;
+    float diff, learnRate, dt;
     for(c = 0 ; c < d->nb[layer]; c++){
         wincount = d->uf_persistWinCounts[layer][c];
-        t = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
+
+        //if node hasn't won then it doesn't need to be moved so learnRate is 0
+        learnRate = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
         Node * n = GetNodeFromDestin(d, layer, 0,0);
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){
             //move the centroid with the averaged delta
             dt = d->uf_avgDelta[layer][c * ns + s];
-            diff = dt * t;
-            n->mu[c * ns + s] += diff;
+            diff = dt * learnRate;
+            n->mu[c * ns + s] += diff; //all nodes in a layer share this n->mu pointer
             n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
             //TODO: write unit test for layerSharedSigma
             layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );

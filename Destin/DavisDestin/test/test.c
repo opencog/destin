@@ -513,7 +513,7 @@ int _testSaveDestin2(bool isUniform){
     uint iterations = 50;
     for(i = 0 ; i < iterations; i++){
         for(j = 0 ; j < nImages ; j++){
-            assertNoNans(d->belief, d->nBeliefs); //test that non nans are occuring
+            assertNoNans(d->belief, d->nBeliefs); //test that non nans (float "not a number") are occuring
             FormulateBelief(d, images[j]);
         }
     }
