@@ -156,9 +156,8 @@ int shouldFail(){
 int testVarArgs(void){
     //test some of the unit test functions and macros
     
-   //TODO: yea toFloatArray is a memory leak, but only a small one :D
-   //will eventually make it clean itself up.
-   printFloatArray(toFloatArray(3, 9.0, 8.0, 7.0), 3);
+   float * fa = toFloatArray(3, 9.0, 8.0, 7.0);
+   printFloatArray(fa, 3);
    float *f = toFloatArray(2,1.2, 1.4);
 
    assertFloatEquals(1.2, f[0],1e-7);
@@ -179,7 +178,7 @@ int testVarArgs(void){
    bool a_bool_array[] = {false, false, true, true};
    assertBoolArrayEqualsV(a_bool_array, 4, false, false, true, true);
 
-
+   free(fa);
    free(f);
    return 0;
 }
@@ -295,7 +294,6 @@ int testUniform(){
 
     //TODO: test top node
     //TODO: test feedback over multiple iterations
-    //TODO: rename unit test array equals macros
 
     for(nid = 0 ; nid < 5 ; nid++){
         Uniform_AverageDeltas(d->nodes, nid);
@@ -454,9 +452,6 @@ int testSaveDestin1(){
 
     assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
     assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 0.0  );
-    //printFloatArray(d->uf_avgDelta[0], nb[0] * ns0 );
-    //printFloatArray(d->uf_avgDelta[1], nb[1] * ns1 );
-    //TODO: finish unit testing load and save
 
     return 0;
 }

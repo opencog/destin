@@ -995,7 +995,6 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
 
 // increment number of counts for winning centroid.
 void Uniform_ResetStats(Destin * d){
-    //TODO: use memset to zero memory instead
     int l, c, ns, s;
     for(l = 0 ; l < d->nLayers ; l++){
         ns = GetNodeFromDestin(d,l,0,0)->ns;

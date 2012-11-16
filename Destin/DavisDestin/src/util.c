@@ -150,7 +150,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->nBeliefs = nBeliefs;
 
     if(isUniform){
-        //TODO: init these to 0 and false
         // allocate for each layer an array of size number = n centroids for that layer
         // that counts how many nodes in a layer pick the given centroid as winner.
         MALLOC(d->uf_winCounts, uint *, d->nLayers);
@@ -514,8 +513,6 @@ void SaveDestin( Destin *d, char *filename )
         fprintf(stderr, "Error: Cannot open %s", filename);
         return;
     }
-    //TODO: save the isUniform field
-    //TODO: how about the noderef? check that all fields are being saved
 
     // write destin hierarchy information to disk
     fwrite(&d->nMovements,  sizeof(uint), 1,            dFile);
@@ -542,7 +539,7 @@ void SaveDestin( Destin *d, char *filename )
         for(l = 0 ; l < d->nLayers; l++){
             nTmp = GetNodeFromDestin(d, l, 0, 0); //get the 0th node of the layer
             fwrite(nTmp->mu,                    sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
-            fwrite(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile); //TODO: may not need to save this
+            fwrite(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
             fwrite(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
             fwrite(d->uf_sigma[l],              sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
             fwrite(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
@@ -555,7 +552,6 @@ void SaveDestin( Destin *d, char *filename )
             nTmp = &d->nodes[i];
 
             // write statistics
-            // TODO: set un used variables to NULL when using uniform destin
             fwrite(nTmp->mu,        sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
             fwrite(nTmp->sigma,     sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
             fwrite(nTmp->starv,     sizeof(float),  nTmp->nb,           dFile);
@@ -621,7 +617,7 @@ Destin * LoadDestin( Destin *d, char *filename )
         for(l = 0 ; l < d->nLayers; l++){
             nTmp = GetNodeFromDestin(d, l, 0, 0);
             fread(nTmp->mu,                    sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
-            fread(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile); //TODO: may not need to save this
+            fread(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
             fread(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
             fread(d->uf_sigma[l],              sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
             fread(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);

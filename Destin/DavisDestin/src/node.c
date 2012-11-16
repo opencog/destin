@@ -255,7 +255,6 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
 }
 
 void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
-    //TODO: make sure this is thread safe
     uint c, s, ns, wincount;
     float diff, t, dt;
     for(c = 0 ; c < d->nb[layer]; c++){
