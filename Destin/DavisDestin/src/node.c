@@ -179,7 +179,7 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     //TODO: test that this works for non uniform
     if(n->d->isUniform){
 
-        long c =  ++n->d->uf_winCounts[n->layer][n->winner];
+        long c =  ++n->d->uf_winCounts[n->layer][n->winner]; //used when averaging the delta vectors
 
         if( c == 1){//only increment this once even if multiple nodes pick this shared centroid
             n->d->uf_persistWinCounts[n->layer][n->winner]++;

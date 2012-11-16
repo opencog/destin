@@ -555,8 +555,27 @@ int _testSaveDestin2(bool isUniform){
 int testSaveDestin2(){
     assertTrue(_testSaveDestin2(true) == 0); //is uniform on
     assertTrue(_testSaveDestin2(false) == 0);//is uniform off
+    return 0;
 }
 
+int testLoadFromConfig(){
+    Destin * d = CreateDestin("testconfig.conf");
+    assertTrue(d->isUniform == true);
+    assertIntArrayEqualsV(d->nb, 3, 4, 5, 6);
+    assertFloatArrayEqualsEV(d->temp, 1e-12, 3, 3.1, 3.2, 3.3 );
+    assertTrue(d->nc == 8);
+    assertTrue(d->nMovements == 7);
+    assertTrue(d->nLayers == 3);
+    Node * n = &d->nodes[0];
+    assertTrue(n->ni == 16);
+    assertFloatEquals(0.002, n->beta, 1e-8);
+    assertFloatEquals(0.1, n->lambda, 1e-8);
+    assertFloatEquals(0.2, n->gamma, 1e-8);
+    assertFloatEquals(0.001, n->starvCoeff, 1e-8);
+
+    DestroyDestin(d);
+    return 0;
+}
 
 int main(int argc, char ** argv ){
 
@@ -569,5 +588,6 @@ int main(int argc, char ** argv ){
     RUN(testUniformFormulate);
     RUN(testSaveDestin1);
     RUN(testSaveDestin2);
+    RUN(testLoadFromConfig);
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }

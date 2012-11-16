@@ -61,9 +61,15 @@ Destin * CreateDestin( char *filename ) {
     fscanf(configFile, "%f", &lambda);
     fscanf(configFile, "%f", &gamma);
     fscanf(configFile, "%f", &starvCoeff);
-    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n", beta, lambda, gamma, starvCoeff);
 
-    bool isUniform = false; //TODO: make this configurable
+    // is uniform, i.e. shared centroids
+    // 0 = uniform off, 1 = uniform on
+    uint iu;
+    fscanf(configFile, "%u", &iu);
+    bool isUniform = iu == 0 ? false : true;
+
+    printf("isUniform: %s beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n", isUniform ? "YES." : "NO.", beta, lambda, gamma, starvCoeff);
+
     newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
 
     fclose(configFile);
@@ -693,6 +699,7 @@ void InitNode
 
     if(d->isUniform){
         //uniform destin uses shared counts
+        node->starv = NULL;
         node->nCounts = NULL;
         node->sigma = NULL;
     }else{
