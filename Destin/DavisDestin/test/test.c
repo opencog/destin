@@ -474,6 +474,34 @@ void turnOnMask(Destin * d){
     }
 }
 
+float ** makeRandomImages(uint image_size, uint nImages){
+
+    //generate random images
+    uint i, j;
+    float ** images;
+    MALLOC(images, float *, nImages);
+
+    for(i = 0 ; i < nImages; i++){
+        MALLOC(images[i], float, image_size);
+    }
+
+    for(i = 0 ; i < image_size ; i++){
+        for(j = 0 ; j < nImages ; j++){
+            images[j][i] = (float)rand()  / (float)RAND_MAX;
+        }
+    }
+    return images;
+}
+
+void freeRandomImages(float ** images, uint nImages){
+    uint i;
+    for(i = 0 ; i < nImages ; i++){
+        FREE(images[i]);
+    }
+    FREE(images);
+    return;
+}
+
 int _testSaveDestin2(bool isUniform){
     //Test that SaveDestin and LoadDestin are working propertly.
     //This uses the strategy of checking that the belief outputs are the same
@@ -498,18 +526,7 @@ int _testSaveDestin2(bool isUniform){
     //generate random images
     uint image_size = ni * d->layerSize[0];
     uint nImages = 5;
-    float ** images;
-    MALLOC(images, float *, nImages);
-
-    for(i = 0 ; i < nImages; i++){
-        MALLOC(images[i], float, image_size);
-    }
-
-    for(i = 0 ; i < image_size ; i++){
-        for(j = 0 ; j < nImages ; j++){
-            images[j][i] = (float)rand()  / (float)RAND_MAX;
-        }
-    }
+    float ** images = makeRandomImages(image_size, nImages);
 
     //mix up destin
     for(i = 0 ; i < 5; i++){
@@ -556,11 +573,9 @@ int _testSaveDestin2(bool isUniform){
     assertFloatArrayEquals(beliefState1, d->belief, nBeliefs);
 
     DestroyDestin(d);
-    for(j = 0 ; j < nImages ; j++){
-        FREE(images[j]);
-    }
-    FREE(images);
+
     FREE(beliefState1);
+    freeRandomImages(images, nImages);
     return 0;
 }
 
@@ -589,6 +604,52 @@ int testLoadFromConfig(){
     return 0;
 }
 
+
+//test GenerateInputFromBelief to make sure it doesn't crash
+int _testGenerateInputFromBelief(bool isUniform){
+
+    uint ni = 16; //input layer nodes cluster on 4 pixel input.
+    uint nl = 4;
+    uint nb [] = {3,4,2,2}; //centroids per layer
+    uint nc = 0;
+    float beta = 0.001;
+    float lambda = 0.10;
+    float gamma = 0.10;
+    float temperature [] = {7.5, 8.5, 4.0, 4.0};
+    float starvCoef = 0.12;
+    uint nMovements = 0;
+    bool doesBoltzman  = true;
+
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
+    d->layerMask[0] = 1;
+    d->layerMask[1] = 1;
+    d->layerMask[2] = 1;
+    d->layerMask[3] = 1;
+
+    float *outFrame;
+    MALLOC( outFrame, float, d->layerSize[0] * d->nodes[0].ni);
+    uint i, nImages = 4;
+    float ** images = makeRandomImages(d->layerSize[0] * d->nodes[0].ni, nImages);
+
+    for(i = 0 ; i < 8; i++){
+        FormulateBelief(d, images[i % nImages]);
+    }
+
+    GenerateInputFromBelief(d, outFrame);
+
+    FREE(outFrame);
+    DestroyDestin(d);
+    freeRandomImages(images, nImages);
+    return 0;
+}
+
+
+int testGenerateInputFromBelief(){
+    assertTrue(_testGenerateInputFromBelief(false) == 0 );
+    assertTrue(_testGenerateInputFromBelief(true) == 0 );
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
@@ -601,5 +662,6 @@ int main(int argc, char ** argv ){
     RUN(testSaveDestin1);
     RUN(testSaveDestin2);
     RUN(testLoadFromConfig);
+    RUN(testGenerateInputFromBelief);
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
 }

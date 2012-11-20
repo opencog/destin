@@ -709,7 +709,7 @@ void InitNode
 
     if(d->isUniform){
         //uniform destin uses shared counts
-        node->starv = NULL;
+        node->starv = d->uf_starv[layer];
         node->nCounts = NULL;
         node->sigma = NULL;
     }else{

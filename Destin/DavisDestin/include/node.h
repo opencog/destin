@@ -25,9 +25,9 @@ typedef struct Node {
 
     // node statistics
     //TODO: make a uf_mu for uniform shared centroids instead of treating it differently
-    float * mu;             // centroid locations ( a table nb x ns  )
+    float * mu;             // centroid locations ( a table nb x ns  ) . In uniform destin, this is a shared pointer)
     float * sigma;          // centroid variances
-    float * starv;          // centroid starvation coefficients
+    float * starv;          // centroid starvation coefficients. ( points to destin->uf_starv if it's uniform destin)
 
     float   muSqDiff;
     long  * nCounts;        // number of observation counts. How many times each centroid is picked as winner over all iterations.
