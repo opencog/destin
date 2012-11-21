@@ -83,7 +83,7 @@ int main(int argc, char ** argv){
         printf("Node %i,0,0 winner: %i\n",layer, n.winner);
         printf("Node centroids: %i\n", n.nb);
 
-        printf("Node strav:");
+        printf("Node starv:");
         printFloatArray(n.starv, n.nb);
         printf("Starv coef: %f \n", n.starvCoeff);
         printf("\n");
