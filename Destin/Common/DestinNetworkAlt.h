@@ -42,8 +42,8 @@ private:
     DestinIterationFinishedCallback * callback;
 
     float beta;   //variance learning rate
-    float lambda; //previous belief damping 0 = disable to 1.0 = keep the same
-    float gamma;  //parents previous belief damping, 0 = disable to 1.0 = keep the same
+    float lambda; //previous belief damping, 0 = disable, 1.0 = keep the same
+    float gamma;  //parents previous belief damping, 0 = disable, 1.0 = keep the same
 
     float * temperatures; //one temperature per layer. If temperature = #
                           //centroids then the belief distribution doesn't change.

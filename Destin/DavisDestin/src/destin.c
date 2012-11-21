@@ -358,50 +358,76 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
 // run an iteration with the CPU implementations of the kernels
 void FormulateBelief( Destin *d, float *image )
 {
+    // n = node index
+    // l = layer index
     uint n, l;
 
+    // Set stability to 0
     d->muSumSqDiff = 0;
+
 
     if(d->isUniform){
         Uniform_ResetStats(d);
     }
+    // n_start = first node index in a layer
+    // n_end = first node index of 'next' layer
     uint n_start, n_end;
     n_start = 0;
     n_end = 0;
     
     for(l = 0; l < d->nLayers; l++ )
     {
+        // Set start of node indexes for current layer to n_end (first node index of 'next' layer)
         n_start = n_end;
+        // Set end of node index to start index + size of current layer
         n_end = n_start + d->layerSize[l];
         
+        // Loop through nodes in current layer
         for(n = n_start; n < n_end; n++ )
         {
+            // Get an observation from the source image for the current node if in layer 0, else from the child nodes.
             GetObservation( d->nodes, image, n );
+
+            // Calculate the distances between the centroids of the current node and the new observation
             CalculateDistances( d->nodes, n );
 
+            // Normalize the calculations and get the winning centroid
             NormalizeBeliefGetWinner( d->nodes, n );
+
+            // Check if centroids should be updated (1 = yes)
             if( d->layerMask[l] == 1 )
             {
+                // Calculate the required centroid movement
                 CalcCentroidMovement( d->nodes, d->inputLabel, n );
+
+                // Check if the network is uniform
                 if(!d->isUniform){
-                    //apply the deltas to move the centroids
+                    // Apply the deltas to move the centroids
                     MoveCentroids( d->nodes,n );
+
+                    // Update the starvation for the centroids
                     UpdateStarvation(d->nodes, n);
 
+                    // Update the network's stability by adding the node's stability
                     d->muSumSqDiff += d->nodes[n].muSqDiff;
                 }
             }
         }
+
+        // Check if the network is uniform and if centroids should be updated
         if(d->isUniform && d->layerMask[l] == 1  ){
+
+            // Loop through the nods in the current layer
             for(n = n_start ; n < n_end ; n++){
-                //average shared centroids movements
+                // Average shared centroid's movements
                 Uniform_AverageDeltas(d->nodes, n);
             }
-            //move the shared centroids
+            // Move the shared centroids
             Uniform_ApplyDeltas(d, l, d->uf_sigma[l] );
-            // in uniform destin, muSqDiff for the layer is stored in the 0th node of the layer.
+            // In uniform destin, muSqDiff for the layer is stored in the 0th node of the layer.
             d->muSumSqDiff += GetNodeFromDestin(d, l, 0, 0)->muSqDiff;
-            //update shared centroids starvation
+
+            // Update shared centroids starvation
             Uniform_UpdateStarvation(d, l, d->uf_starv[l], d->uf_winCounts[l], d->nodes[0].starvCoeff );
         }
     }

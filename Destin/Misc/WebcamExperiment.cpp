@@ -43,7 +43,9 @@ int main(int argc, char ** argv){
     av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
 
     //VideoSource vs(false, "./destin_video_test.avi");
-    VideoSource vs(true, "./cowboy.avi");
+    //VideoSource vs(false, "./cowboy.avi");
+    VideoSource vs(true, "");
+
     vs.enableDisplayWindow();
 
     SupportedImageWidths siw = W512;
