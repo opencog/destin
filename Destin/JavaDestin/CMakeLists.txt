@@ -2,8 +2,14 @@ cmake_minimum_required(VERSION 2.8)
 
 #This section creates java JNI bindings using SWIG 2.)0
 FIND_PACKAGE(SWIG 2.0.4)
-FIND_LIBRARY(highgui highgui)
+FIND_LIBRARY(highgui NAMES highgui opencv_highgui)
 INCLUDE_DIRECTORIES(../DavisDestin/include ../Common )
+if(NOT SWIG_FOUND)
+    message(FATAL_ERROR "SWIG wasnt found")
+endif()
+if(NOT highgui)
+    message(FATAL_ERROR "highgui not found")
+endif()
 if(SWIG_FOUND AND highgui)
     INCLUDE(UseSWIG)
 
@@ -15,7 +21,7 @@ if(SWIG_FOUND AND highgui)
         SET(CMAKE_SWIG_OUTDIR ./gen_src/javadestin )            
         SWIG_ADD_MODULE(destinjava java SwigDestinJavaBindings.i )
         
-        SWIG_LINK_LIBRARIES(destinjava highgui destinalt common )
+        SWIG_LINK_LIBRARIES(destinjava ${highgui} destinalt common )
     
     else(JNI_FOUND)
         message("Couldn't find jni. Is a jdk installed? Not building java interfaces.")
