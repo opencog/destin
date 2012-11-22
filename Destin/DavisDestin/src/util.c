@@ -11,6 +11,24 @@
 #include "destin.h"
 
 
+
+void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
+    d->centLearnStrat = strategy;
+    switch(strategy){
+        case CLS_FIXED:
+            d->centLearnStratFunc = &CLS_Fixed;
+            break;
+        case CLS_DECAY:
+            d->centLearnStratFunc = &CLS_Decay;
+            break;
+        default:
+            fprintf(stderr, "Warning: Invalid centroid update strategy enum value %i. Setting null.\n", strategy);
+            d->centLearnStratFunc = NULL;
+            break;
+    }
+    return;
+}
+
 // create a destin instantiation from a file
 //TODO: update to work with uniform destin
 Destin * CreateDestin( char *filename ) {
@@ -105,6 +123,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->isUniform = isUniform;
     d->doesBoltzman = doesBoltzman;
     d->muSumSqDiff = 0;
+
+    SetLearningStrat(d, CLS_DECAY);
+
     MALLOC(d->inputLabel, uint, nc);
     for( i=0; i < nc; i++ )
     {
@@ -538,11 +559,12 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
-    fwrite(d->temp,                 sizeof(float), d->nLayers,  dFile);
-    fwrite(&d->nodes[0].beta,       sizeof(float), 1,           dFile); //TODO consider moving these constants to the destin struc
-    fwrite(&d->nodes[0].lambda,     sizeof(float), 1,           dFile);
-    fwrite(&d->nodes[0].gamma,      sizeof(float), 1,           dFile);
-    fwrite(&d->nodes[0].starvCoeff, sizeof(float), 1,           dFile);
+    fwrite(d->temp,                 sizeof(float),          d->nLayers,  dFile);
+    fwrite(&d->nodes[0].beta,       sizeof(float),          1,           dFile); //TODO consider moving these constants to the destin struc
+    fwrite(&d->nodes[0].lambda,     sizeof(float),          1,           dFile);
+    fwrite(&d->nodes[0].gamma,      sizeof(float),          1,           dFile);
+    fwrite(&d->nodes[0].starvCoeff, sizeof(float),          1,           dFile);
+    fwrite(&d->centLearnStrat,       sizeof(CentroidLearnStrat),    1,           dFile);
 
     //write belief states
     fwrite(d->inputPipeline, sizeof(float), d->nInputPipeline, dFile);
@@ -623,11 +645,14 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(&lambda, sizeof(float), 1, dFile);
     fread(&gamma, sizeof(float), 1, dFile);
     fread(&starvCoeff, sizeof(float), 1, dFile);
-    
+
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, doesBoltzman);
 
-    fread(d->inputPipeline, sizeof(float),  d->nInputPipeline, dFile);
-    fread(d->belief,        sizeof(float),  d->nBeliefs,       dFile);
+    fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,                 dFile);
+    SetLearningStrat(d, d->centLearnStrat);
+
+    fread(d->inputPipeline, sizeof(float),         d->nInputPipeline, dFile);
+    fread(d->belief,        sizeof(float),         d->nBeliefs,       dFile);
 
     if(isUniform){
         for(l = 0 ; l < d->nLayers; l++){

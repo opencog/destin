@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include "macros.h"
 #include "node.h"
+#include "learn_strats.h"
 
 #define INIT_SIGMA 0.00001
-
 
 /* Destin Struct Definition */
 typedef struct Destin {
@@ -33,7 +33,11 @@ typedef struct Destin {
     uint        * layerMask;
 
     int         ** nodeRef;             // allows easy indexing of nodes by layer, row, and col
-    bool        doesBoltzman;            // flag to determine if the  beliefs are applied with the boltzman distribution
+
+    CentroidLearnStrat   centLearnStrat;        // centroid learning strategy
+    CentroidLearnStratFunc centLearnStratFunc;  // centroid learning strategy function pointer
+
+    bool        doesBoltzman;           // flag to determine if the  beliefs are applied with the boltzman distribution
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
                                         // which means all nodes in a layer share their centroids
 
@@ -42,7 +46,8 @@ typedef struct Destin {
     float       ** uf_avgDelta;         //used to average node centroid movement vectors
     long        ** uf_persistWinCounts; //keeps track how many times the shared centroids win over the lifetime of the training the destin network.
     float       ** uf_sigma;            //shared centroids sigma, one array per layer of size nb x ns
-    float       ** uf_starv;             //shared centroids starvation
+    float       ** uf_starv;            //shared centroids starvation
+
 
 } Destin  ;
 /* Destin Struct Definition End */

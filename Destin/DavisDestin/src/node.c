@@ -244,6 +244,24 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
     return;
 }
 
+
+float CLS_Fixed(Destin * d,  Node * n, uint layer, uint centroid){
+    float learningRate = 0.25;
+    return learningRate;
+}
+
+float CLS_Decay(Destin * d, Node * n, uint layer, uint centroid){
+    uint wincount;
+    float learnRate;
+    if(d->isUniform){
+        wincount = d->uf_persistWinCounts[layer][centroid];
+        learnRate = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
+    }else{
+        learnRate = 1 / (float) n->nCounts[n->winner];
+    }
+    return learnRate;
+}
+
 //average the deltas and multiply them by the shared ncounts
 void Uniform_AverageDeltas(Node * n, uint nIdx){
     n = &n[nIdx];
@@ -260,13 +278,10 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
 }
 
 void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
-    uint c, s, ns, wincount;
+    uint c, s, ns;
     float diff, learnRate, dt;
     for(c = 0 ; c < d->nb[layer]; c++){
-        wincount = d->uf_persistWinCounts[layer][c];
-
-        //if node hasn't won then it doesn't need to be moved so learnRate is 0
-        learnRate = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
+        learnRate = d->centLearnStratFunc(d, NULL, layer, c);
         Node * n = GetNodeFromDestin(d, layer, 0,0);
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){
@@ -282,6 +297,7 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     return;
 }
 
+
 void MoveCentroids( Node *n, uint nIdx ){
     n = &n[nIdx];
     
@@ -292,12 +308,13 @@ void MoveCentroids( Node *n, uint nIdx ){
     n->nCounts[n->winner]++;
 
     int i;
+    float learnRate = n->d->centLearnStratFunc(n->d, n, 0, 0);
     for(i = 0 ; i < n->ns ; i++){   
         // calculate how much we move the centroid.  the 1 / nCounts
         // term can be switched out for a different learning rate
         // whether fixed or adaptive.
         float delta = n->delta[i];
-        float dTmp = (1 / (float) n->nCounts[n->winner]) * delta;
+        float dTmp = learnRate * delta;
 
         // move the winning centroid
         n->mu[winnerOffset+i] += dTmp;

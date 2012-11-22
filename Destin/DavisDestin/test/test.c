@@ -412,6 +412,7 @@ int testSaveDestin1(){
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
 
+    SetLearningStrat(d, CLS_FIXED);
     assertTrue(ns0 == d->nodes[0].ns);
     assertTrue(ns1 == d->nodes[4].ns);
 
@@ -440,6 +441,7 @@ int testSaveDestin1(){
     d = NULL;//must be set to NULL or LoadDestin will try to destroy an invalid pointer
     d = LoadDestin(d, "unit_test_destin.save");
 
+    assertTrue(d->centLearnStrat == CLS_FIXED);
     assertTrue(d->nLayers == 2);
     assertIntArrayEqualsV(d->nb, 2, 3, 4);
     assertTrue(d->nc == 6);
@@ -502,7 +504,7 @@ void freeRandomImages(float ** images, uint nImages){
     return;
 }
 
-int _testSaveDestin2(bool isUniform){
+int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat){
     //Test that SaveDestin and LoadDestin are working propertly.
     //This uses the strategy of checking that the belief outputs are the same
     //after loading a saved destin and repeating the same input image.
@@ -580,12 +582,15 @@ int _testSaveDestin2(bool isUniform){
 }
 
 int testSaveDestin2(){
-    assertTrue(_testSaveDestin2(true) == 0); //is uniform on
-    assertTrue(_testSaveDestin2(false) == 0);//is uniform off
+    assertTrue(_testSaveDestin2(true, CLS_FIXED) == 0); //uniform on
+    assertTrue(_testSaveDestin2(false, CLS_FIXED) == 0);//uniform off
+    assertTrue(_testSaveDestin2(true, CLS_DECAY) == 0);
+    assertTrue(_testSaveDestin2(false, CLS_DECAY) == 0);
     return 0;
 }
 
 int testLoadFromConfig(){
+    //TODO: add configuration for the learning strategy
     Destin * d = CreateDestin("testconfig.conf");
     assertTrue(d->isUniform == true);
     assertIntArrayEqualsV(d->nb, 3, 4, 5, 6);
