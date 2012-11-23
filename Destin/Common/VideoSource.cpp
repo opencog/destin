@@ -20,7 +20,9 @@ bool VideoSource::grab() {
 		// see http://opencv.willowgarage.com/documentation/cpp/imgproc_geometric_image_transformations.html#resize
 		cv::resize(original_frame, rescaled_frame, target_size ,1.0,1.0); //resize image to target_size
 
-		cvtColor(rescaled_frame, greyscaled_frame, CV_BGR2GRAY); //turn the image grey scale
+        cv::flip(rescaled_frame, flipped_frame, 1);
+
+        cvtColor(flipped_frame, greyscaled_frame, CV_BGR2GRAY); //turn the image grey scale
 
 		//convert the greyscaled_frame into a float array for DeSTIN
 		convert(greyscaled_frame, this->float_frame);
@@ -32,6 +34,8 @@ bool VideoSource::grab() {
 
         if(showWindow){
             cv::imshow( DESTIN_VIDEO_WINDOW_TITLE, greyscaled_frame); //show video to output window
+
+            cvMoveWindow(DESTIN_VIDEO_WINDOW_TITLE, 50, 50);
         }
 
 		// some strange issues with waitkey, see http://opencv.willowgarage.com/wiki/documentation/c/highgui/WaitKey
