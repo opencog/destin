@@ -26,9 +26,16 @@ void testNan(float * array, int len){
  *  print - prints the fps if true, otherwise just keeps the timer consistent
  */
 void printFPS(bool print){
+    // start = initial frame time
+    // end = final frame time
+    // sec = time count in seconds
+    // set all to 0
     static double end, sec, start = 0;
 
+    // set final time count to current tick count
     end = (double)cv::getTickCount();
+
+    //
     if(start != 0){
         sec = (end - start) / getTickFrequency();
         if(print==true){

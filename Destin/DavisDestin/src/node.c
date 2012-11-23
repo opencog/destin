@@ -18,20 +18,31 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     uint i, j;
     uint ni, nb, np, ns, nc;
 
+    // Length of input vector
     ni = n->ni;
+
+    // Number of centroids
     nb = n->nb;
+
+    // Number of centroids of the parent
     np = n->np;
+
+    // Sum of ni + nb + np + nc
     ns = n->ns;
+
+    // 'Context'
     nc = n->nc;
 
+    // Check to see if bottom layer image input data is available
     if( n->inputOffsets == NULL )
     {
-        // normal input
+        // If not, use input from the child nodes
         for( i=0; i < ni; i++ )
         {
             n->observation[i] = n->input[i];
         }
     } else {
+        // If so, use input from the input image
         for( i=0; i < ni; i++ )
         {
             n->observation[i] = framePtr[n->inputOffsets[i]];
@@ -42,16 +53,25 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
     for( i=0; i < nb; i++ )
     {
-        n->observation[i+ni] = 1 / (float) nb; //n->pBelief[i] * n->gamma;
+        // Ignore previous beliefs
+        n->observation[i+ni] = 1 / (float) nb;
+
+        // Include previous beliefs
+        // n->observation[i+ni] = n->pBelief[i] * n->gamma;
     }
 
     for( i=0; i < np; i++ )
     {
-        n->observation[i+ni+nb] = 1 / (float) np; // n->parent_pBelief[i] * n->lambda;
+        // Ignore parent's previous belief
+        n->observation[i+ni+nb] = 1 / (float) np;
+
+        // Include parent's previous belief
+        // n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
     }
 
     for( i=0; i < nc; i++ )
     {
+        // Apply context
         n->observation[i+ni+nb+np] = 0;
     }
 }
@@ -59,44 +79,75 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
 // CPU implementation of CalculateDistances kernel
 void CalculateDistances( Node *n, uint nIdx )
 {
+    // delta = difference between the input vector and a centroid
     float delta;
+    // sumEuc = the Euclidean distance between the input vector and a centroid
+    // sumMal = the Mahalanobis distance between the input vector and a centroid, taking the tightness of the cluster into account
     float sumEuc, sumMal;
 
+    // Get a node from the pointer to the list of nodes
     n = &n[nIdx];
 
+    // i = counter for loop through centroids
+    // j = counter for loop through
     uint i, j;
+
+    // Get the length of the node's (children's) input vector
     uint ni = n->ni;
+    // Get the number of centroids in the node
     uint nb = n->nb;
+    // Get the total length of the input vector
     uint ns = n->ns;
+    // Get the context (?)
     uint nc = n->nc;
 
+
+    // Get the sigma array depending on whether uniform or non-uniform destin is being used
     float * sigma = n->d->isUniform ? n->d->uf_sigma[n->layer] : n->sigma;
+    // Get the dynamic starvation factor array depending on whether uniform or non-uniform destin is being used
     float * starv = n->d->isUniform ? n->d->uf_starv[n->layer] : n->starv;
 
    // iterate over each belief
     for( i=0; i < n->nb; i++ )
     {
+        // Reset distances for the centroid that will be processed in this loop
         sumEuc = 0;
         sumMal = 0;
+
+        // mu contains the probabilities (or grayscales) of the centroids in this node
+        // bRow = start index of the probabilities (or grayscales) of the current centroid
         uint bRow = i*ns;
 
         // iterate over each state for belief
+        // Loop through the items in the vector, ignoring the context
         for( j=0; j < ns-nc; j++ )
         {
+            // mu contains the probabilities (or grayscales) of the centroids in this node
+
+            // Calculate the distance between the input (observation) and the centroid's current location
             delta = n->observation[j] - n->mu[bRow+j];
 
+            // Continuation of distance calculation
             delta *= delta;
+
+            // Reduce the distance by the starvation factor
             delta *= starv[i];
 
+            // Add the resulting distance to our Euclidean distance sum for this centroid
             sumEuc += delta;
+
+            // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
             sumMal += delta / sigma[bRow+j];
         }
 
+        // Dead code
         n->genObservation[i] = sumMal;
 
+        // Take the square root of the distance to finalize the distance calculation
         sumEuc = sqrt(sumEuc);
         sumMal = sqrt(sumMal);
 
+        // Calculate intermediate belief in the current centroid based on the distance between the centroid and the input vector data
         n->beliefEuc[i] = ( sumEuc < EPSILON ) ? 1 : (1 / sumEuc);
         n->beliefMal[i] = ( sumMal < EPSILON ) ? 1 : (1 / sumMal);
     }
@@ -105,94 +156,127 @@ void CalculateDistances( Node *n, uint nIdx )
 // CPU implementation of NormalizeBelief kernel
 void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 {
+    // Get a node from the pointer to the list of nodes
     n = &n[nIdx];
     
+    // Define variables for normalized Euclidean and Mahalanobis distance
     float normEuc = 0;
     float normMal = 0;
 
+    // Pick a value from the Euclidean beliefs to initialize the maxEucVal variable
     float maxEucVal = n->beliefEuc[0];
     uint maxEucIdx = 0;
     
+    // Set the index of the current max Euclidean belief value to the index of the value we just retrieved
     float maxMalVal = n->beliefMal[0];
     uint maxMalIdx = 0;
 
+    // Declare looping integer (C requirement)
     uint i;
 
+    // Loop through the centroids in this node
     for( i=0; i < n->nb; i++ )
     {
+        // Sum the beliefs to use for normalization later
         normEuc += n->beliefEuc[i];
         normMal += n->beliefMal[i];
 
+        // Check to see if the current Euclidean belief is greater than our current max
         if( n->beliefEuc[i] > maxEucVal )
         {
+            // If so, update our max Euclidean belief value and its index
             maxEucVal = n->beliefEuc[i];
             maxEucIdx = i;
         }
+        // Check to see if the current Mahalanobis belief is greater than our current max
         if( n->beliefMal[i] > maxMalVal )
         {
+            // If so, update our max Mahalanobis belief value and its index
             maxMalVal = n->beliefMal[i];
             maxMalIdx = i;
         }
     }
     
+    // Start the process of exaggerating the probability distribution using Boltzman's method
     float maxBoltzEuc = 0;
     float maxBoltzMal = 0;
+
+    // Check to see if we want to apply the Boltzman exaggeration method
     bool boltzman = n->d->doesBoltzman;
+
+
     // normalize beliefs to sum to 1
     for( i=0; i < n->nb; i++ )
     {
+        // If the sum of all beliefs is lower than EPSILON, calculate the belief probability for the
+        // current centroid as a constant part of the number of centroids. Else calculate it as a part of
+        // the sum of our beliefs.
         n->beliefEuc[i] = ( normEuc < EPSILON ) ? (1 / (float) n->nb) : (n->beliefEuc[i] / normEuc);
         n->beliefMal[i] = ( normMal < EPSILON ) ? (1 / (float) n->nb) : (n->beliefMal[i] / normMal);
 
+        // Check to see whether Boltzman should be applied
         if(boltzman){
-
-            // get maximum temp to normalize boltz normalization
+            // If so, check to see if the current Euclidean Boltzman belief is greater than our current max
             if( n->beliefEuc[i] * n->temp > maxBoltzEuc )
+                // If so, update our max Euclidean Boltzman value.
                 maxBoltzEuc = n->beliefEuc[i] * n->temp;
+
+            // Check to see if the current Mahalanobis Boltzman belief is greater than our current max
             if( n->beliefMal[i] * n->temp > maxBoltzMal )
+                // If so, update our max Mahalanobis Boltzman value.
                 maxBoltzMal = n->beliefMal[i] * n->temp;
         }else{
+            // Else use the non exaggerated belief value
             n->pBelief[i] = n->beliefMal[i];
         }
-
     }
+    // Check to see whether to apply Boltzman
     if(boltzman){
-        // boltzmann
+        // Prepare Euclidean and Mahalanobis belief value
         float boltzEuc = 0;
         float boltzMal = 0;
 
+        // Loop through the centroids
         for( i=0; i < n->nb; i++ )
         {
+            // Recalculate beliefs with inclusion of Bolzmanish stuff
             n->beliefEuc[i] = exp(n->temp * n->beliefEuc[i] - maxBoltzEuc);
             n->beliefMal[i] = exp(n->temp * n->beliefMal[i] - maxBoltzMal);
 
+            // Add the current belief to the totals
             boltzEuc += n->beliefEuc[i];
             boltzMal += n->beliefMal[i];
         }
 
+        // Loop through the centroids AGAIN
         for( i=0; i < n->nb; i++ )
         {
+            // Normalize the beliefs
             n->beliefEuc[i] /= boltzEuc;
             n->beliefMal[i] /= boltzMal;
 
+            // Set the belief to be used in the end
             n->pBelief[i] = n->beliefEuc[i];
         }
     }
 
+    // Set the winning centroid of the current node to the index of the centroid with the highest Euclidean belief value
     n->winner = maxEucIdx;
 
     //TODO: test that this works for non uniform
     if(n->d->isUniform){
 
-        long c =  ++n->d->uf_winCounts[n->layer][n->winner]; //used when averaging the delta vectors
+        // Add one to the current iteration's wincount of the winning centroid of the node's layer (since this centroid can be
+        // shared between multiple nodes in the same layer)
+        long c = ++(n->d->uf_winCounts[n->layer][n->winner]); //used when averaging the delta vectors
 
+        // For the first node that declares this centroid the winner update the persistent array of win counts.
         if( c == 1){//only increment this once even if multiple nodes pick this shared centroid
             n->d->uf_persistWinCounts[n->layer][n->winner]++;
         }
-
     }
 
-
+    // Todo: write useful comment here
     n->genWinner = maxMalIdx;
 }
 

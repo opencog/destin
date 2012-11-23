@@ -62,7 +62,8 @@ void  InitNode(                         // initialize a node.
                  uint,                  // input dimensionality (# input values)
                  uint,                  // parent belief dimensionality
                  uint,                  // number of classes
-                 uint,                  // ns = state dimensionality (number of inputs + number of beliefs) = ni +nb + np + nc
+                 uint,                  // ns = state dimensionality (number of inputs + number of previous beliefs + number of parent's previous beliefs)
+                                        // = ni + nb + np + nc
                  float,                 // starvation coefficient
                  float,                 // beta (sigma step size)
                  float,                 // lambda
