@@ -107,7 +107,7 @@ void CalculateDistances( Node *n, uint nIdx )
     // Get the dynamic starvation factor array depending on whether uniform or non-uniform destin is being used
     float * starv = n->d->isUniform ? n->d->uf_starv[n->layer] : n->starv;
 
-   // iterate over each belief
+    // iterate over each belief
     for( i=0; i < n->nb; i++ )
     {
         // Reset distances for the centroid that will be processed in this loop
@@ -124,10 +124,10 @@ void CalculateDistances( Node *n, uint nIdx )
         {
             // mu contains the probabilities (or grayscales) of the centroids in this node
 
-            // Calculate the distance between the input (observation) and the centroid's current location
+            // Calculate the difference between the input (observation) and the centroid's current location
             delta = n->observation[j] - n->mu[bRow+j];
 
-            // Continuation of distance calculation
+            // Start distance calculation
             delta *= delta;
 
             // Reduce the distance by the starvation factor
@@ -294,7 +294,7 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
     uint i;
 
     // gets the row offset for the mu/sigma matrices to update
-    uint winnerOffset = n->winner*n->ns;
+    uint winnerOffset = n->winner * n->ns;
 
     // the difference between an element of the observation and
     // an element of the mu matrix

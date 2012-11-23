@@ -31,6 +31,8 @@ private:
 	cv::Mat rescaled_frame;
 	//video after it has been resize and converted to greyscale
 	cv::Mat greyscaled_frame;
+    //video after it has been flip flipped
+    cv::Mat flipped_frame;
 
 	//the greyscaled_frame converted to a float array to be fed to DeSTIN
 	float * float_frame;
