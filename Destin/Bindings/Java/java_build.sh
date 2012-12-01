@@ -1,7 +1,7 @@
 
-cd ../
+cd ../../
 cmake . 
-cd JavaDestin
+cd Bindings/Java
 
 rm gen_src/javadestin/*
 make clean

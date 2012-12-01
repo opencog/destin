@@ -1,5 +1,5 @@
 #!/bin/sh
-destin_alt=`cd ../DavisDestin ; pwd`
+destin_alt=`cd ../../DavisDestin ; pwd`
 java_destin=`pwd`
 the_path="${destin_alt}:${java_destin}"
 

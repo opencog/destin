@@ -398,6 +398,7 @@ void FormulateBelief( Destin *d, float *image )
             if( d->layerMask[l] == 1 )
             {
                 // Calculate the required centroid movement
+                //TODO: merge CalculateDistances with CalcCentroidMovement
                 CalcCentroidMovement( d->nodes, d->inputLabel, n );
 
                 // Check if the network is uniform

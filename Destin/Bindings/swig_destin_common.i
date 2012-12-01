@@ -1,5 +1,5 @@
 
-%module(directors="1") DestModule 
+%module(directors="1") SWIG_MODULE_NAME 
 %{
 
 #include "macros.h"
@@ -31,14 +31,12 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 /* lets you use java strings easily with c++ strings */
 %include "std_string.i"
 
-/* wrap c++ int [] parameter with java int [] */
-%include "arrays_java.i"
-
 /* be able to use INetwork as an abstract interface in Java */
 %feature("director") INetwork; 
 %include "INetwork.h"
 
 /* the other classes to generate wrappers for */
+%include "destin.h"
 %include "VideoSource.h"
 %include "Transporter.h"
 %include "DestinNetworkAlt.h"
