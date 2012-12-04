@@ -68,3 +68,12 @@ bool VideoSource::grab() {
         return false;
     }
 }
+
+
+bool VideoSource::rewind(){
+     if(cap->get(CV_CAP_PROP_FRAME_COUNT) == 0){
+         return true; //already at the begining
+     }
+     cap->set(CV_CAP_PROP_POS_FRAMES,0);
+     return true;
+}

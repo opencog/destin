@@ -151,13 +151,18 @@ public:
 	void setDoesEdgeDetection(bool on_off){
 		edge_detection = on_off;
 	}
-	/*
+    /**
 	 * grab - grabs a frame from the video source.
 	 * Returns true if it could retrieve one, otherwize returns false
 	 *
 	 * Ment to be used in a while loop to keep capturing until the end of the video.
 	 */
 	bool grab();
+
+    /** rewinds the video
+     *  @return - true if it did rewind false otherwise
+     */
+    bool rewind();
 };
 
 #endif /* VIDEOSOURCE_H_ */
