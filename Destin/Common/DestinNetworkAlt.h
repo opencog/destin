@@ -9,8 +9,13 @@
 #define DESTINNETWORKALT_H_
 
 #include <stdexcept>
+#include <exception>
 #include <vector>
 #include <iostream>
+#include <math.h>
+
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 #include "INetwork.h"
 
@@ -20,7 +25,6 @@ extern "C" {
 }
 
 #include "DestinIterationFinishedCallback.h"
-#include <exception>
 
 enum SupportedImageWidths {
     W4 = 4,     //1
@@ -49,6 +53,9 @@ private:
                           //centroids then the belief distribution doesn't change.
                           //Higher temperature makes the belief more winner
                           //take all, lower temperature makes it more uniform.
+
+    cv::Mat winningGrid;
+    cv::Mat winningGridLarge;
 
     /**
      * initTemperatures
@@ -220,6 +227,61 @@ public:
             printf("\n");
         }
     }
+
+    /** Prints a grid of winning centroid numbers for a layer.
+      * The grid is the size of the layer in nodes. Each
+      * node has a winning centroid number.
+      */
+    void printWinningCentroidGrid(int layer){
+        uint width = (uint)sqrt(destin->layerSize[layer]);
+        uint nidx = 0;
+        Node * nodelist = GetNodeFromDestin(destin, layer, 0, 0);
+        printf("Winning centroids grid - layer %i:\n", layer);
+        for( int r  = 0 ; r < width ; r++){
+            for(int c = 0 ; c < width ; c++ , nidx++){
+                printf("%i ", nodelist[nidx].winner);
+            }
+            printf("\n");
+        }
+    }
+
+    /** Shows an image representing winning centroids
+      * Each pixel represents a node where the grayscale color is determined
+      * by the node's winning_centroid_index / # of centroids.
+      * @param layer = layer to show
+      * @param zoom = scales the image by this factor
+      */
+    void imageWinningCentroidGrid(int layer, int zoom = 8){
+        uint width = (uint)sqrt(destin->layerSize[layer]);
+
+        //initialize or create new grid if needed
+        if(winningGrid.rows != width || winningGrid.cols != width){
+            winningGrid = cv::Mat(width, width, CV_32FC1);
+        }
+        int nb = destin->nb[layer];
+        Node * nodes = GetNodeFromDestin(destin, layer, 0,0);
+        float * data = (float *)winningGrid.data;
+        for(int n = 0 ; n < destin->layerSize[layer] ; n++){
+            data[n]  = (float)nodes[n].winner / (float) nb;
+        }
+        cv::resize(winningGrid,winningGridLarge, cv::Size(), zoom, zoom, cv::INTER_NEAREST);
+        cv::imshow("Winning Centroid Grid", winningGridLarge);
+    }
+
+    /** Saves the current destin network to file
+     * Includes centroid locations, and current and previous beliefs.
+     */
+    void save(char * fileName){
+        SaveDestin(destin, fileName);
+    }
+
+    /** Loads a destin structure from the given file
+     * Destroy the current destin structure before loading the new one.
+     */
+    void load(char * fileName){
+        destin = LoadDestin(destin, fileName);
+    }
 };
+
 
 #endif /* DESTINNETWORKALT_H_ */
