@@ -1,1 +1,8 @@
-ADD_LIBRARY( common SHARED VideoSource DestinNetworkAlt.h DestinIterationFinishedCallback.h Transporter.h INetwork.h)
+ADD_LIBRARY( common SHARED
+    DestinIterationFinishedCallback.h
+    DestinNetworkAlt.h
+    GenerativeVisualizer
+    INetwork.h
+    Transporter.h
+    VideoSource
+)
