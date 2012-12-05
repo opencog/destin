@@ -15,6 +15,7 @@
 %}
 
 %include "macros.h"
+typedef unsigned int uint;
 /* 
 turn on director wrapping callback, so c++ code can call methods defined in the target language
 See http://www.swig.org/Doc2.0/SWIGDocumentation.html#Java_directors
@@ -24,11 +25,6 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %feature("director") DestinIterationFinishedCallback;
 %include "DestinIterationFinishedCallback.h"
 
-/* carrays.i so you can use a c++ pointer like an array */
-%include "carrays.i" 
-%array_class(int, SWIG_IntArray);
-%array_class(float, SWIG_FloatArray);
-%array_class(uint, SWIG_UInt_Array);
 
 /* lets you use java strings easily with c++ strings */
 %include "std_string.i"
@@ -39,8 +35,18 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 
 /* the other classes to generate wrappers for */
 %include "destin.h"
+%include "node.h"
 %include "VideoSource.h"
 %include "Transporter.h"
 %include "DestinNetworkAlt.h"
 %include "GenerativeVisualizer.h"
+%include "learn_strats.h"
 
+/* carrays.i so you can use a c++ pointer like an array */
+%include "carrays.i" 
+%array_class(int, SWIG_IntArray);
+%array_class(float, SWIG_FloatArray);
+%array_functions(float *, SWIG_Float_p_Array);
+%array_class(uint, SWIG_UInt_Array);
+%array_functions(Node *, SWIG_Node_p_Array);
+%array_class(Node, SWIG_NodeArray);
