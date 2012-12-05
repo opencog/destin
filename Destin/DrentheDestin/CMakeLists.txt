@@ -1,5 +1,5 @@
 #The name of the project
-PROJECT(DeSTIN_CUDA)
+PROJECT(DretheDestin)
 
 #The CMake Minimum version that is required. The FindCUDA script
 #is distributed since version 2.8

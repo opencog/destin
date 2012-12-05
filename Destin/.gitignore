@@ -22,3 +22,5 @@ Makefile
 *.swp
 tags
 *~
+CMakeLists.txt.user
+Destin.cbp

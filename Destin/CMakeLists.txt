@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
+
+PROJECT(Destin)
 # uncomment to be in Release mode
 SET(CMAKE_BUILD_TYPE Release)
  
