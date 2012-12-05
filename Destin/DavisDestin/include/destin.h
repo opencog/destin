@@ -145,6 +145,13 @@ struct Node * GetNodeFromDestin(
                         uint c          // column
                         );
 
+// grab a node at a particular layer, and node index
+struct Node * GetNodeFromDestinI(
+                        Destin *d,      // pointer to destin object
+                        uint l,         // layer
+                        uint nIdx       // node index
+                        );
+
 //resets sharedCentroidsDidWin vector for each layer
 void Uniform_ResetStats(
                             Destin *

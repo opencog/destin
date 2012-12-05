@@ -364,8 +364,14 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
 void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     uint c, s, ns;
     float diff, learnRate, dt;
+
+    //iterate over shared centroids
     for(c = 0 ; c < d->nb[layer]; c++){
+
+        //use learning strategy function pointer to get the learning rate
         learnRate = d->centLearnStratFunc(d, NULL, layer, c);
+
+        //get the first node of the current layers
         Node * n = GetNodeFromDestin(d, layer, 0,0);
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){

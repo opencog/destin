@@ -418,7 +418,7 @@ void FormulateBelief( Destin *d, float *image )
         // Check if the network is uniform and if centroids should be updated
         if(d->isUniform && d->layerMask[l] == 1  ){
 
-            // Loop through the nods in the current layer
+            // Loop through the nodes in the current layer
             for(n = n_start ; n < n_end ; n++){
                 // Average shared centroid's movements
                 Uniform_AverageDeltas(d->nodes, n);
@@ -891,7 +891,7 @@ void DisplayLayerFeatures( Destin *d, int layer, int node_start, int nodes )
 
     for( n=node_start; n < node_start + ncount; n++ )
     {
-        node = &d->nodes[d->nodeRef[layer][n]];
+        node = GetNodeFromDestinI(d, layer, n);
         for( b=0; b < node->nb; b++ )
         {
             for( u=0, i=0; i < sqrtPatch; i++ )
@@ -1019,6 +1019,12 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
     // grab the node index
     uint nIdx = d->nodeRef[l][r*layerSizeSqRoot+c];
     return &d->nodes[nIdx];
+}
+
+// grab a node at a particular layer, node index
+struct Node * GetNodeFromDestinI( Destin *d, uint l, uint nIdx)
+{
+    return &d->nodes[d->nodeRef[l][nIdx]];
 }
 
 void Uniform_ResetStats(Destin * d){
