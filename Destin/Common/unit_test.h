@@ -326,4 +326,11 @@ bool _assertNoNans(float * array, int length, int line){
     }\
 }\
 
+/** force a failure
+  */
+#define testFailed(message){\
+    printf("test FAILED, line %i, message: %s", __LINE__, #message "\n" );\
+    return 1;\
+}\
+
 #endif
