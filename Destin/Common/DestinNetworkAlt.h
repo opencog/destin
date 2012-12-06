@@ -251,7 +251,7 @@ public:
       * @param layer = layer to show
       * @param zoom = scales the image by this factor
       */
-    void imageWinningCentroidGrid(int layer, int zoom = 8){
+    void imageWinningCentroidGrid(int layer, int zoom = 8, char * window_name="Winning Grid"){
         uint width = (uint)sqrt(destin->layerSize[layer]);
 
         //initialize or create new grid if needed
@@ -265,7 +265,7 @@ public:
             data[n]  = (float)nodes[n].winner / (float) nb;
         }
         cv::resize(winningGrid,winningGridLarge, cv::Size(), zoom, zoom, cv::INTER_NEAREST);
-        cv::imshow("Winning Centroid Grid", winningGridLarge);
+        cv::imshow(window_name, winningGridLarge);
     }
 
     /** Saves the current destin network to file
