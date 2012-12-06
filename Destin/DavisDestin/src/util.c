@@ -104,6 +104,45 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
+void SetupNodeRef(Destin * d){
+    //setup book keeping to be able to look up nodes by row col and layer
+
+    uint layerSizeSqRoot, layerSize, i, l, m, n;
+    MALLOC( d->nodeRef, int *, d->nLayers );
+    int ndx;
+    // set up layer/row/col references for nodes
+    for( i=0, l=0; l < d->nLayers - 1; l++ )
+    {
+        layerSize = d->layerSize[l];
+        layerSizeSqRoot = (uint) sqrt( layerSize );
+
+        MALLOC( d->nodeRef[l], int, layerSize );
+
+        for( m=0; m < layerSizeSqRoot; m+=2 )
+        {
+            for( n=0; n < layerSizeSqRoot; n+=2, i+=4 )
+            {
+                ndx = m   * layerSizeSqRoot + n ;
+                d->nodeRef[l][  ndx  ] = i;
+                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
+                ndx = m   * layerSizeSqRoot + n+1;
+                d->nodeRef[l][ ndx ] = i+1;
+                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
+                ndx = (m+1) * layerSizeSqRoot + n;
+                d->nodeRef[l][ndx] = i+2;
+                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
+                ndx = (m+1) * layerSizeSqRoot + n+1;
+                d->nodeRef[l][ndx] = i+3;
+                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
+            }
+        }
+    }
+
+    // set up layer/row/col reference for top node
+    MALLOC( d->nodeRef[d->nLayers - 1], int, 1 );
+    d->nodeRef[l][0] = d->nNodes - 1;
+}
+
 Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, bool doesBoltzman )
 {
     uint nNodes, nInputPipeline;
@@ -271,6 +310,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         }
     }
 
+
+    SetupNodeRef(d);
+
     uint np = nl > 1 ? nb[1] : 0; //allow 1 layer 1 node networks for testing
     float * sharedCentroids;
 
@@ -403,36 +445,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->maxNs = maxNs;
 
 
-    //setup book keeping to be able to look up nodes by row col and layer
-
-    int layerSize;
-    MALLOC( d->nodeRef, int *, d->nLayers );
-
-    // set up layer/row/col references for nodes
-    for( i=0, l=0; l < d->nLayers - 1; l++ )
-    {
-        layerSize = d->layerSize[l];
-        layerSizeSqRoot = (uint) sqrt( layerSize );
-
-        MALLOC( d->nodeRef[l], int, layerSize );
-
-        for( m=0; m < layerSizeSqRoot; m+=2 )
-        {
-            for( n=0; n < layerSizeSqRoot; n+=2, i+=4 )
-            {
-                d->nodeRef[l][  m   * layerSizeSqRoot + n  ] = i;
-                d->nodeRef[l][  m   * layerSizeSqRoot + n+1] = i+1;
-                d->nodeRef[l][(m+1) * layerSizeSqRoot + n  ] = i+2;
-                d->nodeRef[l][(m+1) * layerSizeSqRoot + n+1] = i+3;
-            }
-        }
-    }
-
-    // set up layer/row/col reference for top node
-    MALLOC( d->nodeRef[d->nLayers - 1], int, 1 );
-    d->nodeRef[l][0] = d->nNodes - 1;
-
-    
 
     for( i=0; i < nInputNodes; i++ )
     {
