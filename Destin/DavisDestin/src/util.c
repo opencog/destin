@@ -707,6 +707,7 @@ void InitNode
 
     // Initialize node parameters
     node->d             = d;
+    node->nIdx          = nodeIdx;
     node->nb            = nb;
     node->ni            = ni;
     node->np            = np;
