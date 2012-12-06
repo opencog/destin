@@ -268,6 +268,38 @@ public:
         cv::imshow(window_name, winningGridLarge);
     }
 
+    void printNodeObservation(int layer, int row, int col){
+        Node * n = getNode(layer, row, col);
+        printf("Node Observation: layer %i, row %i, col: %i\n", layer, row, col);
+        printf("input: ");
+        int i = 0;
+        for(int c = 0 ; c < n->ni ; c++ ){
+            printf("%f ", n->observation[i]);
+            i++;
+        }
+        printf("\nPrevious Belief: ");
+        for(int c  = 0 ; c < n->nb ; c++ ){
+            printf("%f ", n->observation[i]);
+            i++;
+        }
+        printf("\nParent prev belief: ");
+        for(int c  = 0 ; c < n->np ; c++ ){
+            printf("%f ", n->observation[i]);
+            i++;
+        }
+        printf("\n");
+    }
+
+    void printNodeBeliefs(int layer, int row, int col){
+        Node * n = getNode(layer, row, col);
+        printf("Node beliefs: layer%i, row %i, col: %i\n", layer, row, col);
+        for(int i = 0; i < n->nb ; i++){
+            printf("%f ", n->pBelief[i]);
+        }
+        printf("\n");
+
+    }
+
     /** Saves the current destin network to file
      * Includes centroid locations, and current and previous beliefs.
      */
