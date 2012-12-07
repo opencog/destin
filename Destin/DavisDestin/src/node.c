@@ -34,12 +34,12 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     nc = n->nc;
 
     // Check to see if bottom layer image input data is available
-    if( n->inputOffsets == NULL )
+    if( n->layer > 0 )
     {
         // If not, use input from the child nodes
         for( i=0; i < ni; i++ )
         {
-            n->observation[i] = n->input[i];
+            n->observation[i] = n->input[n->inputOffsets[i]];
         }
     } else {
         // If so, use input from the input image
