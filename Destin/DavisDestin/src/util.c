@@ -340,44 +340,8 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     for( i=0; i < nInputNodes; i++ )
     {
         MALLOC(inputOffsets[i], uint, ni);
+        CalcNodeInputOffsets(d, 0, i, 0, (uint)sqrt(ni), inputOffsets[i]);
     }
-
-    // get integer sq root of layersize[0]
-    uint layerSizeSqRoot = (uint) sqrt( d->layerSize[0] );
-
-    // get integer sq root of ni for lowest layer.  asssumes input is a square.
-    uint inputSizeSqRoot = (uint) sqrt( ni );
-
-    // get column size of input image (assuming it is square)
-    uint nCols = (uint) sqrt( d->layerSize[0] * ni );
-
-    // calculate offsets.
-    uint a, b, innerIdx, bias;
-    
-    // iterate through rows... (nodes)
-    for( i=0, m=0; m < layerSizeSqRoot; m+=2 )
-    {
-        // iterate through columns... (nodes)
-        for( n=0; n < layerSizeSqRoot; n+=2, i+=4 )
-        {
-            // iterate through rows... (inputs)
-            for( innerIdx = 0, a=0; a < inputSizeSqRoot; a++ )
-            {
-                // iterate through columns... (inputs)
-                for( b=0; b < inputSizeSqRoot; b++, innerIdx++ )
-                {
-                    bias = m*nCols*inputSizeSqRoot + n*inputSizeSqRoot;
-                    inputOffsets[i+0][innerIdx] = bias + a*nCols+b;
-                    if(nInputNodes > 1){ //case for 1 node 1 layer network
-                        inputOffsets[i+1][innerIdx] = bias + a*nCols+b+inputSizeSqRoot;
-                        inputOffsets[i+2][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b;
-                        inputOffsets[i+3][innerIdx] = bias + (a+inputSizeSqRoot)*nCols+b+inputSizeSqRoot;
-                    }
-                }
-            }
-        }
-    }
-
 
     SetupNodeRef(d);
 
