@@ -6,6 +6,31 @@
 #include <float.h>
 #include <memory.h>
 
+
+Destin * makeDestin(const int layers){
+    if(layers > 8){
+        printf("can't make more than 8 layers!\n");
+    }
+    uint ni = 16; //input layer nodes cluster on 4 pixel input.
+    uint nl = layers;
+
+
+    uint nb [] = {2,2,2,2,2,2,2,2}; //centroids per layer
+    uint nc = 0;
+    float beta = 0.001;
+    float lambda = 0.10;
+    float gamma = 0.10;
+
+    float temperature [] = {7.5, 8.5, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0};
+    float starvCoef = 0.12;
+    uint nMovements = 0;
+    bool doesBoltzman  = true;
+    bool isUniform = true;
+
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
+    return d;
+}
+
 int testInit(){
 
     uint ni, nl;
@@ -30,6 +55,7 @@ int testInit(){
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
 
     Node * n = &d->nodes[0];
+
     assertTrue(n->ni == 16);
     assertFloatEquals(.01, image[n->inputOffsets[0]], 1e-8);
     assertFloatEquals(.02, image[n->inputOffsets[1]], 1e-8);
@@ -38,6 +64,7 @@ int testInit(){
 
     printf("inited non uniform\n");
     DestroyDestin(d);
+
     printf("destroyed non uniform\n");
     
     //test uniform destin init
@@ -655,11 +682,169 @@ int testGenerateInputFromBelief(){
     return 0;
 }
 
+int testGetNode(){
+    uint ni = 1; //input layer nodes cluster on 4 pixel input.
+    uint nl = 4;
+    uint nb [] = {2,2,2,2}; //centroids per layer
+    uint nc = 0;
+    float beta = 0.001;
+    float lambda = 0.10;
+    float gamma = 0.10;
+    float temperature [] = {7.5, 8.5, 4.0,3.3};
+    float starvCoef = 0.12;
+    uint nMovements = 0;
+    bool doesBoltzman  = true;
+
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, false, doesBoltzman);
+
+
+
+    //set node outputs
+    int i;
+    for(i = 0; i < d->nInputPipeline; i++){
+        d->belief[i] = i;
+    }
+
+    // copy node's belief to parent node's input
+    memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
+    float image[] = {
+        0.1, 0.2, 0.3, 0.4,
+        0.11, 0.21, 0.31, 0.41,
+        0.12, 0.22, 0.32, 0.42,
+        0.13, 0.23, 0.33, 0.43,
+    };
+    //FormulateBelief(d, image );
+    //FormulateBelief(d, image );
+    //defines the expected mapping between parents and children
+    int matches [] = {
+      //pin   cout cr, cc, pr,pc,player
+        0,    0,  0,  0,  0,  0, 1,
+        1,    1,  0,  0,  0,  0, 1,
+        2,    0,  0,  1,  0,  0, 1,
+        3,    1,  0,  1,  0,  0, 1,
+        4,    0,  1,  0,  0,  0, 1,
+        5,    1,  1,  0,  0,  0, 1,
+        6,    0,  1,  1,  0,  0, 1,
+        7,    1,  1,  1,  0,  0, 1,
+//2nd parent node
+        0,    0,  0,  2,  0,  1, 1,
+        1,    1,  0,  2,  0,  1, 1,
+        2,    0,  0,  3,  0,  1, 1,
+        3,    1,  0,  3,  0,  1, 1,
+        4,    0,  1,  2,  0,  1, 1,
+        5,    1,  1,  2,  0,  1, 1,
+        6,    0,  1,  3,  0,  1, 1,
+        7,    1,  1,  3,  0,  1, 1,
+//3nd parent node
+        0,    0,  2,  0,  1,  0, 1,
+        1,    1,  2,  0,  1,  0, 1,
+        2,    0,  2,  1,  1,  0, 1,
+        3,    1,  2,  1,  1,  0, 1,
+        4,    0,  3,  0,  1,  0, 1,
+        5,    1,  3,  0,  1,  0, 1,
+        6,    0,  3,  1,  1,  0, 1,
+        7,    1,  3,  1,  1,  0, 1,
+//4nd parent node
+        0,    0,  2,  2,  1,  1, 1,
+        1,    1,  2,  2,  1,  1, 1,
+        2,    0,  2,  3,  1,  1, 1,
+        3,    1,  2,  3,  1,  1, 1,
+        4,    0,  3,  2,  1,  1, 1,
+        5,    1,  3,  2,  1,  1, 1,
+        6,    0,  3,  3,  1,  1, 1,
+        7,    1,  3,  3,  1,  1, 1,
+//top layer parent node
+        0,    0,  0,  0,  0,  0, 2,
+        1,    1,  0,  0,  0,  0, 2,
+        2,    0,  0,  1,  0,  0, 2,
+        3,    1,  0,  1,  0,  0, 2,
+        4,    0,  1,  0,  0,  0, 2,
+        5,    1,  1,  0,  0,  0, 2,
+        6,    0,  1,  1,  0,  0, 2,
+        7,    1,  1,  1,  0,  0, 2,
+    };
+    int m;
+    for(m = 0; m < 40 ; m++){
+        printf("m: %i\n", m);
+        int rs = 7;
+        int pi = matches[m*rs+0];//parent input element
+        int co = matches[m*rs+1];//child output belief element
+        int cr = matches[m*rs+2];//child row
+        int cc = matches[m*rs+3];//child col
+        int pr = matches[m*rs+4];//parent row
+        int pc = matches[m*rs+5];//parent layer
+        int pl = matches[m*rs+6];//parent layer
+        Node * parent_node = GetNodeFromDestin(d, pl, pr, pc);
+        assertFloatEquals(parent_node->input[pi], GetNodeFromDestin(d, pl - 1,cr, cc)->pBelief[co], 1e-12);
+    }
+
+
+    float * obs = d->nodes[0].observation;
+    int l;
+    //try to find if there are overlapping pointers because it looks li
+    for(l = 0; l < nl ; l++){
+        //for(n = 0; n < d->layerSize[l]; n++){
+
+        //}
+    }
+
+    DestroyDestin(d);
+    return 0;
+}
+
+
+
+int test8Layers(){
+    Destin * d = makeDestin(8);
+
+    assertIntEquals(43690, d->nBeliefs);
+    assertIntEquals(43688, d->nInputPipeline);
+    assertIntEquals(16384, d->layerSize[0]);
+
+    assertIntEquals(16384, GetNodeFromDestin(d, 1, 0, 0)->nIdx);
+    assertIntEquals(20480, GetNodeFromDestin(d, 2, 0, 0)->nIdx);
+    assertIntEquals(21504, GetNodeFromDestin(d, 3, 0, 0)->nIdx);
+    assertIntEquals(21844, GetNodeFromDestin(d, 7, 0, 0)->nIdx);
+
+    DestroyDestin(d);
+    return 0;
+}
+
+
+int testInputOffsets(){
+    Destin * d = makeDestin(4);
+
+
+    assertIntEquals(2, GetNodeFromDestin(d, 0, 0, 2)->nIdx);
+    assertIntEquals(44, GetNodeFromDestin(d, 0, 5, 4)->nIdx);
+    assertIntEquals(64, GetNodeFromDestin(d, 1, 0, 0)->nIdx);
+
+    //spot check some parent nodes in layer 1 that they have the right input offsets to their child nodes
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 0)->inputOffsets, 8, 0, 1, 2, 3, 16, 17, 18, 19);
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 2)->inputOffsets, 8, 8, 9, 10, 11, 24, 25, 26, 27); //TODO: fix these tests
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 3, 2)->inputOffsets, 8, 104, 105, 106, 107, 120, 121, 122, 123);
+
+    //same but for layer 2
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 0, 0)->inputOffsets, 8, 128, 129, 130, 131, 136, 137, 138, 139);
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 0, 1)->inputOffsets, 8, 132, 133, 134, 135, 140, 141, 142, 143);
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 1, 0)->inputOffsets, 8, 144, 145, 146, 147, 152, 153, 154, 155);
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 1, 1)->inputOffsets, 8, 148, 149, 150, 151, 156, 157, 158, 159);
+
+    //same but for the top layerr
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 3, 0, 0)->inputOffsets, 8, 160, 161, 162, 163, 164, 165, 166, 167);
+
+    DestroyDestin(d);
+
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
     RUN(testVarArgs);
+
     RUN(testInit);
+    RUN(testInputOffsets);
     RUN(testFormulateNotCrash);
     RUN(testForumateStages);
     RUN(testUniform);
@@ -668,5 +853,15 @@ int main(int argc, char ** argv ){
     RUN(testSaveDestin2);
     RUN(testLoadFromConfig);
     RUN(testGenerateInputFromBelief);
+
+    RUN(test8Layers);
+
+    //RUN(testGetNode);
+
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
+    if(TEST_HAS_FAILURES){
+        return 1;
+    }
+    return 0;
 }
+
