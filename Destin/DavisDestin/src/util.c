@@ -157,7 +157,7 @@ void CalcNodeInputOffsets(
     Destin * d,
     uint layer,
     uint layer_node_id,
-    uint layer_offset,
+    uint child_layer_offset,
     uint child_input_region_width, //width of the input region in pixels (when layer = 0) or nodes ( for upper layers)
     uint * inputOffsets_out){
 
@@ -197,7 +197,7 @@ void CalcNodeInputOffsets(
     i = 0;
     for(child_region_row = 0 ;child_region_row < cirw; child_region_row++){
         for(child_region_col = 0 ; child_region_col < cirw; child_region_col++){
-            cos[i] = layer_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
+            cos[i] = child_layer_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
             i++;
         }
     }
