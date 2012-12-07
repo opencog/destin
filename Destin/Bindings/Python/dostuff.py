@@ -130,12 +130,11 @@ def slowFreeze(start_layer, end_layer, frames_between):
         freezeLayer(l)
 
 def the_callback():
-    dn.imageWinningCentroidGrid(0, 4, "winning centroids layer 0")
-    dn.imageWinningCentroidGrid(1, 4, "winning centroids layer 1")
-    dn.imageWinningCentroidGrid(2, 4, "winning centroids layer 2")
-    #dn.imageWinningCentroidGrid(3, 16, "winning layer 3")
-    #dn.imageWinningCentroidGrid(4, 16, "winning layer 4")
-    #dn.imageWinningCentroidGrid(5, 16, "winning layer 5")
+    zoom = 2
+    for i in range(8):
+        dn.imageWinningCentroidGrid(i, zoom, "Layer " + str(i))
+        zoom*=2
+        
     dn.printBeliefGraph(top_layer, 0, 0)
     freezeTopCentroidsExcept(lucky_centroid)
     
