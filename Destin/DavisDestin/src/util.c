@@ -143,6 +143,38 @@ void SetupNodeRef(Destin * d){
     d->nodeRef[l][0] = d->nNodes - 1;
 }
 
+void CalcNodeInputOffsets(Destin * d, int layer, int layer_node_id, int layer_offset, uint * inputOffsets_out){
+    uint    pr, //parent row
+            pc, //parent col
+            cr, //child row
+            cc, //child col
+            clnb = d->nb[layer - 1],//child layer nb
+            clnw,//child layer node width
+            plw = (uint)sqrt(d->layerSize[layer]), //parent layer width
+            i, j, k;//parent layer width
+
+    clnw = plw * 2;
+    pr = layer_node_id / plw;
+    pc = layer_node_id % plw;
+
+    cr = pr * 2;
+    cc = pc * 2;
+    uint cos[4]; //child output start ( start of its belief output vector)
+    cos[0] = layer_offset + clnb * ( (cr + 0) * clnw + (cc + 0) );
+    cos[1] = layer_offset + clnb * ( (cr + 0) * clnw + (cc + 1) );
+    cos[2] = layer_offset + clnb * ( (cr + 1) * clnw + (cc + 0) );
+    cos[3] = layer_offset + clnb * ( (cr + 1) * clnw + (cc + 1) );
+
+
+    k=0;
+    for(i = 0 ; i < 4 ; i++){
+        for(j = 0 ; j < clnb ; j++){
+            inputOffsets_out[k++] = cos[i] + j;
+        }
+    }
+
+}
+
 Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, bool doesBoltzman )
 {
     uint nNodes, nInputPipeline;
