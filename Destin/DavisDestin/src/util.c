@@ -143,31 +143,68 @@ void SetupNodeRef(Destin * d){
     d->nodeRef[l][0] = d->nNodes - 1;
 }
 
-void CalcNodeInputOffsets(Destin * d, int layer, int layer_node_id, int layer_offset, uint * inputOffsets_out){
+
+// allocate the input layer offsets.  each node gets an offset from
+// the frame it is presented with.  now computing it indirectly with
+// an array, but there's gotta be a closed-form way of getting the
+// input offset..
+//
+// **note** this is hard-coding a 4-to-1 reduction assuming visual
+// input (2d). we may want 2-to-1 reduction for audio input for
+// future research
+void CalcNodeInputOffsets(
+
+    Destin * d,
+    uint layer,
+    uint layer_node_id,
+    uint layer_offset,
+    uint child_input_region_width, //width of the input region in pixels (when layer = 0) or nodes ( for upper layers)
+    uint * inputOffsets_out){
+
+
+
     uint    pr, //parent row
             pc, //parent col
-            cr, //child row
-            cc, //child col
-            clnb = d->nb[layer - 1],//child layer nb
+            cr, //child row in the entire child layer ( or pixel row if input image)
+            cc, //child col in the entire child layer ( or pixel col if input image)
             clnw,//child layer node width
+            cirw = child_input_region_width,
+            clnb,//child layer nb ( size of output belief vector for each child node)
             plw = (uint)sqrt(d->layerSize[layer]), //parent layer width
             i, j, k;//parent layer width
 
-    clnw = plw * 2;
-    pr = layer_node_id / plw;
+    if(layer == 0){
+        // If its the input layer then pretend each pixel of the 4x4 input image( assuming ni = 16)
+        // is a node (in layer below layer 0) with nb = 1, then the nodes in
+        // layer 0 take in 4x4 prentend child nodes instead of just 2x2 nodes like in the upper layers
+        clnb = 1;
+        clnw = plw * cirw ; // Each layer 0 node takes in a square region of width 4 pretend nodes (i.e pixels)
+                            // so this is equal to the image width.
+    }else{
+        clnb = d->nb[layer - 1],//child layer nb
+        clnw = plw * cirw; //the width of the entire child layer in nodes
+    }
+
+    pr = layer_node_id / plw; // Convert nodeid into row, col coordinates
     pc = layer_node_id % plw;
 
-    cr = pr * 2;
-    cc = pc * 2;
-    uint cos[4]; //child output start ( start of its belief output vector)
-    cos[0] = layer_offset + clnb * ( (cr + 0) * clnw + (cc + 0) );
-    cos[1] = layer_offset + clnb * ( (cr + 0) * clnw + (cc + 1) );
-    cos[2] = layer_offset + clnb * ( (cr + 1) * clnw + (cc + 0) );
-    cos[3] = layer_offset + clnb * ( (cr + 1) * clnw + (cc + 1) );
+    cr = pr * cirw;
+    cc = pc * cirw;
+    uint cos[cirw * cirw]; // Child output start ( start of child node belief output vector)
+    uint child_region_row, // The row in the 4x4 or 2x2 input region
+         child_region_col; // The col in the 4x4 or 2x2 input region
+
+    i = 0;
+    for(child_region_row = 0 ;child_region_row < cirw; child_region_row++){
+        for(child_region_col = 0 ; child_region_col < cirw; child_region_col++){
+            cos[i] = layer_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
+            i++;
+        }
+    }
 
 
     k=0;
-    for(i = 0 ; i < 4 ; i++){
+    for(i = 0 ; i < cirw * cirw ; i++){
         for(j = 0 ; j < clnb ; j++){
             inputOffsets_out[k++] = cos[i] + j;
         }
