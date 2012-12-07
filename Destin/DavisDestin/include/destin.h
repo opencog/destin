@@ -30,7 +30,8 @@ typedef struct Destin {
 
     uint        * inputLabel;           // input label (used during supervised training)
     uint        * layerSize;            // size for each layer ( nodes per layer )
-    uint        * layerMask;
+    uint        * layerWidth;           // node width for each layer
+    uint        * layerMask;            // controls which layers are training. 1 = train, 0 = not train.
 
     CentroidLearnStrat   centLearnStrat;        // centroid learning strategy
     CentroidLearnStratFunc centLearnStratFunc;  // centroid learning strategy function pointer

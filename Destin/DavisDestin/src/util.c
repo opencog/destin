@@ -130,7 +130,7 @@ void CalcNodeInputOffsets(
             clnw,//child layer node width
             cirw = child_input_region_width,
             clnb,//child layer nb ( size of output belief vector for each child node)
-            plw = (uint)sqrt(d->layerSize[layer]), //parent layer width
+            plw = d->layerWidth[layer], //parent layer width
             i, j, k;//parent layer width
 
     if(layer == 0){
@@ -219,12 +219,14 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     // to allocate
 
     MALLOC(d->layerSize, uint, nl);
+    MALLOC(d->layerWidth, uint, nl);
 
     nNodes = 0;
     nBeliefs = 0;
     for( i=0, l=nl ; l != 0; l--, i++ )
     {
         d->layerSize[i] = 1 << 2*(l-1);
+        d->layerWidth[i] = (uint)sqrt(d->layerSize[i]);
 
         nNodes += d->layerSize[i];
         nBeliefs += d->layerSize[i] * nb[i];
@@ -463,7 +465,7 @@ void LinkParentBeliefToChildren( Destin *d )
     Node * parent_node;
 
     for(l = 0 ; l < d->nLayers - 1 ; l++){
-        child_layer_width = (uint) sqrt(d->layerSize[l]);
+        child_layer_width = d->layerWidth[l];
         for(cr = 0 ; cr < child_layer_width; cr++){
             pr = cr / 2;
             for(cc = 0; cc < child_layer_width ; cc++){
@@ -519,6 +521,7 @@ void DestroyDestin( Destin * d )
     FREE(d->inputPipeline);
     FREE(d->belief);
     FREE(d->layerSize);
+    FREE(d->layerWidth);
     
     FREE(d);
 }

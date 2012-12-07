@@ -1002,7 +1002,7 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
         return NULL;
     }
 
-    uint layerSizeSqRoot = (uint) sqrt( d->layerSize[l] );
+    uint layerSizeSqRoot = d->layerWidth[l] ;
 
     // check row bounds
     if( r >= layerSizeSqRoot )
