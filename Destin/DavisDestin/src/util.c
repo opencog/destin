@@ -104,45 +104,6 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
-void SetupNodeRef(Destin * d){
-    //setup book keeping to be able to look up nodes by row col and layer
-
-    uint layerSizeSqRoot, layerSize, i, l, m, n;
-    MALLOC( d->nodeRef, int *, d->nLayers );
-    int ndx;
-    // set up layer/row/col references for nodes
-    for( i=0, l=0; l < d->nLayers - 1; l++ )
-    {
-        layerSize = d->layerSize[l];
-        layerSizeSqRoot = (uint) sqrt( layerSize );
-
-        MALLOC( d->nodeRef[l], int, layerSize );
-
-        for( m=0; m < layerSizeSqRoot; m+=2 )
-        {
-            for( n=0; n < layerSizeSqRoot; n+=2, i+=4 )
-            {
-                ndx = m   * layerSizeSqRoot + n ;
-                d->nodeRef[l][  ndx  ] = i;
-                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
-                ndx = m   * layerSizeSqRoot + n+1;
-                d->nodeRef[l][ ndx ] = i+1;
-                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
-                ndx = (m+1) * layerSizeSqRoot + n;
-                d->nodeRef[l][ndx] = i+2;
-                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
-                ndx = (m+1) * layerSizeSqRoot + n+1;
-                d->nodeRef[l][ndx] = i+3;
-                //printf("layer: %i, nid: %i to %i\n",l, ndx, d->nodeRef[l][  ndx  ] );
-            }
-        }
-    }
-
-    // set up layer/row/col reference for top node
-    MALLOC( d->nodeRef[d->nLayers - 1], int, 1 );
-    d->nodeRef[l][0] = d->nNodes - 1;
-}
-
 // allocate the input layer offsets.  each node gets an offset from
 // the frame it is presented with.  now computing it indirectly with
 // an array, but there's gotta be a closed-form way of getting the
@@ -341,8 +302,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         MALLOC(inputOffsets[i], uint, ni);
         CalcNodeInputOffsets(d, 0, i, 0, (uint)sqrt(ni), inputOffsets[i]);
     }
-
-    SetupNodeRef(d);
 
     uint np = nl > 1 ? nb[1] : 0; //allow 1 layer 1 node networks for testing
     float * sharedCentroids;
@@ -561,12 +520,6 @@ void DestroyDestin( Destin * d )
     FREE(d->belief);
     FREE(d->layerSize);
     
-    for( i=0; i < d->nLayers; i++ )
-    {
-        FREE(d->nodeRef[i]);
-    }
-    FREE(d->nodeRef);
-
     FREE(d);
 }
 

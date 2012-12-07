@@ -32,8 +32,6 @@ typedef struct Destin {
     uint        * layerSize;            // size for each layer ( nodes per layer )
     uint        * layerMask;
 
-    int         ** nodeRef;             // allows easy indexing of nodes by layer, row, and col
-
     CentroidLearnStrat   centLearnStrat;        // centroid learning strategy
     CentroidLearnStratFunc centLearnStratFunc;  // centroid learning strategy function pointer
 
