@@ -10,6 +10,8 @@
 
 #define EPSILON     1e-8
 
+//#define RECURRENCE_ON
+
 // CPU implementation of GetObservation kernel
 void GetObservation( Node *n, float *framePtr, uint nIdx )
 {
@@ -53,20 +55,21 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
     for( i=0; i < nb; i++ )
     {
-        // Ignore previous beliefs
+        // Ignore previous beliefs      // Include previous beliefs
+#ifdef RECURRENCE_ON
+        n->observation[i+ni] = n->pBelief[i] * n->gamma;
+#else
         n->observation[i+ni] = 1 / (float) nb;
-
-        // Include previous beliefs
-        // n->observation[i+ni] = n->pBelief[i] * n->gamma;
+#endif
     }
 
     for( i=0; i < np; i++ )
     {
-        // Ignore parent's previous belief
+#ifdef RECURRENCE_ON
+        n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
+#else
         n->observation[i+ni+nb] = 1 / (float) np;
-
-        // Include parent's previous belief
-        // n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
+#endif
     }
 
     for( i=0; i < nc; i++ )
