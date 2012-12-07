@@ -818,10 +818,12 @@ int testInputOffsets(){
     assertIntEquals(2, GetNodeFromDestin(d, 0, 0, 2)->nIdx);
     assertIntEquals(44, GetNodeFromDestin(d, 0, 5, 4)->nIdx);
     assertIntEquals(64, GetNodeFromDestin(d, 1, 0, 0)->nIdx);
+    assertIntEquals(80, GetNodeFromDestin(d, 2, 0, 0)->nIdx);
 
     //spot check some parent nodes in layer 1 that they have the right input offsets to their child nodes
     assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 0)->inputOffsets, 8, 0, 1, 2, 3, 16, 17, 18, 19);
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 2)->inputOffsets, 8, 8, 9, 10, 11, 24, 25, 26, 27); //TODO: fix these tests
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 2)->inputOffsets, 8, 8, 9, 10, 11, 24, 25, 26, 27);
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 3, 1)->inputOffsets, 8, 100, 101, 102, 103, 116, 117, 118, 119);
     assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 3, 2)->inputOffsets, 8, 104, 105, 106, 107, 120, 121, 122, 123);
 
     //same but for layer 2
@@ -856,7 +858,7 @@ int main(int argc, char ** argv ){
 
     RUN(test8Layers);
 
-    //RUN(testGetNode);
+    //RUN(testGetNode); //TODO: fix and renable this test
 
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
     if(TEST_HAS_FAILURES){

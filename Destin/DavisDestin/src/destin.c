@@ -993,6 +993,8 @@ void ResetStarvTrace( Destin *d )
 // grab a node at a particular layer, row, and column
 struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
 {
+    //TODO: make this function faster
+
     // check layer bounds
     if( l >= d->nLayers )
     {
@@ -1017,14 +1019,18 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
     }
 
     // grab the node index
-    uint nIdx = d->nodeRef[l][r*layerSizeSqRoot+c];
-    return &d->nodes[nIdx];
+    return GetNodeFromDestinI(d,l, r * layerSizeSqRoot + c);
 }
 
 // grab a node at a particular layer, node index
 struct Node * GetNodeFromDestinI( Destin *d, uint l, uint nIdx)
 {
-    return &d->nodes[d->nodeRef[l][nIdx]];
+    uint offset= 0;
+    uint i;
+    for(i = 0 ; i < l ; i++){
+        offset += d->layerSize[i];
+    }
+    return &d->nodes[offset + nIdx];
 }
 
 void Uniform_ResetStats(Destin * d){

@@ -216,7 +216,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 {
     uint nNodes, nInputPipeline;
     uint i, l, nBeliefs, maxNb, maxNs;
-    size_t bOffset, iOffset;
+    size_t bOffset ;
 
 
     Destin *d;
@@ -316,7 +316,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     // init belief and input offsets (pointers to big belief and input chunks we
     // allocated above)
     bOffset = 0;
-    iOffset = 0;
 
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
@@ -448,7 +447,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         d->layerMask[i] = 0;
     }
 
+    uint child_layer_offset = 0;
     // initialize the rest of the network
+
     for( l=1; l < nl; l++ )
     {
         // update max belief
@@ -477,8 +478,13 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         }
 
 
+        uint * inputOffsets_temp;
+        MALLOC(inputOffsets_temp, uint, (nb[l - 1] * 4));
+
+        //iterate over nodes in this layer
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
+            CalcNodeInputOffsets(d, l, i, child_layer_offset, 2, inputOffsets_temp);
             InitNode(
                         n, 
                         d,
@@ -494,20 +500,24 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                         lambda,
                         temp[l],
                         &d->nodes[n], 
-                        NULL,
-                        &d->inputPipeline[iOffset],
+                        inputOffsets_temp,
+                        d->inputPipeline,
                         &d->belief[bOffset],
                         sharedCentroids
                     );
             MALLOC( d->nodes[n].children, Node *, 4 );
 
             // increment previous belief offset (input to next node)
-            iOffset += 4*nb[l-1];
+            //iOffset += 4*nb[l-1];
 
             // increment belief offset (so beliefs are mapped contiguously in memory)
             bOffset += nb[l];
-        }
-    }
+        }//next node
+
+        child_layer_offset += 4*nb[l-1] * d->layerSize[l];
+        FREE(inputOffsets_temp);
+
+    }//next layer
     
     LinkParentBeliefToChildren( d );
     d->maxNb = maxNb;

@@ -259,10 +259,9 @@ public:
             winningGrid = cv::Mat(width, width, CV_32FC1);
         }
         int nb = destin->nb[layer];
-        Node * nodes = GetNodeFromDestin(destin, layer, 0,0);
         float * data = (float *)winningGrid.data;
         for(int n = 0 ; n < destin->layerSize[layer] ; n++){
-            data[n]  = (float)nodes[n].winner / (float) nb;
+            data[n]  = (float)GetNodeFromDestinI(destin, layer, n)->winner / (float) nb;
         }
         cv::resize(winningGrid,winningGridLarge, cv::Size(), zoom, zoom, cv::INTER_NEAREST);
         cv::imshow(window_name, winningGridLarge);
