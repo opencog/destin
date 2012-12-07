@@ -31,9 +31,10 @@ typedef struct Destin {
     uint        * inputLabel;           // input label (used during supervised training)
     uint        * layerSize;            // size for each layer ( nodes per layer )
     uint        * layerWidth;           // node width for each layer
+    uint        * layerNodeOffsets;     // stores the node id of the first node of each layer
     uint        * layerMask;            // controls which layers are training. 1 = train, 0 = not train.
 
-    CentroidLearnStrat   centLearnStrat;        // centroid learning strategy
+    CentroidLearnStrat   centLearnStrat;        // centroid learning strategy enum
     CentroidLearnStratFunc centLearnStratFunc;  // centroid learning strategy function pointer
 
     bool        doesBoltzman;           // flag to determine if the  beliefs are applied with the boltzman distribution

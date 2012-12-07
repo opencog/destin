@@ -1002,7 +1002,7 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
         return NULL;
     }
 
-    uint layerSizeSqRoot = d->layerWidth[l] ;
+    uint layerSizeSqRoot = d->layerWidth[l];
 
     // check row bounds
     if( r >= layerSizeSqRoot )
@@ -1025,12 +1025,7 @@ struct Node * GetNodeFromDestin( Destin *d, uint l, uint r, uint c )
 // grab a node at a particular layer, node index
 struct Node * GetNodeFromDestinI( Destin *d, uint l, uint nIdx)
 {
-    uint offset= 0;
-    uint i;
-    for(i = 0 ; i < l ; i++){
-        offset += d->layerSize[i];
-    }
-    return &d->nodes[offset + nIdx];
+    return &d->nodes[d->layerNodeOffsets[l] + nIdx];
 }
 
 void Uniform_ResetStats(Destin * d){

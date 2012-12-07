@@ -801,6 +801,12 @@ int test8Layers(){
     assertIntEquals(43688, d->nInputPipeline);
     assertIntEquals(16384, d->layerSize[0]);
 
+    assertIntEquals(0, d->layerNodeOffsets[0]);
+    assertIntEquals(16384, d->layerNodeOffsets[1]);
+    assertIntEquals(20480, d->layerNodeOffsets[2]);
+    assertIntEquals(21504, d->layerNodeOffsets[3]);
+    assertIntEquals(21844, d->layerNodeOffsets[7]);
+
     assertIntEquals(16384, GetNodeFromDestin(d, 1, 0, 0)->nIdx);
     assertIntEquals(20480, GetNodeFromDestin(d, 2, 0, 0)->nIdx);
     assertIntEquals(21504, GetNodeFromDestin(d, 3, 0, 0)->nIdx);

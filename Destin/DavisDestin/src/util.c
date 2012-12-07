@@ -219,6 +219,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     // to allocate
 
     MALLOC(d->layerSize, uint, nl);
+    MALLOC(d->layerNodeOffsets, uint, nl);
     MALLOC(d->layerWidth, uint, nl);
 
     nNodes = 0;
@@ -227,8 +228,10 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     {
         d->layerSize[i] = 1 << 2*(l-1);
         d->layerWidth[i] = (uint)sqrt(d->layerSize[i]);
+        d->layerNodeOffsets[i] = nNodes;
 
         nNodes += d->layerSize[i];
+
         nBeliefs += d->layerSize[i] * nb[i];
     }
 
@@ -521,6 +524,7 @@ void DestroyDestin( Destin * d )
     FREE(d->inputPipeline);
     FREE(d->belief);
     FREE(d->layerSize);
+    FREE(d->layerNodeOffsets);
     FREE(d->layerWidth);
     
     FREE(d);
