@@ -92,7 +92,12 @@ public:
         callback = NULL;
         initTemperatures(layers, centroid_counts);
         temperatures = new float[layers];
-        bool doesBoltzman = true;
+        bool doesBoltzman = false;
+        float starv_coef = 0.05;
+        uint n_classes = 0;//doesn't look like its used
+        uint num_movements = 0; //this class does not use movements
+        bool isUniform = true; //wheter nodes in a layer share centroids
+
         //figure out how many layers are needed to support the given
         //image width.
         bool supported = false;
@@ -108,11 +113,6 @@ public:
         if (layers != l) {
             throw std::logic_error("Image width does not match the given number of layers.");
         }
-        uint n_classes = 0;//doesn't look like its used
-        float starv_coef = 0.05;
-
-        uint num_movements = 0; //this class does not use movements
-        bool isUniform = true; //wheter nodes in a layer share centroids
         destin = InitDestin(
                 input_dimensionality,
                 layers,
@@ -127,6 +127,9 @@ public:
                 isUniform,
                 doesBoltzman
          );
+
+
+        SetLearningStrat(destin, CLS_FIXED);
         ClearBeliefs(destin);
 
         isTraining(true);

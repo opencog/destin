@@ -57,15 +57,13 @@ int main(int argc, char ** argv){
 
     SupportedImageWidths siw = W512;
 
-    uint centroid_counts[]  = {9,8,7,7,5,4,3,2};
+    uint centroid_counts[]  = {2,6,6,4,4,4,4,2};
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts);
 
     Transporter t;
     vs.grab();//throw away first frame in case its garbage
     int frameCount = 0;
-
-    float * beliefs;
 
     while(vs.grab()){
 
@@ -78,7 +76,7 @@ int main(int argc, char ** argv){
 
         network->doDestin(t.getDest());
 
-        if(frameCount % 1 != 0 ){ //only print every 3rd so display is not so jumpy
+        if(frameCount % 2 != 0 ){ //only print every 3rd so display is not so jumpy
             printFPS(false);
             continue;
         }
