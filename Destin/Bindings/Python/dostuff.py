@@ -9,21 +9,40 @@ def array_to_pointer(arr):
     return ia
 
 
-
-centroids = [2,3,3,3,4,4,4,2]
+centroids = [3,3,3,3,4,4,4,2]
+#centroids = [2,2,2,2]
 layers = len(centroids)
 top_layer = layers - 1
-dn = pd.DestinNetworkAlt(pd.W512, layers, centroids)
+
+layers_to_enum = {
+        1: pd.W4,
+        2: pd.W8,
+        3: pd.W16,
+        4: pd.W32,
+        5: pd.W64,
+        6: pd.W128,
+        7: pd.W256,
+        8: pd.W512}
+
+img_width = layers_to_enum[layers]
+
+dn = pd.DestinNetworkAlt(img_width, layers, centroids)
 
 top_node = dn.getNode(top_layer, 0, 0)
 
 
 vs = pd.VideoSource(False, "hand.MOV")
+vs.setSize(img_width, img_width)
 vs.enableDisplayWindow()
 
 layerMask = pd.SWIG_UInt_Array_frompointer(dn.getNetwork().layerMask)
 
 #viz = pd.GenerativeVisualizer(dn.getNetwork())
+
+def cls():
+    import os
+    os.system('clear')
+    
 
 def getNodeChild(parent_node, child_num):
     return pd.SWIG_Node_p_Array_getitem(parent_node.children, child_num)
@@ -111,20 +130,48 @@ def slowFreeze(start_layer, end_layer, frames_between):
         freezeLayer(l)
 
 def the_callback():
-    dn.imageWinningCentroidGrid(0, 4, "winning layer 0")
-    dn.imageWinningCentroidGrid(1, 8, "winning layer 1")
-    dn.imageWinningCentroidGrid(2, 16, "winning layer 2")
+    dn.imageWinningCentroidGrid(0, 4, "winning centroids layer 0")
+    dn.imageWinningCentroidGrid(1, 4, "winning centroids layer 1")
+    dn.imageWinningCentroidGrid(2, 4, "winning centroids layer 2")
     #dn.imageWinningCentroidGrid(3, 16, "winning layer 3")
     #dn.imageWinningCentroidGrid(4, 16, "winning layer 4")
-    dn.imageWinningCentroidGrid(5, 16, "winning layer 5")
+    #dn.imageWinningCentroidGrid(5, 16, "winning layer 5")
     dn.printBeliefGraph(top_layer, 0, 0)
     freezeTopCentroidsExcept(lucky_centroid)
     
-def go(frames=200):
+def go(frames=20):
     doFramesWithCallback(frames, the_callback)
 
-        
+def reportParentAndChildren(parent_layer, pr, pc):
+    cls()
+    L = parent_layer - 1
+    dn.printNodeBeliefs(L, pr * 2,     pc * 2    )
+    dn.printNodeBeliefs(L, pr * 2,     pc * 2 + 1)
+    dn.printNodeBeliefs(L, pr * 2 + 1, pc * 2    )
+    dn.printNodeBeliefs(L, pr * 2 + 1, pc * 2 + 1)
+    
+    go(1)
+    dn.printNodeObservation(parent_layer, pr, pc)
+  
+    
 lucky_centroid = None
+
+
+
+def printio(row, col):
+    printio_n(dn.getNode(0,row,col))
+
+def printio_n(node):
+    io = pd.SWIG_UInt_Array_frompointer(node.inputOffsets)
+    for i in range(4):
+        for j in range(4):
+            print io[i*4 + j],
+        print
+    
+def printio_i(node_index):
+    nodes = pd.SWIG_NodeArray_frompointer(dn.getNetwork().nodes)
+    printio_n(nodes[node_index])
+    
 
     
 
