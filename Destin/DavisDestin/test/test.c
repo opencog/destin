@@ -812,15 +812,15 @@ int test8Layers(){
 
 
 int testInputOffsets(){
+    //check some parent nodes that they have the right input offsets to their child nodes' output belief vectors
+
     Destin * d = makeDestin(4);
-
-
     assertIntEquals(2, GetNodeFromDestin(d, 0, 0, 2)->nIdx);
     assertIntEquals(44, GetNodeFromDestin(d, 0, 5, 4)->nIdx);
     assertIntEquals(64, GetNodeFromDestin(d, 1, 0, 0)->nIdx);
     assertIntEquals(80, GetNodeFromDestin(d, 2, 0, 0)->nIdx);
 
-    //spot check some parent nodes in layer 1 that they have the right input offsets to their child nodes
+    //spot check some parent nodes in layer 1 that they have the right input offsets to their child nodes' output belief vectors
     assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 0)->inputOffsets, 8, 0, 1, 2, 3, 16, 17, 18, 19);
     assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 2)->inputOffsets, 8, 8, 9, 10, 11, 24, 25, 26, 27);
     assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 3, 1)->inputOffsets, 8, 100, 101, 102, 103, 116, 117, 118, 119);
@@ -837,6 +837,33 @@ int testInputOffsets(){
 
     DestroyDestin(d);
 
+    return 0;
+}
+
+
+int  testLinkParentBeliefToChildren(){
+    // Test that parent nodes have the right children in their children pointers
+    Destin * d = makeDestin(4);
+
+    Node * parent = GetNodeFromDestin(d, 1, 0, 2);
+
+    assertIntEquals(66, parent->nIdx);
+    assertIntEquals(4, parent->children[0]->nIdx);
+    assertIntEquals(5, parent->children[1]->nIdx);
+    assertIntEquals(12, parent->children[2]->nIdx);
+    assertIntEquals(13, parent->children[3]->nIdx);
+
+    //check some child nodes point to the correct parent
+    assertTrue(GetNodeFromDestin(d, 0, 4, 7)->parent_pBelief == GetNodeFromDestin(d, 1, 2, 3)->pBelief);
+    assertTrue(GetNodeFromDestin(d, 0, 6, 4)->parent_pBelief == GetNodeFromDestin(d, 1, 3, 2)->pBelief);
+    assertTrue(GetNodeFromDestin(d, 0, 4, 3)->parent_pBelief == GetNodeFromDestin(d, 1, 2, 1)->pBelief);
+
+    parent = GetNodeFromDestin(d, 1, 2, 2);
+    assertTrue(parent->children[3]->parent_pBelief == parent->pBelief);
+
+
+
+    DestroyDestin(d);
     return 0;
 }
 
@@ -857,6 +884,8 @@ int main(int argc, char ** argv ){
     RUN(testGenerateInputFromBelief);
 
     RUN(test8Layers);
+
+    RUN(testLinkParentBeliefToChildren);
 
     //RUN(testGetNode); //TODO: fix and renable this test
 

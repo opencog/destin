@@ -143,7 +143,6 @@ void SetupNodeRef(Destin * d){
     d->nodeRef[l][0] = d->nNodes - 1;
 }
 
-
 // allocate the input layer offsets.  each node gets an offset from
 // the frame it is presented with.  now computing it indirectly with
 // an array, but there's gotta be a closed-form way of getting the
@@ -500,25 +499,22 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
 void LinkParentBeliefToChildren( Destin *d )
 {
-    Node *node, *parent;
-    uint i, n, l;
+    uint l, cr, cc, pr, pc, child_layer_width;
+    Node * child_node;
+    Node * parent_node;
 
-    uint parentBias = d->layerSize[0];
-    for( n=0, l=0; l < d->nLayers - 1; l++ )
-    {
-        for( i=0; i < d->layerSize[l]; i++, n++)
-        {
-            // get structs from device
-            node = &d->nodes[n];
-            parent = &d->nodes[parentBias + i / 4];
-
-            parent->children[i % 4] = node;
-
-            // update values
-            node->parent_pBelief = parent->pBelief;
+    for(l = 0 ; l < d->nLayers - 1 ; l++){
+        child_layer_width = (uint) sqrt(d->layerSize[l]);
+        for(cr = 0 ; cr < child_layer_width; cr++){
+            pr = cr / 2;
+            for(cc = 0; cc < child_layer_width ; cc++){
+                pc = cc / 2;
+                child_node = GetNodeFromDestin(d, l, cr, cc);
+                parent_node = GetNodeFromDestin(d, l+1, pr, pc);
+                child_node->parent_pBelief = parent_node->pBelief;
+                parent_node->children[(cr % 2) * 2 + cc % 2] = child_node;
+            }
         }
-
-        parentBias += d->layerSize[l+1];
     }
 }
 
