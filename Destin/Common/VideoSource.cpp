@@ -35,7 +35,6 @@ bool VideoSource::grab() {
         if(showWindow){
             cv::imshow( DESTIN_VIDEO_WINDOW_TITLE, greyscaled_frame); //show video to output window
 
-            cvMoveWindow(DESTIN_VIDEO_WINDOW_TITLE, 50, 50);
         }
 
         // some strange issues with waitkey, see http://opencv.willowgarage.com/wiki/documentation/c/highgui/WaitKey

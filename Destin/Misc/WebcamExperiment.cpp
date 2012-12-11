@@ -1,4 +1,4 @@
-#include <time.h>
+        #include <time.h>
 
 #include "VideoSource.h"
 #include "DestinNetworkAlt.h"
@@ -6,11 +6,7 @@
 #include "stdio.h"
 #include "unit_test.h"
 
-extern "C"{
-#define UINT64_C //hack to avoid compile error
-#include <libavutil/log.h> //used to turn off opencv warning message
 
-}
 
 using namespace cv;
 void testNan(float * array, int len){
@@ -47,7 +43,7 @@ void printFPS(bool print){
 
 int main(int argc, char ** argv){
 
-    av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
+
 
     //VideoSource vs(false, "./destin_video_test.avi");
     //VideoSource vs(false, "./cowboy.avi");

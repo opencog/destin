@@ -8,10 +8,19 @@
 #ifndef VIDEOSOURCE_H_
 #define VIDEOSOURCE_H_
 
-#include "opencv/cv.h"
-#include "opencv/highgui.h"
+
 #include <stdexcept>
 
+#include "opencv/cv.h"
+#include "opencv/highgui.h"
+
+extern "C"{
+#define UINT64_C //hack to avoid compile error in libavutil/log.h
+#include <libavutil/log.h> //used to turn off warning message
+//"No accelerated colorspace conversion found from yuv422p to bgr24."
+// that occurs when opening certain video files
+
+}
 
 using namespace std;
 
@@ -101,6 +110,9 @@ public:
 			}
 			throw runtime_error(mess.str());
 		}
+
+        cvMoveWindow(DESTIN_VIDEO_WINDOW_TITLE, 50, 50);
+        av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
 	}
 
 	bool isOpened() {
