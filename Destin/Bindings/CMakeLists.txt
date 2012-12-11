@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-#This section creates java JNI bindings using SWIG 2.)0
 FIND_PACKAGE(SWIG 2.0.4)
 FIND_LIBRARY(highgui NAMES highgui opencv_highgui)
 INCLUDE_DIRECTORIES(../DavisDestin/include ../Common )
