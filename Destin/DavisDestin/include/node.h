@@ -121,8 +121,8 @@ void Uniform_AverageDeltas(
 
 void Uniform_ApplyDeltas(
                     struct Destin *,
-                    uint ,              // layer
-                    float *             // layerSharedSigma
+                    uint,               // layer to apply deltas
+                    float *             // shared sigma float array to use. Table nb x ns
                 );
 
 void Uniform_UpdateStarvation(

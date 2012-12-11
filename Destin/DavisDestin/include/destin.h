@@ -8,6 +8,7 @@
 
 #define INIT_SIGMA 0.00001
 
+
 /* Destin Struct Definition */
 typedef struct Destin {
     uint nInputPipeline;                // number of beliefs to copy to next nodes' input
@@ -159,11 +160,7 @@ void Uniform_ResetStats(
 
 
 
-void Uniform_ApplyDeltas(
-    Destin *,                           //
-    uint layer,                         // layer to apply deltas
-    float *                             // shared sigma float array to use. Table nb x ns
-    );
+
 
 /* Destin Functions End */
 
