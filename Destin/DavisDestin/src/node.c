@@ -352,12 +352,10 @@ float CLS_Decay(Destin * d, Node * n, uint layer, uint centroid){
 //average the deltas and multiply them by the shared ncounts
 void Uniform_AverageDeltas(Node * n, uint nIdx){
     n = &n[nIdx];
-    uint s;
-
-    int count;
-    for(s = 0; s < n->ns ; s++){
-        count = n->d->uf_winCounts[n->layer][n->winner];
-        if(count > 0){
+   int count = n->d->uf_winCounts[n->layer][n->winner];
+   if(count > 0){
+        uint s;
+        for(s = 0; s < n->ns ; s++){
             n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
         }
     }
