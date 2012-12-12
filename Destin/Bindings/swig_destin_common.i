@@ -1,9 +1,8 @@
 
 %module(directors="1") SWIG_MODULE_NAME 
 %{
-
-#include "macros.h"
 /* includes that are needed to compile */
+#include "macros.h"
 #include "DestinIterationFinishedCallback.h"
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
@@ -12,6 +11,10 @@
 #include "INetwork.h"
 #include "DestinNetworkAlt.h"
 #include "GenerativeVisualizer.h"
+#include "CifarSource.h"
+#include "ISom.hpp"    
+#include "Som.hpp"    
+#include "BeliefExporter.h"
 %}
 
 %include "macros.h"
@@ -41,6 +44,10 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "DestinNetworkAlt.h"
 %include "GenerativeVisualizer.h"
 %include "learn_strats.h"
+%include "CifarSource.h"
+%include "ISom.hpp"
+%include "Som.hpp"
+%include "BeliefExporter.h"
 
 /* carrays.i so you can use a c++ pointer like an array */
 %include "carrays.i" 
@@ -50,3 +57,9 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %array_class(uint, SWIG_UInt_Array);
 %array_functions(Node *, SWIG_Node_p_Array);
 %array_class(Node, SWIG_NodeArray);
+
+/* some opencv functions */
+namespace cv {
+class Mat;
+void imshow( const string& winname, const Mat& mat );
+}

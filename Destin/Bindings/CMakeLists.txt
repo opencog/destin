@@ -2,7 +2,14 @@ cmake_minimum_required(VERSION 2.8)
 
 FIND_PACKAGE(SWIG 2.0.4)
 FIND_LIBRARY(highgui NAMES highgui opencv_highgui)
-INCLUDE_DIRECTORIES(../DavisDestin/include ../Common )
+
+INCLUDE_DIRECTORIES(
+        ../DavisDestin/include
+        ../Common 
+        ../SOM
+        ../SOM/brly/som
+)
+
 if(NOT SWIG_FOUND)
     message(FATAL_ERROR "SWIG wasnt found")
 endif()
