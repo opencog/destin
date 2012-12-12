@@ -51,4 +51,30 @@ boolean flag isUniform was added as an argument to InitDestin.
 Unfortunately having shared centroids will require a different parallelization
 strategy when we port it back to CUDA. 
 
+11/17 - 12/12/2012
+------------------
+Made the centroid update strategy configurable via function pointers to make it
+easy to switch between a fixed learning rate or a decaying one.
+
+Added Python bindings to DeSTIN to make it easier to interativly experiment with
+it.
+
+Worked on creating a visualization for DeSTIN. I simply created an image for
+each layer by taking the winning centroid index of each node and converting it
+into grayscale pixel. You can watch in time how long it takes for each layer to
+come "onlnie" as the bottom layers learn first. With uniform DeSTIN turned on a
+clear picture come through whereas on classic DeSTIN it looks like static
+because the winning centroid labels at each node mean something different. 
+
+Throug the visualization work I discovered that our heirarcy wasn't a 4x1
+reduction in a square fashion at each level. Instead it was take in 4x4 square
+regions in the bottom layer, but then the upperalyers were doing a 4x1 reduction
+in a linear fashion instead. This was fixed by adding a lookup array for the
+node inputs to force them to have childing arranged in a square.
+
+I've spent about two days creating code to stream DeSTIN states to a self
+organizing map to see if the belief states cluster with certain images. Will
+need to spend more time to interpret the results. Currently however I'm going to
+be moving on to implementing scale invariance as outlined here:
+http://wiki.opencog.org/w/DestinOpenCog#Uniform_DeSTIN.2C_Part_Two
 
