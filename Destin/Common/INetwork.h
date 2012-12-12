@@ -16,6 +16,7 @@ public:
     virtual void setIsPOSTraining(bool training)=0;
     virtual int getBeliefsPerNode(int layer)=0;
     virtual float * getNodeBeliefs(int layer, int row, int col)=0;
+    virtual unsigned int getLayerCount() = 0;
 
     void printBeliefGraph(int layer, int row, int col){
         float * b = getNodeBeliefs(layer, row, col);

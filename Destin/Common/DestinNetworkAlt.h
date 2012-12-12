@@ -9,7 +9,6 @@
 #define DESTINNETWORKALT_H_
 
 #include <stdexcept>
-#include <exception>
 #include <vector>
 #include <iostream>
 #include <math.h>
@@ -27,14 +26,14 @@ extern "C" {
 #include "DestinIterationFinishedCallback.h"
 
 enum SupportedImageWidths {
-    W4 = 4,     //1
-    W8 = 8,     //2
-    W16 = 16,   //3
-    W32 = 32,   //4
-    W64 = 64,   //5
-    W128 = 128, //6
-    W256 = 256, //7
-    W512 = 512  //8 layers needed
+    W4 = 4,     //1 1x1
+    W8 = 8,     //2 2x2
+    W16 = 16,   //3 4x4
+    W32 = 32,   //4 8x8
+    W64 = 64,   //5 16x16
+    W128 = 128, //6 32x32
+    W256 = 256, //7 64x64
+    W512 = 512  //8 128x128 layers needed
 };
 #define MAX_IMAGE_WIDTH 512
 
@@ -202,6 +201,7 @@ public:
     Destin * getNetwork(){
         return destin;
     }
+
     void displayFeatures(int layer, int node_start, int nodes){
         DisplayLayerFeatures(destin, layer, node_start, nodes);
     }
@@ -300,6 +300,37 @@ public:
         }
         printf("\n");
 
+    }
+
+    void setParentBeliefDamping(float gamma){
+        if(gamma < 0 || gamma > 1.0){
+            throw std::domain_error("setParentBeliefDamping: gamma must be between 0 and 1");
+        }
+        for(int n = 0; n < destin->nNodes ; n++){
+            destin->nodes[n].gamma = gamma;
+        }
+    }
+
+    void setPreviousBeliefDamping(float lambda){
+        if(gamma < 0 || gamma > 1.0){
+            throw std::domain_error("setParentBeliefDamping: lambda must be between 0 and 1");
+        }
+        for(int n = 0; n < destin->nNodes ; n++){
+            destin->nodes[n].lambda = lambda;
+        }
+
+    }
+
+    void clearBeliefs(){
+        ClearBeliefs(destin);
+    }
+
+    void setLayerIsTraining(uint layer, bool isTraining){
+        destin->layerMask[layer] = isTraining;
+    }
+
+    unsigned int getLayerCount(){
+        return destin->nLayers;
     }
 
     /** Saves the current destin network to file
