@@ -232,11 +232,18 @@ public:
     }
 
     void setCurrentImage(uint id){
+        if(id > nImages){
+            throw std::domain_error("setCurrentImage: id out of range\n");
+        }
         currentImage = id;
     }
 
     int getImageIndex(){
         return currentImage;
+    }
+
+    uint getImageClassLabel(){
+        return images[currentImage].classLabel;
     }
 
     float * getGrayImageFloat(){

@@ -63,3 +63,9 @@ namespace cv {
 class Mat;
 void imshow( const string& winname, const Mat& mat );
 }
+typedef struct CvPoint
+{
+      int x;
+      int y;
+}
+CvPoint;

@@ -8,13 +8,15 @@
 #include <stdio.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include <vector>
 
 class Som : public ISom {
 
     brly_som::Som<float> som;
 
     cv::Mat sim_map;            //simularity map
-    cv::Mat resized_sim_map;
+    cv::Mat resized_sim_map;    //scaled visually
+    cv::Mat draw_on_sim_map;    //where user shapes are drawn
 
     uint rows;
     uint cols;
@@ -22,6 +24,8 @@ class Som : public ISom {
 
     typedef const brly_som::Som<float>::Mat SomMat;
     typedef brly_som::Som<float>::Elem Sample;
+
+
 
     void calcSimularityMap(uint nh_width = 2){
         SomMat &m = som.data();
@@ -71,7 +75,36 @@ class Som : public ISom {
         }
     }
 
+    typedef struct {
+        uint row;
+        uint col;
+        float hue; //0 to 1
+        uint size; //radius or width
+
+    } map_marker;
+
+    std::vector<map_marker> map_markers;
+
+    // Draws the given map marker to the given cv::Mat.
+    // The map marker coordinates are relative to this SOM's size
+    // and rescaled to the given mat's size so the location,
+    // if expressed as a percentage of width and height, is constant.
+    void drawMarker(cv::Mat & mat, map_marker & mm){
+            cv::Point p;
+            p.y = mm.row * (double)mat.rows / (double)rows;
+            p.x = mm.col * (double)mat.cols / (double)cols;
+            float r, g, b;
+            float hue = mm.hue * 360.0, sat = 1.0, val = 1.0;
+            HSVtoRGB(&r, &g, &b, hue, sat, val );
+            printf("R: %f, G: %f, B: %f\n", r, g, b);
+            cv::circle(mat, p, mm.size ,cv::Scalar(r*255, g*255, b*255), -1);
+    }
+
+
+
 public:
+
+
 
     Som(int map_rows, int map_cols, int vector_dim)
         :rows(map_rows),
@@ -79,22 +112,131 @@ public:
           vector_dim(vector_dim),
           som(map_rows, map_cols, vector_dim),
           sim_map(map_rows, map_cols, CV_32FC1)
-    {
-
-
-    }
+    { }
 
     void train_iterate(float * data){
         som.next(data);
     }
 
+    //taken from http://www.cs.rit.edu/~ncs/color/t_convert.html#RGB to HSV & HSV to RGB
+    // r,g,b values are from 0 to 1
+    // h = [0,360], s = [0,1], v = [0,1]
+    //		if s == 0, then h = -1 (undefined)
+    void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v )
+    {
+        //h is 0 to 360
+        //s is 0 to 1
+        //v is 0 to 1
+            int i;
+            float f, p, q, t;
+            if( s == 0 ) {
+                    // achromatic (grey)
+                    *r = *g = *b = v;
+                    return;
+            }
+            h /= 60;			// sector 0 to 5
+            i = floor( h );
+            f = h - i;			// factorial part of h
+            p = v * ( 1 - s );
+            q = v * ( 1 - s * f );
+            t = v * ( 1 - s * ( 1 - f ) );
+            switch( i ) {
+                    case 0:
+                            *r = v;
+                            *g = t;
+                            *b = p;
+                            break;
+                    case 1:
+                            *r = q;
+                            *g = v;
+                            *b = p;
+                            break;
+                    case 2:
+                            *r = p;
+                            *g = v;
+                            *b = t;
+                            break;
+                    case 3:
+                            *r = p;
+                            *g = q;
+                            *b = v;
+                            break;
+                    case 4:
+                            *r = t;
+                            *g = p;
+                            *b = v;
+                            break;
+                    default:		// case 5:
+                            *r = v;
+                            *g = p;
+                            *b = q;
+                            break;
+            }
+    }
 
-    void showSimularityMap(string windowName, uint nh_width = 2, int window_width = 512, int window_height = 512){
+    cv::Mat convertFtoU(cv::Mat & src, cv::Mat & dst){
+
+        cv::Mat ret(src.size(),CV_8UC3 );
+
+        float * data = (float *)src.data;
+        for(int i = 0 ; i < src.rows * src.cols; i++){
+            //ret.data
+        }
+        src.convertTo(dst, CV_8UC3);
+    }
+
+    void showSimularityMap(string windowName = "SOM Simularity Map  ", uint nh_width = 2, int window_width = 512, int window_height = 512){
         calcSimularityMap(nh_width);
-        cv::resize(sim_map, resized_sim_map, cv::Size(window_width, window_height));
-        cv::imshow(windowName, resized_sim_map);
+
+        cv::Size size(window_width, window_height);
+
+        cv::resize(sim_map, resized_sim_map, size);
+
+        cv::Mat todraw;
+        if(map_markers.size() == 0){
+            todraw = resized_sim_map;
+        }else{
+            cv::Mat recolored(size, CV_8UC3);
+            //cvtColor()
+            resized_sim_map.convertTo(recolored, CV_8UC3, 255.0);
+            cv::Mat temp;
+            cvtColor(recolored, temp, CV_GRAY2RGB);
+
+            //resized_sim_map.convertTo(recolored, CV_8UC3);
+            for(int m  = 0 ; m < map_markers.size() ; m++){
+                drawMarker(temp, map_markers[m]);
+            }
+            todraw = temp;
+        }
+
+
+
+        cv::imshow(windowName, todraw);
         cv::waitKey(5);
     }
+
+    void clearSimMapMarkers(){
+        map_markers.clear();
+    }
+
+    void addSimMapMaker(uint row, uint col, float hue, uint marker_width){
+        map_marker mm;
+        mm.col = col;
+        mm.row = row;
+        mm.size = marker_width;
+        mm.hue = hue;
+        map_markers.push_back(mm);
+    }
+
+    CvPoint findBestMatchingUnit(float * data){
+        int r, c;
+        som.find_bmu(data, r, c);
+        CvPoint p;
+        p.x = c;
+        p.y = r;
+        return p;
+    }
+
 
     void showMap(string windowName){
 

@@ -1,16 +1,17 @@
 import time
 import pydestin as pd
 
+import opencv as cv
 import opencv.highgui as hg
 
 cifar_dir = "/home/ted/destin_git_repo/Destin/Data/CIFAR/cifar-10-batches-bin"
 cs = pd.CifarSource(cifar_dir, 1)
 
 #must be size 4 because the cifar data is 32x32
-centroids = [5,5,5,5]
+centroids = [10,5,5,5]
 layers = 4
 
-training_iterations = 1000
+training_iterations = 5000
 
 som_train_iterations = 10000
 
@@ -20,6 +21,7 @@ dn.setPreviousBeliefDamping(0)
 
 iterations_per_image = 8
 
+marker_width = 5
 
 """
 consider belief propagation delay. For a static image, if there are
@@ -36,9 +38,14 @@ junk beliefs, the training on those top ones should be disabled
 
 
 cs.disableAllClasses()
-cs.setClassIsEnabledByName("airplane", True)
-cs.setClassIsEnabledByName("cat", True)
-cs.setClassIsEnabledByName("ship", True)
+#cs.setClassIsEnabledByName("airplane", True)
+#cs.setClassIsEnabledByName("cat", True)
+#cs.setClassIsEnabledByName("ship", True)
+cs.setClassIsEnabled(0, True)
+cs.setClassIsEnabled(1, True)
+cs.setClassIsEnabled(2, True)
+cs.setClassIsEnabled(3, True)
+
 
 
 batch = 0
@@ -73,8 +80,18 @@ def train_destin():
     #dn.save( str(int(time.time()))+"_som.dst")
     dn.save( "saved.dst")
 
-#train the self organizing maps
 
+def showDestinImage(i):
+    im_id = i % len(image_ids)
+    
+    cs.setCurrentImage(image_ids[im_id])
+    
+    dn.clearBeliefs()
+    
+    for j in range(layers):
+        dn.doDestin(cs.getGrayImageFloat())
+            
+#train the self organizing maps
 def train_som():
 
     global som
@@ -82,25 +99,18 @@ def train_som():
     for j in range(layers):
         dn.setLayerIsTraining(j, False)
 
-    n_images = len(image_ids)
-    
     for i in range(som_train_iterations):
         if i % 50 == 0:
             print "Training SOM iteration: " + str(i)
         
-        im_id = i % n_images
-        
-        cs.setCurrentImage(image_ids[im_id])
-        
-        dn.clearBeliefs()
-        
-        for j in range(layers):
-            dn.doDestin(cs.getGrayImageFloat())
+        showDestinImage(i)
 
         som.train_iterate( be.getBeliefs() )
         
         if i % 50  == 0:
-            som.showSimularityMap("SOM", 3)
+            som.showSimularityMap()
+            
+    #finish by saving
     som.saveSom("saved.som")
             
     
@@ -110,10 +120,21 @@ def showCifarImage(id):
      hg.cvWaitKey()
 	
 
-som = pd.Som(100, 100, be.getOutputSize() )
-#print som.loadSom("saved.som")
+def paintClasses():
+    som.clearSimMapMarkers()
+    for i in range(len(image_ids)):
+        showDestinImage(i)
+        label = cs.getImageClassLabel()
+        bmu = som.findBestMatchingUnit( be.getBeliefs() )
+        hue = label / 10.0
+        som.addSimMapMaker(bmu.y, bmu.x, hue, marker_width)
+        
+    #finish        
+    som.showSimularityMap()
+        
+        
+train_destin()
+train_som()
 
-    
-
-    
+paintClasses()
     

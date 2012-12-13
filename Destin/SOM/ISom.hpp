@@ -6,6 +6,8 @@ using namespace std;
 
 typedef void (*ItemToColorFunc)(float * item, int &r, int &g, int &b);
 
+typedef unsigned int uint;
+
 class ISom {
 
 public:
