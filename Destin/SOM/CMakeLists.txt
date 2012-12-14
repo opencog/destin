@@ -7,10 +7,11 @@ include_directories( brly/som )
 add_subdirectory( brly/som )
 
 add_library(som_common SHARED
-    ISom.hpp
-    BrlySom.hpp
+    ISom
+    BrlySom
     brly/som/brly_som.hpp
-    SomPresentor.hpp
+    SomPresentor
+    ClusterSom
 )
 
 target_link_libraries(som_common ml cvaux highgui cv cxcore)

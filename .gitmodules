@@ -1,3 +1,6 @@
 [submodule "Destin/SOM/brly/som"]
 	path = Destin/SOM/brly/som
 	url = ./Destin/SOM/brly/som/
+[submodule "Destin/SOM/cluster"]
+	path = Destin/SOM/cluster
+	url = https://github.com/ebardes/cluster.git
