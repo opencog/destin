@@ -13,7 +13,8 @@
 #include "GenerativeVisualizer.h"
 #include "CifarSource.h"
 #include "ISom.hpp"    
-#include "Som.hpp"    
+#include "BrlySom.hpp"    
+#include "SomPresentor.hpp"
 #include "BeliefExporter.h"
 %}
 
@@ -46,7 +47,8 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "learn_strats.h"
 %include "CifarSource.h"
 %include "ISom.hpp"
-%include "Som.hpp"
+%include "BrlySom.hpp"
+%include "SomPresentor.hpp"
 %include "BeliefExporter.h"
 
 /* carrays.i so you can use a c++ pointer like an array */

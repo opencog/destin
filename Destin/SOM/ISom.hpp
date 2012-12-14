@@ -1,6 +1,5 @@
 #ifndef ISOM_HPP
 #define ISOM_HPP
-#include<string>
 
 using namespace std;
 
@@ -15,18 +14,15 @@ public:
 
     virtual void train_iterate(float * data) = 0;
 
-    virtual void showSimularityMap(
-                    string,     // window name
-                    uint,       // 1/2 width of pixel neighborhood
-                    int,        // window height, does not affect the map dimensions only output window size
-                    int         // window width,  does not affect the map dimensions only output window size
-        ) = 0;
+    virtual float distance(float * cell1, float * cell2) = 0;
 
-    virtual void showMap(string windowName) = 0;
+    virtual float * getMapCell(int row, int col) = 0;
 
-    virtual void setItemToColorFuncPointer(ItemToColorFunc function) = 0;
+    virtual int cell_rows() = 0;
 
+    virtual int cell_cols() = 0;
 
+    virtual int cell_dim() = 0;
 
 };
 

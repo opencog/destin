@@ -11,7 +11,7 @@ cs = pd.CifarSource(cifar_dir, 1)
 centroids = [10,5,5,5]
 layers = 4
 
-training_iterations = 5000
+training_iterations = 500
 
 som_train_iterations = 10000
 
@@ -55,6 +55,7 @@ image_ids = []
 be = pd.BeliefExporter(dn, 2)
 
 som = None
+sp = None
 
 #train the network
 def train_destin():
@@ -95,7 +96,9 @@ def showDestinImage(i):
 def train_som():
 
     global som
-    som = pd.Som(64,64, be.getOutputSize() )
+    som = pd.BrlySom(64,64, be.getOutputSize() )
+    global sp
+    sp = pd.SomPresentor(som)
     for j in range(layers):
         dn.setLayerIsTraining(j, False)
 
@@ -108,7 +111,7 @@ def train_som():
         som.train_iterate( be.getBeliefs() )
         
         if i % 50  == 0:
-            som.showSimularityMap()
+            sp.showSimularityMap()
             
     #finish by saving
     som.saveSom("saved.som")
@@ -121,16 +124,16 @@ def showCifarImage(id):
 	
 
 def paintClasses():
-    som.clearSimMapMarkers()
+    sp.clearSimMapMarkers()
     for i in range(len(image_ids)):
         showDestinImage(i)
         label = cs.getImageClassLabel()
         bmu = som.findBestMatchingUnit( be.getBeliefs() )
         hue = label / 10.0
-        som.addSimMapMaker(bmu.y, bmu.x, hue, marker_width)
+        sp.addSimMapMaker(bmu.y, bmu.x, hue, marker_width)
         
     #finish        
-    som.showSimularityMap()
+    sp.showSimularityMap()
         
         
 train_destin()
