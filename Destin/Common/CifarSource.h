@@ -261,6 +261,29 @@ public:
         }
     }
 
+    void displayCifarColorImage(int index, int rows=512, int cols=512, string window_title="CIFAR Color Image"){
+        if(index < 0 || index >= nImages){
+            printf("displayCifarColorImage, index out of bounds\n");
+            return;
+        }
+
+        cv::Mat image = colorMats[index];
+        cv::Mat bigger;
+        cv::resize(image, bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
+        cv::imshow(window_title, bigger);
+    }
+
+    void displayCifarGrayImage(int index, int rows=512, int cols=512, string window_title="CIFAR Gray Image"){
+        if(index < 0 || index >= nImages){
+            printf("displayCifarGrayImage, index out of bounds\n");
+            return;
+        }
+
+        cv::Mat bigger;
+        cv::resize(grayMats[index], bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
+        cv::imshow(window_title, bigger);
+    }
+
     cv::Mat getGrayImageMat(int rows = 32, int cols = 32){
         if(rows != 32 || cols != 32){
             cv::Mat image = grayMats[currentImage];
