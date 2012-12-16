@@ -14,6 +14,7 @@
 #include "CifarSource.h"
 #include "ISom.hpp"    
 #include "BrlySom.hpp"    
+#include "ClusterSom.hpp"
 #include "SomPresentor.hpp"
 #include "BeliefExporter.h"
 %}
@@ -25,12 +26,10 @@ turn on director wrapping callback, so c++ code can call methods defined in the 
 See http://www.swig.org/Doc2.0/SWIGDocumentation.html#Java_directors
 See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 */
-
 %feature("director") DestinIterationFinishedCallback;
 %include "DestinIterationFinishedCallback.h"
 
-
-/* lets you use java strings easily with c++ strings */
+/* Lets you use script strings easily with c++ strings */
 %include "std_string.i"
 
 /* be able to use INetwork as an abstract interface in Java */
@@ -48,6 +47,7 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "CifarSource.h"
 %include "ISom.hpp"
 %include "BrlySom.hpp"
+%include "ClusterSom.hpp"
 %include "SomPresentor.hpp"
 %include "BeliefExporter.h"
 

@@ -36,6 +36,13 @@ public:
         return som.distance(cell1, cell2);
     }
 
+    float distance_coords(int r1, int c1, int r2, int c2){
+        float * cell1 = getMapCell(r1, r2);
+
+        float * cell2 = getMapCell(r2, c2);
+        return distance(cell1, cell2);
+    }
+
     int cell_rows(){
         return rows;
     }

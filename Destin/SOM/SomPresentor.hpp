@@ -1,6 +1,8 @@
 #ifndef SOM_PRESENTOR_HPP
 #define SOM_PRESENTOR_HPP
 
+
+#include <stdio.h>
 #include <vector>
 #include <math.h>
 
@@ -32,6 +34,8 @@ class SomPresentor {
     uint cols;
     uint vector_dim;
 
+    bool inverted;
+
     typedef struct {
         uint row;
         uint col;
@@ -51,8 +55,6 @@ class SomPresentor {
             nc; //neighbor col (can be negative if near the border)
 
 
-        float * neighbor;
-        float * origin;
 
         double distTotal;
         double maxDistance = -1.0;
@@ -63,15 +65,13 @@ class SomPresentor {
         float * sim_data = (float *)sim_map.data;//simularity map raw data
         for(r = nh_width ; r < rows - nh_width; r++){
             for(c = nh_width; c < cols - nh_width; c++){
-                origin =  som.getMapCell(r, c);
                 distTotal = 0;
                 for(nr = r - nh_width ; nr < r + nh_width ; nr++){
                     if(nr < 0 || nr >= rows){ continue; }
 
                     for(nc = c - nh_width ; nc < c + nh_width ; nc++){
                         if(nc < 0 || nc >= cols){ continue; }
-                        neighbor = som.getMapCell(nr, nc);
-                        distTotal += som.distance(origin, neighbor);
+                        distTotal += som.distance_coords(nr, nc, r, c);
                     }
                 }
                 sim_data[r * rows + c] = distTotal;
@@ -87,6 +87,11 @@ class SomPresentor {
         // so the image can be displayed as greyscale
         for(int i = 0; i < pixels; i++){
             sim_data[i] /= maxDistance;
+        }
+        if(inverted){
+            for(int i = 0 ; i < pixels ; i++){
+                sim_data[i] = 1.0 - sim_data[i];
+            }
         }
     }
 
@@ -112,12 +117,17 @@ public:
         :som(som),
           rows(som.cell_rows()),
           cols(som.cell_cols()),
-          vector_dim(som.cell_dim())
+          vector_dim(som.cell_dim()),
+          inverted(false)
 
     {
         sim_map = cv::Mat(rows, cols, CV_32FC1);
         printf("rrows: %i, cols: %i, som_rows: %i, som_cols: %i\n", rows, cols, som.cell_rows(), som.cell_cols());
 
+    }
+
+    void setInverted(bool inverted){
+        this->inverted = inverted;
     }
 
     //taken from http://www.cs.rit.edu/~ncs/color/t_convert.html#RGB to HSV & HSV to RGB

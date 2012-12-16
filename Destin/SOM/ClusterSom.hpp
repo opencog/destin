@@ -1,68 +1,62 @@
 #ifndef CLUSTER_SOM_HPP
 #define CLUSTER_SOM_HPP
-
 #include <stdexcept>
 #include <vector>
-#include <limits>
+
 #include "ISom.hpp"
+extern "C" {
+    //#include "cluster/src/cluster.h"
+    // define these instead of using cluster.h because there's a name conflic with max macro
+    // and Node
+double clusterdistance (int nrows, int ncolumns, double** data, int** mask,
+    double weight[], int n1, int n2, int index1[], int index2[], char dist,
+    char method, int transpose);
 
+void somcluster (int nrows, int ncolumns, double** data, int** mask,
+    const double weight[], int transpose, int nxnodes, int nynodes,
+    double inittau, int niter, char dist, double*** celldata,
+    int clusterid[][2]);
+}
 
-//hack to get around Node name collision
-#define Node ClusterNode
-#include "cluster/src/cluster.h"
-#define Node Node
-//end hack
-
-
-// Function pointer to various distance metrics
-typedef double (*DistanceMetric)(
-    int n,                  // The number of elements in a row or column. If transpose==0, then n is the number of columns; otherwise, n is the number of rows.
-    double ** data1,        // The data array containing the first vector.
-    double ** data2,        // The data array containing the second vector.
-    int ** mask1,           // This array which elements in data1 are missing. If mask1[i][j]==0, then data1[i][j] is missing.
-    int ** mask2,           // This array which elements in data2 are missing. If mask2[i][j]==0, then  data2[i][j] is missing.
-    const double[] weight,  // The weights that are used to calculate the distance.
-    int index1,             // Index of the first row or column.
-    int index2,             // Index of the second row or column.
-    int transpose           // If transpose==0, the distance between two rows in the matrix is calculated. Otherwise, the distance between two columns in the matrix is calculated.
-    );
-
-DistanceMetric setmetric(char d);
 
 
 class ClusterSom : public ISom {
     std::vector< double * > trainData;
     const int rows, cols, dim;
     double*** celldata;
+    float *** celldata_float;
     bool hasTrained;
 
     int * defaultMaskData;
     std::vector< int * > defaultMask;
 
     double * defaultWeight;
-    DistanceMetric metric;
     char distMetric;
     double inittau;
 
     float _distance(double * data1, double * data2){
-        return metric(
-            dim,
-            &data1,
-            &data2,
-            defaultMask.data(),
-            defaultMask.data(),
-            defaultWeight,
-            0,
-            0,
-            0);
+
+        double * data[2];
+        data[0] = data1;
+        data[1] = data2;
+
+        int indicies1[1];
+        indicies1[0] = 0;
+
+        int indicies2[1];
+        indicies2[0] = 1;
+
+        return clusterdistance(2, dim, data, defaultMask.data(), defaultWeight, 1, 1, indicies1, indicies2, distMetric, 's', 0);
     }
 
 public:
+
     ClusterSom(int rows, int cols, int dim):
-        rows(rows), cols(cols), dim(dim),
+        rows(rows),
+        cols(cols),
+        dim(dim),
         hasTrained(false),
         distMetric('e'),
-        metric(setmetric(distMetric),
         inittau(0.02)
     {
         if(rows <= 0 || cols <= 0 || dim <= 0){
@@ -70,13 +64,16 @@ public:
         }
         // allocate grid units / cells / neurons / samples / clusters
         celldata = new double**[rows];
-
+        celldata_float = new float**[rows];
         for(int r = 0 ; r < rows; r++){
             celldata[r] = new double*[cols];
+            celldata_float[r] = new float*[cols];
             for(int c = 0 ; c < cols ; c++){
                 celldata[r][c] = new double[dim];
+                celldata_float[r][c] = new float[dim];
                 for(int i = 0 ; i < dim ; i++){
                     celldata[r][c][i] = 0.0;
+                    celldata_float[r][c][i] = 0.0;
                 }
             }
         }
@@ -85,7 +82,7 @@ public:
         defaultMaskData = new int[dim];
         for(int i = 0 ; i < dim ; i++){
             defaultWeight[i] = 1.0;
-            defaultMaskData = 1;
+            defaultMaskData[i] = 1;
         }
     }
 
@@ -97,10 +94,13 @@ public:
         for(int r = 0; r < rows ; r++){
             for(int c = 0 ; c < cols; c++){
                 delete [] celldata[r][c];
+                delete [] celldata_float[r][c];
             }
             delete [] celldata[r];
+            delete [] celldata_float[r];
         }
         delete [] celldata;
+        delete [] celldata_float;
 
         delete [] defaultWeight;
         delete [] defaultMaskData;
@@ -166,6 +166,9 @@ transpose ==1
       */
 
     void train(int n_iter ){
+        if(trainData.size() == 0){
+            throw runtime_error("can't train without adding data.\n");
+        }
         int nrows = trainData.size();
         int ncolumns = dim;
         somcluster(nrows,
@@ -178,9 +181,19 @@ transpose ==1
                    rows,
                    inittau,
                    n_iter,
-                   dist,
+                   distMetric,
                    celldata,
                    NULL);
+
+
+        // make a float copy of the cell data
+        for(int r = 0 ;  r < rows ; r++){
+            for(int c = 0; c < cols; c++){
+                for(int i = 0; i < dim; i++){
+                    celldata_float[r][c][i] = celldata[r][c][i];
+                }
+            }
+        }
 
         hasTrained = true;
     }
@@ -198,7 +211,7 @@ transpose ==1
         any other: euclid
       */
     void setDistMetric(char dist){
-        metric = setmetric(dist);
+        distMetric = dist;
     }
 
     /** Find which SOM cell best matches the given data vector.
@@ -210,7 +223,7 @@ transpose ==1
         }
 
         double distance;
-        double minDist = std::numeric_limits<double>::max();
+        double minDist = 1e100;
         CvPoint best;
         best.x = 0;
         best.y = 0;
@@ -251,12 +264,16 @@ transpose ==1
         return _distance(d1, d2);
     }
 
+    float distance_coords(int r1, int c1, int r2, int c2){
+        return _distance(celldata[r1][c1], celldata[r2][c2]);
+    }
+
     void train_iterate(float * data){
         printf("ClusterSom::train_iterate not implemented\n");
     }
 
     float * getMapCell(int row, int col){
-
+        return celldata_float[row][col];
     }
 
     int cell_rows(){

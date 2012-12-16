@@ -11,7 +11,8 @@ add_library(som_common SHARED
     BrlySom
     brly/som/brly_som.hpp
     SomPresentor
-    ClusterSom
+    cluster/src/cluster
+    ClusterSom.hpp
 )
 
 target_link_libraries(som_common ml cvaux highgui cv cxcore)

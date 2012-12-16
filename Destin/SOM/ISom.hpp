@@ -17,9 +17,14 @@ public:
 
     virtual CvPoint findBestMatchingUnit(float * data) = 0;
 
-    virtual void train_iterate(float * data) = 0;
+
+    virtual void addTrainData(float * data) = 0;
+
+    virtual void train(int n_iters) = 0;
 
     virtual float distance(float * data1, float * data2) = 0;
+
+    virtual float distance_coords(int r1, int c1, int r2, int c2) = 0;
 
     virtual float * getMapCell(int row, int col) = 0;
 

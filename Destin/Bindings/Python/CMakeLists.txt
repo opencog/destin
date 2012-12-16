@@ -7,6 +7,6 @@ if(PYTHONLIBS_FOUND)
     SET(CMAKE_SWIG_OUTDIR . )            
     SWIG_ADD_MODULE(pydestin python swig_destin_python.i )
     
-    SWIG_LINK_LIBRARIES(pydestin ${highgui} destinalt common )
+    SWIG_LINK_LIBRARIES(pydestin ${highgui} destinalt common som_common)
     
 endif(PYTHONLIBS_FOUND)
