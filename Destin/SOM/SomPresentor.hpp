@@ -8,21 +8,9 @@
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-//#include "cluster/src/cluster.h"
 #include "ISom.hpp"
 
-
-
-//prototype from SOM/cluster/src/cluster.h
-//can't include it because that defines Node
-/*
-void somcluster (int nrows, int ncolumns, double** data, int** mask,
-      const double weight[], int transpose, int nxnodes, int nynodes,
-      double inittau, int niter, char dist, double*** celldata,
-      int clusterid[][2]);
-*/
 class SomPresentor {
-
 
     ISom & som;
 
@@ -45,7 +33,6 @@ class SomPresentor {
     } map_marker;
 
     std::vector<map_marker> map_markers;
-
 
     void calcSimularityMap(uint nh_width = 2){
 
@@ -109,31 +96,12 @@ class SomPresentor {
             HSVtoRGB(&r, &g, &b, hue, sat, val );
             cv::circle(mat, p, mm.size ,cv::Scalar(r*255, g*255, b*255), -1);
     }
-
-
-public:
-
-    SomPresentor(ISom & som)
-        :som(som),
-          rows(som.cell_rows()),
-          cols(som.cell_cols()),
-          vector_dim(som.cell_dim()),
-          inverted(false)
-
-    {
-        sim_map = cv::Mat(rows, cols, CV_32FC1);
-        printf("rrows: %i, cols: %i, som_rows: %i, som_cols: %i\n", rows, cols, som.cell_rows(), som.cell_cols());
-
-    }
-
-    void setInverted(bool inverted){
-        this->inverted = inverted;
-    }
-
-    //taken from http://www.cs.rit.edu/~ncs/color/t_convert.html#RGB to HSV & HSV to RGB
-    // r,g,b values are from 0 to 1
-    // h = [0,360], s = [0,1], v = [0,1]
-    //		if s == 0, then h = -1 (undefined)
+    /** Converts a HSV color to RGB
+    * r,g,b values are from 0 to 1
+    * h = [0,360], s = [0,1], v = [0,1]
+                if s == 0, then h = -1 (undefined)
+    * taken from http://www.cs.rit.edu/~ncs/color/t_convert.html
+    */
     void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v )
     {
         //h is 0 to 360
@@ -186,11 +154,42 @@ public:
             }
     }
 
-    void clearSimMapMarkers(){
-        map_markers.clear();
+
+public:
+
+    SomPresentor(ISom & som)
+        :som(som),
+          rows(som.cell_rows()),
+          cols(som.cell_cols()),
+          vector_dim(som.cell_dim()),
+          inverted(false)
+
+    {
+        sim_map = cv::Mat(rows, cols, CV_32FC1);
+        printf("rrows: %i, cols: %i, som_rows: %i, som_cols: %i\n", rows, cols, som.cell_rows(), som.cell_cols());
 
     }
 
+
+    /** Inverts the simularity map grayscale image.
+      * Defaults to false.
+      */
+    void setInverted(bool inverted){
+        this->inverted = inverted;
+    }
+
+
+    void clearSimMapMarkers(){
+        map_markers.clear();
+    }
+
+    /** Add a marker to be drawn on the simularity map
+      * @param hue -  The hue in HSV color space. between 0 and 1 ( mapped to 0 to 360 degrees).
+      * @param row - y coordinate on the map to be drawn. In SOM coordinates not SOM display coordinates,
+      *                so it rescales itself based on the size of the output window
+      * @param col - x coordinate
+      * @param marker_width - the radius of the marker, in SOM display coordinates
+      */
     void addSimMapMaker(uint row, uint col, float hue, uint marker_width){
         map_marker mm;
         mm.col = col;
@@ -200,6 +199,18 @@ public:
         map_markers.push_back(mm);
     }
 
+    /** Creates a grayscale representation of the SOM
+      * For each cell of the SOM, a square neighborhood of SOM cells around it is chosen.
+      * For each cell in the neightboorhood, the distance is taken, then the sum of
+      * of distances of the neightborhood is converted into the value of greyscale pixel
+      * that represents the cell.
+      *
+      * Draws markers that have been added with addSimMapMaker on top if it.
+      * @param nh_width - 1/2 the width of the square that determintes a cell's neighbors.
+      *                   A larger value makes the image smoother, but takes longer to calulate
+      *
+      * @param window_width and window_height - the simularity map it rescaled to this
+      */
     void showSimularityMap(string windowName = "SOM Simularity Map  ", uint nh_width = 2, int window_width = 512, int window_height = 512){
         calcSimularityMap(nh_width);
 
