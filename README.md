@@ -44,10 +44,11 @@ To build DrentheDestin, CUDA SDK is required.
 Individual parts can be skipped by commenting out their ADD_SUBDIRECTORY line in the CMakeLists.txt
 Some examples:
 
-    * If you dont have CUDA for example, comment out the "ADD_SUBDIRECTORY(DrentheDestin)" in Destin/CMakeLists.txt
-    * If you dont want to install any language bindings comment out "ADD_SUBDIRECTORY(Bindings)" in Destin/CMakeLists.txt.
-    * If you want python bindings but not Java, then in Destin/Bindings/CMakeLists.txt comment out "add_subdirectory(Java)"
+* If you dont have CUDA for example, comment out the "ADD_SUBDIRECTORY(DrentheDestin)" in Destin/CMakeLists.txt
 
+* If you dont want to install any language bindings comment out "ADD_SUBDIRECTORY(Bindings)" in Destin/CMakeLists.txt.
+
+* If you want python bindings but not Java, then in Destin/Bindings/CMakeLists.txt comment out "add_subdirectory(Java)"
 
 Building:
 
@@ -61,12 +62,13 @@ Building:
     
 Rebuilding:
     
-    During development sometimes CMake is not able to detect dependencies between the different built libraries. So it is recommened
-    to do a "make clean" and "make -j4" (j4 lets you use multiple cores) from the Destin directory to make sure everyting is building fresh.
+During development sometimes CMake is not able to detect dependencies between the different built libraries. So it is recommened
+to do a "make clean" and "make -j4" (j4 lets you use multiple cores) from the Destin directory to make sure everyting is building fresh.
 
 Building Java Bindings:
 
-    The native jni bindings lib is built with CMake, the actual java program which uses it is built with java_build.sh:
+The native jni bindings lib is built with CMake, the actual java program which uses it is built with java_build.sh:
+
     $ cd Destin/Bindings/Java
     $ ./java_build.sh
     $ ./java_run.sh
@@ -75,14 +77,26 @@ Building Java Bindings:
 Show me something!
 ------------------
 
-Currently the most interesting things to see are the scripts in the Destin/Bindings/Python directory. These scripts are meant to be used interactivly so I recommend installing and using idle for python ( search for and install the idle package).
+Currently the most interesting things to see are the scripts in the Destin/Bindings/Python directory. 
+These scripts are meant to be used interactivly so I recommend installing and using idle for python ( search for and install the idle package).
 
 To see a self organizing map (SOM):
 
+Manually download http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz
+
+    $ tar xf cifar-10-binary.tar.gz
+    $ cd cifar-10-batches-bin
+    $ pwd
+
+Note the absolute path 
+
     $ cd Destin/Bindings/Python
+    
+Edit som.py and edit the cifar_dir variable near the top and change it to the absolute path of the cifar-10-batches-bin directory
+
     $ idle som.py
 
-Two windows appear, select the som.py window and click Run->Run Module (F5)
+Two windows appear, select the som.py window and click Run->Run Module (F5).
 Training will begin, after less than 5 minutes the SOM will popup.
     
 To see DeSTIN train on an video and see its output:
@@ -102,8 +116,10 @@ To make it continue processing type go(100) to have it process 100 more frames. 
 changing the line: 
 
     vs = pd.VideoSource(False, "hand.m4v")
-    to 
-    'vs = pd.VideoSource(True, "")
+    
+to 
+
+    vs = pd.VideoSource(True, "")
     
     
     
