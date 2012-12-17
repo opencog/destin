@@ -7,7 +7,6 @@ INCLUDE_DIRECTORIES(
         ../DavisDestin/include
         ../Common 
         ../SOM
-        ../SOM/brly/som
 )
 
 if(NOT SWIG_FOUND)

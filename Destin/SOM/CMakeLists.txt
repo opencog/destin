@@ -1,15 +1,7 @@
 PROJECT( SOM )
 
-include_directories( brly/som )
-
-
-#add_subdirectory(som_pak-3.1)
-add_subdirectory( brly/som )
-
 add_library(som_common SHARED
     ISom
-    BrlySom
-    brly/som/brly_som.hpp
     SomPresentor
     cluster/src/cluster
     ClusterSom.hpp

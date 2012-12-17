@@ -1,13 +1,10 @@
 
 #include <stdlib.h>
 #include <vector>
-//#include "BrlySom.hpp"
 #include "SomPresentor.hpp"
 #include "ClusterSom.hpp"
 
 int main(int argc, char ** argv){
-    //BrlySom som(50, 50, 3);
-
     ClusterSom som(50,50,3);
 
     std::vector<std::vector<float> > data;
