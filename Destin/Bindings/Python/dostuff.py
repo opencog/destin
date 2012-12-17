@@ -28,16 +28,14 @@ layers_to_enum = {
 
 img_width = layers_to_enum[layers]
 
-print "iamge width is " + str(img_width)
-
-dn = pd.DestinNetworkAlt(img_width, layers, centroids)
+dn = pd.DestinNetworkAlt(img_width, layers, centroids, True)
 
 top_node = dn.getNode(top_layer, 0, 0)
 
 
 
 
-vs = pd.VideoSource(False, "hand.AVI")
+vs = pd.VideoSource(False, "hand.m4v")
 vs.setSize(img_width, img_width)
 
 vs.enableDisplayWindow()
@@ -188,6 +186,6 @@ def reportParentAndChildren(parent_layer, pr, pc):
 
 #dn.load("hand.dst")
 #freezeTraining()
-#go(1)
-#arrangeWindows()
-#go(1)
+go(10)
+arrangeWindows()
+go(500)
