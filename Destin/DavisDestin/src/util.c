@@ -157,6 +157,7 @@ void CalcNodeInputOffsets(
     i = 0;
     for(child_region_row = 0 ;child_region_row < cirw; child_region_row++){
         for(child_region_col = 0 ; child_region_col < cirw; child_region_col++){
+            //store where this child's output belief vector starts
             cos[i] = child_layer_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
             i++;
         }

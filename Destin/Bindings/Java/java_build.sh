@@ -7,4 +7,5 @@ rm gen_src/javadestin/*
 make clean
 make
 
+ant -f build.xml clean
 ant -f build.xml

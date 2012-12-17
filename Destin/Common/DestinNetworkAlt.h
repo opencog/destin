@@ -79,7 +79,7 @@ private:
 
 public:
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [] ) :
+            unsigned int centroid_counts [], bool isUniform ) :
             training(true),
             beta(.01),
             lambda(.1),
@@ -95,7 +95,6 @@ public:
         float starv_coef = 0.05;
         uint n_classes = 0;//doesn't look like its used
         uint num_movements = 0; //this class does not use movements
-        bool isUniform = true; //wheter nodes in a layer share centroids
 
         //figure out how many layers are needed to support the given
         //image width.

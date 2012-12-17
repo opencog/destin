@@ -57,7 +57,7 @@ private:
     bool showWindow; //shows video or webcam input in window for user. 
 	/**
 	 * convert - converts from an OpenCV Mat greyscal 8bit uchar image into
-	 * a float array where each element is normalized to 0 to 1.0, with 1,0 being black.
+         * a float array where each element is normalized to 0 to 1.0, with 1.0 being black.
 	 *
 	 * Assumes out points to a preallocated float array big enough to hold the
 	 * converted image ( should be of size target_size)

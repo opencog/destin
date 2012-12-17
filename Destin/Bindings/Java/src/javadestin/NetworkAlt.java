@@ -10,7 +10,7 @@ package javadestin;
  * @author ted
  */
 public class NetworkAlt extends DestinNetworkAlt {
-    public NetworkAlt(SupportedImageWidths width, long layers, long[] centroid_counts) {
-        super(width, layers, centroid_counts);
+    public NetworkAlt(SupportedImageWidths width, long layers, long[] centroid_counts, boolean isUniform) {
+        super(width, layers, centroid_counts, isUniform);
     }
 }

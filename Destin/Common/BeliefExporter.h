@@ -5,6 +5,9 @@
 #include "DestinNetworkAlt.h"
 #include <stdexcept>
 
+
+/** Returns a pointer to a subset of destin's beliefs
+  */
 class BeliefExporter {
 
     DestinNetworkAlt & destin;
@@ -13,11 +16,14 @@ class BeliefExporter {
 public:
     const unsigned int nLayers;
 
+    /** Constructor
+      * @param network - destin network to export belielfs
+      * @param bottom - layer to start including the beliefs for. See getOutputSize()
+      */
     BeliefExporter(DestinNetworkAlt & network, uint bottom):
         destin(network),
         nLayers(destin.getLayerCount())
         {
-        //layerMask(nLayers, true){ //layerMask vector has nLayers elements all set to true
         setBottomLayer(bottom);
     }
 
@@ -49,6 +55,12 @@ public:
         return outputSize;
     }
 
+    /** Get the pointer to the begining of the destin beliefs.
+      * The begining of the belief vector depends on what
+      * the bottom layer is set to via the constructor or by
+      * setBottomLayer method. The end of the vector is
+      * beliefs of the top layer node.
+      */
     float * getBeliefs(){
         return &(destin.getNetwork()->belief[skipSize]);
     }

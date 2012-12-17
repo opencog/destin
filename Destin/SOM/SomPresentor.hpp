@@ -10,6 +10,9 @@
 #include <opencv/highgui.h>
 #include "ISom.hpp"
 
+/** This class displays the underlying SOM as an image to the user
+  * Can show a simularity map and draw markers using opencv highgui
+  */
 class SomPresentor {
 
     ISom & som;
@@ -50,15 +53,16 @@ class SomPresentor {
         // neighbors and use the total simularity value as a grayscale pixel
         // for the grayscale simularity map.
         float * sim_data = (float *)sim_map.data;//simularity map raw data
-        for(r = nh_width ; r < rows - nh_width; r++){
-            for(c = nh_width; c < cols - nh_width; c++){
+        for(r = 0; r < rows ; r++){
+            for(c = 0; c < cols; c++){
                 distTotal = 0;
                 for(nr = r - nh_width ; nr < r + nh_width ; nr++){
-                    if(nr < 0 || nr >= rows){ continue; }
-
-                    for(nc = c - nh_width ; nc < c + nh_width ; nc++){
-                        if(nc < 0 || nc >= cols){ continue; }
-                        distTotal += som.distance_coords(nr, nc, r, c);
+                    if(nr >= 0 && nr  < rows){
+                        for(nc = c - nh_width ; nc < c + nh_width ; nc++){
+                            if(nc >= 0 && nc < cols){
+                                distTotal += som.distance_coords(nr, nc, r, c);
+                            }
+                        }
                     }
                 }
                 sim_data[r * rows + c] = distTotal;

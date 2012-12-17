@@ -10,13 +10,16 @@ typedef unsigned int uint;
 
 struct CvPoint;
 
+/** An abstract interface for different flavors of SOM classes
+  * Currently ClusterSom and BrlySom
+  *
+  */
 class ISom {
 
 public:
     virtual ~ISom(){}
 
     virtual CvPoint findBestMatchingUnit(float * data) = 0;
-
 
     virtual void addTrainData(float * data) = 0;
 

@@ -5,9 +5,8 @@
 
 #include "ISom.hpp"
 extern "C" {
-    //#include "cluster/src/cluster.h"
-    // define these instead of using cluster.h because there's a name conflic with max macro
-    // and Node
+    // define these prototypes instead of including "cluster/src/cluster.h" because
+    // there's a name conflic with max macro and Node
 double clusterdistance (int nrows, int ncolumns, double** data, int** mask,
     double weight[], int n1, int n2, int index1[], int index2[], char dist,
     char method, int transpose);
@@ -243,15 +242,22 @@ transpose ==1
         return best;
     }
 
+    /** Add data for training
+      * Makes a copy of the given data vector of lenght dim
+      * to be used for training later
+      *
+      */
     void addTrainData(float * data){
 
         //convert the float into double data
-        double * ddata = new double[dim]; //will be deleted in the deconstructor
+        double * ddata = new double[dim]; //will be deleted/freed in the deconstructor
         for(int i = 0 ; i < dim ; i++){
             ddata[i] = data[i];
         }
 
+        // The mask tells it that no data elements are missing
         defaultMask.push_back(defaultMaskData);
+        //
         trainData.push_back(ddata);
     }
 

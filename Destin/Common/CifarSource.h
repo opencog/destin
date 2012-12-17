@@ -48,7 +48,7 @@ class CifarSource {
         uchar * image;          // pointer to the image data
     } image_info;
 
-    vector<image_info> images; // saves info about all the images
+    vector<image_info> images;  // saves info about all the images
     vector<cv::Mat> grayMats;   // store images as grayscal opencv Mats (matrix, images)
     vector<cv::Mat> colorMats;  // store images as color opencv Mats (matrix, images)
 
@@ -74,7 +74,7 @@ class CifarSource {
 
         int k = 0;
         for(int i = 0 ; i < 32 * 32 ; i++){
-            //dont know whay its BGR and not RGB. Linux thing maybe?
+            //opencv actually uses BGR instead of RGB
             data[k++] = image[2 * 32 * 32 + i]; //B
             data[k++] = image[1 * 32 * 32 + i]; //G
             data[k++] = image[0 * 32 * 32 + i]; //R
@@ -137,6 +137,15 @@ class CifarSource {
 
 public:
 
+    /** Constructor
+      *
+      * @param cifar_dir - the directory which contains the
+      * CIFAR data ffiles data_batch_1.bin  to data_batch_5.bin
+      *
+      * @param batch - Integer 1 to 5 of which data_batch_*.bin file to use
+      * as the image source
+      * @throws runtime_error if the data_batch bin file cannot be loaded.
+      */
     CifarSource(string cifar_dir, int batch ) :
         batch(batch),
         currentImage(-1),
@@ -175,12 +184,22 @@ public:
         delete [] raw_batch;
     }
 
+
+    /** Sets all image classes to not be found.
+      * At least one class should be re-enabled to avoid an exception from
+      * the findNextImage method because it would not be able to find any images
+      * otherwise.
+      */
     void disableAllClasses(){
         for(int i = 0 ; i < numClasses ; i++){
             classesEnabled[i] = false;
         }
     }
 
+    /** Turn on an image class to be found be class number.
+      * @param classLabel - integer 0 to 9 corresponding to airplane, etc. see setupNameToClass method
+      * @param enabled - if true then images of this class can be found otherwise they will be skipped
+      */
     void setClassIsEnabled(unsigned int classLabel, bool enabled){
         if(classLabel >= 10){
             string message("setClassIsEnabled: classLabel must be less than ");
@@ -192,6 +211,10 @@ public:
         classesEnabled[classLabel] = enabled;
     }
 
+    /** Turn on an image class to be found by class name.
+      * @param className - name such as "airplane" or "dog" to enable
+      * @param enabled - if true then images of this class can be found otherwise they will be skippeds
+      */
     void setClassIsEnabledByName(string className, bool enabled){
         if(name_to_class.find(className) == name_to_class.end()){
             string mess = "setClassIsEnabledByName could not find class named "+className;
@@ -205,7 +228,7 @@ public:
       * If it finds an image, it remebers the spot so another call
       * to this method will start from that spot.
       * Wraps to the begining of the batch when it reaches the end.
-      * Throws an exception if it cant find an image of an enabled class.
+      * @throws logic_error - if it cant find an image of an enabled class or no classes are enabled.
       * @returns index of the image found
       */
     int findNextImage(){
@@ -231,25 +254,44 @@ public:
 
     }
 
-    void setCurrentImage(uint id){
-        if(id > nImages){
+    /** Sets the current cifar image.
+      * Methods such as getGrayImageFloat will reflect what this is set to.
+      * The next invocation of the findNextImage method will start from this location.
+      * @param id - image id between 0 and 9999
+      */
+    void setCurrentImage(uint image_id){
+        if(image_id > nImages){
             throw std::domain_error("setCurrentImage: id out of range\n");
         }
-        currentImage = id;
+        currentImage = image_id;
     }
 
+    /**
+      * @return - integer from 0 to 9999 of the "current image" id.
+      */
     int getImageIndex(){
         return currentImage;
     }
 
+    /** Returns the current image's class label.
+      * For example if the current image is a dog then this
+      * will return 5.
+      */
     uint getImageClassLabel(){
         return images[currentImage].classLabel;
     }
 
+    /** Gets the current image represented as a float vector.
+      * Suitable to be fed into DeSTIN. The grayscale pixels are
+      * floats from 0.0 to 1.0;
+      */
     float * getGrayImageFloat(){
         return (float *)grayMats[currentImage].data;
     }
 
+    /** Gets the current image as an opencv color Mat (image.)
+      * @params rows, cols - scales the image to this size
+      */
     cv::Mat getColorImageMat(int rows = 32, int cols = 32){
         if(rows != 32 || cols != 32){
             cv::Mat image = colorMats[currentImage];
@@ -261,18 +303,26 @@ public:
         }
     }
 
-    void displayCifarColorImage(int index, int rows=512, int cols=512, string window_title="CIFAR Color Image"){
-        if(index < 0 || index >= nImages){
+    /** Displays the given image to the user in a window.
+      * A call to cv::waitKey() must be called by the user for it to show.
+      * @param image_id - The image to show between 0 and 9999.
+      *                   The image_id can be different from and does not
+      *                   change the "current image".
+      */
+    void displayCifarColorImage(int image_id, int rows=512, int cols=512, string window_title="CIFAR Color Image"){
+        if(image_id < 0 || image_id >= nImages){
             printf("displayCifarColorImage, index out of bounds\n");
             return;
         }
 
-        cv::Mat image = colorMats[index];
+        cv::Mat image = colorMats[image_id];
         cv::Mat bigger;
         cv::resize(image, bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
         cv::imshow(window_title, bigger);
     }
 
+    /** Same as displayCifarGrayImage method, except in grayscale
+      */
     void displayCifarGrayImage(int index, int rows=512, int cols=512, string window_title="CIFAR Gray Image"){
         if(index < 0 || index >= nImages){
             printf("displayCifarGrayImage, index out of bounds\n");
@@ -284,6 +334,10 @@ public:
         cv::imshow(window_title, bigger);
     }
 
+    /** Returns the "current image" as an opencv image (Mat)
+      * Not suitable for input to DeSTIN, use getGrayImageFloat method instead.
+      * @param rows, cols - optionally scale the image to this size
+      */
     cv::Mat getGrayImageMat(int rows = 32, int cols = 32){
         if(rows != 32 || cols != 32){
             cv::Mat image = grayMats[currentImage];

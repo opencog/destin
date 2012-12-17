@@ -14,7 +14,7 @@ public class NetworkFactory implements INetworkFactory {
 
     @Override
     public INetwork create() {
-            INetwork n = new NetworkAlt(SupportedImageWidths.W512, 8, new long[]{20, 16, 14, 12, 10, 8, 6, 2});
+            INetwork n = new NetworkAlt(SupportedImageWidths.W512, 8, new long[]{20, 16, 14, 12, 10, 8, 6, 2}, true);
             n.setIterationFinishedCallback(new BeliefGraphCallback());
             return n;
     }

@@ -54,8 +54,9 @@ int main(int argc, char ** argv){
     SupportedImageWidths siw = W512;
 
     uint centroid_counts[]  = {2,6,6,4,4,4,4,2};
+    bool isUniform = true;
 
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
 
     Transporter t;
     vs.grab();//throw away first frame in case its garbage
