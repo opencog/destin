@@ -81,23 +81,29 @@ To see a self organizing map (SOM):
 
     $ cd Destin/Bindings/Python
     $ idle som.py
-    - Two windows appear, select the som.py window and click Run->Run Module (F5)
-    - Training will begin, after less than 5 minutes the SOM will popup.
+
+Two windows appear, select the som.py window and click Run->Run Module (F5)
+Training will begin, after less than 5 minutes the SOM will popup.
     
 To see DeSTIN train on an video and see its output:
     
     $ cd Destin/Bindings/Python
     $ idle dostuff.py
     
-    Two windows should appear.
+Two windows should appear.
+
     - select the dostuff.py window
     - click Run -> Run Modedule ( F5 )
 
-    You should see a video of a hand and windows for 8 layers.
+You should see a video of a hand and windows for 8 layers.
     
-    In the other "*Python Shell*" window you can interact with the code after its done with 500 frames ( about a minute).
-    To make it continue processing type go(100) to have it process 100 more frames. You can make it train on webcam input instead by
-    changing the line 'vs = pd.VideoSource(False, "hand.m4v")' to 'vs = pd.VideoSource(True, "")'
+In the other "*Python Shell*" window you can interact with the code after its done with 500 frames ( about a minute).
+To make it continue processing type go(100) to have it process 100 more frames. You can make it train on webcam input instead by
+changing the line: 
+
+    vs = pd.VideoSource(False, "hand.m4v")
+    to 
+    'vs = pd.VideoSource(True, "")
     
     
     
