@@ -88,6 +88,25 @@ bool _assertIntArrayEquals(int * expected, int * actual, int length, int line){
     return true;
 }
 
+
+bool _assertUIntArrayEquals(unsigned int * expected, unsigned int * actual, int length, int line){
+    int i;
+    if(length <= 0 ){
+        printf("assertUIntArrayEquals FAILED, line: %i, negative or zero array length: %i", line, length);
+        return false;
+    }
+
+    for(i = 0 ; i < length ; i++){
+        if( expected[i] != actual[i] ){
+            printf("assertUIntArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
+            printf("expected: %i, actual: %i\n", expected[i], actual[i]);
+            return false;
+        }
+    }
+    return true;
+}
+
+
 bool _assertLongArrayEquals(long * expected, long * actual, int length, int line){
     int i;
     if(length <= 0 ){
@@ -159,8 +178,10 @@ bool _assertFloatArrayEqualsEV(float *actual, float epsilon, int len, int line, 
 }
 
 
-/** test float array with epislon and variable arguments
-*/
+/** Test float array with epislon and variable arguments.
+  * Must write floats as 1.0 and not 1 for example or
+  * bad things will happen.
+  */
 #define assertFloatArrayEqualsEV( act, epsilon, len, args... ){\
     if(! _assertFloatArrayEqualsEV(act, epsilon, len, __LINE__, args )){\
         return 1;\
@@ -171,6 +192,12 @@ bool _assertIntArrayEqualsV(int *actual, int len, int line, ...){
     int expected[len];
     ut_varags_to_array(expected, line, len, int);
     return _assertIntArrayEquals(expected, actual, len, line );
+}
+
+bool _assertUIntArrayEqualsV(unsigned int *actual, int len, int line, ...){
+    unsigned int expected[len];
+    ut_varags_to_array(expected, line, len, unsigned int);
+    return _assertUIntArrayEquals(expected, actual, len, line );
 }
 
 bool _assertLongArrayEqualsV(long *actual, int len, int line, ...){
@@ -193,6 +220,15 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
         return 1;\
     }\
 }\
+
+/** test int array with variable arguments
+*/
+#define assertUIntArrayEqualsV( act, len, expecteds... ){\
+    if(! _assertUIntArrayEqualsV(act, len, __LINE__, expecteds )){\
+        return 1;\
+    }\
+}\
+
 
 /** test long array with variable arguments
 * must write long constants as 1L, 2L ect.
@@ -282,7 +318,7 @@ bool _assertIntEquals( int expected, int actual, int line){
 }
 
 #define assertIntEquals( expected, actual){\
-    if( ! _assertIntEquals(expected, actual, __LINE__ )){\
+    if( ! _assertIntEquals((expected), (actual), __LINE__ )){\
         return 1;\
     }\
 }\
