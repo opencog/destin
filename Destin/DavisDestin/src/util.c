@@ -104,24 +104,28 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
-// allocate the input layer offsets.  each node gets an offset from
-// the frame it is presented with.  now computing it indirectly with
-// an array, but there's gotta be a closed-form way of getting the
-// input offset..
-//
-// **note** this is hard-coding a 4-to-1 reduction assuming visual
-// input (2d). we may want 2-to-1 reduction for audio input for
-// future research
+
+/** Calculates input offsets for a node.
+ * The input offsets allow the node to recieve the correct input in the correct geometry.
+ * This creates a heirarchy of 2x2 children to 1 parent node.
+ * This calculates input offsets for both the input nodes ( for pixel inputs ) and upper layer nodes ( for childrens' beliefs )
+ *
+ * @param d - Destin struct
+ * @param layer - the layer of the node to calculate input offsets
+ * @param layer_node_id - linear position of the node in the given layer from 0 to d->layerSize[layer] - 1
+ * @param child_layer_belief_offset - offset in the belief pipeline where the child layer's concatonated belief output vector begins
+ * this this should be zero for the 0th and 1st layer.
+ * @param child_input_region_width - If its an input node this is 4 ( 4x4 pixel input), otherwise 2 for 2x2 child node input
+ * @param inputOffsets_out - pointer to preallocated uint array which will hold the calculated offsets.
+ */
 void CalcNodeInputOffsets(
 
     Destin * d,
     uint layer,
     uint layer_node_id,
-    uint child_layer_offset,
+    uint child_layer_belief_offset,
     uint child_input_region_width, //width of the input region in pixels (when layer = 0) or nodes ( for upper layers)
     uint * inputOffsets_out){
-
-
 
     uint    pr, //parent row
             pc, //parent col
@@ -158,7 +162,7 @@ void CalcNodeInputOffsets(
     for(child_region_row = 0 ;child_region_row < cirw; child_region_row++){
         for(child_region_col = 0 ; child_region_col < cirw; child_region_col++){
             //store where this child's output belief vector starts
-            cos[i] = child_layer_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
+            cos[i] = child_layer_belief_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
             i++;
         }
     }
@@ -175,8 +179,8 @@ void CalcNodeInputOffsets(
 
 Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, bool doesBoltzman )
 {
-    uint nNodes, nInputPipeline;
-    uint i, l, nBeliefs, maxNb, maxNs;
+    uint nInputPipeline;
+    uint i, l, maxNb, maxNs;
     size_t bOffset ;
 
 
@@ -223,8 +227,15 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     MALLOC(d->layerNodeOffsets, uint, nl);
     MALLOC(d->layerWidth, uint, nl);
 
-    nNodes = 0;
-    nBeliefs = 0;
+    // init the train mask (determines which layers should be training)
+    MALLOC(d->layerMask, uint, d->nLayers);
+    for( i=0; i < d->nLayers; i++ )
+    {
+        d->layerMask[i] = 0;
+    }
+
+    uint nNodes = 0;
+    uint nBeliefs = 0;
     for( i=0, l=nl ; l != 0; l--, i++ )
     {
         d->layerSize[i] = 1 << 2*(l-1);
@@ -263,6 +274,9 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         // that counts how many nodes in a layer pick the given centroid as winner.
         MALLOC(d->uf_winCounts, uint *, d->nLayers);
         MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
+        //used to calculate the shared centroid delta averages
+        MALLOC(d->uf_avgDelta, float *, d->nLayers);
+        MALLOC(d->uf_sigma, float *, d->nLayers);
 
         // layer shared centroid starvation vectors
         MALLOC(d->uf_starv, float *, d->nLayers);
@@ -288,97 +302,12 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     maxNb = 0;
     maxNs = 0;
 
-    // allocate the input layer offsets.  each node gets an offset from
-    // the frame it is presented with.  now computing it indirectly with
-    // an array, but there's gotta be a closed-form way of getting the
-    // input offset..
-    //
-    // **note** this is hard-coding a 4-to-1 reduction assuming visual
-    // input (2d). we may want 2-to-1 reduction for audio input for
-    // future research
-
-    uint n, m;
-
-    uint **inputOffsets;
-    uint nInputNodes = pow(4,nl-1);
-
-    MALLOC(inputOffsets, uint *, d->layerSize[0]);
-    for( i=0; i < nInputNodes; i++ )
-    {
-        MALLOC(inputOffsets[i], uint, ni);
-        CalcNodeInputOffsets(d, 0, i, 0, (uint)sqrt(ni), inputOffsets[i]);
-    }
-
-    uint np = nl > 1 ? nb[1] : 0; //allow 1 layer 1 node networks for testing
-    float * sharedCentroids;
-
-    // calculate the state dimensionality (number of inputs + number of beliefs)
-    uint ns = ni + nb[0] + np + nc;
-    if(isUniform){
-        MALLOC(sharedCentroids, float, nb[0]*ns);
-    }else{
-        sharedCentroids = NULL;
-    }
-
-    if(isUniform){
-        //used to calculate the shared centroid delta averages
-        MALLOC(d->uf_avgDelta, float *, d->nLayers);
-        MALLOC(d->uf_avgDelta[0], float, ns*nb[0]);//the rest are allocated later
-
-        MALLOC(d->uf_sigma, float *, d->nLayers);
-        MALLOC(d->uf_sigma[0], float, ns*nb[0]);//the rest are allocated later
-    }
-
-    // initialize zero-layer nodes
-    for( n=0, i=0, bOffset = 0; i < d->layerSize[0]; i++, n++ )
-    {
-        InitNode( 
-                    n,
-                    d,
-                    0,
-                    ni,
-                    nb[0],
-                    np,
-                    nc,
-                    ns,
-                    starvCoeff,
-                    beta,
-                    gamma,
-                    lambda,
-                    temp[0],
-                    &d->nodes[n],
-                    inputOffsets[n],
-                    NULL,
-                    &d->belief[bOffset],
-                    sharedCentroids
-                    );
-
-        // increment belief offset
-        bOffset += nb[0];
-    }
-
-    // update max belief 
-    if( nb[0] > maxNb )
-    {
-        maxNb = nb[0];
-    }
-
-    if( ni + nb[0] + np > maxNs )
-    {
-        maxNs = ni + nb[0] + np;
-    }
-
-    // init the train mask (determines which layers should be training)
-    MALLOC(d->layerMask, uint, d->nLayers);
-    for( i=0; i < d->nLayers; i++ )
-    {
-        d->layerMask[i] = 0;
-    }
-
+    uint n = 0;
     uint child_layer_offset = 0;
+
     // initialize the rest of the network
 
-    for( l=1; l < nl; l++ )
+    for( l=0; l < nl; l++ )
     {
         // update max belief
         if( nb[l] > maxNb )
@@ -388,15 +317,17 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
         uint np = (l == nl - 1) ? 0 : nb[l + 1];
 
-        if( 4*nb[l-1] + nb[l] + np > maxNs )
+        ni = l == 0 ? ni : 4*nb[l-1];
+
+        if( ni + nb[l] + np > maxNs )
         {
-            maxNs = 4*nb[l-1] + nb[l] + np;
+            maxNs = ni + nb[l] + np;
         }
 
         float * sharedCentroids;
 
         // calculate the state dimensionality (number of inputs + number of beliefs)
-        uint ns = nb[l-1]*4 + nb[l] + np + nc;
+        uint ns = ni + nb[l] + np + nc;
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
@@ -406,18 +337,20 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         }
 
 
-        uint * inputOffsets_temp;
-        MALLOC(inputOffsets_temp, uint, (nb[l - 1] * 4));
-
-        //iterate over nodes in this layer
+        uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            CalcNodeInputOffsets(d, l, i, child_layer_offset, 2, inputOffsets_temp);
+            CalcNodeInputOffsets(d,
+                                 l, // layer
+                                 i, // linear node position in the current layer
+                                 child_layer_offset,
+                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
+                                 inputOffsets);
             InitNode(
                         n, 
                         d,
                         l,
-                        nb[l-1]*4,
+                        ni,
                         nb[l],
                         np,
                         nc,
@@ -428,22 +361,24 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                         lambda,
                         temp[l],
                         &d->nodes[n], 
-                        inputOffsets_temp,
-                        d->inputPipeline,
+                        inputOffsets,
+                        (l == 0 ? NULL : d->inputPipeline),
                         &d->belief[bOffset],
                         sharedCentroids
                     );
-            MALLOC( d->nodes[n].children, Node *, 4 );
 
-            // increment previous belief offset (input to next node)
-            //iOffset += 4*nb[l-1];
+            if(l > 0){
+                MALLOC( d->nodes[n].children, Node *, 4 );
+            }
 
             // increment belief offset (so beliefs are mapped contiguously in memory)
             bOffset += nb[l];
         }//next node
 
-        child_layer_offset += 4*nb[l-1] * d->layerSize[l];
-        FREE(inputOffsets_temp);
+        if(l > 0){
+            // where the beliefs of the next layer begin
+            child_layer_offset += ni * d->layerSize[l];
+        }
 
     }//next layer
     
@@ -451,14 +386,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
-
-
-    for( i=0; i < nInputNodes; i++ )
-    {
-        free(inputOffsets[i]);
-    }
-
-    free(inputOffsets);
     return d;
 }
 
