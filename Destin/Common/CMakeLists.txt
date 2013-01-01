@@ -13,4 +13,5 @@ ADD_LIBRARY( common SHARED
 
 add_executable( testCifarSource TestCifar.cc )
 
-target_link_libraries(testCifarSource highgui cxcore cv)
+find_package( OpenCV REQUIRED) 
+target_link_libraries(testCifarSource ${OpenCV_LIBS} )

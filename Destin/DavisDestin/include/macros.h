@@ -3,6 +3,8 @@
 
 // unsigned int macro
 #include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define PRINTF printf
 

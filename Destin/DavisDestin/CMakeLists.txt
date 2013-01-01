@@ -13,13 +13,24 @@ IF (CMAKE_BUILD_TYPE STREQUAL "")
 	SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+
+FIND_PACKAGE( OpenCV REQUIRED)
+
 INCLUDE_DIRECTORIES( include ../Common )
 
 
 ADD_EXECUTABLE(destin src/destin_mnist.c )    
 
-ADD_LIBRARY( destinalt SHARED src/destin.c src/node.c src/util.c )
-TARGET_LINK_LIBRARIES( destinalt opencv_imgproc opencv_highgui opencv_core)
+ADD_LIBRARY( destinalt SHARED
+    src/destin.c
+    src/node.c
+    src/util.c
+    src/cent_image_gen.c
+    include/macros.h
+    include/cent_image_gen.h
+)
+
+TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS})
 
 TARGET_LINK_LIBRARIES( destin destinalt )
 SET_TARGET_PROPERTIES( destin PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin )

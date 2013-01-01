@@ -6,7 +6,7 @@ SET(CMAKE_BUILD_TYPE Release)
  
 # uncomment to build in debug mode
 #SET(CMAKE_BUILD_TYPE Debug)
-    
+FIND_PACKAGE( OpenCV REQUIRED)
 ADD_SUBDIRECTORY(Common)
 ADD_SUBDIRECTORY(DavisDestin)
 ADD_SUBDIRECTORY(DrentheDestin)

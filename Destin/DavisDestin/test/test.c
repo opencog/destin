@@ -1,17 +1,17 @@
 
-#include "unit_test.h"
-#include "destin.h"
-#include <stdio.h>
-
 #include <float.h>
 #include <memory.h>
+#include <stdio.h>
 
+#include "destin.h"
+#include "unit_test.h"
+#include "cent_image_gen.h"
 
 Destin * makeDestin(const int layers){
     if(layers > 8){
         printf("can't make more than 8 layers!\n");
     }
-    uint ni = 16; //input layer nodes cluster on 4 pixel input.
+    uint ni = 16;
     uint nl = layers;
 
 
@@ -873,9 +873,72 @@ int  testLinkParentBeliefToChildren(){
     return 0;
 }
 
+int testCentroidImageGeneration(){
+    uint ni = 1; //input layer nodes cluster on 1 pixel input.
+    uint nl = 3;
+    uint nb [] = {2,2,2}; //centroids per layer
+    uint nc = 0;
+    float beta = 0.001;
+    float lambda = 0.10;
+    float gamma = 0.10;
+    float temperature [] = {7.5, 8.5, 4.0,3.3};
+    float starvCoef = 0.12;
+    uint nMovements = 0;
+    bool doesBoltzman  = true;
+    bool isUniform = true;
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, doesBoltzman);
+
+    Node * n = GetNodeFromDestin(d, 0, 0 ,0);
+    n->mu[0 * n->ns + 0] = 0.0;
+    n->mu[1 * n->ns + 0] = 1.0; // black ( or is it white?)
+
+    n = GetNodeFromDestin(d, 1, 0 ,0);
+    assignFloatArray(&n->mu[0], 8,          0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //all black
+    assignFloatArray(&n->mu[1 * n->ns], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //all white
+
+    n = GetNodeFromDestin(d, 2, 0 ,0);
+
+    //top half black, bottom half white
+    assignFloatArray(&n->mu[0], 8,          1.0, 0.0, 1.0, 0.0,
+                                            0.0, 1.0, 0.0, 1.0);
+
+    //all black, bottom right dark grey
+    assignFloatArray(&n->mu[1 * n->ns], 8,  1.0, 0.0, 1.0, 0.0,
+                                            1.0, 0.0, 0.75, 0.25);
+
+
+    float *** images = CreateCentroidImages(d);
+
+    // check that the generated images are correct
+    assertFloatArrayEqualsEV(images[0][0], 0.0, 1, 0.0);
+    assertFloatArrayEqualsEV(images[0][1], 0.0, 1, 1.0);
+
+    assertFloatArrayEqualsEV(images[1][0], 0.0, 4, 1.0, 1.0, 1.0, 1.0);
+    assertFloatArrayEqualsEV(images[1][1], 0.0, 4, 0.0, 0.0, 0.0, 0.0);
+
+    assertFloatArrayEqualsEV(images[2][0], 0.0, 16,
+                             1.0, 1.0, 1.0, 1.0,
+                             1.0, 1.0, 1.0, 1.0,
+                             0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0);
+
+    assertFloatArrayEqualsEV(images[2][1], 0.0, 16,
+                             1.0, 1.0, 1.0, 1.0,
+                             1.0, 1.0, 1.0, 1.0,
+                             1.0, 1.0, 0.75, 0.75,
+                             1.0, 1.0, 0.75, 0.75);
+
+
+    DestroyCentroidImages(d, images);
+    DestroyDestin(d);
+
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
+
     RUN(testVarArgs);
 
     RUN(testInit);
@@ -894,6 +957,7 @@ int main(int argc, char ** argv ){
     RUN(testLinkParentBeliefToChildren);
 
     //RUN(testGetNode); //TODO: fix and renable this test
+    RUN(testCentroidImageGeneration);
 
     printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
     if(TEST_HAS_FAILURES){
