@@ -21,6 +21,7 @@
 extern "C" {
 #include "destin.h"
 #include "node.h"
+#include "cent_image_gen.h"
 }
 
 #include "DestinIterationFinishedCallback.h"
@@ -55,7 +56,11 @@ private:
 
     cv::Mat winningGrid;
     cv::Mat winningGridLarge;
+    cv::Mat centroidImage;
+    cv::Mat centroidImageResized;
 
+    float *** centroidImages;
+    bool isUniform;
     /**
      * initTemperatures
      * Input layer stays the same. For the top two layers temperature = centroids * 2
@@ -83,7 +88,9 @@ public:
             training(true),
             beta(.01),
             lambda(.1),
-            gamma(.1)
+            gamma(.1),
+            isUniform(isUniform),
+            centroidImages(NULL)
             {
 
         uint input_dimensionality = 16;
@@ -131,10 +138,13 @@ public:
         ClearBeliefs(destin);
 
         isTraining(true);
-
     }
 
     virtual ~DestinNetworkAlt() {
+        if(centroidImages != NULL){
+            DestroyCentroidImages(destin,  centroidImages);
+        }
+
         if(destin!=NULL){
             DestroyDestin(destin);
             destin = NULL;
@@ -216,8 +226,12 @@ public:
             printf("centroid %i: input ", centroid);
             int dimension;
             for(dimension = 0 ; dimension < n->ni ; dimension++){
+                if(dimension % (n->ni / 4) == 0){
+                    printf("\n");
+                }
                 printf("%.5f ", n->mu[centroid*n->ns + dimension]);
             }
+            printf("\n");
             printf(" self ");
             for(int end = dimension + n->nb ; dimension < end ; dimension++){
                 printf("%.5f ", n->mu[centroid*n->ns + dimension]);
@@ -275,6 +289,7 @@ public:
         printf("input: ");
         int i = 0;
         for(int c = 0 ; c < n->ni ; c++ ){
+
             printf("%f ", n->observation[i]);
             i++;
         }
@@ -344,6 +359,63 @@ public:
      */
     void load(char * fileName){
         destin = LoadDestin(destin, fileName);
+        if(destin == NULL){
+            throw std::runtime_error("load: could not open file.\n");
+        }
+
+        if(centroidImages != NULL){
+            DestroyCentroidImages(destin,  centroidImages);
+        }
+        centroidImages = NULL;
+
+        Node * n = GetNodeFromDestin(destin, 0, 0, 0);
+        this->beta = n->beta;
+        this->gamma = n->gamma;
+        this->isUniform = destin->isUniform;
+        this->lambda = n->lambda;
+        this->temperatures = destin->temp;
+
+    }
+
+    float * getCentroidImage(int layer, int centroid){
+        if(centroidImages == NULL){
+            centroidImages = CreateCentroidImages(destin);
+        }else{
+            UpdateCentroidImages(destin, centroidImages);
+        }
+        return centroidImages[layer][centroid];
+    }
+
+    void displayCentroidImage(int layer, int centroid, int disp_width = 256 ,  char * window_name="Centroid Image" ){
+        if(!isUniform){
+            cerr << "can't displayCentroidImage with non uniform DeSTIN.\n";
+            return;
+        }
+        if(layer > destin->nLayers ||  centroid > destin->nb[layer]){
+            cerr << "displayCentroidImage: layer, centroid out of bounds\n";
+            return;
+        }
+
+        if(centroidImages == NULL){
+            centroidImages = CreateCentroidImages(destin);
+        }else{
+            UpdateCentroidImages(destin, centroidImages);
+        }
+
+        uint width = GetCentroidImageWidth(destin, layer);
+
+        //initialize or create new grid if needed
+        if(centroidImage.rows != width || centroidImage.cols != width){
+            centroidImage = cv::Mat(width, width, CV_32FC1);
+        }
+        float * data = (float *)centroidImage.data;
+
+        memcpy(data, centroidImages[layer][centroid], width*width*sizeof(float));
+
+        cv::resize(centroidImage,centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);
+        cv::imshow(window_name, centroidImageResized);
+
+
     }
 };
 

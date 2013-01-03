@@ -1,16 +1,25 @@
 #!/usr/bin/python
 import pydestin as pd
 
-import opencv.highgui as cvhg
+#import opencv.highgui as cvhg
+import threading
+
+import cv2.cv
+
+cvhg = lambda: None
+
+cvhg.cvResizeWindow = cv2.cv.ResizeWindow
+cvhg.cvMoveWindow = cv2.cv.MoveWindow
+cvhg.cvWaitKey = cv2.cv.WaitKey
 
 def array_to_pointer(arr):
     ia = pd.SWIG_IntArray(len(arr))
-    for x in range(len(arr)):
+    for x in ranbge(len(arr)):
         ia[x] = arr[x]
     return ia
 
 
-centroids = [10,5,4,4,4,4,4,2]
+centroids = [2,2,4,4,64,32,16,2]
              
 #centroids = [2,2,2,2]
 layers = len(centroids)
@@ -149,12 +158,15 @@ def arrangeWindows():
     y = 0
     n = len(opened_windows)
     for i, w in enumerate(opened_windows):
+        
+        
         cvhg.cvResizeWindow(w, window_width, window_width)
         r, c = divmod(i, windows_wide)
         cvhg.cvMoveWindow(w, c * window_width, r * window_width)
     
 
 lucky_centroid = None
+
 def the_callback():
     zoom = 2
     global opened_windows
@@ -167,8 +179,14 @@ def the_callback():
         
     dn.printBeliefGraph(top_layer, 0, 0)
     freezeTopCentroidsExcept(lucky_centroid)
-    dn.displayFeatures(1, 0, 1)
-    
+    dn.displayFeatures(the_callback.dfl , 0, 1)
+    if the_callback.do_cent_image:
+        dn.displayCentroidImage(the_callback.dfl, 0, the_callback.cent_image_disp_width )
+
+the_callback.do_cent_image = False
+the_callback.dfl = 7
+the_callback.cent_image_disp_width = 512
+
 def go(frames=20):
     doFramesWithCallback(frames, the_callback)
 
@@ -183,9 +201,24 @@ def reportParentAndChildren(parent_layer, pr, pc):
     go(1)
     dn.printNodeObservation(parent_layer, pr, pc)
   
+def printCentImage(layer, cent):
+    l = pd.GetCentroidImageWidth(dn.getNetwork(), layer)
+    l = l * l
+    fa = pd.SWIG_FloatArray_frompointer( dn.getCentroidImage(layer, cent))
+    for i in range(l):
+        print fa[i]
 
+        
+        
+def dci(layer, cent):
+    dn.displayCentroidImage(layer, cent)
+    cv2.waitKey(10)
+
+def wk(time=100):
+    cv2.waitKey(time)
+    
 #dn.load("hand.dst")
 #freezeTraining()
 go(10)
 arrangeWindows()
-go(500)
+go(50)

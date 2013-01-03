@@ -1,22 +1,35 @@
 
 #include <memory.h>
+#include <math.h>
 #include "macros.h"
 #include "destin.h"
 #include "cent_image_gen.h"
 
 
-
-
-void BlendImages(float ** images, float * weights, int nImages,
-                   const int img_size, float * image_out){
+void BlendImages(float ** images,       // array of images to blend
+                 float * weights,       // weights used to blend images ( will be normalized )
+                 int nImages,           // number of images to blend
+                 const int img_size,    // number of pixels in each image to blend
+                 float * image_out){    // blended image is stored here. must be preallocated memory of length img_size
 
     int p, i;
-    float pix_out;
+    float pix_out, sum = 0;
+    float norm_weights[nImages];
+
+    memcpy(norm_weights, weights, nImages * sizeof(float));
+
+    for(i = 0 ; i < nImages ; i++){
+        sum += norm_weights[i];
+    }
+
+    for(i = 0 ; i < nImages ; i++){
+        norm_weights[i] /= sum;
+    }
 
     for(p = 0 ; p < img_size ; p++){
         pix_out = 0;
         for(i = 0 ; i < nImages ; i++){
-            pix_out += weights[i] * images[i][p];
+            pix_out += norm_weights[i] * images[i][p];
         }
         image_out[p] = pix_out;
     }
@@ -54,7 +67,7 @@ float*** CreateCentroidImages(Destin * d){
     // allocate memory for the centroid images
     float *** images;
     MALLOC(images, float **, d->nLayers);
-    int l, c, p, prev_image_width, image_width = GetNodeFromDestin(d, 0, 0, 0)->ni;
+    int l, c, image_width = GetNodeFromDestin(d, 0, 0, 0)->ni;
     for(l = 0 ; l < d->nLayers; l++){
         MALLOC(images[l], float *, d->nb[l]);
         for(c = 0 ; c < d->nb[l]; c++){
@@ -63,8 +76,22 @@ float*** CreateCentroidImages(Destin * d){
         image_width *= 2;
     }
 
+    UpdateCentroidImages(d, images);
+
+    return images;
+}
+
+int GetCentroidImageWidth(Destin * d, int layer){
+
+    return sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni) * pow(2, layer);
+}
+
+void UpdateCentroidImages(Destin * d, float *** images){
+
+    int p, l, c, prev_image_width,image_width;
+
     Node * n;
-    image_width = GetNodeFromDestin(d, 0, 0, 0)->ni;
+    image_width = sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni);
     prev_image_width = image_width;
     for(l = 0 ; l < 1 ; l++){
         n = GetNodeFromDestin(d, l, 0, 0);
@@ -102,7 +129,7 @@ float*** CreateCentroidImages(Destin * d){
                               d->nb[l - 1],
                               prev_image_width * prev_image_width,
                               combined_images[child_section]);
-            }
+                }
 
             ConcatImages(combined_images, prev_image_width, prev_image_width, images[l][c] );
         }
@@ -117,8 +144,7 @@ float*** CreateCentroidImages(Destin * d){
         prev_image_width = image_width;
         image_width *= 2;
     }
-
-    return images;
+    return;
 }
 
 void DestroyCentroidImages(Destin * d, float *** images){
