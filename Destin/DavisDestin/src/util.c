@@ -498,12 +498,13 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
-    fwrite(d->temp,                 sizeof(float),          d->nLayers,  dFile);
-    fwrite(&d->nodes[0].beta,       sizeof(float),          1,           dFile); //TODO consider moving these constants to the destin struc
-    fwrite(&d->nodes[0].lambda,     sizeof(float),          1,           dFile);
-    fwrite(&d->nodes[0].gamma,      sizeof(float),          1,           dFile);
-    fwrite(&d->nodes[0].starvCoeff, sizeof(float),          1,           dFile);
-    fwrite(&d->centLearnStrat,       sizeof(CentroidLearnStrat),    1,           dFile);
+    fwrite(d->temp,                 sizeof(float),              d->nLayers,  dFile);
+    fwrite(&d->nodes[0].beta,       sizeof(float),              1,           dFile); //TODO consider moving these constants to the destin struc
+    fwrite(&d->nodes[0].lambda,     sizeof(float),              1,           dFile);
+    fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
+    fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
+    fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
+    fwrite(&d->fixedLearnRate,      sizeof(float),              1,           dFile);
 
     //write belief states
     fwrite(d->inputPipeline, sizeof(float), d->nInputPipeline, dFile);
@@ -579,16 +580,18 @@ Destin * LoadDestin( Destin *d, char *filename )
     fread(nb, sizeof(uint), nl, dFile);
 
     // read destin params from disk
-    fread(temp, sizeof(float), nl, dFile);
-    fread(&beta, sizeof(float), 1, dFile);
-    fread(&lambda, sizeof(float), 1, dFile);
-    fread(&gamma, sizeof(float), 1, dFile);
-    fread(&starvCoeff, sizeof(float), 1, dFile);
+    fread(temp,         sizeof(float), nl,  dFile);
+    fread(&beta,        sizeof(float), 1,   dFile);
+    fread(&lambda,      sizeof(float), 1,   dFile);
+    fread(&gamma,       sizeof(float), 1,   dFile);
+    fread(&starvCoeff,  sizeof(float), 1,   dFile);
 
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, doesBoltzman);
 
-    fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,                 dFile);
+    fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
     SetLearningStrat(d, d->centLearnStrat);
+
+    fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
 
     fread(d->inputPipeline, sizeof(float),         d->nInputPipeline, dFile);
     fread(d->belief,        sizeof(float),         d->nBeliefs,       dFile);

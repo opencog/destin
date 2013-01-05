@@ -1,15 +1,8 @@
 #include "destin.h"
 #include "learn_strats.h"
 
-// TODO: make this not a global variable
-// TODO: save the fixed learning rate in SaveDestin
-float CLS_Fixed_learn_rate = 0.25;
-void CLS_Fixed_SetRate(float rate){
-    CLS_Fixed_learn_rate = rate;
-}
-
 float CLS_Fixed(Destin * d,  Node * n, uint layer, uint centroid){
-    return CLS_Fixed_learn_rate;
+    return d->fixedLearnRate;
 }
 
 float CLS_Decay(Destin * d, Node * n, uint layer, uint centroid){

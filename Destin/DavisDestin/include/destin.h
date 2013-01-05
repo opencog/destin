@@ -37,6 +37,7 @@ typedef struct Destin {
 
     CentroidLearnStrat   centLearnStrat;        // centroid learning strategy enum
     CentroidLearnStratFunc centLearnStratFunc;  // centroid learning strategy function pointer
+    float       fixedLearnRate;       // if CLS_Fixed is set for centLearnStrat, then this is the fixed learning rate to use, otherwise ignored.
 
     bool        doesBoltzman;           // flag to determine if the  beliefs are applied with the boltzman distribution
     bool        isUniform;              // internal flag to determine if this destin has been made uniform

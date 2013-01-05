@@ -136,7 +136,7 @@ public:
 
         SetLearningStrat(destin, CLS_FIXED);
         ClearBeliefs(destin);
-
+        destin->fixedLearnRate = 0.1;
         isTraining(true);
     }
 
@@ -177,6 +177,10 @@ public:
     void free() {
         DestroyDestin(destin);
         destin = NULL;
+    }
+
+    void setFixedLearnRate(float rate){
+        destin->fixedLearnRate = rate;
     }
 
     void setIsPOSTraining(bool training) {
