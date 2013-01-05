@@ -142,7 +142,7 @@ public:
 
     virtual ~DestinNetworkAlt() {
         if(centroidImages != NULL){
-            DestroyCentroidImages(destin,  centroidImages);
+            Cig_DestroyCentroidImages(destin,  centroidImages);
         }
 
         if(destin!=NULL){
@@ -364,7 +364,7 @@ public:
         }
 
         if(centroidImages != NULL){
-            DestroyCentroidImages(destin,  centroidImages);
+            Cig_DestroyCentroidImages(destin,  centroidImages);
         }
         centroidImages = NULL;
 
@@ -379,14 +379,14 @@ public:
 
     float * getCentroidImage(int layer, int centroid){
         if(centroidImages == NULL){
-            centroidImages = CreateCentroidImages(destin);
+            centroidImages = Cig_CreateCentroidImages(destin);
         }else{
-            UpdateCentroidImages(destin, centroidImages);
+            Cig_UpdateCentroidImages(destin, centroidImages);
         }
         return centroidImages[layer][centroid];
     }
 
-    void displayCentroidImage(int layer, int centroid, int disp_width = 256 ,  char * window_name="Centroid Image" ){
+    void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" ){
         if(!isUniform){
             cerr << "can't displayCentroidImage with non uniform DeSTIN.\n";
             return;
@@ -397,12 +397,12 @@ public:
         }
 
         if(centroidImages == NULL){
-            centroidImages = CreateCentroidImages(destin);
+            centroidImages = Cig_CreateCentroidImages(destin);
         }else{
-            UpdateCentroidImages(destin, centroidImages);
+            Cig_UpdateCentroidImages(destin, centroidImages);
         }
 
-        uint width = GetCentroidImageWidth(destin, layer);
+        uint width = Cig_GetCentroidImageWidth(destin, layer);
 
         //initialize or create new grid if needed
         if(centroidImage.rows != width || centroidImage.cols != width){
@@ -412,10 +412,19 @@ public:
 
         memcpy(data, centroidImages[layer][centroid], width*width*sizeof(float));
 
-        cv::resize(centroidImage,centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);
-        cv::imshow(window_name, centroidImageResized);
+        cv::Mat toShow;
 
+        if(enhanceContrast){
+            cv::Mat equalized;
+            centroidImage.convertTo(equalized, CV_8UC1, 255);
+            cv::equalizeHist(equalized, equalized);
+            toShow = equalized;
+        }else{
+            toShow = centroidImage;
+        }
 
+        cv::resize(toShow,centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);
+        cv::imshow(window_name.c_str(), centroidImageResized);
     }
 };
 

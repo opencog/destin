@@ -28,6 +28,8 @@ ADD_LIBRARY( destinalt SHARED
     src/cent_image_gen.c
     include/macros.h
     include/cent_image_gen.h
+    src/learn_strats.c
+    include/learn_strats.h
 )
 
 TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS})

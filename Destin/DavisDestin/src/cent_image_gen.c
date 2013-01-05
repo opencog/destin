@@ -5,38 +5,101 @@
 #include "destin.h"
 #include "cent_image_gen.h"
 
+#define NORM_WEIGHTS
+//#define DETECT_NORM
 
-void BlendImages(float ** images,       // array of images to blend
+float Cig_PowerNormalize_power = 1.0;
+void Cig_SetPowerNormalizePower(float power){
+    Cig_PowerNormalize_power = power;
+}
+
+void Cig_Normalize(float * weights_in, float * weights_out, int len, float not_used){
+    memcpy(weights_out, weights_in, len * sizeof(float));
+    int i;
+    float sum;
+    for(i = 0 ; i < len ; i++){
+        sum += weights_out[i];
+    }
+    for(i = 0 ; i < len ; i++){
+        weights_out[i] /= sum;
+    }
+}
+
+void Cig_PowerNormalize(float * weights_in, float * weights_out, int len, float exponent){
+    int i;
+    memcpy(weights_out, weights_in, len * sizeof(float));
+
+    float sum = 0;
+    if(exponent == 1.0){
+        for(i = 0 ; i < len ; i++){
+            sum+=weights_out[i];
+        }
+    }else{
+        for(i = 0 ; i < len ; i++){
+            weights_out[i] = pow(weights_out[i],exponent);
+            sum+=weights_out[i];
+        }
+    }
+    for(i = 0 ; i < len ; i++){
+        weights_out[i]/=sum;
+    }
+}
+
+void Cig_BlendImages(float ** images,       // array of images to blend
                  float * weights,       // weights used to blend images ( will be normalized )
                  int nImages,           // number of images to blend
                  const int img_size,    // number of pixels in each image to blend
                  float * image_out){    // blended image is stored here. must be preallocated memory of length img_size
 
     int p, i;
-    float pix_out, sum = 0;
+    float pix_out;
+
+    float * w;
+#ifdef NORM_WEIGHTS
     float norm_weights[nImages];
+    Cig_PowerNormalize(weights, norm_weights, nImages, Cig_PowerNormalize_power);
+    w = norm_weights;
+#else
+    w = weights;
+#endif
 
-    memcpy(norm_weights, weights, nImages * sizeof(float));
-
-    for(i = 0 ; i < nImages ; i++){
-        sum += norm_weights[i];
+#ifdef DETECT_NORM
+    // This block is used to investigate if the weights sum to one.
+    // To help in debugging.
+    static float percent = 0.0;
+    static unsigned long int count = 0;
+    static unsigned long int norm_count = 0;
+    static unsigned long int iteration = 0;
+    static float epsilon = 1e-3;
+    static float max_sum = 0;
+    iteration++;
+    if(iteration % 1 == 0){
+        count++;
+        for(i = 0 ; i < nImages ; i++){
+            sum += w[i];
+        }
+        if(sum < (1.0 + epsilon)){
+            norm_count++;
+        }
+        if(sum > max_sum){
+            max_sum = sum;
+        }
+        percent = (float)norm_count / (float)count;
+        printf("norm percent: %f, weight sum: %f, max sum:%f \n", percent, sum, max_sum);
     }
-
-    for(i = 0 ; i < nImages ; i++){
-        norm_weights[i] /= sum;
-    }
+#endif
 
     for(p = 0 ; p < img_size ; p++){
         pix_out = 0;
         for(i = 0 ; i < nImages ; i++){
-            pix_out += norm_weights[i] * images[i][p];
+            pix_out += w[i] * images[i][p];
         }
         image_out[p] = pix_out;
     }
     return;
 }
 
-void ConcatImages(float ** images,// Array of the 4 images to concat.
+void Cig_ConcatImages(float ** images,// Array of the 4 images to concat.
                   const int rows, // Height of each image to concat.
                   const int cols, // Width of each image to concat.
                   float * image_out // Concated image that is 2 x wider and taller
@@ -58,7 +121,7 @@ void ConcatImages(float ** images,// Array of the 4 images to concat.
     }
 }
 
-float*** CreateCentroidImages(Destin * d){
+float*** Cig_CreateCentroidImages(Destin * d){
 
     if(!d->isUniform){
         return NULL;
@@ -76,17 +139,17 @@ float*** CreateCentroidImages(Destin * d){
         image_width *= 2;
     }
 
-    UpdateCentroidImages(d, images);
+    Cig_UpdateCentroidImages(d, images);
 
     return images;
 }
 
-int GetCentroidImageWidth(Destin * d, int layer){
+int Cig_GetCentroidImageWidth(Destin * d, int layer){
 
     return sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni) * pow(2, layer);
 }
 
-void UpdateCentroidImages(Destin * d, float *** images){
+void Cig_UpdateCentroidImages(Destin * d, float *** images){
 
     int p, l, c, prev_image_width,image_width;
 
@@ -124,14 +187,14 @@ void UpdateCentroidImages(Destin * d, float *** images){
                 // For the current sub section of the current centroid,
                 // generate its representative image and store it in
                 // the appropriate section of combined_images;
-                BlendImages(images[l - 1],
+                Cig_BlendImages(images[l - 1],
                               &n->mu[c * n->ns + child_section * d->nb[l - 1]],
                               d->nb[l - 1],
                               prev_image_width * prev_image_width,
                               combined_images[child_section]);
                 }
 
-            ConcatImages(combined_images, prev_image_width, prev_image_width, images[l][c] );
+            Cig_ConcatImages(combined_images, prev_image_width, prev_image_width, images[l][c] );
         }
 
         for(i = 0 ; i < 4 ; i++){
@@ -147,7 +210,7 @@ void UpdateCentroidImages(Destin * d, float *** images){
     return;
 }
 
-void DestroyCentroidImages(Destin * d, float *** images){
+void Cig_DestroyCentroidImages(Destin * d, float *** images){
 
     int l, c;
     for(l = 0 ; l < d->nLayers ; l++){

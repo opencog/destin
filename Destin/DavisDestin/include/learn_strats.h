@@ -1,6 +1,9 @@
 #ifndef LEARN_STRATS_H
 #define LEARN_STRATS_H
 
+
+#include "macros.h"
+
 // Centroid learning strategy. Enumerates strategies for
 // centroid movement / learning rate.
 typedef  enum {

@@ -3,12 +3,16 @@
 #ifndef CENT_IMAGE_GEN_H
 #define CENT_IMAGE_GEN_H
 
-float *** CreateCentroidImages(Destin * d);
+float *** Cig_CreateCentroidImages(Destin * d);
 
-void DestroyCentroidImages(Destin * d, float *** images);
+void Cig_DestroyCentroidImages(Destin * d, float *** images);
 
-void UpdateCentroidImages(Destin * d, float *** images);
+void Cig_UpdateCentroidImages(Destin * d, float *** images);
 
-int GetCentroidImageWidth(Destin * d, int layer);
+int Cig_GetCentroidImageWidth(Destin * d, int layer);
+
+void Cig_SetPowerNormalizePower(float power);
+
+
 
 #endif

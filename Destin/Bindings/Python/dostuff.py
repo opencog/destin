@@ -152,14 +152,7 @@ def slowFreeze(start_layer, end_layer, frames_between):
 def arrangeWindows():
     windows_wide = 4
     window_width = 256
-    top_left = 0
-    top_rigt = 0
-    x = 0
-    y = 0
-    n = len(opened_windows)
     for i, w in enumerate(opened_windows):
-        
-        
         cvhg.cvResizeWindow(w, window_width, window_width)
         r, c = divmod(i, windows_wide)
         cvhg.cvMoveWindow(w, c * window_width, r * window_width)
@@ -180,10 +173,12 @@ def the_callback():
     dn.printBeliefGraph(top_layer, 0, 0)
     freezeTopCentroidsExcept(lucky_centroid)
     dn.displayFeatures(the_callback.dfl , 0, 1)
+    cent = the_callback.do_cent_image_num
     if the_callback.do_cent_image:
-        dn.displayCentroidImage(the_callback.dfl, 0, the_callback.cent_image_disp_width )
+        dn.displayCentroidImage(the_callback.dfl, cent, the_callback.cent_image_disp_width )
 
 the_callback.do_cent_image = False
+the_callback.do_cent_image_num = 0
 the_callback.dfl = 7
 the_callback.cent_image_disp_width = 512
 
@@ -209,16 +204,16 @@ def printCentImage(layer, cent):
         print fa[i]
 
         
-        
-def dci(layer, cent):
-    dn.displayCentroidImage(layer, cent)
-    cv2.waitKey(10)
+#display centroid image       
+def dci(layer, cent, equalize_hist = False):
+    dn.displayCentroidImage(layer, cent, 256, equalize_hist)
+    cv2.waitKey(100)
 
 def wk(time=100):
     cv2.waitKey(time)
     
 #dn.load("hand.dst")
 #freezeTraining()
-go(10)
+go(5)
 arrangeWindows()
-go(50)
+go(5)

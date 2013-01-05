@@ -331,24 +331,6 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
     return;
 }
 
-
-float CLS_Fixed(Destin * d,  Node * n, uint layer, uint centroid){
-    float learningRate = 0.25;
-    return learningRate;
-}
-
-float CLS_Decay(Destin * d, Node * n, uint layer, uint centroid){
-    uint wincount;
-    float learnRate;
-    if(d->isUniform){
-        wincount = d->uf_persistWinCounts[layer][centroid];
-        learnRate = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
-    }else{
-        learnRate = 1 / (float) n->nCounts[n->winner];
-    }
-    return learnRate;
-}
-
 //average the deltas and multiply them by the shared ncounts
 void Uniform_AverageDeltas(Node * n, uint nIdx){
     n = &n[nIdx];
