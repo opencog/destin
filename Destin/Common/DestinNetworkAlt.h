@@ -289,7 +289,9 @@ public:
         printf("input: ");
         int i = 0;
         for(int c = 0 ; c < n->ni ; c++ ){
-
+            if(c % (n->ni / 4) == 0){
+                printf("\n");
+            }
             printf("%f ", n->observation[i]);
             i++;
         }
@@ -384,6 +386,22 @@ public:
             Cig_UpdateCentroidImages(destin, centroidImages);
         }
         return centroidImages[layer][centroid];
+    }
+
+
+    /** Moves the given centroid to its node's input observation.
+      * @param layer
+      * @param row
+      * @param col
+      * @param centroid
+      */
+    void moveCentroidToInput(int layer, int row, int col, int centroid){
+        Node * n = getNode(layer, row, col);
+        if(centroid >= destin->nb[layer]){
+            throw std::domain_error("moveCentroidToInput: centroid out of bounds.");
+        }
+        float * cent = &n->mu[centroid * n->ns];
+        memcpy(cent, n->observation, n->ns * sizeof(float));
     }
 
     void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" ){
