@@ -911,10 +911,10 @@ void DisplayLayerFeatures( Destin *d, int layer, int node_start, int nodes )
     featuresOut->imageData = (char *) frame;
     featuresOut->imageDataOrigin = featuresOut->imageData;
 
-    size.height = height * 2;
-    size.width = width * 2;
+    size.height = height * 8;
+    size.width = width * 8;
     IplImage *bigImg = cvCreateImage(size, IPL_DEPTH_32F, 1);
-    cvResize(featuresOut, bigImg, CV_INTER_CUBIC);
+    cvResize(featuresOut, bigImg, CV_INTER_NN);
 
     cvShowImage("Features!!", bigImg);
 
