@@ -1,9 +1,13 @@
 import time
 import pydestin as pd
-import opencv as cv
-import opencv.highgui as hg
+import cv2.cv as cv
+
 import threading
 
+hg = lambda: None
+
+hg.cvWaitKey = cv.WaitKey
+hg.cvSetMouseCallback = cv.SetMouseCallback
 """
 This script defines a "go()" function which will train DeSTIN on CIFAR images ( see http://www.cs.toronto.edu/~kriz/cifar.html )
 and then presents the DeSTIN beliefs on a self organizing map ( SOM ).
@@ -217,7 +221,7 @@ def paintClasses(classes_to_show = []):
 # This callback lets the user click on a dot on the SOM and it will display
 # the corresponding image for it.
 def som_click_callback(event, x, y, flag, param):
-    if event == hg.CV_EVENT_LBUTTONUP:
+    if event == cv.CV_EVENT_LBUTTONUP:
         print "clicked r:%i c:%i" % (y, x)
         scale_x = som_width /  float(som_display_width)
         scale_y = som_height / float(som_display_height)
