@@ -9,8 +9,33 @@
 #include "macros.h"
 
 #define EPSILON     1e-8
+#define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
 
-//#define RECURRENCE_ON
+#define RECURRENCE_ON
+
+#define CHECK_NORM_LESS_THAN_EPSILON
+
+/*
+#define CHECK_BELIEF_LESS_THAN_EPSILON
+#define CHECK_BELIEF_ZERO
+#define CHECK_OBS
+
+#define checkinf(d){\
+    if(isinf(d)){\
+    oops("was inf at line %i\n", __LINE__ );\
+    }\
+}
+*/
+
+#define USE_MAL
+//#define USE_EUC
+
+#if defined(USE_MAL) && defined(USE_EUC)
+#error "both USE_MAL and USE_EUC can't be set"
+#endif
+
+//#define STARV_QUICK_RESET
+#define STARV_SLOW_RESET
 
 // CPU implementation of GetObservation kernel
 void GetObservation( Node *n, float *framePtr, uint nIdx )
@@ -55,7 +80,6 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
     for( i=0; i < nb; i++ )
     {
-        // Ignore previous beliefs      // Include previous beliefs
 #ifdef RECURRENCE_ON
         n->observation[i+ni] = n->pBelief[i] * n->gamma;
 #else
@@ -77,6 +101,24 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
         // Apply context
         n->observation[i+ni+nb+np] = 0;
     }
+
+#ifdef CHECK_OBS
+    for(i = 0 ; i < n->ns ; i++){
+        float o = n->observation[i];
+        if(isinf(o)){
+            oops("observation was inf at index %i\n", i);
+        }
+        if(isnan(o)){
+            oops("observation was nan at index %i\n", i);
+        }
+        if(o < 0){
+            oops("observation was negative at index %i\n", i);
+        }
+        if(o > 1){
+            oops("observation was greater than 1.0 at index %i\n", i);
+        }
+    }
+#endif
 }
 
 // CPU implementation of CalculateDistances kernel
@@ -125,10 +167,16 @@ void CalculateDistances( Node *n, uint nIdx )
 
             // Calculate the difference between the input (observation) and the centroid's current location
             delta = n->observation[j] - n->mu[bRow+j];
-
             // Start distance calculation
             delta *= delta;
-
+#ifdef CHECK_BELIEF_ZERO
+            if(isnan(delta)){
+                oops("delta was nan\n");
+            }
+            if(isinf(delta)){
+                oops("delta was inf. obs: %e, mu: %e\n", n->observation[j], n->mu[bRow + j]);
+            }
+#endif
             // Reduce the distance by the starvation factor
             delta *= starv[i];
 
@@ -147,8 +195,17 @@ void CalculateDistances( Node *n, uint nIdx )
         sumMal = sqrt(sumMal);
 
         // Calculate intermediate belief in the current centroid based on the distance between the centroid and the input vector data
-        n->beliefEuc[i] = ( sumEuc < EPSILON ) ? 1 : (1 / sumEuc);
-        n->beliefMal[i] = ( sumMal < EPSILON ) ? 1 : (1 / sumMal);
+        n->beliefEuc[i] = ( sumEuc < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumEuc);
+        n->beliefMal[i] = ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal);
+
+#ifdef CHECK_BELIEF_ZERO
+        if(n->beliefEuc[i] < EPSILON){
+            oops("n->beliefEuc == 0, sumEuc:%e \n", sumEuc);
+        }
+        if(n->beliefMal[i] < EPSILON){
+            oops("n->beliefMal == 0, sumMal:%e\n", sumMal);
+        }
+#endif
     }
 }
 
@@ -196,6 +253,16 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
         }
     }
     
+#ifdef CHECK_NORM_LESS_THAN_EPSILON
+    if (normEuc < EPSILON){
+        oops("normEuc was less than EPSILON: %e\n", normEuc);
+    }
+    if (normMal < EPSILON){
+        oops("normMal was less than EPSILON: %e\n", normMal);
+    }
+#endif
+
+
     // Start the process of exaggerating the probability distribution using Boltzman's method
     float maxBoltzEuc = 0;
     float maxBoltzMal = 0;
@@ -207,11 +274,17 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     // normalize beliefs to sum to 1
     for( i=0; i < n->nb; i++ )
     {
-        // If the sum of all beliefs is lower than EPSILON, calculate the belief probability for the
-        // current centroid as a constant part of the number of centroids. Else calculate it as a part of
-        // the sum of our beliefs.
-        n->beliefEuc[i] = ( normEuc < EPSILON ) ? (1 / (float) n->nb) : (n->beliefEuc[i] / normEuc);
-        n->beliefMal[i] = ( normMal < EPSILON ) ? (1 / (float) n->nb) : (n->beliefMal[i] / normMal);
+        n->beliefEuc[i] = n->beliefEuc[i] / normEuc;
+        n->beliefMal[i] = n->beliefMal[i] / normMal;
+
+#ifdef CHECK_BELIEF_LESS_THAN_EPSILON
+        if(n->beliefEuc[i] < EPSILON){
+            oops("beliefEuc was less than EPSILON.\n");
+        }
+        if(n->beliefMal[i] < EPSILON){
+            oops("belief mal was less than EPSILON.\n");
+        }
+#endif
 
         // Check to see whether Boltzman should be applied
         if(boltzman){
@@ -226,7 +299,13 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
                 maxBoltzMal = n->beliefMal[i] * n->temp;
         }else{
             // Else use the non exaggerated belief value
+            // TODO: do they want beliefMal or beliefEuc?
+#ifdef USE_MAL
             n->pBelief[i] = n->beliefMal[i];
+#endif
+#ifdef USE_EUC
+            n->pBelief[i] = n->beliefEuc[i];
+#endif
         }
     }
     // Check to see whether to apply Boltzman
@@ -255,7 +334,13 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
             n->beliefMal[i] /= boltzMal;
 
             // Set the belief to be used in the end
+            // TODO: do they want beliefMal or beliefEuc?
+#ifdef USE_MAL
+            n->pBelief[i] = n->beliefMal[i];
+#endif
+#ifdef USE_EUC
             n->pBelief[i] = n->beliefEuc[i];
+#endif
         }
     }
 
@@ -345,13 +430,13 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     float diff, learnRate, dt;
 
     //iterate over shared centroids
+    Node * n = GetNodeFromDestin(d, layer, 0,0);
     for(c = 0 ; c < d->nb[layer]; c++){
 
         //use learning strategy function pointer to get the learning rate
         learnRate = d->centLearnStratFunc(d, NULL, layer, c);
 
         //get the first node of the current layers
-        Node * n = GetNodeFromDestin(d, layer, 0,0);
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){
             //move the centroid with the averaged delta
@@ -400,23 +485,38 @@ void UpdateStarvation(Node *n, uint nIdx)
 {
     n = &n[nIdx];
     int i;
+#ifdef STARV_QUICK_RESET
     for( i=0; i < n->nb; i++ )
     {
-//        n->starv[i] = n->starv[i] * (1 - n->starvCoeff) + n->starvCoeff * (i == n->winner);
         n->starv[i] *= 1 - n->starvCoeff;
     }
     n->starv[n->winner] = 1;
+#endif
+
+#ifdef STARV_SLOW_RESET
+    for( i=0; i < n->nb; i++ )
+    {
+         n->starv[i] = n->starv[i] * (1 - n->starvCoeff) + n->starvCoeff * (i == n->winner);
+    }
+#endif
 }
 
 void Uniform_UpdateStarvation(Destin * d, uint layer, float * sharedStarvation, uint * sharedCentroidsWinCounts, float starvCoeff)
 {
     uint i, nb = d->nb[layer];
+#ifdef STARV_QUICK_RESET
     for(i = 0; i < nb ; i++){
         sharedStarvation[i] *= 1 - starvCoeff;
         if(sharedCentroidsWinCounts[i] > 0){
             sharedStarvation[i] = 1;
         }
     }
+#endif
+#ifdef STARV_SLOW_RESET
+    for(i = 0; i < nb ; i++){
+        sharedStarvation[i] = sharedStarvation[i] * (1 - starvCoeff) + starvCoeff * ( sharedCentroidsWinCounts[i] > 0 );
+    }
+#endif
 
 }
 

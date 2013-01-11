@@ -8,7 +8,7 @@
 
 #define PRINTF printf
 
-#define oops(s) { fprintf(stderr, s); exit(1); }
+#define oops(s...) { fprintf(stderr, ## s); exit(1); }
 
 #define MALLOC(s,t,n) {                                 \
     if((s = (t *) malloc(n*sizeof(t))) == NULL) {       \
