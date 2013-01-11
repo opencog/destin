@@ -352,7 +352,11 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 
         // Add one to the current iteration's wincount of the winning centroid of the node's layer (since this centroid can be
         // shared between multiple nodes in the same layer)
-        long c = ++(n->d->uf_winCounts[n->layer][n->winner]); //used when averaging the delta vectors
+        long c;
+        #pragma omp critical
+        {
+            c = ++(n->d->uf_winCounts[n->layer][n->winner]); //used when averaging the delta vectors
+        }//omp critical
 
         // For the first node that declares this centroid the winner update the persistent array of win counts.
         if( c == 1){//only increment this once even if multiple nodes pick this shared centroid
