@@ -687,30 +687,23 @@ void InitNode
     }
 
     MALLOC( node->delta, float, ns);
-
     node->children = NULL;
+
+    // copy the input offset for the inputs (should be NULL for non-input nodes)
+    MALLOC(node->inputOffsets, uint, ni);
+    memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
 
     // point to the block-allocated space
     node->input = input_host;
     uint i,j;
     if(input_host != NULL){
         for(i = 0 ; i < ni ; i++){
-            node->input[i] = 0.5; //prevent nans caused by uninitialized memory
+            node->input[node->inputOffsets[i]] = 0.5; //prevent nans caused by uninitialized memory
         }
     }
 
     node->pBelief = belief_host;
 
-    // copy the input offset for the inputs (should be NULL for non-input nodes)
-    if( inputOffsets != NULL )
-    {
-        MALLOC(node->inputOffsets, uint, ni);
-        memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
-    }
-    else
-    {
-        node->inputOffsets = NULL;
-    }
 
     for( i=0; i < nb; i++ )
     {
