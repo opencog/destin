@@ -6,6 +6,10 @@ SET(CMAKE_BUILD_TYPE Release)
  
 # uncomment to build in debug mode
 #SET(CMAKE_BUILD_TYPE Debug)
+
+#SET(CMAKE_EXE_LINKER_FLAGS -pg)
+#ADD_DEFINITIONS( -pg)
+
 FIND_PACKAGE( OpenCV REQUIRED)
 ADD_SUBDIRECTORY(Common)
 ADD_SUBDIRECTORY(DavisDestin)
