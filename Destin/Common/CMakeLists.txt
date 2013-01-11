@@ -8,6 +8,8 @@ ADD_LIBRARY( common SHARED
     unit_test.h
     CifarSource.h
     BeliefExporter.h
+    ImageSourceBase.h
+    ImageSourceImpl.h
 )
 
 
