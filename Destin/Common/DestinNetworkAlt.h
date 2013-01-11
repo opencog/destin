@@ -54,6 +54,8 @@ private:
                           //Higher temperature makes the belief more winner
                           //take all, lower temperature makes it more uniform.
 
+    float centroidImageWeightParameter; // higher value gives centroids images higher contrast
+
     cv::Mat winningGrid;
     cv::Mat winningGridLarge;
     cv::Mat centroidImage;
@@ -90,7 +92,8 @@ public:
             lambda(.1),
             gamma(.1),
             isUniform(isUniform),
-            centroidImages(NULL)
+            centroidImages(NULL),
+            centroidImageWeightParameter(1.0)
             {
 
         uint input_dimensionality = 16;
@@ -383,21 +386,11 @@ public:
 
     }
 
-    float * getCentroidImage(int layer, int centroid){
-        if(centroidImages == NULL){
-            centroidImages = Cig_CreateCentroidImages(destin);
-        }else{
-            Cig_UpdateCentroidImages(destin, centroidImages);
-        }
-        return centroidImages[layer][centroid];
-    }
-
-
-    /** Moves the given centroid to its node's input observation.
+    /** Moves the given centroid to its node's input last observation.
       * @param layer
       * @param row
       * @param col
-      * @param centroid
+      * @param centroid - centroid to move
       */
     void moveCentroidToInput(int layer, int row, int col, int centroid){
         Node * n = getNode(layer, row, col);
@@ -408,6 +401,26 @@ public:
         memcpy(cent, n->observation, n->ns * sizeof(float));
     }
 
+    /** Helps determine the centroid image contrast.
+      * Values greater than 1.0 will provide more contrasts to
+      * the centroid images generated via displayCentroidImage() method.
+      */
+    void setCentImgWeightExponent(float exp){
+        centroidImageWeightParameter = exp;
+    }
+
+
+    /** Generates representative images for all centroids then displays the chosen image.
+      * Currently only works for uniform destin. cvWaitKey() must be called after to see the image.
+      * The contrast of the image can be enhanced by setting the weight exponent
+      * parameter larger than 1.0 via setCentImgWeightExponent() method, and further by
+      * passing enhanceContrast parameter as true.
+      * @param layer - which layer the centroid belongs
+      * @param centroid - which centroid of the given layer to display.
+      * @param disp_width - scales the square centroid image to this width to be displayed. Defaults to 256 pixels
+      * @param enhanceContrast - if true, the image contrast is enhanced using the opencv function cvEqualizeHist as a post processing step
+      * @param window_name - name to give the display window
+      */
     void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" ){
         if(!isUniform){
             cerr << "can't displayCentroidImage with non uniform DeSTIN.\n";
@@ -419,9 +432,9 @@ public:
         }
 
         if(centroidImages == NULL){
-            centroidImages = Cig_CreateCentroidImages(destin);
+            centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
         }else{
-            Cig_UpdateCentroidImages(destin, centroidImages);
+            Cig_UpdateCentroidImages(destin, centroidImages, centroidImageWeightParameter);
         }
 
         uint width = Cig_GetCentroidImageWidth(destin, layer);
@@ -447,6 +460,16 @@ public:
 
         cv::resize(toShow,centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);
         cv::imshow(window_name.c_str(), centroidImageResized);
+    }
+
+    float * getCentroidImage(int layer, int centroid){
+        if(!destin->isUniform){
+            printf("getCentroidImage: must be uniform");
+            return NULL;
+        }
+
+        displayCentroidImage(layer, centroid);
+        return centroidImages[layer][centroid];
     }
 };
 

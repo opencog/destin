@@ -205,8 +205,9 @@ def printCentImage(layer, cent):
 
         
 #display centroid image       
-def dci(layer, cent, equalize_hist = False):
-    dn.displayCentroidImage(layer, cent, 256, equalize_hist)
+def dci(layer, cent, equalize_hist = False, exp_weight = 4):
+    dn.setCentImgWeightExponent(exp_weight)
+    dn.displayCentroidImage(layer, cent, 512, equalize_hist)
     cv2.waitKey(100)
 
 def wk(time=100):

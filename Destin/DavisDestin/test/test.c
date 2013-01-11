@@ -907,7 +907,7 @@ int testCentroidImageGeneration(){
                                             1.0, 0.0, 0.75, 0.25);
 
 
-    float *** images = Cig_CreateCentroidImages(d);
+    float *** images = Cig_CreateCentroidImages(d, 1.0);
 
     // check that the generated images are correct
     assertFloatArrayEqualsEV(images[0][0], 0.0, 1, 0.0);

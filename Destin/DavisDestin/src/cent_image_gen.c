@@ -8,11 +8,6 @@
 #define NORM_WEIGHTS
 //#define DETECT_NORM
 
-float Cig_PowerNormalize_power = 1.0;
-void Cig_SetPowerNormalizePower(float power){
-    Cig_PowerNormalize_power = power;
-}
-
 void Cig_Normalize(float * weights_in, float * weights_out, int len, float not_used){
     memcpy(weights_out, weights_in, len * sizeof(float));
     int i;
@@ -49,6 +44,7 @@ void Cig_BlendImages(float ** images,       // array of images to blend
                  float * weights,       // weights used to blend images ( will be normalized )
                  int nImages,           // number of images to blend
                  const int img_size,    // number of pixels in each image to blend
+                 float weighParameter,  // a value higher than one makes for more contrasting images
                  float * image_out){    // blended image is stored here. must be preallocated memory of length img_size
 
     int p, i;
@@ -57,7 +53,7 @@ void Cig_BlendImages(float ** images,       // array of images to blend
     float * w;
 #ifdef NORM_WEIGHTS
     float norm_weights[nImages];
-    Cig_PowerNormalize(weights, norm_weights, nImages, Cig_PowerNormalize_power);
+    Cig_PowerNormalize(weights, norm_weights, nImages, weighParameter);
     w = norm_weights;
 #else
     w = weights;
@@ -121,7 +117,7 @@ void Cig_ConcatImages(float ** images,// Array of the 4 images to concat.
     }
 }
 
-float*** Cig_CreateCentroidImages(Destin * d){
+float*** Cig_CreateCentroidImages(Destin * d, float weightParameter){
 
     if(!d->isUniform){
         return NULL;
@@ -139,7 +135,7 @@ float*** Cig_CreateCentroidImages(Destin * d){
         image_width *= 2;
     }
 
-    Cig_UpdateCentroidImages(d, images);
+    Cig_UpdateCentroidImages(d, images, weightParameter);
 
     return images;
 }
@@ -149,7 +145,10 @@ int Cig_GetCentroidImageWidth(Destin * d, int layer){
     return sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni) * pow(2, layer);
 }
 
-void Cig_UpdateCentroidImages(Destin * d, float *** images){
+void Cig_UpdateCentroidImages(Destin * d,
+                              float *** images,    // preallocated images to update
+                              float weighParameter // higher value means higher contrast
+                              ){
 
     int p, l, c, prev_image_width,image_width;
 
@@ -191,6 +190,7 @@ void Cig_UpdateCentroidImages(Destin * d, float *** images){
                               &n->mu[c * n->ns + child_section * d->nb[l - 1]],
                               d->nb[l - 1],
                               prev_image_width * prev_image_width,
+                              weighParameter,
                               combined_images[child_section]);
                 }
 
