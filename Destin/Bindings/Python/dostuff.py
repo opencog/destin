@@ -12,14 +12,7 @@ cvhg.cvResizeWindow = cv2.cv.ResizeWindow
 cvhg.cvMoveWindow = cv2.cv.MoveWindow
 cvhg.cvWaitKey = cv2.cv.WaitKey
 
-def array_to_pointer(arr):
-    ia = pd.SWIG_IntArray(len(arr))
-    for x in ranbge(len(arr)):
-        ia[x] = arr[x]
-    return ia
-
-
-centroids = [2,2,4,4,64,32,16,2]
+centroids = [4,10,10,10,10,10,10,2]
              
 #centroids = [2,2,2,2]
 layers = len(centroids)
@@ -171,6 +164,7 @@ def the_callback():
         zoom*=2
         
     dn.printBeliefGraph(top_layer, 0, 0)
+    printStats()
     freezeTopCentroidsExcept(lucky_centroid)
     dn.displayFeatures(the_callback.dfl , 0, 1)
     cent = the_callback.do_cent_image_num
@@ -212,6 +206,29 @@ def dci(layer, cent, equalize_hist = False, exp_weight = 4):
 
 def wk(time=100):
     cv2.waitKey(time)
+    
+def printStats():
+    n = dn.getNode(7,0,0)
+    print "Winner: %i" %(n.winner)
+    starv =  pd.SWIG_FloatArray_frompointer( n.starv )
+    for c in range(n.nb):
+        print "starv %i: %f" % (c, starv[c])
+        
+    print ""
+    
+def incrementTrain():
+    for l in range(layers):
+        freezeTraining()        
+        unfreezeLayer(l)
+        go(200)
+        
+def eatDogFood(centroid):
+    img = dn.getCentroidImage(top_layer, centroid)
+    freezeTraining()
+    for i in range(layers):
+        dn.doDestin(img)
+    the_callback()
+    cv2.waitKey(100)
     
 #dn.load("hand.dst")
 #freezeTraining()
