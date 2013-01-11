@@ -95,14 +95,10 @@ void CalculateDistances( Node *n, uint nIdx )
     // j = counter for loop through
     uint i, j;
 
-    // Get the length of the node's (children's) input vector
-    uint ni = n->ni;
-    // Get the number of centroids in the node
-    uint nb = n->nb;
     // Get the total length of the input vector
-    uint ns = n->ns;
+    const uint ns = n->ns;
     // Get the context (?)
-    uint nc = n->nc;
+    const uint nc = n->nc;
 
 
     // Get the sigma array depending on whether uniform or non-uniform destin is being used
