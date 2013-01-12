@@ -1,12 +1,13 @@
 import pydestin as pd
 import cv2.cv as cv
+import time
 
 ims = pd.ImageSouceImpl()
 
 ims.addImage("/home/ted/Pictures/I.png")
 ims.addImage("/home/ted/Pictures/X.png")
 
-centroids = [2,2,8,32,64,16,4,2]
+centroids = [2,2,8,32,64,16,8,2] 
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 
 def train():
@@ -29,5 +30,10 @@ def dci(layer, cent, equalize_hist = False, exp_weight = 4):
 #dn.load("x.dst")
 train()
 
+
+t = str(int(time.time()))
+fn = t + ".dst"
+print "Saving " + fn
+dn.save(fn)
 dci(7,0,False, 4)
  
