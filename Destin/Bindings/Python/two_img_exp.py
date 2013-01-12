@@ -6,18 +6,19 @@ ims = pd.ImageSouceImpl()
 
 ims.addImage("/home/ted/Pictures/I.png")
 ims.addImage("/home/ted/Pictures/X.png")
+ims.addImage("/home/ted/Pictures/Y.png")
 
-centroids = [2,2,8,32,64,16,8,2] 
+centroids = [2,2,8,32,64,16,16,3] 
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 
 def train():
-    for i in range(400):
+    for i in range(1600):
         if i % 10 == 0:
             print "Iteration " + str(i)
             
         ims.findNextImage()
         #dn.clearBeliefs()
-        for j in range(8):
+        for j in range(4):
             
             f = ims.getGrayImageFloat()    
             dn.doDestin(f)
@@ -26,14 +27,23 @@ def dci(layer, cent, equalize_hist = False, exp_weight = 4):
     dn.setCentImgWeightExponent(exp_weight)
     dn.displayCentroidImage(layer, cent, 512, equalize_hist)
     cv.WaitKey(100)
-    
+
+
+
+def window_callback(event, x, y, flag, param):
+    if event == cv.CV_EVENT_LBUTTONUP:
+        pass
 #dn.load("x.dst")
-train()
+#cv.SetMouseCallback("Centroid image",window_callback)
 
-
-t = str(int(time.time()))
-fn = t + ".dst"
-print "Saving " + fn
-dn.save(fn)
+do_train = True
+if do_train:
+    train()
+    t = str(int(time.time()))
+    fn = t + ".dst"
+    print "Saving " + fn
+    dn.save(fn)
+else:
+    dn.load("1357963760.dst")
 dci(7,0,False, 4)
  
