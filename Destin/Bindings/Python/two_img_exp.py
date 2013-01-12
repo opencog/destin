@@ -8,17 +8,17 @@ ims.addImage("/home/ted/Pictures/I.png")
 ims.addImage("/home/ted/Pictures/X.png")
 ims.addImage("/home/ted/Pictures/Y.png")
 
-centroids = [2,2,8,32,64,16,16,3] 
+centroids = [2,2,8,32,64,32,16,3]  
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 
 def train():
-    for i in range(1600):
+    for i in range(3200):
         if i % 10 == 0:
             print "Iteration " + str(i)
             
         ims.findNextImage()
         #dn.clearBeliefs()
-        for j in range(4):
+        for j in range(2):
             
             f = ims.getGrayImageFloat()    
             dn.doDestin(f)
@@ -44,6 +44,7 @@ if do_train:
     print "Saving " + fn
     dn.save(fn)
 else:
-    dn.load("1357963760.dst")
+    to_load = "1357965378.dst"
+    dn.load(to_load)
 dci(7,0,False, 4)
  
