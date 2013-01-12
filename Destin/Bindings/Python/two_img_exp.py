@@ -6,7 +6,7 @@ ims = pd.ImageSouceImpl()
 ims.addImage("/home/ted/Pictures/I.png")
 ims.addImage("/home/ted/Pictures/X.png")
 
-centroids = [2,2,8,8,64,16,4,2]
+centroids = [2,2,8,32,64,16,4,2]
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 
 def train():
@@ -28,3 +28,6 @@ def dci(layer, cent, equalize_hist = False, exp_weight = 4):
     
 #dn.load("x.dst")
 train()
+
+dci(7,0,False, 4)
+ 
