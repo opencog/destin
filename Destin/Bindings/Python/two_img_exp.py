@@ -10,7 +10,7 @@ centroids = [2,2,8,8,64,16,4,2]
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 
 def train():
-    for i in range(800):
+    for i in range(400):
         if i % 10 == 0:
             print "Iteration " + str(i)
             

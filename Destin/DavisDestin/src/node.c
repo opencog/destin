@@ -27,8 +27,8 @@
 }
 */
 
-#define USE_MAL
-//#define USE_EUC
+//#define USE_MAL
+#define USE_EUC
 
 #if defined(USE_MAL) && defined(USE_EUC)
 #error "both USE_MAL and USE_EUC can't be set"
