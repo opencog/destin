@@ -13,14 +13,16 @@ ims.addImage("/home/ted/Pictures/X.png")
 ims.addImage("/home/ted/Pictures/Y.png")
 ims.addImage("/home/ted/Pictures/Z.png")
 ims.addImage("/home/ted/Pictures/A.png")
+ims.addImage("/home/ted/Pictures/E.png")
 
-centroids = [2,2,8,32,64,64,32,5]   
+centroids = [2,2,8,32,64,64,32,6]    
 layers = len(centroids)
 top_layer = layers - 1
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
+dn.setFixedLearnRate(.1)
 weight_exponent = 4
 
-run_id="0"
+save_root="./saves/"
 
 def train():
     for i in range(3200):
@@ -81,21 +83,23 @@ def saveCenImages(run_id):
     dn.setCentImgWeightExponent(1)
     dn.updateCentroidImages()
     for i in range(bn):
+        f = "%02d_%s.png" % (i,run_id)
         # save original
-        fn = orig_dir + str(i) + ".png"
+        fn = orig_dir + f 
         dn.saveCentroidImage(top_layer, i, fn, 512, False )
     
         # save original enhanced
-        fn = orige_dir + str(i) + ".png"
+        fn = orige_dir + f
         dn.saveCentroidImage(top_layer, i, fn, 512, True )
     
     
     dn.setCentImgWeightExponent(weight_exponent)
     dn.updateCentroidImages()
     for i in range(bn):
-        fn = highweighted_dir + str(i) + ".png"
+        f = "%02d_%s.png" % (i,run_id)
+        fn = highweighted_dir + f 
         dn.saveCentroidImage(top_layer, i, fn, 512, False )
-        fn = highweightede_dir + str(i) + ".png"
+        fn = highweightede_dir + f
         dn.saveCentroidImage(top_layer, i, fn, 512, True )    
     
 #dn.load("x.dst")
@@ -104,7 +108,7 @@ do_train = True
 if do_train:
     train()
     t = str(int(time.time()))
-    fn = t + ".dst"
+    fn = save_root + t + ".dst"
     print "Saving " + fn
     dn.save(fn)
     saveCenImages(t)
