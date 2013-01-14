@@ -367,22 +367,24 @@ public:
      * Destroy the current destin structure before loading the new one.
      */
     void load(char * fileName){
-        destin = LoadDestin(destin, fileName);
-        if(destin == NULL){
-            throw std::runtime_error("load: could not open file.\n");
-        }
-
         if(centroidImages != NULL){
             Cig_DestroyCentroidImages(destin,  centroidImages);
+            centroidImages = NULL;
         }
-        centroidImages = NULL;
+
+        destin = LoadDestin(destin, fileName);
+        if(destin == NULL){
+            throw std::runtime_error("load: could not open destin file.\n");
+        }
+
 
         Node * n = GetNodeFromDestin(destin, 0, 0, 0);
         this->beta = n->beta;
         this->gamma = n->gamma;
         this->isUniform = destin->isUniform;
         this->lambda = n->lambda;
-        this->temperatures = destin->temp;
+
+        memcpy(temperatures, destin->temp, sizeof(float) * getLayerCount());
 
     }
 
@@ -410,31 +412,24 @@ public:
     }
 
 
-    /** Generates representative images for all centroids then displays the chosen image.
-      * Currently only works for uniform destin. cvWaitKey() must be called after to see the image.
-      * The contrast of the image can be enhanced by setting the weight exponent
-      * parameter larger than 1.0 via setCentImgWeightExponent() method, and further by
-      * passing enhanceContrast parameter as true.
-      * @param layer - which layer the centroid belongs
-      * @param centroid - which centroid of the given layer to display.
-      * @param disp_width - scales the square centroid image to this width to be displayed. Defaults to 256 pixels
-      * @param enhanceContrast - if true, the image contrast is enhanced using the opencv function cvEqualizeHist as a post processing step
-      * @param window_name - name to give the display window
-      */
-    void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" ){
+    void updateCentroidImages(){
+        if(centroidImages==NULL){
+            centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
+        }else{
+            Cig_UpdateCentroidImages(destin, centroidImages, centroidImageWeightParameter);
+        }
+    }
+
+    cv::Mat getCentroidImageM(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false){
         if(!isUniform){
-            cerr << "can't displayCentroidImage with non uniform DeSTIN.\n";
-            return;
+            throw std::logic_error("can't displayCentroidImage with non uniform DeSTIN.");
         }
         if(layer > destin->nLayers ||  centroid > destin->nb[layer]){
-            cerr << "displayCentroidImage: layer, centroid out of bounds\n";
-            return;
+            throw std::domain_error("displayCentroidImage: layer, centroid out of bounds\n");
         }
 
         if(centroidImages == NULL){
             centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
-        }else{
-            Cig_UpdateCentroidImages(destin, centroidImages, centroidImageWeightParameter);
         }
 
         uint width = Cig_GetCentroidImageWidth(destin, layer);
@@ -448,29 +443,37 @@ public:
         memcpy(data, centroidImages[layer][centroid], width*width*sizeof(float));
 
         cv::Mat toShow;
-
+        centroidImage.convertTo(toShow, CV_8UC1, 255); // make it suitable for equalizeHist
         if(enhanceContrast){
-            cv::Mat equalized;
-            centroidImage.convertTo(equalized, CV_8UC1, 255);
-            cv::equalizeHist(equalized, equalized);
-            toShow = equalized;
-        }else{
-            toShow = centroidImage;
+            cv::equalizeHist(toShow, toShow);
         }
 
         cv::resize(toShow,centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);
+
+        return centroidImageResized;
+    }
+
+    /** Generates representative images for all centroids then displays the chosen image.
+      * Currently only works for uniform destin. cvWaitKey() must be called after to see the image.
+      * The contrast of the image can be enhanced by setting the weight exponent
+      * parameter larger than 1.0 via setCentImgWeightExponent() method, and further by
+      * passing enhanceContrast parameter as true.
+      * @param layer - which layer the centroid belongs
+      * @param centroid - which centroid of the given layer to display.
+      * @param disp_width - scales the square centroid image to this width to be displayed. Defaults to 256 pixels
+      * @param enhanceContrast - if true, the image contrast is enhanced using the opencv function cvEqualizeHist as a post processing step
+      * @param window_name - name to give the display window
+      */
+    void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" ){
+        getCentroidImageM(layer, centroid, disp_width, enhanceContrast);
         cv::imshow(window_name.c_str(), centroidImageResized);
     }
 
-    float * getCentroidImage(int layer, int centroid){
-        if(!destin->isUniform){
-            printf("getCentroidImage: must be uniform");
-            return NULL;
-        }
-
-        displayCentroidImage(layer, centroid);
-        return centroidImages[layer][centroid];
+    void saveCentroidImage(int layer, int centroid, string filename, int disp_width = 256, bool enhanceContrast = false){
+        getCentroidImageM(layer, centroid, disp_width, enhanceContrast);
+        cv::imwrite(filename, centroidImageResized);
     }
+
 };
 
 
