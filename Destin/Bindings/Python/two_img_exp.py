@@ -8,14 +8,13 @@ experiment_root_dir="./experiment_runs"
 
 
 ims = pd.ImageSouceImpl()
-ims.addImage("/home/ted/Pictures/I.png")
-ims.addImage("/home/ted/Pictures/X.png")
-ims.addImage("/home/ted/Pictures/Y.png")
-ims.addImage("/home/ted/Pictures/Z.png")
-ims.addImage("/home/ted/Pictures/A.png")
-ims.addImage("/home/ted/Pictures/E.png")
 
-centroids = [2,2,8,32,64,64,32,6]    
+letters = "ABCDEFGHIJKLMNOP"
+for l in letters:
+    ims.addImage("/home/ted/Pictures/%s.png" % l)
+    
+
+centroids =  [2,4,8,32,64,128,128,16]  
 layers = len(centroids)
 top_layer = layers - 1
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
@@ -25,7 +24,7 @@ weight_exponent = 4
 save_root="./saves/"
 
 def train():
-    for i in range(3200):
+    for i in range(6400):
         if i % 10 == 0:
             print "Iteration " + str(i)
             
