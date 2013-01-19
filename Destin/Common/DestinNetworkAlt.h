@@ -12,7 +12,7 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
-
+#include <string>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -38,6 +38,8 @@ enum SupportedImageWidths {
 };
 #define MAX_IMAGE_WIDTH 512
 
+using std::string;
+
 class DestinNetworkAlt: public INetwork {
 
 private:
@@ -60,6 +62,7 @@ private:
     cv::Mat winningGridLarge;
     cv::Mat centroidImage;
     cv::Mat centroidImageResized;
+    cv::Mat layerCentroidsImage;//one large image of all centroid images of one layer put together in a grid fashion
 
     float *** centroidImages;
     bool isUniform;
@@ -85,6 +88,7 @@ private:
     }
 
 public:
+
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [], bool isUniform ) :
             training(true),
@@ -152,8 +156,10 @@ public:
             DestroyDestin(destin);
             destin = NULL;
         }
-        delete [] temperatures;
-        temperatures = NULL;
+        if(temperatures!=NULL){
+            delete [] temperatures;
+            temperatures = NULL;
+        }
     }
 
     void doDestin( //run destin with the given input
@@ -366,7 +372,7 @@ public:
     /** Loads a destin structure from the given file
      * Destroy the current destin structure before loading the new one.
      */
-    void load(char * fileName){
+    void load(const char * fileName){
         if(centroidImages != NULL){
             Cig_DestroyCentroidImages(destin,  centroidImages);
             centroidImages = NULL;
@@ -384,6 +390,10 @@ public:
         this->isUniform = destin->isUniform;
         this->lambda = n->nLambda;
 
+        if(temperatures != NULL){
+            delete [] temperatures;
+        }
+        temperatures = new float[getLayerCount()];
         memcpy(temperatures, destin->temp, sizeof(float) * getLayerCount());
 
     }
@@ -418,6 +428,16 @@ public:
         }else{
             Cig_UpdateCentroidImages(destin, centroidImages, centroidImageWeightParameter);
         }
+    }
+
+    float * getCentroidImage(int layer, int centroid){
+        if(!destin->isUniform){
+            printf("getCentroidImage: must be uniform");
+            return NULL;
+        }
+
+        displayCentroidImage(layer, centroid);
+        return centroidImages[layer][centroid];
     }
 
     cv::Mat getCentroidImageM(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false){
@@ -472,6 +492,51 @@ public:
     void saveCentroidImage(int layer, int centroid, string filename, int disp_width = 256, bool enhanceContrast = false){
         getCentroidImageM(layer, centroid, disp_width, enhanceContrast);
         cv::imwrite(filename, centroidImageResized);
+    }
+
+    void displayLayerCentroidImages(int layer,
+                                    int scale_width = 800,
+                                    int border_width = 10,
+                                    string window_title="Centroid Images"
+                                    ){
+        if(!isUniform){
+            throw std::logic_error("can't displayLayerCentroidImages with non uniform DeSTIN.");
+        }
+
+        if(centroidImages == NULL){
+            centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
+        }
+
+        int images = getBeliefsPerNode(layer);
+        int images_wide = ceil(sqrt(images));
+        int sub_img_width = Cig_GetCentroidImageWidth(destin, layer);
+        int wpb = sub_img_width + border_width; // sub image width plus boarder. Each image gets a right and bottom boarder only.
+
+        int width = wpb * images_wide;
+        int images_high = ceil((float)images / (float)images_wide);
+        int height = wpb * images_high;
+
+        cv::Mat big_img = cv::Mat::zeros(height, width, CV_32FC1);
+
+        int r, c, x, y;
+        // copies the subimages into the correct place in the big image
+        for(int i = 0 ; i < images ; i++){
+                r = i  / images_wide;
+                c = i - r * images_wide;
+                x = c * wpb;
+                y = r * wpb;
+                cv::Mat subimage(sub_img_width, sub_img_width, CV_32FC1, centroidImages[layer][i]);
+                //cv::Mat destination = big_img.colRange(x, x + sub_img_width - 1).rowRange(y, y + sub_img_width - 1);
+
+                cv::Rect roi( cv::Point( x, y ), subimage.size() );
+                cv::Mat dest = big_img( roi );
+
+                subimage.copyTo( dest );
+        }
+
+        double scale = (double)scale_width / (double) width;
+        cv::resize(big_img, layerCentroidsImage, cv::Size(), scale, scale, cv::INTER_NEAREST);
+        cv::imshow(window_title, layerCentroidsImage);
     }
 
 };

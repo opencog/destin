@@ -541,7 +541,7 @@ void SaveDestin( Destin *d, char *filename )
     fclose(dFile);
 }
 
-Destin * LoadDestin( Destin *d, char *filename )
+Destin * LoadDestin( Destin *d, const char *filename )
 {
     FILE *dFile;
     uint i, l;

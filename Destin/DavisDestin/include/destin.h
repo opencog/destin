@@ -99,7 +99,7 @@ void SaveDestin(                        // save destin to disk
 
 Destin * LoadDestin(                    // load destin from disk
                 Destin *,               // network to save
-                char *                  // filename to load from
+                const char *            // filename to load from
         );
 
 void ResetStarvTrace(                   // reset the starv trace to 1's

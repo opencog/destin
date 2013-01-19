@@ -44,6 +44,10 @@ def dci(layer, cent, equalize_hist = False, exp_weight = 4):
     dn.displayCentroidImage(layer, cent, 256, equalize_hist)
     cv.WaitKey(100)
 
+def dcis(layer):
+    dn.displayLayerCentroidImages(layer)
+    cv.WaitKey(100)
+    
 
 def mkdir(path):
     try:
