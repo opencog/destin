@@ -430,6 +430,9 @@ public:
         }
     }
 
+    /** Returns the centroid image as a float array.
+      * Then displays it.
+      */
     float * getCentroidImage(int layer, int centroid){
         if(!destin->isUniform){
             printf("getCentroidImage: must be uniform");
@@ -440,6 +443,8 @@ public:
         return centroidImages[layer][centroid];
     }
 
+    /** Gets the generated centroid images as an opencv Mat image.
+      */
     cv::Mat getCentroidImageM(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false){
         if(!isUniform){
             throw std::logic_error("can't displayCentroidImage with non uniform DeSTIN.");
@@ -494,9 +499,22 @@ public:
         cv::imwrite(filename, centroidImageResized);
     }
 
+    /** Displays all the centroid images of a layer into one large image.
+      * The centroid images are arranged into a grid and are seperated by a black boarder.
+      * If there's not a square number of centroid images, then empty (black) centroid images
+      * are added to the bottom right of the grid until the number is a square number. For example
+      * if there are 15 centroid images, then it will display a 4x4 grid with the bottom right corner empty.
+      * Only works with uniform destin.
+      * cvWaitKey() must be called after for the image to appear.
+      *
+      * @param layer - what layer the centroids belong to
+      * @param scale_width - resizes the square image grid width to this size.
+      * @param boarder_width - how wide, in pixels, the black border is that seperates the images.
+      * @param window_title - name given to the window that is displayed.
+      */
     void displayLayerCentroidImages(int layer,
-                                    int scale_width = 800,
-                                    int border_width = 10,
+                                    int scale_width = 600,
+                                    int border_width = 5,
                                     string window_title="Centroid Images"
                                     ){
         if(!isUniform){
@@ -509,14 +527,13 @@ public:
 
         int images = getBeliefsPerNode(layer);
         int images_wide = ceil(sqrt(images));
-        int sub_img_width = Cig_GetCentroidImageWidth(destin, layer);
+        int sub_img_width = (int)((double)scale_width / (double)images_wide - (double)border_width);
+
         int wpb = sub_img_width + border_width; // sub image width plus boarder. Each image gets a right and bottom boarder only.
 
-        int width = wpb * images_wide;
         int images_high = ceil((float)images / (float)images_wide);
-        int height = wpb * images_high;
 
-        cv::Mat big_img = cv::Mat::zeros(height, width, CV_32FC1);
+        cv::Mat big_img = cv::Mat::zeros(wpb*images_high, wpb*images_wide, CV_32FC1);
 
         int r, c, x, y;
         // copies the subimages into the correct place in the big image
@@ -525,17 +542,17 @@ public:
                 c = i - r * images_wide;
                 x = c * wpb;
                 y = r * wpb;
-                cv::Mat subimage(sub_img_width, sub_img_width, CV_32FC1, centroidImages[layer][i]);
-                //cv::Mat destination = big_img.colRange(x, x + sub_img_width - 1).rowRange(y, y + sub_img_width - 1);
-
-                cv::Rect roi( cv::Point( x, y ), subimage.size() );
+                int w = Cig_GetCentroidImageWidth(destin, layer);
+                cv::Mat subimage(w, w, CV_32FC1, centroidImages[layer][i]);
+                cv::Mat subimage_resized;
+                cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
+                cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );
                 cv::Mat dest = big_img( roi );
 
-                subimage.copyTo( dest );
+                subimage_resized.copyTo( dest );
         }
 
-        double scale = (double)scale_width / (double) width;
-        cv::resize(big_img, layerCentroidsImage, cv::Size(), scale, scale, cv::INTER_NEAREST);
+        layerCentroidsImage = big_img;
         cv::imshow(window_title, layerCentroidsImage);
     }
 
