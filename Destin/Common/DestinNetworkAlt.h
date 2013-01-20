@@ -166,6 +166,10 @@ public:
         destin->doesBoltzman = yes_no;
     }
 
+    void setTemperatures(float temperatures[]){
+        memcpy(this->temperatures, temperatures, sizeof(float) * getLayerCount());
+    }
+
     void doDestin( //run destin with the given input
             float * input_dev //pointer to input memory on device
             ) {

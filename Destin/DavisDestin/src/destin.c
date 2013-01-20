@@ -385,7 +385,7 @@ void FormulateBelief( Destin *d, float *image )
         n_end = n_start + d->layerSize[l];
         
         // Loop through nodes in current layer]
-        #pragma omp parallel for private(n)
+        #pragma omp parallel for private(n) //openmp to do multithreaded processing
         for(n = n_start; n < n_end; n++ )
         {
             // Get an observation from the source image for the current node if in layer 0, else from the child nodes.

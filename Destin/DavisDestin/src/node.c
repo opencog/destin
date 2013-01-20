@@ -334,7 +334,6 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
             n->beliefMal[i] /= boltzMal;
 
             // Set the belief to be used in the end
-            // TODO: do they want beliefMal or beliefEuc?
 #ifdef USE_MAL
             n->pBelief[i] = n->beliefMal[i];
 #endif
