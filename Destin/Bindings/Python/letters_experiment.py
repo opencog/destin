@@ -14,11 +14,13 @@ for l in letters:
     ims.addImage("/home/ted/Pictures/%s.png" % l)
     
 
-centroids =  [2,4,8,32,64,128,128,16]  
+centroids =  [2,4,8,32,64,64,64,16]   
 layers = len(centroids)
 top_layer = layers - 1
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 dn.setFixedLearnRate(.1)
+dn.setDoesBoltzmann(True)
+
 weight_exponent = 4
 
 save_root="./saves/"
@@ -45,7 +47,7 @@ def dci(layer, cent, equalize_hist = False, exp_weight = 4):
     cv.WaitKey(100)
 
 def dcis(layer):
-    dn.displayLayerCentroidImages(layer)
+    dn.displayLayerCentroidImages(layer,1000)
     cv.WaitKey(100)
     
 
@@ -116,10 +118,10 @@ if do_train:
     dn.save(fn)
     saveCenImages(t)
 else:
-    to_load = "1357970611.dst"
+    to_load = "saves/1358139144.dst"
     dn.load(to_load)
     
-#dci(7,0,False, weight_exponent)
-    
+dci(7,0,False, weight_exponent)
+dcis(7)
     
     

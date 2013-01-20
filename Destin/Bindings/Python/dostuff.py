@@ -3,7 +3,7 @@ import pydestin as pd
 
 #import opencv.highgui as cvhg
 import threading
-
+import time
 import cv2.cv
 
 cvhg = lambda: None
@@ -33,9 +33,6 @@ img_width = layers_to_enum[layers]
 dn = pd.DestinNetworkAlt(img_width, layers, centroids, True)
 
 top_node = dn.getNode(top_layer, 0, 0)
-
-
-
 
 vs = pd.VideoSource(False, "hand.m4v")
 vs.setSize(img_width, img_width)
@@ -223,15 +220,36 @@ def incrementTrain():
         go(200)
         
 def eatDogFood(centroid):
+    if centroid >= dn.getBeliefsPerNode(top_layer):
+        print "out of bounds"
+        return
+    dn.displayCentroidImage(top_layer, centroid)
+    dn.setCentImgWeightExponent(8)
     img = dn.getCentroidImage(top_layer, centroid)
     freezeTraining()
     for i in range(layers):
         dn.doDestin(img)
     the_callback()
-    cv2.waitKey(100)
-    
-#dn.load("hand.dst")
+    cv2.waitKey(300)
+   
+def cycleCentroidImages(layer):
+    for c in range(dn.getBeliefsPerNode(layer)):
+        dn.displayCentroidImage(layer, c, 256, True)
+        cv2.waitKey(300)               
+        time.sleep(1)
+
+ims = pd.ImageSouceImpl()
+ims.addImage("/home/ted/Pictures/X.png")
+
+dn.load("./saves/1358139144.dst")
+dn.setIsPOSTraining(False)
+dn.setCentImgWeightExponent(4)
 #freezeTraining()
 go(5)
 arrangeWindows()
 go(5)
+
+def showX():
+    for i in range(8):
+        dn.doDestin(ims.getGrayImageFloat())        
+    
