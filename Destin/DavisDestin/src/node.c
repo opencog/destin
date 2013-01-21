@@ -209,6 +209,48 @@ void CalculateDistances( Node *n, uint nIdx )
     }
 }
 
+void ApplyBoltzmann(Node * n){
+    // Start the process of exaggerating the probability distribution using Boltzman's method
+    float maxBoltzEuc = 0;
+    float maxBoltzMal = 0;
+    uint i;
+    for( i=0; i < n->nb; i++ ){
+        // If so, check to see if the current Euclidean Boltzman belief is greater than our current max
+        if( n->beliefEuc[i] * n->temp > maxBoltzEuc )
+            // If so, update our max Euclidean Boltzman value.
+            maxBoltzEuc = n->beliefEuc[i] * n->temp;
+
+        // Check to see if the current Mahalanobis Boltzman belief is greater than our current max
+        if( n->beliefMal[i] * n->temp > maxBoltzMal )
+            // If so, update our max Mahalanobis Boltzman value.
+            maxBoltzMal = n->beliefMal[i] * n->temp;
+    }
+
+    // Prepare Euclidean and Mahalanobis belief value
+    float boltzEuc = 0;
+    float boltzMal = 0;
+
+    // Loop through the centroids
+    for( i=0; i < n->nb; i++ )
+    {
+        // Recalculate beliefs with inclusion of Bolzmanish stuff
+        n->beliefEuc[i] = exp(n->temp * n->beliefEuc[i] - maxBoltzEuc);
+        n->beliefMal[i] = exp(n->temp * n->beliefMal[i] - maxBoltzMal);
+
+        // Add the current belief to the totals
+        boltzEuc += n->beliefEuc[i];
+        boltzMal += n->beliefMal[i];
+    }
+
+    // Loop through the centroids AGAIN
+    for( i=0; i < n->nb; i++ )
+    {
+        // Normalize the beliefs
+        n->beliefEuc[i] /= boltzEuc;
+        n->beliefMal[i] /= boltzMal;
+    }
+}
+
 // CPU implementation of NormalizeBelief kernel
 void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 {
@@ -263,14 +305,6 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 #endif
 
 
-    // Start the process of exaggerating the probability distribution using Boltzman's method
-    float maxBoltzEuc = 0;
-    float maxBoltzMal = 0;
-
-    // Check to see if we want to apply the Boltzman exaggeration method
-    bool boltzman = n->d->doesBoltzman;
-
-
     // normalize beliefs to sum to 1
     for( i=0; i < n->nb; i++ )
     {
@@ -285,62 +319,20 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
             oops("belief mal was less than EPSILON.\n");
         }
 #endif
-
-        // Check to see whether Boltzman should be applied
-        if(boltzman){
-            // If so, check to see if the current Euclidean Boltzman belief is greater than our current max
-            if( n->beliefEuc[i] * n->temp > maxBoltzEuc )
-                // If so, update our max Euclidean Boltzman value.
-                maxBoltzEuc = n->beliefEuc[i] * n->temp;
-
-            // Check to see if the current Mahalanobis Boltzman belief is greater than our current max
-            if( n->beliefMal[i] * n->temp > maxBoltzMal )
-                // If so, update our max Mahalanobis Boltzman value.
-                maxBoltzMal = n->beliefMal[i] * n->temp;
-        }else{
-            // Else use the non exaggerated belief value
-            // TODO: do they want beliefMal or beliefEuc?
-#ifdef USE_MAL
-            n->pBelief[i] = n->beliefMal[i];
-#endif
-#ifdef USE_EUC
-            n->pBelief[i] = n->beliefEuc[i];
-#endif
-        }
     }
-    // Check to see whether to apply Boltzman
-    if(boltzman){
-        // Prepare Euclidean and Mahalanobis belief value
-        float boltzEuc = 0;
-        float boltzMal = 0;
 
-        // Loop through the centroids
-        for( i=0; i < n->nb; i++ )
-        {
-            // Recalculate beliefs with inclusion of Bolzmanish stuff
-            n->beliefEuc[i] = exp(n->temp * n->beliefEuc[i] - maxBoltzEuc);
-            n->beliefMal[i] = exp(n->temp * n->beliefMal[i] - maxBoltzMal);
+    // Check to see if we want to apply the Boltzman exaggeration method
+    if(n->d->doesBoltzman){
+        ApplyBoltzmann(n);
+    }
 
-            // Add the current belief to the totals
-            boltzEuc += n->beliefEuc[i];
-            boltzMal += n->beliefMal[i];
-        }
-
-        // Loop through the centroids AGAIN
-        for( i=0; i < n->nb; i++ )
-        {
-            // Normalize the beliefs
-            n->beliefEuc[i] /= boltzEuc;
-            n->beliefMal[i] /= boltzMal;
-
-            // Set the belief to be used in the end
+    for( i=0; i < n->nb; i++ ){
 #ifdef USE_MAL
-            n->pBelief[i] = n->beliefMal[i];
+        n->pBelief[i] = n->beliefMal[i];
 #endif
 #ifdef USE_EUC
-            n->pBelief[i] = n->beliefEuc[i];
+        n->pBelief[i] = n->beliefEuc[i];
 #endif
-        }
     }
 
     // Set the winning centroid of the current node to the index of the centroid with the highest Euclidean belief value
