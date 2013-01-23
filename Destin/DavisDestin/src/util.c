@@ -199,6 +199,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->muSumSqDiff = 0;
 
     SetLearningStrat(d, CLS_DECAY);
+    d->fixedLearnRate = 0.1;
 
     MALLOC(d->inputLabel, uint, nc);
     for( i=0; i < nc; i++ )
