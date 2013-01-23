@@ -719,7 +719,7 @@ void SampleInputFromBelief( Node *n, float *xf )
         CalculateBelief( n, x, bx );
         bMSE = BeliefMSE( n->nb, bx, pBelief );
         
-        printf("%f\n", bMSE);
+        log_info("%f\n", bMSE);
 
         g = 0.001;
         __special xTmp[n->ns];
@@ -758,6 +758,7 @@ void SampleInputFromBelief( Node *n, float *xf )
         ConstrainInput( n, x );
     }
 
+#ifndef UNIT_TEST
     printf("bx:\n");
     for( i=0; i < n->nb; i++ )
     {
@@ -770,6 +771,7 @@ void SampleInputFromBelief( Node *n, float *xf )
         printf("%0.3f ", x[i]);
     }
     printf("\n");
+#endif
 
     for( i=0; i < n->ns; i++ )
     {

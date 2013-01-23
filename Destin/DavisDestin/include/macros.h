@@ -8,6 +8,13 @@
 
 #define PRINTF printf
 
+
+#ifdef UNIT_TEST
+#define log_info(s...)do{}while(0)
+#else
+#define log_info(s...)do{printf(s);}while(0)
+#endif
+
 #define oops(s...) { fprintf(stderr, ## s); exit(1); }
 
 #define MALLOC(s,t,n) {                                 \

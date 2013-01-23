@@ -26,23 +26,32 @@ INCLUDE_DIRECTORIES( include ../Common )
 
 ADD_EXECUTABLE(destin src/destin_mnist.c )    
 
-ADD_LIBRARY( destinalt SHARED
+set(destalt_sources
     src/destin.c
+    include/node.h
     src/node.c
     src/util.c
     src/cent_image_gen.c
     include/macros.h
     include/node.h
     include/cent_image_gen.h
+    include/destin.h
     src/learn_strats.c
     include/learn_strats.h
 )
 
+ADD_LIBRARY( destinalt SHARED ${destalt_sources})
 TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS})
+
+ADD_LIBRARY( destinalt_test SHARED ${destalt_sources})
+TARGET_LINK_LIBRARIES( destinalt_test ${OpenCV_LIBS})
+SET_TARGET_PROPERTIES(destinalt_test PROPERTIES COMPILE_DEFINITIONS "UNIT_TEST")
+
 
 TARGET_LINK_LIBRARIES( destin destinalt )
 SET_TARGET_PROPERTIES( destin PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin )
 
+
 ADD_EXECUTABLE( test test/test.c )
-TARGET_LINK_LIBRARIES( test destinalt )
+TARGET_LINK_LIBRARIES( test destinalt_test )
 SET_TARGET_PROPERTIES( test PROPERTIES RUNTIME_OUTPUT_DIRECTORY test )

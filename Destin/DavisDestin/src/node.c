@@ -13,20 +13,6 @@
 
 //#define RECURRENCE_ON
 
-#define CHECK_NORM_LESS_THAN_EPSILON
-
-/*
-#define CHECK_BELIEF_LESS_THAN_EPSILON
-#define CHECK_BELIEF_ZERO
-#define CHECK_OBS
-
-#define checkinf(d){\
-    if(isinf(d)){\
-    oops("was inf at line %i\n", __LINE__ );\
-    }\
-}
-*/
-
 #define USE_MAL
 //#define USE_EUC
 
@@ -36,6 +22,20 @@
 
 //#define STARV_QUICK_RESET
 #define STARV_SLOW_RESET
+
+
+#ifdef UNIT_TEST
+    //checks various things if this is compiled for the unit test
+    #define CHECK_NORM_LESS_THAN_EPSILON
+    #define CHECK_BELIEF_ZERO
+    #define CHECK_OBS
+    #define CHECK_BIG_MU
+#define checkinf(d){\
+    if(isinf(d)){\
+    oops("was inf at line %i\n", __LINE__ );\
+    }\
+}
+#endif
 
 // CPU implementation of GetObservation kernel
 void GetObservation( Node *n, float *framePtr, uint nIdx )
