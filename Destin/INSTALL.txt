@@ -23,7 +23,7 @@ INSTALLATION
 Dependencies:
  * CMake 2.8 or higher (http://www.cmake.org)
  * Pugixml (http://www.pugixml.org)
- * CUDA 4.0 (http://developer.nvidia.com/object/cuda_download.html)
+ * CUDA 4.0 (http://developer.nvidia.com/object/cuda_download.html) (not essential)
 
 Windows
  * run cmake to create you Visual Studio solution. (Don't make the output folder the same as the source)
