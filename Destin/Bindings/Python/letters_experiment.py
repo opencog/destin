@@ -111,13 +111,15 @@ def saveCenImages(run_id):
 #dn.load("x.dst")
 #cv.SetMouseCallback("Centroid image",window_callback)
 do_train = True
+save = False
 if do_train:
     train()
-    t = str(int(time.time()))
-    fn = save_root + t + ".dst"
-    print "Saving " + fn
-    dn.save(fn)
-    saveCenImages(t)
+    if save:    
+        t = str(int(time.time()))
+        fn = save_root + t + ".dst"
+        print "Saving " + fn
+        dn.save(fn)
+        saveCenImages(t)
 else:
     to_load = "saves/1358139144.dst"
     dn.load(to_load)
