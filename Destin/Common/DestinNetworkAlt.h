@@ -104,7 +104,6 @@ public:
         uint c, l;
         callback = NULL;
         initTemperatures(layers, centroid_counts);
-        temperatures = new float[layers];
         float starv_coef = 0.05;
         uint n_classes = 0;//doesn't look like its used
         uint num_movements = 0; //this class does not use movements
@@ -166,6 +165,12 @@ public:
 
     void setTemperatures(float temperatures[]){
         memcpy(this->temperatures, temperatures, sizeof(float) * getLayerCount());
+        memcpy(destin->temp, temperatures, sizeof(float) * getLayerCount());
+        for(int l = 0; l < getLayerCount(); l++){
+            for(int n = 0 ; n < destin->layerSize[l]; n++){
+                GetNodeFromDestinI(destin, l, n)->temp = temperatures[l];
+            }
+        }
     }
 
     void doDestin( //run destin with the given input
