@@ -1,20 +1,15 @@
 #!/usr/bin/python
 import pydestin as pd
-
-#import opencv.highgui as cvhg
-import threading
 import time
 import cv2.cv
 
 cvhg = lambda: None
-
 cvhg.cvResizeWindow = cv2.cv.ResizeWindow
 cvhg.cvMoveWindow = cv2.cv.MoveWindow
 cvhg.cvWaitKey = cv2.cv.WaitKey
 
-centroids = [4,10,10,10,10,10,10,2]
-             
-#centroids = [2,2,2,2]
+centroids = [5,5,5,5,5,5,5,5]
+            
 layers = len(centroids)
 top_layer = layers - 1
 
@@ -32,6 +27,13 @@ img_width = layers_to_enum[layers]
 
 dn = pd.DestinNetworkAlt(img_width, layers, centroids, True)
 
+dn.setBeliefTransform(pd.DST_BT_P_NORM)
+
+ct=2.0
+dn.setTemperatures([ct,ct,ct,ct,ct,ct,ct,ct])
+dn.setFixedLearnRate(.1)
+
+
 top_node = dn.getNode(top_layer, 0, 0)
 
 vs = pd.VideoSource(False, "hand.m4v")
@@ -43,16 +45,10 @@ layerMask = pd.SWIG_UInt_Array_frompointer(dn.getNetwork().layerMask)
 
 opened_windows = []
 
-#make it so windows are more responsive
-#cvhg.cvStartWindowThread()
-
-#viz = pd.GenerativeVisualizer(dn.getNetwork())
-
 def cls():
     import os
     os.system('clear')
     
-
 def getNodeChild(parent_node, child_num):
     return pd.SWIG_Node_p_Array_getitem(parent_node.children, child_num)
                                           
@@ -69,8 +65,6 @@ def doFrames(frames):
         if not doFrame():
             return False
     return True
-
-
 
 def dlf(layer, start, end):
     pd.DisplayLayerFeatures(dn.getNetwork(), layer, start, end)
@@ -112,8 +106,6 @@ def unfreezeLayer(layer):
 def unfreezeAllLayers():
     for i in range(layers):
         layerMask[i] = 1
-
-
 
 def freezeTopCentroidsExcept(lucky_centroid):
     if lucky_centroid == None:
@@ -238,18 +230,11 @@ def cycleCentroidImages(layer):
         cv2.waitKey(300)               
         time.sleep(1)
 
-ims = pd.ImageSouceImpl()
-ims.addImage("/home/ted/Pictures/X.png")
-
-dn.load("./saves/1358139144.dst")
-dn.setIsPOSTraining(False)
+dn.setIsPOSTraining(True)
 dn.setCentImgWeightExponent(4)
-#freezeTraining()
+
 go(5)
 arrangeWindows()
 go(5)
 
-def showX():
-    for i in range(8):
-        dn.doDestin(ims.getGrayImageFloat())        
-    
+
