@@ -19,7 +19,8 @@ layers = len(centroids)
 top_layer = layers - 1
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 dn.setFixedLearnRate(.1)
-dn.setDoesBoltzmann(True)
+dn.setBeliefTransform(pd.DST_BT_BOLTZ)
+dn.setTemperatures([1.2,10,5,5,5,5,5,5])
 
 weight_exponent = 4
 

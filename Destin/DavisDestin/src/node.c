@@ -209,48 +209,6 @@ void CalculateDistances( Node *n, uint nIdx )
     }
 }
 
-void ApplyBoltzmann(Node * n){
-    // Start the process of exaggerating the probability distribution using Boltzman's method
-    float maxBoltzEuc = 0;
-    float maxBoltzMal = 0;
-    uint i;
-    for( i=0; i < n->nb; i++ ){
-        // If so, check to see if the current Euclidean Boltzman belief is greater than our current max
-        if( n->beliefEuc[i] * n->temp > maxBoltzEuc )
-            // If so, update our max Euclidean Boltzman value.
-            maxBoltzEuc = n->beliefEuc[i] * n->temp;
-
-        // Check to see if the current Mahalanobis Boltzman belief is greater than our current max
-        if( n->beliefMal[i] * n->temp > maxBoltzMal )
-            // If so, update our max Mahalanobis Boltzman value.
-            maxBoltzMal = n->beliefMal[i] * n->temp;
-    }
-
-    // Prepare Euclidean and Mahalanobis belief value
-    float boltzEuc = 0;
-    float boltzMal = 0;
-
-    // Loop through the centroids
-    for( i=0; i < n->nb; i++ )
-    {
-        // Recalculate beliefs with inclusion of Bolzmanish stuff
-        n->beliefEuc[i] = exp(n->temp * n->beliefEuc[i] - maxBoltzEuc);
-        n->beliefMal[i] = exp(n->temp * n->beliefMal[i] - maxBoltzMal);
-
-        // Add the current belief to the totals
-        boltzEuc += n->beliefEuc[i];
-        boltzMal += n->beliefMal[i];
-    }
-
-    // Loop through the centroids AGAIN
-    for( i=0; i < n->nb; i++ )
-    {
-        // Normalize the beliefs
-        n->beliefEuc[i] /= boltzEuc;
-        n->beliefMal[i] /= boltzMal;
-    }
-}
-
 // CPU implementation of NormalizeBelief kernel
 void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 {
@@ -297,10 +255,10 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     
 #ifdef CHECK_NORM_LESS_THAN_EPSILON
     if (normEuc < EPSILON){
-        oops("normEuc was less than EPSILON: %e\n", normEuc);
+        oops("oops: normEuc was less than EPSILON: %e\n", normEuc);
     }
     if (normMal < EPSILON){
-        oops("normMal was less than EPSILON: %e\n", normMal);
+        oops("oops: normMal was less than EPSILON: %e\n", normMal);
     }
 #endif
 
@@ -310,21 +268,9 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
     {
         n->beliefEuc[i] = n->beliefEuc[i] / normEuc;
         n->beliefMal[i] = n->beliefMal[i] / normMal;
-
-#ifdef CHECK_BELIEF_LESS_THAN_EPSILON
-        if(n->beliefEuc[i] < EPSILON){
-            oops("beliefEuc was less than EPSILON.\n");
-        }
-        if(n->beliefMal[i] < EPSILON){
-            oops("belief mal was less than EPSILON.\n");
-        }
-#endif
     }
 
-    // Check to see if we want to apply the Boltzman exaggeration method
-    if(n->d->doesBoltzman){
-        ApplyBoltzmann(n);
-    }
+    n->d->beliefTransformFunc(n);
 
     for( i=0; i < n->nb; i++ ){
 #ifdef USE_MAL
@@ -438,6 +384,11 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
             dt = d->uf_avgDelta[layer][c * ns + s];
             diff = dt * learnRate;
             n->mu[c * ns + s] += diff; //all nodes in a layer share this n->mu pointer
+#ifdef CHECK_BIG_MU
+            if ( n->mu[c * ns + s] > 1.0){
+                oops("Big mu value:%e at line %i\n",n->mu[c * ns + s],__LINE__ );
+            }
+#endif
             n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
             //TODO: write unit test for layerSharedSigma
             layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
@@ -467,7 +418,11 @@ void MoveCentroids( Node *n, uint nIdx ){
 
         // move the winning centroid
         n->mu[winnerOffset+i] += dTmp;
-
+#ifdef CHECK_BIG_MU
+        if (n->mu[winnerOffset+i]  > 1.0){
+            oops("Big mu value:%e at line %i\n",n->mu[winnerOffset+i] ,__LINE__ );
+        }
+#endif
         // increment the sq. difference
         n->muSqDiff += dTmp * dTmp;
 

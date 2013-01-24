@@ -5,12 +5,14 @@
 #include "macros.h"
 #include "node.h"
 #include "learn_strats.h"
+#include "belief_transform.h"
 
 #define INIT_SIGMA 0.00001
 
 
 /* Destin Struct Definition */
 typedef struct Destin {
+    uint serializeVersion;
     uint nInputPipeline;                // number of beliefs to copy to next nodes' input
     uint maxNb;                         // max number of beliefs for all nodes (important for kernels)
     uint maxNs;
@@ -37,9 +39,12 @@ typedef struct Destin {
 
     CentroidLearnStrat   centLearnStrat;        // centroid learning strategy enum
     CentroidLearnStratFunc centLearnStratFunc;  // centroid learning strategy function pointer
+
+    BeliefTransformEnum beliefTransform;
+    BeliefTransformFunc beliefTransformFunc;
+
     float       fixedLearnRate;       // if CLS_Fixed is set for centLearnStrat, then this is the fixed learning rate to use, otherwise ignored.
 
-    bool        doesBoltzman;           // flag to determine if the  beliefs are applied with the boltzman distribution
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
                                         // which means all nodes in a layer share their centroids
 
@@ -70,8 +75,7 @@ Destin * InitDestin(                    // initialize Destin.
                     float *,            // temperature for each layer
                     float,              // starv coeff
                     uint,               // number of movements per digit presentation
-                    bool,               // is uniform - if nodes in a layer share one list of centroids
-                    bool                // if beliefs are applied with a boltzman distribution
+                    bool               // is uniform - if nodes in a layer share one list of centroids
                 );
 
 

@@ -10,7 +10,12 @@
 #include "node.h"
 #include "destin.h"
 
-
+// Defines the version of destin structs that it can load and save.
+// This is to try to prevent loading older incompatible destin structs from file
+// and causing an unknown crash.
+// This value should be incremented by the developer when the order of the destin struc
+// fields are moved around or if fields are added, removed, ect.
+#define SERIALIZE_VERSION 1
 
 void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
     d->centLearnStrat = strategy;
@@ -87,15 +92,21 @@ Destin * CreateDestin( char *filename ) {
     fscanfResult = fscanf(configFile, "%u", &iu);
     bool isUniform = iu == 0 ? false : true;
 
+    //TODO: set learning strat and belief transform in config
+    //TODO: fix test config file
     // applies boltzman distibution
     // 0 = off, 1 = on
-    uint db;
-    fscanfResult = fscanf(configFile, "%u", &db);
-    bool doesBoltzman = db == 0 ? false : true;
-    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
-    printf("isUniform: %s. boltzman: %s.", isUniform ? "YES" : "NO", doesBoltzman ? "YES" : "NO");
+    char bts[80]; //belief transform string
 
-    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, doesBoltzman);
+    fscanfResult = fscanf(configFile, "%80s", bts);
+
+    BeliefTransformEnum bte = BeliefTransform_S_to_E(bts);
+
+    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
+    printf("isUniform: %s. belief transform: %s.\n", isUniform ? "YES" : "NO", bts);
+
+    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
+    SetBeliefTransform(newDestin, bte);
 
     fclose(configFile);
 
@@ -178,7 +189,7 @@ void CalcNodeInputOffsets(
 
 }
 
-Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, bool doesBoltzman )
+Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform )
 {
     uint nInputPipeline;
     uint i, l, maxNb, maxNs;
@@ -190,15 +201,17 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     // initialize a new Destin object
     MALLOC(d, Destin, 1);
 
+    d->serializeVersion = SERIALIZE_VERSION;
     d->nNodes = 0;
     d->nLayers = nl;
 
     d->nMovements = nMovements;
     d->isUniform = isUniform;
-    d->doesBoltzman = doesBoltzman;
     d->muSumSqDiff = 0;
 
     SetLearningStrat(d, CLS_DECAY);
+    SetBeliefTransform(d, DST_BT_NONE);
+
     d->fixedLearnRate = 0.1;
 
     MALLOC(d->inputLabel, uint, nc);
@@ -490,13 +503,14 @@ void SaveDestin( Destin *d, char *filename )
         return;
     }
 
+    fwrite(&d->serializeVersion, sizeof(uint), 1,       dFile);
+
     // write destin hierarchy information to disk
     fwrite(&d->nMovements,  sizeof(uint), 1,            dFile);
     fwrite(&d->nc,          sizeof(uint), 1,            dFile);
     fwrite(&d->nodes[0].ni, sizeof(uint), 1,            dFile);
     fwrite(&d->nLayers,     sizeof(uint), 1,            dFile);
     fwrite(&d->isUniform,   sizeof(bool), 1,            dFile);
-    fwrite(&d->doesBoltzman,sizeof(bool), 1,            dFile);
     fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
@@ -506,6 +520,7 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
     fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
+    fwrite(&d->beliefTransform,     sizeof(BeliefTransformEnum),1,           dFile);
     fwrite(&d->fixedLearnRate,      sizeof(float),              1,           dFile);
 
     //write belief states
@@ -555,8 +570,9 @@ Destin * LoadDestin( Destin *d, const char *filename )
         DestroyDestin( d );
     }
 
+    uint serializeVersion;
     uint nMovements, nc, ni, nl;
-    bool isUniform, doesBoltzman;
+    bool isUniform;
     uint *nb;
 
     float beta, lambda, gamma, starvCoeff;
@@ -569,13 +585,18 @@ Destin * LoadDestin( Destin *d, const char *filename )
         return NULL;
     }
 
+    fread(&serializeVersion, sizeof(uint), 1, dFile);
+    if(serializeVersion != SERIALIZE_VERSION){
+        fprintf(stderr, "Error: can't load %s because its version is %i, and we're expecting %i\n", filename, serializeVersion, SERIALIZE_VERSION);
+        return NULL;
+    }
+
     // read destin hierarchy information from disk
     freadResult = fread(&nMovements,  sizeof(uint), 1, dFile);
     freadResult = fread(&nc,          sizeof(uint), 1, dFile);
     freadResult = fread(&ni,          sizeof(uint), 1, dFile);
     freadResult = fread(&nl,          sizeof(uint), 1, dFile);
     freadResult = fread(&isUniform,   sizeof(bool), 1, dFile);
-    freadResult = fread(&doesBoltzman,sizeof(bool), 1, dFile);
 
     MALLOC(nb, uint, nl);
     MALLOC(temp, float, nl);
@@ -589,10 +610,13 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&gamma,       sizeof(float), 1,   dFile);
     freadResult = fread(&starvCoeff,  sizeof(float), 1,   dFile);
 
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, doesBoltzman);
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform);
 
     freadResult = fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
     SetLearningStrat(d, d->centLearnStrat);
+
+    freadResult = fread(&d->beliefTransform, sizeof(BeliefTransformEnum),1,         dFile);
+    SetBeliefTransform(d, d->beliefTransform);
 
     freadResult = fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
 

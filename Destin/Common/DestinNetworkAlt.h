@@ -105,7 +105,6 @@ public:
         callback = NULL;
         initTemperatures(layers, centroid_counts);
         temperatures = new float[layers];
-        bool doesBoltzman = false;
         float starv_coef = 0.05;
         uint n_classes = 0;//doesn't look like its used
         uint num_movements = 0; //this class does not use movements
@@ -136,8 +135,7 @@ public:
                 temperatures,
                 starv_coef,
                 num_movements,
-                isUniform,
-                doesBoltzman
+                isUniform
          );
 
 
@@ -162,8 +160,8 @@ public:
         }
     }
 
-    void setDoesBoltzmann(bool yes_no){
-        destin->doesBoltzman = yes_no;
+    void setBeliefTransform(BeliefTransformEnum e){
+        SetBeliefTransform(destin, e);
     }
 
     void setTemperatures(float temperatures[]){

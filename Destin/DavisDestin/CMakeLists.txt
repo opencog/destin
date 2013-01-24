@@ -38,6 +38,8 @@ set(destalt_sources
     include/destin.h
     src/learn_strats.c
     include/learn_strats.h
+    include/belief_transform.h
+    src/belief_transform.c
 )
 
 ADD_LIBRARY( destinalt SHARED ${destalt_sources})
