@@ -32,6 +32,7 @@ ADD_LIBRARY( destinalt SHARED
     src/util.c
     src/cent_image_gen.c
     include/macros.h
+    include/node.h
     include/cent_image_gen.h
     src/learn_strats.c
     include/learn_strats.h

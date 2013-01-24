@@ -83,6 +83,7 @@ void PrintIt( Destin *d )
 
 void TrainDestin( Destin *d, char *dataFileName, char *labelsFileName )
 {
+    size_t freadResult; // Not used, added to remove compiler warnings.
     // check if destin passed is initialized
     if( d == NULL )
     {
@@ -130,8 +131,8 @@ void TrainDestin( Destin *d, char *dataFileName, char *labelsFileName )
         // while the whole file hasn't been read...
         while( i < NITS * 3 )//!feof(dataFile) )
         {
-            fread( d->dataSet, sizeof(float), inputFrameSize, dataFile );
-            fread( &label, sizeof(uint), 1, labelFile );
+            freadResult = fread( d->dataSet, sizeof(float), inputFrameSize, dataFile );
+            freadResult =fread( &label, sizeof(uint), 1, labelFile );
 
             if( label > d->nc )
             {
@@ -202,6 +203,7 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
 {
     FILE *beliefsFile;
     beliefsFile = fopen("beliefs.dat", "w");
+    size_t freadResult; // Not used, added to remove compiler warnings.
     
     FILE *dataFile;
     FILE *labelFile;
@@ -291,8 +293,8 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
 
     while( i < d->nMovements * 15000 )
     {
-        fread( d->dataSet, sizeof(float), inputFrameSize, dataFile );
-        fread( &label, sizeof(uint), 1, labelFile );
+        freadResult = fread( d->dataSet, sizeof(float), inputFrameSize, dataFile );
+        freadResult = fread( &label, sizeof(uint), 1, labelFile );
 
         // a new digit is picked up every d->nMovements movements.
         if( i % d->nMovements == 0 )

@@ -33,6 +33,7 @@ void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
 //TODO: update to work with uniform destin
 Destin * CreateDestin( char *filename ) {
     Destin *newDestin;
+    int fscanfResult;
 
     FILE *configFile;
     // open file
@@ -50,19 +51,19 @@ Destin * CreateDestin( char *filename ) {
     // parse config file
 
     // get number of movements per digit
-    fscanf(configFile, "%d", &nMovements);
+    fscanfResult = fscanf(configFile, "%d", &nMovements);
     printf("nMovements: %d\n", nMovements);
 
     // get number of distinct classes
-    fscanf(configFile, "%d", &nc);
+    fscanfResult = fscanf(configFile, "%d", &nc);
     printf("# classes: %d\n", nc);
 
     // get input dimensionality
-    fscanf(configFile, "%d", &ni);
+    fscanfResult = fscanf(configFile, "%d", &ni);
     printf("input dim: %d\n", ni);
 
     // get number of layers
-    fscanf(configFile, "%d", &nl);
+    fscanfResult = fscanf(configFile, "%d", &nl);
     nb = (uint *) malloc(sizeof(uint) * nl);
     temp = (float *) malloc(sizeof(float) * nl);
 
@@ -70,26 +71,26 @@ Destin * CreateDestin( char *filename ) {
 
     // get layer beliefs and temps
     for(i=0; i < nl; i++) {
-        fscanf(configFile, "%d %f", &nb[i], &temp[i]);
+        fscanfResult = fscanf(configFile, "%d %f", &nb[i], &temp[i]);
         printf("\t%d %f\n", nb[i], temp[i]);
     }
 
     // get coeffs
-    fscanf(configFile, "%f", &beta);
-    fscanf(configFile, "%f", &lambda);
-    fscanf(configFile, "%f", &gamma);
-    fscanf(configFile, "%f", &starvCoeff);
+    fscanfResult = fscanf(configFile, "%f", &beta);
+    fscanfResult = fscanf(configFile, "%f", &lambda);
+    fscanfResult = fscanf(configFile, "%f", &gamma);
+    fscanfResult = fscanf(configFile, "%f", &starvCoeff);
 
     // is uniform, i.e. shared centroids
     // 0 = uniform off, 1 = uniform on
     uint iu;
-    fscanf(configFile, "%u", &iu);
+    fscanfResult = fscanf(configFile, "%u", &iu);
     bool isUniform = iu == 0 ? false : true;
 
     // applies boltzman distibution
     // 0 = off, 1 = on
     uint db;
-    fscanf(configFile, "%u", &db);
+    fscanfResult = fscanf(configFile, "%u", &db);
     bool doesBoltzman = db == 0 ? false : true;
     printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
     printf("isUniform: %s. boltzman: %s.", isUniform ? "YES" : "NO", doesBoltzman ? "YES" : "NO");
@@ -500,7 +501,7 @@ void SaveDestin( Destin *d, char *filename )
     // write destin params to disk
     fwrite(d->temp,                 sizeof(float),              d->nLayers,  dFile);
     fwrite(&d->nodes[0].beta,       sizeof(float),              1,           dFile); //TODO consider moving these constants to the destin struc
-    fwrite(&d->nodes[0].lambda,     sizeof(float),              1,           dFile);
+    fwrite(&d->nodes[0].nLambda,     sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
     fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
@@ -545,6 +546,7 @@ Destin * LoadDestin( Destin *d, char *filename )
     FILE *dFile;
     uint i, l;
     Node *nTmp;
+    size_t freadResult;
 
     if( d != NULL )
     {
@@ -567,44 +569,44 @@ Destin * LoadDestin( Destin *d, char *filename )
     }
 
     // read destin hierarchy information from disk
-    fread(&nMovements,  sizeof(uint), 1, dFile);
-    fread(&nc,          sizeof(uint), 1, dFile);
-    fread(&ni,          sizeof(uint), 1, dFile);
-    fread(&nl,          sizeof(uint), 1, dFile);
-    fread(&isUniform,   sizeof(bool), 1, dFile);
-    fread(&doesBoltzman,sizeof(bool), 1, dFile);
+    freadResult = fread(&nMovements,  sizeof(uint), 1, dFile);
+    freadResult = fread(&nc,          sizeof(uint), 1, dFile);
+    freadResult = fread(&ni,          sizeof(uint), 1, dFile);
+    freadResult = fread(&nl,          sizeof(uint), 1, dFile);
+    freadResult = fread(&isUniform,   sizeof(bool), 1, dFile);
+    freadResult = fread(&doesBoltzman,sizeof(bool), 1, dFile);
 
     MALLOC(nb, uint, nl);
     MALLOC(temp, float, nl);
 
-    fread(nb, sizeof(uint), nl, dFile);
+    freadResult = fread(nb, sizeof(uint), nl, dFile);
 
     // read destin params from disk
-    fread(temp,         sizeof(float), nl,  dFile);
-    fread(&beta,        sizeof(float), 1,   dFile);
-    fread(&lambda,      sizeof(float), 1,   dFile);
-    fread(&gamma,       sizeof(float), 1,   dFile);
-    fread(&starvCoeff,  sizeof(float), 1,   dFile);
+    freadResult = fread(temp,         sizeof(float), nl,  dFile);
+    freadResult = fread(&beta,        sizeof(float), 1,   dFile);
+    freadResult = fread(&lambda,      sizeof(float), 1,   dFile);
+    freadResult = fread(&gamma,       sizeof(float), 1,   dFile);
+    freadResult = fread(&starvCoeff,  sizeof(float), 1,   dFile);
 
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, doesBoltzman);
 
-    fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
+    freadResult = fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
     SetLearningStrat(d, d->centLearnStrat);
 
-    fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
+    freadResult = fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
 
-    fread(d->inputPipeline, sizeof(float),         d->nInputPipeline, dFile);
-    fread(d->belief,        sizeof(float),         d->nBeliefs,       dFile);
+    freadResult = fread(d->inputPipeline, sizeof(float),         d->nInputPipeline, dFile);
+    freadResult = fread(d->belief,        sizeof(float),         d->nBeliefs,       dFile);
 
     if(isUniform){
         for(l = 0 ; l < d->nLayers; l++){
             nTmp = GetNodeFromDestin(d, l, 0, 0);
-            fread(nTmp->mu,                    sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
-            fread(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
-            fread(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
-            fread(d->uf_sigma[l],              sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
-            fread(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
-            fread(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],               dFile);
+            freadResult = fread(nTmp->mu,                    sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
+            freadResult = fread(d->uf_avgDelta[l],           sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
+            freadResult = fread(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
+            freadResult = fread(d->uf_sigma[l],              sizeof(float),  d->nb[l] * nTmp->ns,    dFile);
+            freadResult = fread(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
+            freadResult = fread(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],               dFile);
         }
 
     }else{
@@ -613,10 +615,10 @@ Destin * LoadDestin( Destin *d, char *filename )
             nTmp = &d->nodes[i];
 
             // load statistics
-            fread(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-            fread(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
-            fread(nTmp->starv, sizeof(float), nTmp->nb, dFile);
-            fread(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
+            freadResult = fread(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
+            freadResult = fread(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
+            freadResult = fread(nTmp->starv, sizeof(float), nTmp->nb, dFile);
+            freadResult = fread(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
         }
     }
 
@@ -657,7 +659,7 @@ void InitNode
     node->nc            = nc;
     node->starvCoeff    = starvCoeff;
     node->beta          = beta;
-    node->lambda        = lambda;
+    node->nLambda        = lambda;
     node->gamma         = gamma;
     node->temp          = temp;
     node->winner        = 0;

@@ -274,7 +274,7 @@ public:
       * @param layer = layer to show
       * @param zoom = scales the image by this factor
       */
-    void imageWinningCentroidGrid(int layer, int zoom = 8, char * window_name="Winning Grid"){
+    void imageWinningCentroidGrid(int layer, int zoom = 8, const string& window_name="Winning Grid"){
         uint width = (uint)sqrt(destin->layerSize[layer]);
 
         //initialize or create new grid if needed
@@ -339,7 +339,7 @@ public:
             throw std::domain_error("setParentBeliefDamping: lambda must be between 0 and 1");
         }
         for(int n = 0; n < destin->nNodes ; n++){
-            destin->nodes[n].lambda = lambda;
+            destin->nodes[n].nLambda = lambda;
         }
 
     }
@@ -382,7 +382,7 @@ public:
         this->beta = n->beta;
         this->gamma = n->gamma;
         this->isUniform = destin->isUniform;
-        this->lambda = n->lambda;
+        this->lambda = n->nLambda;
 
         memcpy(temperatures, destin->temp, sizeof(float) * getLayerCount());
 

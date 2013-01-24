@@ -476,7 +476,7 @@ int testSaveDestin1(){
 
     assertTrue(n->ni == 16);
     assertFloatEquals(0.001, n->beta, 1e-10);
-    assertFloatEquals(0.96, n->lambda, 1e-07); //accuracy is not very good
+    assertFloatEquals(0.96, n->nLambda, 1e-07); //accuracy is not very good
     assertFloatEquals( 0.78, n->gamma, 3e-8);
     assertFloatArrayEqualsEV(d->temp, 1e-12, 2, 7.5, 8.5 );
     assertTrue(n->starvCoeff == starvCoef);
@@ -628,7 +628,7 @@ int testLoadFromConfig(){
     Node * n = &d->nodes[0];
     assertTrue(n->ni == 16);
     assertFloatEquals(0.002, n->beta, 1e-8);
-    assertFloatEquals(0.1, n->lambda, 1e-8);
+    assertFloatEquals(0.1, n->nLambda, 1e-8);
     assertFloatEquals(0.2, n->gamma, 1e-8);
     assertFloatEquals(0.001, n->starvCoeff, 1e-8);
     assertTrue(d->doesBoltzman);
