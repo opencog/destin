@@ -235,6 +235,6 @@ dn.setCentImgWeightExponent(4)
 
 go(5)
 arrangeWindows()
-go(5)
+go(500)
 
 
