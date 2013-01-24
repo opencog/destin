@@ -531,7 +531,7 @@ void freeRandomImages(float ** images, uint nImages){
     return;
 }
 
-int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat){
+int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTransformEnum bt){
     //Test that SaveDestin and LoadDestin are working propertly.
     //This uses the strategy of checking that the belief outputs are the same
     //after loading a saved destin and repeating the same input image.
@@ -549,7 +549,7 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat){
     uint i, j;
 
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
-    SetBeliefTransform(d, DST_BT_BOLTZ);
+    SetBeliefTransform(d, bt);
     turnOnMask(d);
 
     //generate random images
@@ -609,10 +609,11 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat){
 }
 
 int testSaveDestin2(){
-    assertTrue(_testSaveDestin2(true, CLS_FIXED) == 0); //uniform on
-    assertTrue(_testSaveDestin2(false, CLS_FIXED) == 0);//uniform off
-    assertTrue(_testSaveDestin2(true, CLS_DECAY) == 0);
-    assertTrue(_testSaveDestin2(false, CLS_DECAY) == 0);
+    assertTrue(_testSaveDestin2(true, CLS_FIXED, DST_BT_BOLTZ) == 0); //uniform on
+    assertTrue(_testSaveDestin2(false, CLS_FIXED, DST_BT_BOLTZ) == 0);//uniform off
+    assertTrue(_testSaveDestin2(false, CLS_FIXED, DST_BT_P_NORM) == 0);//uniform off
+    assertTrue(_testSaveDestin2(true, CLS_DECAY, DST_BT_P_NORM) == 0);
+    assertTrue(_testSaveDestin2(false, CLS_DECAY, DST_BT_BOLTZ) == 0);
     return 0;
 }
 
@@ -925,6 +926,14 @@ int testCentroidImageGeneration(){
                              1.0, 1.0, 0.75, 0.75,
                              1.0, 1.0, 0.75, 0.75);
 
+    float aDist[3] = {1.0,2.0,3.0};
+    float aDistNormed[3];
+    Cig_PowerNormalize(aDist, aDistNormed, 3, 2);
+    assertFloatArrayEqualsEV(aDistNormed, 1e-6, 3, 0.0714285714, 0.2857142857, 0.6428571429 );
+
+    //try if the source is same as dest
+    Cig_PowerNormalize(aDist, aDist, 3, 2);
+    assertFloatArrayEqualsEV(aDist, 1e-6, 3, 0.0714285714, 0.2857142857, 0.6428571429 );
 
     Cig_DestroyCentroidImages(d, images);
     DestroyDestin(d);

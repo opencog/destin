@@ -3,6 +3,7 @@
 #include "belief_transform.h"
 #include "node.h"
 #include "destin.h"
+#include "cent_image_gen.h"
 
 void SetBeliefTransform(Destin * d, BeliefTransformEnum bt){
 
@@ -83,7 +84,8 @@ void DST_BT_Boltzmann(Node* n){
 }
 
 void DST_BT_PNorm(struct Node* n){
-    printf("DST_BT_PNorm: not implemented\n");
+    Cig_PowerNormalize(n->beliefEuc, n->beliefEuc, n->nb, n->temp);
+    Cig_PowerNormalize(n->beliefMal, n->beliefMal, n->nb, n->temp);
     return;
 }
 

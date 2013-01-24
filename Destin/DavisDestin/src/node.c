@@ -264,6 +264,7 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 
 
     // normalize beliefs to sum to 1
+    // TODO: think beliefTranform already does this
     for( i=0; i < n->nb; i++ )
     {
         n->beliefEuc[i] = n->beliefEuc[i] / normEuc;

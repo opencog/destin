@@ -22,7 +22,9 @@ void Cig_Normalize(float * weights_in, float * weights_out, int len, float not_u
 
 void Cig_PowerNormalize(float * weights_in, float * weights_out, int len, float exponent){
     int i;
-    memcpy(weights_out, weights_in, len * sizeof(float));
+    if(weights_out != weights_in){
+        memcpy(weights_out, weights_in, len * sizeof(float));
+    }
 
     float sum = 0;
     if(exponent == 1.0){

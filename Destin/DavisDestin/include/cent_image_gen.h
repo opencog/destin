@@ -11,4 +11,6 @@ void Cig_UpdateCentroidImages(Destin * d, float *** images, float weighParameter
 
 int Cig_GetCentroidImageWidth(Destin * d, int layer);
 
+void Cig_PowerNormalize(float * weights_in, float * weights_out, int len, float exponent);
+
 #endif
