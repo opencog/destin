@@ -9,7 +9,8 @@ struct Destin;
 typedef enum {
     DST_BT_BOLTZ,       // destin belief transform boltzmann
     DST_BT_P_NORM,      // destin belief transform exponential parameter
-    DST_BT_NONE         // no transformation is applied
+    DST_BT_NONE,        // no transformation is applied
+    DST_BT_WTA          // winner take all
 } BeliefTransformEnum;
 
 /** Maps the string to the corresponding enum.
@@ -54,6 +55,12 @@ void DST_BT_PNorm(struct Node* n);
   * Used when no post processing is to be done to the beliefs.
   */
 void DST_BT_None(struct Node* n);
+
+/** Winner take all.
+  * The belief element with the maximum value gets 1.0,
+  * while the others get 0.
+  */
+void DST_BT_WinnerTakeAll(struct Node* n);
 
 
 #endif

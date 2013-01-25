@@ -11,21 +11,23 @@
 #define EPSILON     1e-8
 #define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
 
-//#define RECURRENCE_ON
 
-#define USE_MAL
-//#define USE_EUC
+//#define RECURRENCE_ON // if defined then it clusters on its previous and parent's previous belief.
+
+
+#define USE_MAL     // use mahalanobis distance to calulate beliefs ( gives better results )
+//#define USE_EUC   // use euclidian distance to calculate beliefs
 
 #if defined(USE_MAL) && defined(USE_EUC)
 #error "both USE_MAL and USE_EUC can't be set"
 #endif
 
-//#define STARV_QUICK_RESET
-#define STARV_SLOW_RESET
+//#define STARV_QUICK_RESET  // if a centroid wins its starvation is immedialy reset to 1.0
+#define STARV_SLOW_RESET     // if a centroid wins its starvation get increasead by a constant ( gives better results )
 
 
+//checks various things if this is compiled for the unit test
 #ifdef UNIT_TEST
-    //checks various things if this is compiled for the unit test
     #define CHECK_NORM_LESS_THAN_EPSILON
     #define CHECK_BELIEF_ZERO
     #define CHECK_OBS
@@ -252,6 +254,13 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
             maxMalIdx = i;
         }
     }
+    // Set the winning centroid of the current node to the index of the centroid with the highest Euclidean belief value
+#ifdef USE_MAL
+    n->winner = maxMalIdx;
+#endif
+#ifdef USE_EUC
+    n->winner = maxEucIdx;
+#endif
     
 #ifdef CHECK_NORM_LESS_THAN_EPSILON
     if (normEuc < EPSILON){
@@ -282,8 +291,6 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 #endif
     }
 
-    // Set the winning centroid of the current node to the index of the centroid with the highest Euclidean belief value
-    n->winner = maxEucIdx;
 
     //TODO: test that this works for non uniform
     if(n->d->isUniform){
@@ -291,7 +298,7 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
         // Add one to the current iteration's wincount of the winning centroid of the node's layer (since this centroid can be
         // shared between multiple nodes in the same layer)
         long c;
-        #pragma omp critical
+        #pragma omp critical //open mp, only 1 thread in this section
         {
             c = ++(n->d->uf_winCounts[n->layer][n->winner]); //used when averaging the delta vectors
         }//omp critical

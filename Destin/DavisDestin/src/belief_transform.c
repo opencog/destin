@@ -18,6 +18,9 @@ void SetBeliefTransform(Destin * d, BeliefTransformEnum bt){
         case DST_BT_NONE:
             d->beliefTransformFunc = &DST_BT_None;
             break;
+        case DST_BT_WTA:
+            d->beliefTransformFunc = &DST_BT_WinnerTakeAll;
+            break;
         default:
             fprintf(stderr, "Warning: Invalid BeliefTransformEnum value %i. Setting null.\n", bt);
             d->beliefTransformFunc = NULL;
@@ -34,6 +37,8 @@ void SetBeliefTransform(Destin * d, BeliefTransformEnum bt){
         return DST_BT_P_NORM;
     }else if(strcmp(string,"none")==0){
         return DST_BT_NONE;
+    }else if(strcmp(string,"wta")==0){
+        return DST_BT_WTA;
     }else{
         fprintf(stderr, "Warning: Invalid belief transform string: %s, defaulting to None.\n", string);
         return DST_BT_NONE;
@@ -92,3 +97,15 @@ void DST_BT_PNorm(struct Node* n){
 void DST_BT_None(struct Node* n){
     return;
 }
+
+
+void DST_BT_WinnerTakeAll(struct Node* n){
+    int i;
+    for(i = 0 ; i < n->nb ; i++){
+        n->beliefEuc[i] = 0.0;
+        n->beliefMal[i] = 0.0;
+    }
+    n->beliefEuc[n->winner] = 1.0;
+    n->beliefMal[n->winner] = 1.0;
+}
+
