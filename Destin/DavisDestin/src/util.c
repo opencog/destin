@@ -585,7 +585,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
         return NULL;
     }
 
-    fread(&serializeVersion, sizeof(uint), 1, dFile);
+    freadResult = fread(&serializeVersion, sizeof(uint), 1, dFile);
     if(serializeVersion != SERIALIZE_VERSION){
         fprintf(stderr, "Error: can't load %s because its version is %i, and we're expecting %i\n", filename, serializeVersion, SERIALIZE_VERSION);
         return NULL;
