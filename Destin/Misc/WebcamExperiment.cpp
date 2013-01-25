@@ -47,12 +47,14 @@ int main(int argc, char ** argv){
 
     //VideoSource vs(false, "./destin_video_test.avi");
     //VideoSource vs(false, "./cowboy.avi");
+    //VideoSource vs(false, "./Various.avi");
     VideoSource vs(true, "");
 
     vs.enableDisplayWindow();
 
     SupportedImageWidths siw = W512;
 
+    // Top to bottom (first is top layer)
     uint centroid_counts[]  = {2,6,6,4,4,4,4,2};
     bool isUniform = true;
 
@@ -78,8 +80,12 @@ int main(int argc, char ** argv){
             continue;
         }
 
-        
-        printf("\033[2J");      /* clear screen */
+        // Old clear screen method
+        //printf("\033[2J");
+
+        // New clear screen method (might give less flickering...?)
+        printf("\033[2J\033[1;1H");
+
         printf("Frame: %i\n", frameCount);
         printFPS(true);
         int layer = 1;
