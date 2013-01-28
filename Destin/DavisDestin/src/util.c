@@ -469,7 +469,7 @@ void DestroyDestin( Destin * d )
     FREE(d->layerSize);
     FREE(d->layerNodeOffsets);
     FREE(d->layerWidth);
-    
+    FREE(d->inputLabel);
     FREE(d);
 }
 
