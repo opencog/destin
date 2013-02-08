@@ -965,10 +965,8 @@ int main(int argc, char ** argv ){
     //RUN(testGetNode); //TODO: fix and renable this test
     RUN(testCentroidImageGeneration);
 
-    printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");
-    if(TEST_HAS_FAILURES){
-        return 1;
-    }
+    UT_REPORT_RESULTS();
+
     return 0;
 }
 

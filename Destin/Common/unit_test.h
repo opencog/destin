@@ -89,6 +89,24 @@ bool _assertIntArrayEquals(int * expected, int * actual, int length, int line){
 }
 
 
+bool _assertShortArrayEquals(short * expected, short * actual, int length, int line){
+    int i;
+    if(length <= 0 ){
+        printf("assertShortArrayEquals FAILED, line: %i, negative or zero array length: %i", line, length);
+        return false;
+    }
+
+    for(i = 0 ; i < length ; i++){
+        if( expected[i] != actual[i] ){
+            printf("assertShortArrayEquals FAILED, line: %i, on index %i with array length %i\n", line, i, length );
+            printf("expected: %i, actual: %i\n", expected[i], actual[i]);
+            return false;
+        }
+    }
+    return true;
+}
+
+
 bool _assertUIntArrayEquals(unsigned int * expected, unsigned int * actual, int length, int line){
     int i;
     if(length <= 0 ){
@@ -194,6 +212,12 @@ bool _assertIntArrayEqualsV(int *actual, int len, int line, ...){
     return _assertIntArrayEquals(expected, actual, len, line );
 }
 
+bool _assertShortArrayEqualsV(short *actual, int len, int line, ...){
+    short expected[len];
+    ut_varags_to_array(expected, line, len, int); //short is promoted to int
+    return _assertShortArrayEquals(expected, actual, len, line );
+}
+
 bool _assertUIntArrayEqualsV(unsigned int *actual, int len, int line, ...){
     unsigned int expected[len];
     ut_varags_to_array(expected, line, len, unsigned int);
@@ -212,6 +236,13 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
     return _assertBoolArrayEquals(expected, actual, len, line );
 }
 
+/** test short array with variable arguments
+*/
+#define assertShortArrayEqualsV( act, len, expecteds... ){\
+    if(! _assertShortArrayEqualsV(act, len, __LINE__, expecteds )){\
+        return 1;\
+    }\
+}\
 
 /** test int array with variable arguments
 */
@@ -367,6 +398,15 @@ bool _assertNoNans(float * array, int length, int line){
 #define testFailed(message){\
     printf("test FAILED, line %i, message: %s", __LINE__, #message "\n" );\
     return 1;\
+}\
+
+/** Call this at the end to report test results
+  */
+#define UT_REPORT_RESULTS(){\
+printf("FINSHED TESTING: %s\n", TEST_HAS_FAILURES ? "FAIL" : "PASS");\
+if(TEST_HAS_FAILURES){\
+    return 1;\
+}\
 }\
 
 #endif
