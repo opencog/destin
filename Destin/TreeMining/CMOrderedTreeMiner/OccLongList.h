@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 Header: OccLongList.h
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -15,23 +15,23 @@ extern PatternTree currentPatternTree;
 using namespace std;
 
 struct OccLongList { //the occurrence list for the FreqTree, i.e., Asai's algorithm
-	vector<pair<int,vector<short> > > occurrenceLong;
-	int lastTid;
-	int mySupport;
+    vector<pair<int,vector<short> > > occurrenceLong;
+    int lastTid;
+    int mySupport;
 
-	OccLongList() : lastTid(-1), mySupport(0)
-	{
-	}
+    OccLongList() : lastTid(-1), mySupport(0)
+    {
+    }
 
-	void insert(int newTid, vector<short>& oldLocations, short newLocation);
+    void insert(int newTid, vector<short>& oldLocations, short newLocation);
 
-	bool combineList(const OccLongList& mother, const OccList& newNodes);
+    bool combineList(const OccLongList& mother, const OccList& newNodes);
 
-	void explore(const vector<bool>& isFrequent, 
-		const vector<TextTree>& database,
-		const int& support,
-		vector<int>& checked,
-		vector<int>& closed,
+    void explore(const vector<bool>& isFrequent,
+        const vector<TextTree>& database,
+        const int& support,
+        vector<int>& checked,
+        vector<int>& closed,
         vector<int>& maximal,
         const short MIN_VERTEX,
         PatternTree & currentPatternTree,
