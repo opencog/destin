@@ -27,7 +27,9 @@ struct OccList { //the occurrence list for the FREQT, i.e., Asai's algorithm
 		const vector<TextTree>& database,
 		const int& support,
 		vector<int>& frequency,
-		const short level);
+        const short level, 
+        const short MIN_VERTEX, 
+        const short currentVertexNumber);
 };
 
 #endif //OccList_H

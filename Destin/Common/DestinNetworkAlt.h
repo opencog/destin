@@ -567,6 +567,10 @@ public:
         cv::imshow(window_title, layerCentroidsImage);
     }
 
+    void displayTree(vector<short> tree){
+
+    }
+
 };
 
 

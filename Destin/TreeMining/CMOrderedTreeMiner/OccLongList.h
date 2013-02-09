@@ -32,7 +32,10 @@ struct OccLongList { //the occurrence list for the FreqTree, i.e., Asai's algori
 		const int& support,
 		vector<int>& checked,
 		vector<int>& closed,
-		vector<int>& maximal);
+        vector<int>& maximal,
+        const short MIN_VERTEX,
+        PatternTree & currentPatternTree,
+        vector<PatternTree> & maximal_trees);
 };
 
 #endif //OccLongList_H

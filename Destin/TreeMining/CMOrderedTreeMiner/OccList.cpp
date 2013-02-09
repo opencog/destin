@@ -32,7 +32,7 @@ void OccList::explore(const vector<bool>& isFrequent,
 					  const vector<TextTree>& database,
 					  const int& support,
 					  vector<int>& frequency,
-					  const short level)
+                      const short level, const short MIN_VERTEX, const short currentVertexNumber)
 {
 	frequency[currentVertexNumber]++; //update the number of frequent trees
 
@@ -71,9 +71,7 @@ void OccList::explore(const vector<bool>& isFrequent,
 
 	for ( pos = potentialChildren.begin(); pos != potentialChildren.end(); ++pos ) {
 		if ( pos->second.mySupport >= support ) { //a frequent extension!
-			currentVertexNumber++;
-			pos->second.explore(isFrequent,database,support,frequency,level+1);
-			currentVertexNumber--;
+            pos->second.explore(isFrequent,database,support,frequency,level+1, MIN_VERTEX, currentVertexNumber + 1);
 		}
 	}
 
@@ -116,9 +114,7 @@ void OccList::explore(const vector<bool>& isFrequent,
 
 		for ( pos = potentialChildren.begin(); pos != potentialChildren.end(); ++pos ) {
 			if ( pos->second.mySupport >= support ) { //a frequent extension!
-				currentVertexNumber++;
-				pos->second.explore(isFrequent,database,support,frequency,myLevel);
-				currentVertexNumber--;
+                pos->second.explore(isFrequent,database,support,frequency,myLevel, MIN_VERTEX, currentVertexNumber + 1);
 			}
 		}
 		myLevel--; //backtrack

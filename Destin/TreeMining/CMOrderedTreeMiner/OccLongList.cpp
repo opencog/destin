@@ -73,7 +73,11 @@ void OccLongList::explore(const vector<bool>& isFrequent,
 						  const int& support,
 						  vector<int>& checked,
 						  vector<int>& closed,
-						  vector<int>& maximal)
+                          vector<int>& maximal,
+                          const short MIN_VERTEX,
+                          PatternTree & currentPatternTree,
+                          vector<PatternTree> & maximal_trees
+                          )
 {
 	
 	//for debug
@@ -444,7 +448,7 @@ void OccLongList::explore(const vector<bool>& isFrequent,
 				isClosed = false;
 				isMaximal = false;
 			}
-			newLongList.explore(isFrequent,database,support,checked,closed,maximal);
+            newLongList.explore(isFrequent,database,support,checked,closed,maximal, MIN_VERTEX, currentPatternTree, maximal_trees);
 			currentPatternTree.deleteRightmost();
 		}
 	}
@@ -477,7 +481,7 @@ void OccLongList::explore(const vector<bool>& isFrequent,
 					isClosed = false;
 					isMaximal = false;
 				}
-				newLongList.explore(isFrequent,database,support,checked,closed,maximal);
+                newLongList.explore(isFrequent,database,support,checked,closed,maximal, MIN_VERTEX, currentPatternTree, maximal_trees);
 				currentPatternTree.deleteRightmost();
 			}
 		}
@@ -588,8 +592,9 @@ void OccLongList::explore(const vector<bool>& isFrequent,
 		closed[tempV]++;
 		//cout << "closed  " << tempV << ":" << currentPatternTree << " support=" << mySupport << endl;
 	}
-	if ( isMaximal ) {
-		maximal[tempV]++;
-		//cout << "maximal " << tempV << ":" << currentPatternTree << " support=" << mySupport << endl;
+    if ( isMaximal ) {
+        maximal[tempV]++;
+        maximal_trees.push_back(currentPatternTree);
+        //cout << "maximal " << tempV << ":" << currentPatternTree << " support=" << mySupport << endl;
 	}
 }

@@ -5,12 +5,6 @@
 #include "OccList.h"
 #include "OccLongList.h"
 
-short MIN_VERTEX = 30001;
-short MAX_VERTEX = -1; //therefore, the range for valid node label is 0--30000
-
-short currentVertexNumber;
-
-PatternTree currentPatternTree;
 
 int main(int argc, char* argv[])
 {
@@ -20,6 +14,10 @@ int main(int argc, char* argv[])
 		exit (1);
 	}
 
+
+	short MIN_VERTEX = 30001;
+	short MAX_VERTEX = -1; //therefore, the range for valid node label is 0--30000
+	PatternTree currentPatternTree;
 	int support;
 	istringstream iss(argv[1]);
 	iss >> support;
@@ -29,7 +27,7 @@ int main(int argc, char* argv[])
 		exit (1);
 	}
 
-	vector<int> frequency(1000,0); //assuming the max frequent tree size is 1000
+	//vector<int> frequency(1000,0); //assuming the max frequent tree size is 1000
 	vector<int> checked(1000,0);
 	vector<int> closed(1000,0);
 	vector<int> maximal(1000,0);
@@ -114,15 +112,21 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	vector<PatternTree> maximal_trees;
 	/******************************************************************
 	step2.3: explore each frequent item 
 	******************************************************************/
 	for ( pos2 = occLongList.begin(); pos2 != occLongList.end(); ++pos2 ) {
 		if ( pos2->second.mySupport >= support ) {
 			currentPatternTree.addRightmost(pos2->first + MIN_VERTEX,0);
-			pos2->second.explore(isFrequent,database,support,checked,closed,maximal);
+			pos2->second.explore(isFrequent,database,support,checked,closed,maximal, MIN_VERTEX, currentPatternTree, maximal_trees);
 			currentPatternTree.deleteRightmost();
 		}
+	}
+
+	cout << "size: " << maximal_trees.size() << endl;
+	for(int i = 0 ; i < maximal_trees.size(); i++){
+		cout << "m is: " << maximal_trees[i] << endl;
 	}
 
 	stop_time = time(0);
