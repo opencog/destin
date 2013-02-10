@@ -14,16 +14,16 @@ class BeliefExporter {
     uint outputSize;
     uint skipSize;
     short * winnerTree;
-    const int winningTreeSize;
+    int winningTreeSize;
     uint labelBucket;
     int bottomLayer;
     const int nLayers;
 
-    short getTreeLabelForCentroid(int centroid, int layer){
+    short getTreeLabelForCentroid(const int centroid, const int layer){
         return layer * labelBucket + centroid;
     }
 
-    int buildTree(Node * parent, int pos){
+    int buildTree(const Node * parent, int pos){
         winnerTree[pos] = getTreeLabelForCentroid(parent->winner, parent->layer);
         if(parent->layer > bottomLayer && parent->children != NULL){
             for(int i = 0 ; i < 4 ; i++){
@@ -42,8 +42,7 @@ public:
       */
     BeliefExporter(DestinNetworkAlt & network, uint bottom):
         destin(network), winnerTree(NULL), bottomLayer(bottom),
-        nLayers(destin.getLayerCount()),
-        winningTreeSize((destin.getNetwork()->nNodes - 1) * 2 + 1)
+        nLayers(destin.getLayerCount())
     {
         labelBucket = ( 1 << ( sizeof(short) * 8 - 1))/nLayers;
         setBottomLayer(bottom);
@@ -66,12 +65,23 @@ public:
             throw std::domain_error("setBottomLayer: cannot be set to above the top layer\n");
         }
 
+        bottomLayer = bottom;
         Destin * d = destin.getNetwork();
 
         uint to_substract = 0;
+        uint nodes_to_subtract = 0;
         for(int i = 0 ; i < bottom ; i++){
+            nodes_to_subtract += d->layerSize[i];
             to_substract += d->layerSize[i] * d->nb[i];
         }
+
+        winningTreeSize = (destin.getNetwork()->nNodes - nodes_to_subtract - 1) * 2 + 1;
+
+        if(winnerTree!=NULL){
+            delete [] winnerTree;
+            winnerTree = NULL;
+        }
+
         outputSize = d->nBeliefs - to_substract;
         skipSize = to_substract;
     }

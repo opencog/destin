@@ -90,19 +90,29 @@ int experiment(){
     float temperatures[8] = {2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0};
     dn.setTemperatures(temperatures);
     dn.setIsPOSTraining(true);
-    VideoSource vs(false, "circle_square.mp4");
+    VideoSource vs(false, "moving_circle.avi");
 
-    for(int i = 800 ; i--; ){
+#if FALSE
+    for(int i = 200 ; i--; ){
         if(!vs.grab()){
             continue;
         }
 
+        if(i % 10 == 0){
+            printf("iteration: %i\n",i);
+        }
         dn.doDestin(vs.getOutput());
     }
-    dn.setIsPOSTraining(false);
+    dn.save("treeminer.dst");
+#else
+    dn.load("treeminer.dst");
+#endif
 
+    dn.setIsPOSTraining(false);
     BeliefExporter be(dn, 0);
+    be.setBottomLayer(5);
     CMOrderedTreeMinerWrapper tmw;
+
 
     for(int i = 50 ; i-- ;){
         if(!vs.grab()){
@@ -115,21 +125,39 @@ int experiment(){
 
         dn.doDestin(vs.getOutput());
         int len = be.getWinningCentroidTreeSize();
-        tmw.addTreeToDatabase(be.getWinningCentroidTree(), len);
+        cout << "tree size is " << len << endl;
+        cout << "getting tree " << i << endl;
+        short * t = be.getWinningCentroidTree();
+
+        for(int j = 0 ; j < len; j++){
+            cout << t[j] << " ";
+        }
+        cout << endl;
+        printf("adding tree %i\n ", i);
+        tmw.addTreeToDatabase(t, len);
+        printf("finished adding %i\n", i);
     }
+
     vector<PatternTree> minedTrees;
     int support = 10;
+    printf("mining...\n");
     tmw.mine(support, minedTrees);
-    vector<short> atree;
-    tmw.treeToVector(minedTrees.at(0), atree);
-    dn.displayTree(atree);
+    //vector<short> atree;
+    //tmw.treeToVector(minedTrees.at(0), atree);
+    //dn.displayTree(atree);
+    printf("trees: %lu\n", minedTrees.size());
+    for(int i = 0 ; i < minedTrees.size(); i++){
+        cout << minedTrees[i] << endl;
+    }
 
+    return 0;
 }
 
 int main(int argc, char ** argv){
     RUN(testTreeToVector);
     RUN(testTreeMiner);
-    //RUN(testBeliefExporter);
+    RUN(testBeliefExporter);
+    //RUN(experiment);
     UT_REPORT_RESULTS();
     return 0;
 }
