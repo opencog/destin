@@ -1,6 +1,7 @@
+include_directories( ../DavisDestin/include )
 ADD_LIBRARY( common SHARED
     DestinIterationFinishedCallback.h
-    DestinNetworkAlt.h
+    DestinNetworkAlt
     GenerativeVisualizer
     INetwork.h
     Transporter.h
