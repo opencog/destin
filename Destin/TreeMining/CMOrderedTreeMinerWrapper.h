@@ -28,7 +28,7 @@ public:
 
     }
 
-    void addTreeToDatabase(short description[], int length){
+    void addTree(short description[], int length){
         int total = length;
         short temp;
         stack<short> tempK;
@@ -152,6 +152,7 @@ public:
          v_out.pop_back(); // remove the ending "-1"
          return;
     }
+
 };
 
 #endif

@@ -87,6 +87,81 @@ private:
         }
     }
 
+    float *** getCentroidImages(){
+        if(centroidImages==NULL){
+            centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
+        }
+        return centroidImages;
+    }
+
+
+    void decodeLabelLayerCentroid(short label, int & layer_out, int & centroid_out){
+       return 0; //TODO
+    }
+
+    int decodeLabelChildNum(short label){
+        return 0; //TODO
+    }
+
+
+    void paintCentroidImage(int cent_layer, int centroid, int x, int y, cv::Mat & img){
+        int w = Cig_GetCentroidImageWidth(destin, cent_layer); //TODO: what is smallest depth
+        cv::Mat subimage(w, w, CV_32FC1, getCentroidImages()[cent_layer][centroid]); // wrap centroid image with cv::Mat
+        cv::Rect roi(cv::Point( x, y ), subimage.size()); // make roi = region of interest
+        cv::Mat dest = img( roi );     // get the subsection of img where the centroid image will go
+        subimage.copyTo(dest);                                                  // copy the subimage to the subsection of img
+        return;
+    }
+
+    void calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out){
+        int w;
+        switch (child_no) {
+            case 0:
+                child_x_out = px;
+                child_y_out = py;
+                break;
+            case 1:
+                w = Cig_GetCentroidImageWidth(getNetwork(), child_layer);
+                child_x_out = px + w;
+                child_y_out = py;
+                break;
+            case 2:
+                w = Cig_GetCentroidImageWidth(getNetwork(), child_layer);
+                child_x_out = px;
+                child_y_out = py + w;
+                break;
+            case 3:
+                w = Cig_GetCentroidImageWidth(getNetwork(), child_layer);
+                child_x_out = px + w;
+                child_y_out = py + w;
+                break;
+            default :
+                throw std::domain_error("DestinNetworlAlt::calcNewCoords: invalid child number.");
+        };
+        return;
+    }
+
+    void displayTreeHelper(vector<short> & tree, int tree_pos, int px, int py, cv::Mat & img){
+        int label = tree.at(tree_pos);
+        if(label != -1 ){
+            int layer, cent;
+            decodeLabelLayerCentroid(label, layer, cent);
+            paintCentroidImage(layer, cent, px, py, img );
+        }
+
+        if(tree_pos == tree.size() - 1){
+            return;
+        }
+
+        tree_pos++;
+        int child_x, child_y;
+        int child_label = tree.at(tree_pos);
+        calcChildCoords(px, py, decodeLabelChildNum(child_label), child_x, child_y );
+        displayTreeHelper(tree, tree_pos, child_x, child_y, img );
+
+    }
+
+
 public:
 
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
@@ -434,11 +509,7 @@ public:
 
 
     void updateCentroidImages(){
-        if(centroidImages==NULL){
-            centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
-        }else{
-            Cig_UpdateCentroidImages(destin, centroidImages, centroidImageWeightParameter);
-        }
+        Cig_UpdateCentroidImages(destin, getCentroidImages(), centroidImageWeightParameter);
     }
 
     /** Returns the centroid image as a float array.
@@ -451,7 +522,7 @@ public:
         }
 
         displayCentroidImage(layer, centroid);
-        return centroidImages[layer][centroid];
+        return getCentroidImages()[layer][centroid];
     }
 
     /** Gets the generated centroid images as an opencv Mat image.
@@ -464,10 +535,6 @@ public:
             throw std::domain_error("displayCentroidImage: layer, centroid out of bounds\n");
         }
 
-        if(centroidImages == NULL){
-            centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
-        }
-
         uint width = Cig_GetCentroidImageWidth(destin, layer);
 
         //initialize or create new grid if needed
@@ -476,7 +543,7 @@ public:
         }
         float * data = (float *)centroidImage.data;
 
-        memcpy(data, centroidImages[layer][centroid], width*width*sizeof(float));
+        memcpy(data, getCentroidImages()[layer][centroid], width*width*sizeof(float));
 
         cv::Mat toShow;
         centroidImage.convertTo(toShow, CV_8UC1, 255); // make it suitable for equalizeHist
@@ -532,10 +599,6 @@ public:
             throw std::logic_error("can't displayLayerCentroidImages with non uniform DeSTIN.");
         }
 
-        if(centroidImages == NULL){
-            centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
-        }
-
         int images = getBeliefsPerNode(layer);
         int images_wide = ceil(sqrt(images));
         int sub_img_width = (int)((double)scale_width / (double)images_wide - (double)border_width);
@@ -544,6 +607,7 @@ public:
 
         int images_high = ceil((float)images / (float)images_wide);
 
+        // initialize the big image as solid black
         cv::Mat big_img = cv::Mat::zeros(wpb*images_high, wpb*images_wide, CV_32FC1);
 
         int r, c, x, y;
@@ -554,7 +618,7 @@ public:
                 x = c * wpb;
                 y = r * wpb;
                 int w = Cig_GetCentroidImageWidth(destin, layer);
-                cv::Mat subimage(w, w, CV_32FC1, centroidImages[layer][i]);
+                cv::Mat subimage(w, w, CV_32FC1, getCentroidImages()[layer][i]);
                 cv::Mat subimage_resized;
                 cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
                 cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );
@@ -567,8 +631,14 @@ public:
         cv::imshow(window_title, layerCentroidsImage);
     }
 
-    void displayTree(vector<short> tree){
 
+    /** Displays an image representation of the tree.
+      * The input tree descibes
+      */
+    void displayTree(vector<short> tree){
+        //cv::Mat img; //TODO: resize properly
+        //displayTreeHelper(tree, 0, 0, 0, img);
+        return;
     }
 
 };

@@ -32,8 +32,8 @@ int testTreeMiner(){
     short t1[9] = {1, 2, 3, -1, 4, -1, -1, 5, -1};
     short t2[5] = {1, 2, -1, 5, -1};
 
-    tmw.addTreeToDatabase(t1, 9);
-    tmw.addTreeToDatabase(t2, 5);
+    tmw.addTree(t1, 9);
+    tmw.addTree(t2, 5);
 
     vector<PatternTree> maximal_subtrees;
 
@@ -134,7 +134,7 @@ int experiment(){
         }
         cout << endl;
         printf("adding tree %i\n ", i);
-        tmw.addTreeToDatabase(t, len);
+        tmw.addTree(t, len);
         printf("finished adding %i\n", i);
     }
 
