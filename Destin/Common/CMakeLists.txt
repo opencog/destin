@@ -11,6 +11,7 @@ ADD_LIBRARY( common SHARED
     BeliefExporter.h
     ImageSourceBase.h
     ImageSourceImpl.h
+    DestinTreeManager
 )
 
 

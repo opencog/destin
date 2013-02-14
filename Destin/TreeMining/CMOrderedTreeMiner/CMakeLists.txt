@@ -1,4 +1,4 @@
-add_library(cm_ordered_treeminer
+add_library(cm_ordered_treeminer SHARED
 OccLongList
 OccList
 TextTree

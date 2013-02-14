@@ -18,6 +18,7 @@
 #include "ClusterSom.hpp"
 #include "SomPresentor.hpp"
 #include "BeliefExporter.h"
+#include "DestinTreeManager.h"
 %}
 
 %include "macros.h"
@@ -54,6 +55,7 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "BeliefExporter.h"
 %include "cent_image_gen.h"
 %include "belief_transform.h"
+%include "DestinTreeManager.h"
 
 /* carrays.i so you can use a c++ pointer like an array */
 %include "carrays.i" 

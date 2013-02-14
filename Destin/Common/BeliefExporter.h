@@ -13,26 +13,8 @@ class BeliefExporter {
     DestinNetworkAlt & destin;
     uint outputSize;
     uint skipSize;
-    short * winnerTree;
-    int winningTreeSize;
-    uint labelBucket;
-    int bottomLayer;
     const int nLayers;
-
-    short getTreeLabelForCentroid(const int centroid, const int layer){
-        return layer * labelBucket + centroid;
-    }
-
-    int buildTree(const Node * parent, int pos){
-        winnerTree[pos] = getTreeLabelForCentroid(parent->winner, parent->layer);
-        if(parent->layer > bottomLayer && parent->children != NULL){
-            for(int i = 0 ; i < 4 ; i++){
-                pos = buildTree(parent->children[i], ++pos);
-                winnerTree[++pos] = -1;
-            }
-        }
-        return pos;
-    }
+    int bottomLayer;
 
 public:
 
@@ -41,23 +23,10 @@ public:
       * @param bottom - layer to start including the beliefs for. See getOutputSize()
       */
     BeliefExporter(DestinNetworkAlt & network, uint bottom):
-        destin(network), winnerTree(NULL), bottomLayer(bottom),
+        destin(network),
         nLayers(destin.getLayerCount())
     {
-        labelBucket = ( 1 << ( sizeof(short) * 8 - 1))/nLayers;
         setBottomLayer(bottom);
-        for(int i = 0 ; i <  nLayers; i++){
-            if( network.getBeliefsPerNode(i) >= labelBucket){
-                throw std::domain_error("BeliefExporter: too many centroids\n.");
-            }
-        }
-    }
-
-    ~BeliefExporter(){
-        if(winnerTree!=NULL){
-            delete [] winnerTree;
-            winnerTree = NULL;
-        }
     }
 
     void setBottomLayer(unsigned int bottom){
@@ -69,17 +38,8 @@ public:
         Destin * d = destin.getNetwork();
 
         uint to_substract = 0;
-        uint nodes_to_subtract = 0;
         for(int i = 0 ; i < bottom ; i++){
-            nodes_to_subtract += d->layerSize[i];
             to_substract += d->layerSize[i] * d->nb[i];
-        }
-
-        winningTreeSize = (destin.getNetwork()->nNodes - nodes_to_subtract - 1) * 2 + 1;
-
-        if(winnerTree!=NULL){
-            delete [] winnerTree;
-            winnerTree = NULL;
         }
 
         outputSize = d->nBeliefs - to_substract;
@@ -107,21 +67,7 @@ public:
         return &(destin.getNetwork()->belief[skipSize]);
     }
 
-    short * getWinningCentroidTree(){
-        if(!destin.getNetwork()->isUniform){
-            throw std::logic_error("BeliefExpoerter::getWinningCentroidTree only uniform destin is supported.\n");
-        }
-        if(winnerTree==NULL){
-            winnerTree = new short[getWinningCentroidTreeSize()];
-        }
 
-        buildTree(destin.getNode(nLayers - 1, 0, 0), 0);
-        return winnerTree;
-    }
-
-    int getWinningCentroidTreeSize(){
-        return winningTreeSize;
-    }
 
 };
 

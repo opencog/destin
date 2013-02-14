@@ -4,12 +4,15 @@
 #include "CMOrderedTreeMinerWrapper.h"
 #include "DestinNetworkAlt.h"
 #include "VideoSource.h"
-#include "BeliefExporter.h"
+#include "DestinTreeManager.h"
 
 using std::vector;
 
 int testTreeToVector(){
 
+    // format is as follows:
+    // id id <length of depth first search path> < the depth first search path>
+    // Note that -1 means a back track in the dfs.
     stringstream ss("0 0 9 1 2 3 -1 4 -1 -1 5 -1");
 
     TextTree tt;
@@ -49,6 +52,153 @@ int testTreeMiner(){
     return 0;
 }
 
+int testDisplayTree(){
+    uint centroids[3] = {2, 2, 2};
+    DestinNetworkAlt dn(W16, 3, centroids, true);
+    Destin * d = dn.getNetwork();
+
+    //dn.getNode(0,0,0)->mu
+
+    DestinTreeManager tm(dn, 0);
+
+    vector<short> tree;
+
+    Node * n = dn.getNode(0,0,0);
+    assertIntEquals(20, n->ns);
+
+    /// set black and white for level 0
+    for(int i = 0 ; i < n->ns - 4 ; i++){ // ns - 4 skips the recurrence and parent belief section of the centroids
+        //n->mu is shared with all nodes in uniform destin
+        n->mu[i + n->ns * 0] = 1.0; //centroid 0 is black block
+        n->mu[i + n->ns * 1] = 0.0; //centroid 1 is white block
+    }
+
+    n = dn.getNode(1,0,0);
+    assertIntEquals(12, n->ns );
+
+    /// set centroids to black and white for level 1
+    assignFloatArray(&n->mu[n->ns * 0], 8,
+                     1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //black
+
+    assignFloatArray(&n->mu[n->ns * 1], 8,
+                     0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //white
+
+
+    /// set centroids to black and white for top level
+    n = dn.getNode(2,0,0);
+    assertIntEquals(10, n->ns );
+
+    assignFloatArray(&n->mu[n->ns * 0], 8,
+                     1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //black
+
+    assignFloatArray(&n->mu[n->ns * 1], 8,
+                     0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //white
+
+
+
+    /****
+    * make a tree that represents all black
+    ******/
+    tree.push_back(tm.getTreeLabelForCentroid(0,2,0)); //all black
+
+    cv::Mat img = tm.getTreeImg(tree);
+
+    assertIntEquals(16, img.cols);
+    assertIntEquals(16, img.rows);
+
+    // make sure that it generates a totally black image
+    float * data = (float *)img.data;
+    for(int i = 0 ; i < 16*16; i++){
+        assertFloatEquals(1.0, data[i], 0.0); //make sure pixel is black
+    }
+
+
+    /**********************************************
+    * Now generate a tree that represents this 16x16 pixel image,
+    * where # is a 4x4 black patch and 0 is a 4x4 white patch:
+    *
+    *  ####
+    *  ####
+    *  #000
+    *  0#00
+    *
+    **************************************************/
+    // TODO: check if 1000 is a limitation in the mining software
+
+    tree.clear();
+    tree.push_back(tm.getTreeLabelForCentroid(0,2,0));
+    tree.push_back(tm.getTreeLabelForCentroid(0,1,2));
+    tree.push_back(tm.getTreeLabelForCentroid(1,0,1));
+    tree.push_back(-1);
+    tree.push_back(tm.getTreeLabelForCentroid(1,0,2));
+    tree.push_back(-1);
+    tree.push_back(-1);
+    tree.push_back(tm.getTreeLabelForCentroid(1,1,3));
+    tree.push_back(-1);
+
+    img = tm.getTreeImg(tree);
+    assertIntEquals(16, img.cols);
+    assertIntEquals(16, img.rows);
+
+    data = (float *)img.data;
+
+    /*****
+      Checks that the above image is generated
+    ******/
+    // Top two rows ( 0 and 1) should be black
+    // Represents ####
+    //            ####
+    for(int i = 0 ; i < 8 * 16; i++){
+        assertFloatEquals(1.0, *data, 0.0); // black
+        data++; //move pointer to next pixel
+    }
+
+    // row 2
+    // Represents #000
+    for(int i = 0 ; i < 4; i++){ //4 horizonal scan lines per row
+
+        //first cell is black
+        for(int j = 0 ; j < 1 * 4; j++){
+            assertFloatEquals(1.0, *data, 0.0); //pixel must be black
+            data++; //move pointer to next pixel
+        }
+
+        // next 3 are white
+        for(int j = 0 ; j < 3 * 4; j++){
+            assertFloatEquals(0.0, *data, 0.0); //pixel must be white
+            data++; //move pointer to next pixel
+        }
+
+    }
+
+    // row 4
+    // Represents 0#00
+    for(int i = 0 ; i < 4; i++){ //4 horizonal scan lines per row
+
+        //first cell is white
+        for(int j = 0 ; j < 1 * 4; j++){
+            assertFloatEquals(0.0, *data, 0.0); //pixel must be white
+            data++; //move pointer to next pixel
+        }
+
+        // second cell is black
+        for(int j = 0 ; j < 1 * 4; j++){
+            assertFloatEquals(1.0, *data, 0.0); //pixel must be black
+            data++; //move pointer to next pixel
+        }
+
+        // 3rd and 4th are white
+        for(int j = 0 ; j < 2 * 4; j++){
+            assertFloatEquals(0.0, *data, 0.0); //pixel must be white
+            data++; //move pointer to next pixel
+        }
+
+    }
+
+
+    return 0;
+}
+
 int testBeliefExporter(){
     uint centroids[3] = {2, 2, 2};
     DestinNetworkAlt dn(W16, 3, centroids, true);
@@ -58,27 +208,40 @@ int testBeliefExporter(){
         d->nodes[n].winner = n; // pretend winning centroid is n
                                 // ( even though each node currenly only has 2 centroid)
     }
-    BeliefExporter be(dn, 0);
+    DestinTreeManager be(dn, 0);
 
-    int len = 41;
+    int len = 41;// length of the depth first search path for a 3 layer heirach
     int b0 = 0;
-    int b1 = ( 32768 / 3 ) * 1;
+
+    /// 32768  is the max value of short, the subtree mining software uses shorts values as node labels.
+    /// This arithmetic mess below shows how I encode the ( layer#, centroid#, child position ) tupple into one short value.
+
+    int b1 = ( 32768 / 3 ) * 1; // divide labels up into 3 layers
     int b2 = ( 32768 / 3 ) * 2;
+
+    int cbs  = ( 32768 / 3 ) / 4;//child bucket size, divides each layer number range into 4 child position buckets
+
+    int c00 = b0 + 0, c01 = b0 + cbs * 1, c02 = b0 + cbs * 2, c03 = b0 + cbs * 3; // children 0 to 3 offsets for level 0 ( bottom layer )
+    int c10 = b1 + 0, c11 = b1 + cbs * 1, c12 = b1 + cbs * 2, c13 = b1 + cbs * 3; //                             level 1 ( middle layer )
+    int c20 = b2 + 0, c21 = b2 + cbs * 1, c22 = b2 + cbs * 2, c23 = b2 + cbs * 3; //                             level 2 ( top layer )
+
+
     assertIntEquals(len, be.getWinningCentroidTreeSize());
 
     printf("b1: %i, b2: %i\n", b1, b2);
     short * t = be.getWinningCentroidTree();
-    for(int i = 0 ; i < 41; i++){
+    for(int i = 0 ; i < len; i++){
         printf("%i ",t[i]);
     }
     printf("\n");
-    //create a tree from the winning centroids
+
+    ///Create a representative depth first search tree path using node labels based on the winning centroid
     assertShortArrayEqualsV(be.getWinningCentroidTree(), len,
-        b2 + 20,
-        b1 + 16,  0, -1,  1, -1,  4, -1,  5, -1, -1,
-        b1 + 17,  2, -1,  3, -1,  6, -1,  7, -1, -1,
-        b1 + 18,  8, -1,  9, -1, 12, -1, 13, -1, -1,
-        b1 + 19, 10, -1, 11, -1, 14, -1, 15, -1, -1)
+        c20 + 20, // "this "c20 + 20" means centroid #20 on level 2 in child position zero ( goes zero to three)
+        c10 + 16, c00 + 0,  -1, c01 + 1,  -1, c02 + 4,  -1, c03 + 5,  -1, -1,
+        c11 + 17, c00 + 2,  -1, c01 + 3,  -1, c02 + 6,  -1, c03 + 7,  -1, -1,
+        c12 + 18, c00 + 8,  -1, c01 + 9,  -1, c02 + 12, -1, c03 + 13, -1, -1,
+        c13 + 19, c00 + 10, -1, c01 + 11, -1, c02 + 14, -1, c03 + 15, -1, -1);
 
     return 0;
 }
@@ -109,7 +272,7 @@ int experiment(){
 #endif
 
     dn.setIsPOSTraining(false);
-    BeliefExporter be(dn, 0);
+    DestinTreeManager be(dn, 0);
     be.setBottomLayer(5);
     CMOrderedTreeMinerWrapper tmw;
 
@@ -158,6 +321,7 @@ int main(int argc, char ** argv){
     RUN(testTreeMiner);
     RUN(testBeliefExporter);
     //RUN(experiment);
+    RUN(testDisplayTree);
     UT_REPORT_RESULTS();
     return 0;
 }

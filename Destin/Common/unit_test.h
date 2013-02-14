@@ -239,7 +239,7 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
 /** test short array with variable arguments
 */
 #define assertShortArrayEqualsV( act, len, expecteds... ){\
-    if(! _assertShortArrayEqualsV(act, len, __LINE__, expecteds )){\
+    if(! _assertShortArrayEqualsV((act), (len), __LINE__, expecteds )){\
         return 1;\
     }\
 }\

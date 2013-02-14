@@ -18,6 +18,8 @@ public:
     virtual float * getNodeBeliefs(int layer, int row, int col)=0;
     virtual unsigned int getLayerCount() = 0;
 
+    /** Prints a horizonal bar chart of the beliefs of a node.
+      */
     void printBeliefGraph(int layer, int row, int col){
         float * b = getNodeBeliefs(layer, row, col);
         int nb = getBeliefsPerNode(layer);

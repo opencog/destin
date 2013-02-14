@@ -1,12 +1,10 @@
-        #include <time.h>
+#include <time.h>
 
 #include "VideoSource.h"
 #include "DestinNetworkAlt.h"
 #include "Transporter.h"
 #include "stdio.h"
 #include "unit_test.h"
-
-
 
 using namespace cv;
 void testNan(float * array, int len){

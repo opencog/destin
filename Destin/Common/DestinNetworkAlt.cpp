@@ -23,74 +23,6 @@ float *** DestinNetworkAlt::getCentroidImages(){
 }
 
 
-void DestinNetworkAlt::decodeLabelLayerCentroid(short label, int & layer_out, int & centroid_out){
-   return; //TODO
-}
-
-int DestinNetworkAlt::decodeLabelChildNum(short label){
-    return 0; //TODO
-}
-
-
-void DestinNetworkAlt::paintCentroidImage(int cent_layer, int centroid, int x, int y, cv::Mat & img){
-    int w = Cig_GetCentroidImageWidth(destin, cent_layer); //TODO: what is smallest depth
-    cv::Mat subimage(w, w, CV_32FC1, getCentroidImages()[cent_layer][centroid]); // wrap centroid image with cv::Mat
-    cv::Rect roi(cv::Point( x, y ), subimage.size()); // make roi = region of interest
-    cv::Mat dest = img( roi );     // get the subsection of img where the centroid image will go
-    subimage.copyTo(dest);                                                  // copy the subimage to the subsection of img
-    return;
-}
-
-void DestinNetworkAlt::calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out){
-    int w;
-    switch (child_no) {
-        case 0:
-            child_x_out = px;
-            child_y_out = py;
-            break;
-        case 1:
-            w = Cig_GetCentroidImageWidth(getNetwork(), child_layer);
-            child_x_out = px + w;
-            child_y_out = py;
-            break;
-        case 2:
-            w = Cig_GetCentroidImageWidth(getNetwork(), child_layer);
-            child_x_out = px;
-            child_y_out = py + w;
-            break;
-        case 3:
-            w = Cig_GetCentroidImageWidth(getNetwork(), child_layer);
-            child_x_out = px + w;
-            child_y_out = py + w;
-            break;
-        default :
-            throw std::domain_error("DestinNetworlAlt::calcNewCoords: invalid child number.");
-    };
-    return;
-}
-
-void DestinNetworkAlt::displayTreeHelper(std::vector<short> & tree, int tree_pos, int px, int py, cv::Mat & img){
-    int label = tree.at(tree_pos);
-    if(label != -1 ){
-        int layer, cent;
-        decodeLabelLayerCentroid(label, layer, cent);
-        paintCentroidImage(layer, cent, px, py, img );
-    }
-
-    if(tree_pos == tree.size() - 1){
-        return;
-    }
-
-    tree_pos++;
-    int child_x, child_y, child_layer, dummy;
-    int child_label = tree.at(tree_pos);
-    decodeLabelLayerCentroid(child_label, child_layer, dummy);
-    calcChildCoords(px, py, decodeLabelChildNum(child_label), child_layer, child_x, child_y );
-    displayTreeHelper(tree, tree_pos, child_x, child_y, img );
-
-}
-
-
 DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
         unsigned int centroid_counts [], bool isUniform ) :
         training(true),
@@ -139,7 +71,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
             isUniform
      );
 
-
+    setBeliefTransform(DST_BT_NONE);
     SetLearningStrat(destin, CLS_FIXED);
     ClearBeliefs(destin);
     destin->fixedLearnRate = 0.1;
@@ -477,12 +409,4 @@ void DestinNetworkAlt::displayLayerCentroidImages(int layer,
 }
 
 
-/** Displays an image representation of the tree.
-  * The input tree descibes
-  */
-void DestinNetworkAlt::displayTree(std::vector<short> & tree){
-    //cv::Mat img; //TODO: resize properly
-    //displayTreeHelper(tree, 0, 0, 0, img);
-    //TODO: finish implementation
-    return;
-}
+

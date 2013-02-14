@@ -74,22 +74,15 @@ private:
      */
     void initTemperatures(int layers, uint * centroids);
 
-    float *** getCentroidImages();
 
-    void decodeLabelLayerCentroid(short label, int & layer_out, int & centroid_out);
-
-    int decodeLabelChildNum(short label);
-    void paintCentroidImage(int cent_layer, int centroid, int x, int y, cv::Mat & img);
-
-    void calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out);
-
-    void displayTreeHelper(std::vector<short> & tree, int tree_pos, int px, int py, cv::Mat & img);
 public:
 
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [], bool isUniform );
 
     virtual ~DestinNetworkAlt();
+
+    float *** getCentroidImages();
 
     void setBeliefTransform(BeliefTransformEnum e){
         SetBeliefTransform(destin, e);
@@ -270,10 +263,7 @@ public:
                                     );
 
 
-    /** Displays an image representation of the tree.
-      * The input tree descibes
-      */
-    void displayTree(std::vector<short> & tree);
+
 
 };
 
