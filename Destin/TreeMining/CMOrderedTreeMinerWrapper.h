@@ -2,9 +2,11 @@
 #define CM_ORDERED_TREE_MINER_WRAPPER_H
 
 #include <vector>
+#include <string>
+#include <stdexcept>
+
 #include "PatternTree.h"
 #include "OccLongList.h"
-#include <string>
 
 using std::vector;
 
@@ -72,6 +74,9 @@ public:
             rhs.parent.push_back(tempK.top()); //the parent of the new node is the current node
             tempK.push(rhs.vNumber);
             rhs.vNumber++;
+            if(rhs.vNumber >= CMR_MAX_TREE_NODES){
+                throw std::domain_error("CMOrderedTreeMinerWrapper::addTree: tree has too many nodes.\n");
+            }
         }
 
         database.push_back(rhs);
