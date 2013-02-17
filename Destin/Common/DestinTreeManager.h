@@ -15,7 +15,7 @@ class DestinTreeManager {
     int bottomLayer;
     const int nLayers;
 
-    CMOrderedTreeMinerWrapper tmw;
+    CMOrderedTreeMinerWrapper tmw; //tree miner wrapper
     vector<PatternTree> minedTrees;
 
 
@@ -27,6 +27,9 @@ class DestinTreeManager {
 
     // helper method for getTreeImg()
     void calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out);
+
+
+    void printHelper(PatternTree & pt, short vertex, int level);
 
 public:
 
@@ -108,6 +111,25 @@ public:
     /** Returns a copy of the given mined tree found from mine() method.
       */
     std::vector<short> getMinedTree(const int treeIndex);
+
+    /** Prints the given mined tree as a depth first search path list
+      *  For example:
+      *  size: 7 : (L6,C2,P2) (L5,C4,P0)  (GoUp) (L5,C9,P2)  (GoUp) (L5,C9,P3)  (GoUp)
+      */
+    void printMinedTree(const int treeIndex);
+
+    /** Prints the given mined tree in a treelike fashion
+      * For example:
+      *        (L6,C2,P2)
+      *            (L5,C4,P0)
+      *            (L5,C9,P2)
+      *            (L5,C9,P3)
+      *  L = Level, C = centroid, P = child position ( 0 to 3 )
+      */
+    void printMinedTreeStructure(const int treeIndex){
+        printHelper(minedTrees.at(treeIndex), 0, 0);
+    }
+
 };
 
 

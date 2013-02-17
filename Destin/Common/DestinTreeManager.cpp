@@ -190,3 +190,40 @@ std::vector<short> DestinTreeManager::getMinedTree(const int treeIndex){
     tmw.treeToVector(minedTrees.at(treeIndex), out);
     return out;
 }
+
+void DestinTreeManager::printHelper(PatternTree & pt, short vertex, int level){
+    for (int i = 0; i < level; i++ ){
+        putchar ('\t');
+    }
+    int cent, layer, pos;
+    this->decodeLabel(pt.vLabel[vertex], cent, layer, pos);
+    printf("(L%i,C%i,P%i)\n", layer, cent, pos);
+    int child = pt.firstChild.at(vertex);
+    if(child !=-1){
+        printHelper(pt, child, level + 1);
+        int sib = pt.nextSibling.at(child);
+        while(sib != -1){
+            printHelper(pt, sib, level + 1);
+            sib = pt.nextSibling.at(sib);
+        }
+    }
+
+    return;
+}
+
+void DestinTreeManager::printMinedTree(const int treeIndex){
+    vector<short> t;
+    tmw.treeToVector(minedTrees.at(treeIndex), t);
+    cout << "size: " << t.size() << " : ";
+    for(int i = 0 ; i < t.size() ; i ++){
+        int cent, layer, pos;
+        if(t[i] != -1){
+            this->decodeLabel(t[i], cent, layer, pos);
+            printf("(L%i,C%i,P%i) ", layer, cent, pos);
+        }else{
+            printf(" (GoUp) ");
+        }
+    }
+    cout << endl;
+    return;
+}
