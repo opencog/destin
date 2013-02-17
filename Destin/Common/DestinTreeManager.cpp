@@ -2,7 +2,7 @@
 #include "DestinTreeManager.h"
 
 DestinTreeManager::DestinTreeManager(DestinNetworkAlt & destin, int bottom)
-    :destin(destin), nLayers(destin.getLayerCount()), winnerTree(NULL)
+:destin(destin), nLayers(destin.getLayerCount()), winnerTree(NULL)
 {
     labelBucket = ( 1 << ( sizeof(short) * 8 - 1))/nLayers;
     childNumBucket = labelBucket / 4;
@@ -81,7 +81,7 @@ void DestinTreeManager::setBottomLayer(unsigned int bottom){
 /** Displays an image representation of the tree.
   * The input tree descibes
   */
-cv::Mat DestinTreeManager::getTreeImg(std::vector<short> & tree){
+cv::Mat DestinTreeManager::getTreeImg(const std::vector<short> & tree){
     if(tree.size()==0){
         std::cerr << " DestinTreeManager::getTreeImg: tree was empty.\n";
         return cv::Mat();
@@ -122,7 +122,7 @@ cv::Mat DestinTreeManager::getTreeImg(std::vector<short> & tree){
     return img;
 }
 
-void DestinTreeManager::displayTree(std::vector<short> & tree){
+void DestinTreeManager::displayTree(const std::vector<short> & tree){
     if(tree.size()==0){
         std::cerr << "displayTree: tree was empty.\n";
         return;
@@ -130,6 +130,12 @@ void DestinTreeManager::displayTree(std::vector<short> & tree){
     cv::Mat img = getTreeImg(tree);
     cv::imshow("display tree", img);
     return;
+}
+
+void DestinTreeManager::displayMinedTree(const int treeIndex){
+    vector<short> tree;
+    tmw.treeToVector(minedTrees.at(treeIndex), tree);
+    displayTree(tree);
 }
 
 void DestinTreeManager::paintCentroidImage(int cent_layer, int centroid, int x, int y, cv::Mat & img){
@@ -167,4 +173,20 @@ void DestinTreeManager::calcChildCoords(int px, int py, int child_no, int child_
             throw std::domain_error("DestinNetworlAlt::calcNewCoords: invalid child number.");
     };
     return;
+}
+
+void DestinTreeManager::addTree(){
+    tmw.addTree(getWinningCentroidTree(), getWinningCentroidTreeSize());
+}
+
+int DestinTreeManager::mine(const int support){
+    minedTrees.clear();
+    tmw.mine(support, minedTrees);
+    return minedTrees.size();
+}
+
+std::vector<short> DestinTreeManager::getMinedTree(const int treeIndex){
+    vector<short> out;
+    tmw.treeToVector(minedTrees.at(treeIndex), out);
+    return out;
 }

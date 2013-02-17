@@ -1,6 +1,6 @@
 add_subdirectory(CMOrderedTreeMiner)
 
-include_directories(CMOrderedTreeMiner ../Common ../DavisDestin/include)
+include_directories(CMOrderedTreeMiner ../Common ../DavisDestin/include .)
 
 add_executable(testTreeMiner
 TestTreeMiner.cc

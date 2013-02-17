@@ -21,8 +21,13 @@
 #include "DestinTreeManager.h"
 %}
 
+
 %include "macros.h"
 typedef unsigned int uint;
+
+/* Lets you use script strings easily with c++ strings */
+%include "std_string.i"
+
 /* 
 turn on director wrapping callback, so c++ code can call methods defined in the target language
 See http://www.swig.org/Doc2.0/SWIGDocumentation.html#Java_directors
@@ -31,12 +36,11 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %feature("director") DestinIterationFinishedCallback;
 %include "DestinIterationFinishedCallback.h"
 
-/* Lets you use script strings easily with c++ strings */
-%include "std_string.i"
 
 /* be able to use INetwork as an abstract interface in Java */
 %feature("director") INetwork; 
 %include "INetwork.h"
+
 
 /* the other classes to generate wrappers for */
 %include "destin.h"
@@ -57,6 +61,14 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "belief_transform.h"
 %include "DestinTreeManager.h"
 
+/* use c++ vector like a python list */
+%include "std_vector.i"
+namespace std {
+%template(IntVector) vector<int>;
+%template(ShortVector) vector<short>;
+}
+
+
 /* carrays.i so you can use a c++ pointer like an array */
 %include "carrays.i" 
 %array_class(int, SWIG_IntArray);
@@ -65,6 +77,7 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %array_class(uint, SWIG_UInt_Array);
 %array_functions(Node *, SWIG_Node_p_Array);
 %array_class(Node, SWIG_NodeArray);
+
 
 /* some opencv functions */
 namespace cv {

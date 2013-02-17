@@ -7,6 +7,8 @@ INCLUDE_DIRECTORIES(
         ../DavisDestin/include
         ../Common 
         ../SOM
+        ../TreeMining
+        ../TreeMining/CMOrderedTreeMiner
 )
 
 if(NOT SWIG_FOUND)

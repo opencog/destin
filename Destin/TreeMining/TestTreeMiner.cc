@@ -305,9 +305,11 @@ int experiment(){
     int support = 10;
     printf("mining...\n");
     tmw.mine(support, minedTrees);
-    //vector<short> atree;
-    //tmw.treeToVector(minedTrees.at(0), atree);
-    //dn.displayTree(atree);
+    vector<short> atree;
+    tmw.treeToVector(minedTrees.at(7), atree);
+
+    be.displayTree(atree);
+    cv::waitKey();
     printf("trees: %lu\n", minedTrees.size());
     for(int i = 0 ; i < minedTrees.size(); i++){
         cout << minedTrees[i] << endl;
@@ -320,7 +322,7 @@ int main(int argc, char ** argv){
     RUN(testTreeToVector);
     RUN(testTreeMiner);
     RUN(testBeliefExporter);
-    //RUN(experiment);
+    //RUN(experiment); //commented out because it needs a video file
     RUN(testDisplayTree);
     UT_REPORT_RESULTS();
     return 0;
