@@ -41,10 +41,6 @@ void printFPS(bool print){
 
 int main(int argc, char ** argv){
 
-
-
-    //VideoSource vs(false, "./destin_video_test.avi");
-    //VideoSource vs(false, "./cowboy.avi");
     //VideoSource vs(false, "./Various.avi");
     VideoSource vs(true, "");
 
@@ -52,7 +48,7 @@ int main(int argc, char ** argv){
 
     SupportedImageWidths siw = W512;
 
-    // Top to bottom (first is top layer)
+    // Left to Right is bottom layer to top
     uint centroid_counts[]  = {2,6,6,4,4,4,4,2};
     bool isUniform = true;
 
@@ -73,7 +69,7 @@ int main(int argc, char ** argv){
 
         network->doDestin(t.getDest());
 
-        if(frameCount % 2 != 0 ){ //only print every 3rd so display is not so jumpy
+        if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
             printFPS(false);
             continue;
         }
