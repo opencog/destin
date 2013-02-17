@@ -27,10 +27,10 @@ int main(int argc, char* argv[])
         exit (1);
     }
 
-    //vector<int> frequency(1000,0); //assuming the max frequent tree size is 1000
-    vector<int> checked(1000,0);
-    vector<int> closed(1000,0);
-    vector<int> maximal(1000,0);
+    //vector<int> frequency(CMR_MAX_TREE_NODES,0); //assuming the max frequent tree size is CMR_MAX_TREE_NODES
+    vector<int> checked(CMR_MAX_TREE_NODES,0);
+    vector<int> closed(CMR_MAX_TREE_NODES,0);
+    vector<int> maximal(CMR_MAX_TREE_NODES,0);
 
     currentPatternTree.initialSize();
     time_t start_time;
@@ -134,19 +134,19 @@ int main(int argc, char* argv[])
     /******************************************************************
     step2.4: output the results
     ******************************************************************/
-    for ( short j = 0; j < 1000; j++ ) {
+    for ( short j = 0; j < CMR_MAX_TREE_NODES; j++ ) {
         if ( checked[j] > 0 ) {
             outFile << "number of checked " << j << " trees: " << checked[j] << endl;
         }
     }
     outFile << endl << "************************" << endl;
-    for ( short j = 0; j < 1000; j++ ) {
+    for ( short j = 0; j < CMR_MAX_TREE_NODES; j++ ) {
         if ( closed[j] > 0 ) {
             outFile << "number of closed " << j << " trees: " << closed[j] << endl;
         }
     }
     outFile << endl << "************************" << endl;
-    for ( short j = 0; j < 1000; j++ ) {
+    for ( short j = 0; j < CMR_MAX_TREE_NODES; j++ ) {
         if ( maximal[j] > 0 ) {
             outFile << "number of maximal " << j << " trees: " << maximal[j] << endl;
         }

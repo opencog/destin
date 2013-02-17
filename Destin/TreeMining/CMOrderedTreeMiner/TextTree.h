@@ -29,7 +29,7 @@ struct TextTree {
     //assuming the copy constructor and operator= have default definition
 
     int tid;
-    short vNumber;
+    short vNumber; // number of nodes in the tree
     vector<short> vLabel;
     vector<short> firstChild;
     vector<short> nextSibling;

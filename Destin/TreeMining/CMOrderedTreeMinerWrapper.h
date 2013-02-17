@@ -14,6 +14,7 @@ using std::vector;
   */
 void dfsVisit(const short current, const TextTree& rhs, vector<short>& zakiCode);
 
+
 class CMOrderedTreeMinerWrapper {
 
     int support;
@@ -90,9 +91,9 @@ public:
 
         currentPatternTree.initialSize();
         maximal_out.clear();
-        vector<int> checked(1000,0); //TODO: what does 1000 do?
-        vector<int> closed(1000,0);
-        vector<int> maximal(1000,0);
+        vector<int> checked(CMR_MAX_TREE_NODES,0);
+        vector<int> closed(CMR_MAX_TREE_NODES,0);
+        vector<int> maximal(CMR_MAX_TREE_NODES,0);
         /******************************************************************
         step2.1: scan the database once, find frequent node labels
         ******************************************************************/

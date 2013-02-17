@@ -27,11 +27,11 @@ struct PatternTree : public TextTree {
     {
         tid = 0;
         vNumber = 0;
-        vLabel.resize(1000,-1);
-        firstChild.resize(1000,-1);
-        nextSibling.resize(1000,-1);
-        previousSibling.resize(1000,-1);
-        parent.resize(1000,-1);
+        vLabel.resize(CMR_MAX_TREE_NODES,-1);
+        firstChild.resize(CMR_MAX_TREE_NODES,-1);
+        nextSibling.resize(CMR_MAX_TREE_NODES,-1);
+        previousSibling.resize(CMR_MAX_TREE_NODES,-1);
+        parent.resize(CMR_MAX_TREE_NODES,-1);
     }
 
     void deleteRightmost ()

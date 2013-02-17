@@ -25,4 +25,6 @@ Header: CMRmisc.h
 
 using namespace std;
 
+
+#define CMR_MAX_TREE_NODES 1000
 #endif //CMRmisc_H
