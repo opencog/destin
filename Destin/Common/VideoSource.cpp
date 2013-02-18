@@ -51,7 +51,7 @@ bool VideoSource::grab() {
             if(cap->get(CV_CAP_PROP_POS_AVI_RATIO) > 0.9){   // if reached near end of video
                 cap->set(CV_CAP_PROP_POS_FRAMES,0);         // move to beginning
                 if(cap->grab()){                            // if can get a frame
-                    cout << "video rewind " << endl;
+                    //cout << "video rewind " << endl;
                     return this->grab();                    // get the next frame
                 }else{
                     cout << "couldn't rewind and grab first frame." << endl;
