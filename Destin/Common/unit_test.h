@@ -166,6 +166,13 @@ bool _assertBoolArrayEquals(bool * expected, bool * actual, int length, int line
     }\
 }\
 
+#define assertShortArrayEquals( exp, act, len ){\
+    if( ! _assertShortArrayEquals((exp), (act), (len), __LINE__ ) ){\
+        return 1;\
+    }\
+}\
+
+
 /** Fills dest array with caller's of this macro recieved arguments
  * last_fixed_argument - plain text of the last fixed argument passed to
  * the caller function, which will not be put into dest array

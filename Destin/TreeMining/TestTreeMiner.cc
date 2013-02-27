@@ -318,12 +318,68 @@ int experiment(){
     return 0;
 }
 
+void setWinningCentroids(Destin * d, uint a, uint b, uint c){
+    uint wc[3] = {a, b, c};
+    for(int layer = 0 ; layer < 3; layer++){
+        for(int i = 0 ; i < d->layerSize[layer]; i++){
+            GetNodeFromDestinI(d, layer, i)->winner = wc[layer];
+        }
+    }
+    return;
+}
+
+int testTimeSliceTreeExporter(){
+    uint centroids[] = {4,4,4};
+    DestinNetworkAlt dn(W16, 3, centroids, true);
+    DestinTreeManager tm(dn, 0);
+    CMOrderedTreeMinerWrapper & tmw = tm.getTreeMiner();
+
+    Destin * d = dn.getNetwork();
+
+    setWinningCentroids(d, 1,2,3);
+    tm.addTree();
+    setWinningCentroids(d, 3,1,2);
+    tm.addTree();
+    setWinningCentroids(d, 2,3,1);
+    tm.addTree();
+    setWinningCentroids(d, 1,2,3);
+    tm.addTree();
+    setWinningCentroids(d, 3,1,2);
+    tm.addTree();
+
+    assertIntEquals(5, tm.getTreeCount());
+    tm.timeShiftTrees();
+
+    assertIntEquals(3, tm.getTreeCount());
+
+    vector<short> tree;
+
+    int treesize = ((1 + 4 + 16) * 2 - 1);
+
+    tmw.treeToVector(tmw.getAddedTree(0), tree);
+    assertIntEquals( treesize, tree.size());
+
+    setWinningCentroids(d, 1, 1, 1);
+    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), treesize );
+
+    tmw.treeToVector(tmw.getAddedTree(1), tree);
+    setWinningCentroids(d, 3, 3, 3);
+    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), treesize );
+
+    tmw.treeToVector(tmw.getAddedTree(2), tree);
+    setWinningCentroids(d, 2, 2, 2);
+    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), treesize );
+
+    return 0;
+}
+
 int main(int argc, char ** argv){
     RUN(testTreeToVector);
     RUN(testTreeMiner);
     RUN(testBeliefExporter);
     //RUN(experiment); //commented out because it needs a video file
     RUN(testDisplayTree);
+    RUN(testTimeSliceTreeExporter);
     UT_REPORT_RESULTS();
     return 0;
 }

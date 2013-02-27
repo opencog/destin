@@ -29,7 +29,7 @@ class DestinTreeManager {
     void calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out);
 
 
-    void printHelper(PatternTree & pt, short vertex, int level);
+    void printHelper(TextTree & pt, short vertex, int level);
 
 public:
 
@@ -102,6 +102,14 @@ public:
       */
     void addTree();
 
+
+
+    /** Returs how many trees have been added by addTree()
+      */
+    int getTreeCount(){
+        return tmw.getTreeCount();
+    }
+
     /** Uses displayTree() method to show the given found mined tree.
       * cv::waitKey must be called after for it to show.
       * @param treeIndex - which tree to display
@@ -130,6 +138,40 @@ public:
         printHelper(minedTrees.at(treeIndex), 0, 0);
     }
 
+    /** Same as printMinedTreeStructure but shows trees
+      * in the database.
+      */
+    void printAddedTreeStructure(const int treeIndex){
+        printHelper(tmw.getAddedTree(treeIndex), 0, 0);
+    }
+
+
+    /** Returns the underlying tree mining object
+      */
+    CMOrderedTreeMinerWrapper & getTreeMiner(){
+        return tmw;
+    }
+
+    /** Constructs new trees that each represent one time slice.
+      *
+      * This adjusts trees that have been added with addTree() so that
+      * each tree will represent one instance in time. It does
+      * this by looking ahead to future trees to construct the "present" tree.
+      *
+      * Normaly it takes N destin cycles, where N = number of layers
+      * in the destin heirarcy, before an input image makes it way from the
+      * bottom layer to the top layer and so all winning centroid trees
+      * will represent different instances of time. Calling this method
+      * will make it look like the images fed through destin move through
+      * it instanly without the time delays.
+      *
+      * After this call, the last N - 1 trees will be thrown out because of
+      * lack of enough trees to look ahead with
+      *
+      * @throws std::runtime_error if there are not enough trees to make at least
+      * one correct tree.
+      */
+    void timeShiftTrees();
 };
 
 

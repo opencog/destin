@@ -31,6 +31,12 @@ public:
 
     }
 
+    /** Returns how many trees have been added with addTree()
+      */
+    int getTreeCount(){
+        return database.size();
+    }
+
     void addTree(short description[], int length){
         int total = length;
         short temp;
@@ -90,6 +96,10 @@ public:
             }
         }
         return;
+    }
+
+    TextTree & getAddedTree(int index){
+        return database.at(index);
     }
 
     void mine(int support, vector<PatternTree> & maximal_out){
@@ -154,9 +164,46 @@ public:
     }
 
     void treeToVector(TextTree & tt, vector<short> & v_out){
+         v_out.clear();
          dfsVisit(0, tt, v_out);
          v_out.pop_back(); // remove the ending "-1"
          return;
+    }
+
+    /**
+      * Assumes that all the trees in the database have all the same size and structure
+      */
+    void timeShiftDatabaseHelper(const short vertex, const int level, const int tree_index){
+        TextTree & ta = database.at(tree_index + level); // ta = tree ahead = tree for look ahead
+        TextTree & tt = database.at(tree_index);         // tt = text tree
+        tt.vLabel.at(vertex) = ta.vLabel.at(vertex);     // perform lookahead
+
+        if(level <= 1){
+            return; // dont need to do look ahead for bottom nodes
+        }
+
+        int child = tt.firstChild.at(vertex);
+        if(child !=-1){
+            timeShiftDatabaseHelper(child, level - 1, tree_index);
+            int sib = tt.nextSibling.at(child);
+            while(sib != -1){
+                timeShiftDatabaseHelper(sib, level - 1, tree_index);
+                sib = tt.nextSibling.at(sib);
+            }
+        }
+    }
+
+    void timeShiftDatabase(int treeDepth){
+        for(int i = 0 ; i < database.size() - treeDepth + 1; i++){
+            timeShiftDatabaseHelper(0, treeDepth - 1, i);
+        }
+
+        for(int i = 0 ; i < treeDepth - 1; i++){
+            if(database.size() > 0){
+                database.pop_back();
+            }
+        }
+        return;
     }
 
 };

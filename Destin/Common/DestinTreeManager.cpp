@@ -191,7 +191,7 @@ std::vector<short> DestinTreeManager::getMinedTree(const int treeIndex){
     return out;
 }
 
-void DestinTreeManager::printHelper(PatternTree & pt, short vertex, int level){
+void DestinTreeManager::printHelper(TextTree & pt, short vertex, int level){
     for (int i = 0; i < level; i++ ){
         putchar ('\t');
     }
@@ -226,4 +226,8 @@ void DestinTreeManager::printMinedTree(const int treeIndex){
     }
     cout << endl;
     return;
+}
+
+void DestinTreeManager::timeShiftTrees(){
+    tmw.timeShiftDatabase(destin.getLayerCount());
 }
