@@ -427,6 +427,9 @@ int testIsSubtreeOf(){
     assertTrue (tmw.isSubTreeOf(tmw.getAddedTree(8), tmw.getAddedTree(11)) );
 
 
+    short t11[7] = {1,3,-1,5,-1,6,-1}; tmw.addTree(t11, 7); // #12
+    assertFalse(tmw.isSubTreeOf(tmw.getAddedTree(8), tmw.getAddedTree(12)) );
+
     return 0;
 }
 
