@@ -27,12 +27,15 @@ class CMOrderedTreeMinerWrapper {
 
     bool isSubTreeOfHelper(const TextTree & parent_tree, const TextTree & child_tree, const short pt_vertex);
 
+    /**
+      * Assumes that all the trees in the database have all the same size and structure
+      */
+    void timeShiftDatabaseHelper(const short vertex, const int level, const int tree_index);
 
 public:
 
     CMOrderedTreeMinerWrapper():current_tid(0), MIN_VERTEX((1 << 15) - 1), MAX_VERTEX(0)
     {
-
     }
 
     /** Returns how many trees have been added with addTree()
@@ -52,7 +55,7 @@ public:
       *    3   2
       *
       * Would be input as an array [5, 3, -1, 2, -1]
-      * The -1 entries represent a trackback in the array.
+      * The -1 entries represent a back track in the search path.
       */
     void addTree(short description[], int length);
 
@@ -60,17 +63,43 @@ public:
         return database.at(index);
     }
 
+    /** Mines the trees database added with addTree() to find
+      * maximal, frequent, subtrees.
+      *
+      * @param support - subtrees must appear this many times to be considerd frequent
+      * @param maximaml_out - this output list gets populated with the minded subtrees
+      */
     void mine(int support, vector<PatternTree> & maximal_out);
 
+    /** Converts a TextTree or PatternTree to a short vector.
+      * @param tt - the TextTree or PatternTree to convert.
+      * @param v_out - the output vector. See addTree() for the format of this vector
+      */
     void treeToVector(TextTree & tt, vector<short> & v_out);
 
 
-    /**
-      * Assumes that all the trees in the database have all the same size and structure
+
+    /** Adjusts the database so that each tree represents one time slice.
+      *
+      * This adjusts trees that have been added with addTree() so that
+      * each tree will represent one instance in time. It does
+      * this by looking ahead to future trees to construct the "present" tree.
+      *
+      * Normaly it takes N destin cycles, where N = number of layers
+      * in the destin heirarcy, before an input image makes it way from the
+      * bottom layer to the top layer and so all winning centroid trees
+      * will represent different instances of time. Calling this method
+      * will make it look like the images fed through destin move through
+      * it instanly without the time delays.
+      *
+      * After this call, the last N - 1 trees will be thrown out because of
+      * lack of enough trees to look ahead with.
+      *
+      * Assumes all trees in the database have the same depth and structure.
+      *
+      * @throws std::runtime_error if there are not enough trees to make at least
+      * one correct tree.
       */
-    void timeShiftDatabaseHelper(const short vertex, const int level, const int tree_index);
-
-
     void timeShiftDatabase(int treeDepth);
 
 
