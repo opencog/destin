@@ -26,4 +26,4 @@ find_package( OpenCV REQUIRED)
 target_link_libraries(testCifarSource ${OpenCV_LIBS} )
 
 
-target_link_libraries( common cm_ordered_treeminer )
+target_link_libraries( common cm_ordered_treeminer_wrapper )

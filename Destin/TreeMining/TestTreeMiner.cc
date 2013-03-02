@@ -373,6 +373,64 @@ int testTimeSliceTreeExporter(){
     return 0;
 }
 
+int testIsSubtreeOf(){
+
+    CMOrderedTreeMinerWrapper tmw;
+
+    short t1[1] = {5};
+    tmw.addTree(t1, 1); // #0 - Add a one node tree.
+    tmw.addTree(t1, 1); // #1 - Add a one node tree.
+
+
+    t1[0] = 4;
+
+    tmw.addTree(t1, 1); // #2 - Add a one node tree.
+
+    short t2[5] = {5, 4, -1, 2, -1};
+    tmw.addTree(t2, 5); // #3 - 3 nodes tree
+
+    short t3[3] = {5, 2, -1};
+    tmw.addTree(t3, 3); // #4 - 2 nodes tree
+
+    assertTrue( tmw.isSubTreeOf(tmw.getAddedTree(0), tmw.getAddedTree(0)));// a tree appears in itself
+    assertTrue( tmw.isSubTreeOf(tmw.getAddedTree(0), tmw.getAddedTree(1)));// a tree appears in itself
+    assertFalse(tmw.isSubTreeOf(tmw.getAddedTree(0), tmw.getAddedTree(2))) // does not appear in itself
+
+    assertTrue( tmw.isSubTreeOf(tmw.getAddedTree(3), tmw.getAddedTree(4)));//tree #4 is found in tree #3
+    assertFalse(tmw.isSubTreeOf(tmw.getAddedTree(4), tmw.getAddedTree(3)));//tree #3 is not found in tree #4
+
+    short t4[7] = {2, 3, -1, 5, -1, 5, -1}; tmw.addTree(t4, 7); // #5
+    short t5[3] = {2, 4, -1};             ; tmw.addTree(t5, 3); // #6
+
+    assertFalse(tmw.isSubTreeOf(tmw.getAddedTree(5), tmw.getAddedTree(6)) );
+    assertFalse(tmw.isSubTreeOf(tmw.getAddedTree(6), tmw.getAddedTree(5)) );
+
+    short t6[7] = {2, 3, -1, 4, -1, 5, -1}; tmw.addTree(t6, 7); // #7
+    assertTrue (tmw.isSubTreeOf(tmw.getAddedTree(7), tmw.getAddedTree(6)) );
+    assertFalse(tmw.isSubTreeOf(tmw.getAddedTree(6), tmw.getAddedTree(7)) );
+
+    short t7[17] = {0,1,3,-1,4,-1,5,-1,-1,2,6,-1,7,-1,8,-1-1}; tmw.addTree(t7, 17); // #8
+    short t8[13] = {0,1,3,-1,5,-1,-1,2,6,-1,8,-1-1};           tmw.addTree(t8, 13); // #9
+
+    assertTrue (tmw.isSubTreeOf(tmw.getAddedTree(8), tmw.getAddedTree(9)) );
+    assertFalse(tmw.isSubTreeOf(tmw.getAddedTree(9), tmw.getAddedTree(8)) );
+
+    short t9[5] = {0,1,5,-1,-1}; tmw.addTree(t9, 5); // #10
+    assertTrue (tmw.isSubTreeOf(tmw.getAddedTree(8), tmw.getAddedTree(10)) );
+
+
+    short t10[5] = {2,6,-1,8,-1}; tmw.addTree(t10, 5); // #11
+
+    assertIntEquals(2, tmw.getAddedTree(8).vLabel.at(5));
+    assertTrue (tmw.treeMatchesHelper(tmw.getAddedTree(8), tmw.getAddedTree(11), 5, 0 ));
+
+    assertTrue (tmw.isSubTreeOf(tmw.getAddedTree(8), tmw.getAddedTree(11)) );
+
+
+    return 0;
+}
+
+
 int main(int argc, char ** argv){
     RUN(testTreeToVector);
     RUN(testTreeMiner);
@@ -380,6 +438,7 @@ int main(int argc, char ** argv){
     //RUN(experiment); //commented out because it needs a video file
     RUN(testDisplayTree);
     RUN(testTimeSliceTreeExporter);
+    RUN(testIsSubtreeOf);
     UT_REPORT_RESULTS();
     return 0;
 }
