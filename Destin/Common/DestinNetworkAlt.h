@@ -226,7 +226,7 @@ public:
       * Mehod updateCentroidImages should be called to get a refreshed version of the image.
       * Currently only works when isUniform instance variable is true.
       * The contrast of the image can be enhanced by setting the weight exponent
-      * parameter larger than 1.0 via setCentImgWeightExponent() method, and further by
+      * parameter larger than 1.0 via setCentImgWeightExponent method, and further by
       * passing enhanceContrast parameter as true.
       * @param layer - which layer the centroid belongs
       * @param centroid - which centroid of the given layer to display.

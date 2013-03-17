@@ -66,18 +66,6 @@ def doFrames(frames):
             return False
     return True
 
-def dlf(layer, start, end):
-    pd.DisplayLayerFeatures(dn.getNetwork(), layer, start, end)
-
-def doFramesWithFeatures(frames, layer, start_node, end_node):
-    for i in range(frames):
-        if(vs.grab()):
-            dn.doDestin(vs.getOutput())
-            dlf(layer, start_node, end_node)
-        else:
-            return False
-    return True
-
 def doFramesWithWinningGrid(frames, layer):
     for i in range(frames):
         doFrame()
@@ -91,7 +79,6 @@ def doFramesWithCallback(frames, callback):
 def beliefAndGridCallback():
     dn.printBeliefGraph(top_layer, 0, 0)
     dn.imageWinningCentroidGrid(1, 4)
-    dlf(0, 0, 1)
     
 def freezeTraining():
     dn.setIsPOSTraining(False)
@@ -155,7 +142,6 @@ def the_callback():
     dn.printBeliefGraph(top_layer, 0, 0)
     printStats()
     freezeTopCentroidsExcept(lucky_centroid)
-    dn.displayFeatures(the_callback.dfl , 0, 1)
     cent = the_callback.do_cent_image_num
     if the_callback.do_cent_image:
         dn.displayCentroidImage(the_callback.dfl, cent, the_callback.cent_image_disp_width )
