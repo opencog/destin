@@ -29,7 +29,7 @@ class DestinTreeManager {
     void calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out);
 
 
-    void printHelper(TextTree & pt, short vertex, int level);
+    void printHelper(TextTree & pt, short vertex, int level, stringstream & ss);
 
 public:
 
@@ -102,12 +102,10 @@ public:
       */
     void addTree();
 
-
-
     /** Returs how many trees have been added by addTree()
       */
-    int getTreeCount(){
-        return tmw.getTreeCount();
+    int getAddedTreeCount(){
+        return tmw.getAddedTreeCount();
     }
 
     /** Uses displayTree() method to show the given found mined tree.
@@ -116,15 +114,28 @@ public:
       */
     void displayMinedTree(const int treeIndex);
 
+
+    /** Saves an image of the given found mined subtree to a file.
+      */
+    void saveMinedTreeImg(const int treeIndex, const string & filename);
+
     /** Returns a copy of the given mined tree found from mine() method.
       */
     std::vector<short> getMinedTree(const int treeIndex);
+
+    /** Returns how many frequent subtrees have been found from mine() method.
+      */
+    int getMinedTreeCount(){
+        return minedTrees.size();
+    }
 
     /** Prints the given mined tree as a depth first search path list
       *  For example:
       *  size: 7 : (L6,C2,P2) (L5,C4,P0)  (GoUp) (L5,C9,P2)  (GoUp) (L5,C9,P3)  (GoUp)
       */
     void printMinedTree(const int treeIndex);
+
+    string getMinedTreeAsString(const int treeIndex);
 
     /** Prints the given mined tree in a treelike fashion
       * For example:
@@ -135,14 +146,22 @@ public:
       *  L = Level, C = centroid, P = child position ( 0 to 3 )
       */
     void printMinedTreeStructure(const int treeIndex){
-        printHelper(minedTrees.at(treeIndex), 0, 0);
+        cout << getMinedTreeStructureAsString(treeIndex);
+    }
+
+    string getMinedTreeStructureAsString(const int treeIndex){
+        stringstream ss;
+        printHelper(minedTrees.at(treeIndex), 0, 0, ss);
+        return ss.str();
     }
 
     /** Same as printMinedTreeStructure but shows trees
       * in the database.
       */
     void printAddedTreeStructure(const int treeIndex){
-        printHelper(tmw.getAddedTree(treeIndex), 0, 0);
+        stringstream ss;
+        printHelper(tmw.getAddedTree(treeIndex), 0, 0, ss);
+        cout << ss.str();
     }
 
 
@@ -172,6 +191,22 @@ public:
       * one correct tree.
       */
     void timeShiftTrees();
+
+    /** Determines what database trees the given frequent subtree is found in.
+      * @param foundSubtreeIndex - searches for this found subtree in the tree database.
+      * It must be in range of the count given by getMinedTreeCount().
+      * @return list of indicies of trees, in the tree database, that the
+      *         given found frequent subtree is a subtree of.
+      */
+    vector<int> matchSubtree(int foundSubtreeIndex){
+        vector<int> matches;
+        for(int i = 0 ; i < getAddedTreeCount() ; i++){
+            if(tmw.isSubTreeOf(tmw.getAddedTree(i), minedTrees.at(foundSubtreeIndex))){
+                matches.push_back(i);
+            }
+        }
+        return matches;
+    }
 };
 
 

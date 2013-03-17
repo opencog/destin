@@ -9,25 +9,28 @@ experiment_root_dir="./experiment_runs"
 
 ims = pd.ImageSouceImpl()
 
-letters = "ABCDEFGHIJKLMNOP"
-for l in letters:
-    ims.addImage("/home/ted/Pictures/%s.png" % l)
-    
 
-centroids =  [2,4,8,32,64,64,64,16]   
+letters = "LO+"
+for l in letters:
+    #ims.addImage("/home/ted/Dropbox/destin/treeimgs/%s.png" % l)
+    ims.addImage("/home/ted/Pictures/treeminingletters/%s.png" % l)
+    
+centroids =  [2,2,8,32,40,32,15,len(letters)]    
 layers = len(centroids)
 top_layer = layers - 1
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 dn.setFixedLearnRate(.1)
-dn.setBeliefTransform(pd.DST_BT_BOLTZ)
-dn.setTemperatures([1.2,10,5,5,5,5,5,5])
+dn.setBeliefTransform(pd.DST_BT_NONE)
+#dn.setBeliefTransform(pd.DST_BT_P_NORM)
+#ut=1.5
+#dn.setTemperatures([ut,ut,ut,ut,ut,ut,ut,ut])
 
 weight_exponent = 4
 
 save_root="./saves/"
 
 def train():
-    for i in range(6400):
+    for i in range(1600):
         if i % 10 == 0:
             print "Iteration " + str(i)
             
@@ -107,9 +110,11 @@ def saveCenImages(run_id):
         dn.saveCentroidImage(top_layer, i, fn, 512, False )
         fn = highweightede_dir + f
         dn.saveCentroidImage(top_layer, i, fn, 512, True )    
+        
+
+def getTreeLabel(layer, cent, child_num):
+    return tm.getTreeLabelForCentroid()
     
-#dn.load("x.dst")
-#cv.SetMouseCallback("Centroid image",window_callback)
 do_train = True
 save = False
 if do_train:
@@ -121,10 +126,16 @@ if do_train:
         dn.save(fn)
         saveCenImages(t)
 else:
-    to_load = "saves/1358139144.dst"
+    to_load = "+LO.dst"
     dn.load(to_load)
     
+dn.save("+LO.dst")
 dci(7,0,False, weight_exponent)
 dcis(7)
-    
-    
+
+tm = pd.DestinTreeManager(dn, 0)
+#tm.displayTree()
+
+
+
+

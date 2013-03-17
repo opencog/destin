@@ -138,6 +138,16 @@ void DestinTreeManager::displayMinedTree(const int treeIndex){
     displayTree(tree);
 }
 
+void DestinTreeManager::saveMinedTreeImg(const int treeIndex, const string & filename){
+    vector<short> tree;
+    tmw.treeToVector(minedTrees.at(treeIndex), tree);
+    cv::Mat img = getTreeImg(tree);
+    cv::Mat towrite;
+    img.convertTo(towrite, CV_8UC1, 255);
+    cv::imwrite(filename, towrite);
+    return;
+}
+
 void DestinTreeManager::paintCentroidImage(int cent_layer, int centroid, int x, int y, cv::Mat & img){
     int w = Cig_GetCentroidImageWidth(destin.getNetwork(), cent_layer); //TODO: what is smallest depth
     cv::Mat subimage(w, w, CV_32FC1,destin.getCentroidImages()[cent_layer][centroid]); // wrap centroid image with cv::Mat
@@ -191,40 +201,46 @@ std::vector<short> DestinTreeManager::getMinedTree(const int treeIndex){
     return out;
 }
 
-void DestinTreeManager::printHelper(TextTree & pt, short vertex, int level){
+void DestinTreeManager::printHelper(TextTree & pt, short vertex, int level, stringstream & ss){
     for (int i = 0; i < level; i++ ){
-        putchar ('\t');
+        ss << '\t';
     }
     int cent, layer, pos;
     this->decodeLabel(pt.vLabel[vertex], cent, layer, pos);
-    printf("(L%i,C%i,P%i)\n", layer, cent, pos);
+    ss << "(L"  << layer << ",C" << cent << ",P" << pos << ")" << endl;
     int child = pt.firstChild.at(vertex);
     if(child !=-1){
-        printHelper(pt, child, level + 1);
+        printHelper(pt, child, level + 1, ss);
         int sib = pt.nextSibling.at(child);
         while(sib != -1){
-            printHelper(pt, sib, level + 1);
+            printHelper(pt, sib, level + 1, ss);
             sib = pt.nextSibling.at(sib);
         }
     }
 
-    return;
+    return ;
 }
 
-void DestinTreeManager::printMinedTree(const int treeIndex){
+string DestinTreeManager::getMinedTreeAsString(const int treeIndex){
     vector<short> t;
+    stringstream ss;
     tmw.treeToVector(minedTrees.at(treeIndex), t);
-    cout << "size: " << t.size() << " : ";
+    ss << "size: " << t.size() << " : ";
     for(int i = 0 ; i < t.size() ; i ++){
         int cent, layer, pos;
         if(t[i] != -1){
             this->decodeLabel(t[i], cent, layer, pos);
-            printf("(L%i,C%i,P%i) ", layer, cent, pos);
+            ss << "(L" << layer << ",C" << cent << ",P" << pos <<")";
         }else{
-            printf(" (GoUp) ");
+            ss << " (GoUp) ";
         }
     }
-    cout << endl;
+    ss << endl;
+    return ss.str();
+}
+
+void DestinTreeManager::printMinedTree(const int treeIndex){
+    cout << getMinedTreeAsString(treeIndex);
     return;
 }
 

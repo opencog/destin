@@ -347,10 +347,10 @@ int testTimeSliceTreeExporter(){
     setWinningCentroids(d, 3,1,2);
     tm.addTree();
 
-    assertIntEquals(5, tm.getTreeCount());
+    assertIntEquals(5, tm.getAddedTreeCount());
     tm.timeShiftTrees();
 
-    assertIntEquals(3, tm.getTreeCount());
+    assertIntEquals(3, tm.getAddedTreeCount());
 
     vector<short> tree;
 

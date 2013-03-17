@@ -165,6 +165,7 @@ void CMOrderedTreeMinerWrapper::timeShiftDatabase(int treeDepth){
     return;
 }
 
+
 bool CMOrderedTreeMinerWrapper::treeMatchesHelper(const TextTree & parent_tree,
                        const TextTree & child_tree,
                        const short pt_start_node,
@@ -210,6 +211,7 @@ bool CMOrderedTreeMinerWrapper::treeMatchesHelper(const TextTree & parent_tree,
     }//end while
 }
 
+// TODO: could be made faster by not checking the bottom "[ child tree depth - 1 ]" nodes
 bool CMOrderedTreeMinerWrapper::isSubTreeOfHelper(const TextTree & parent_tree, const TextTree & child_tree, const short pt_vertex){
     if(treeMatchesHelper(parent_tree, child_tree, pt_vertex, 0)){
         return true;

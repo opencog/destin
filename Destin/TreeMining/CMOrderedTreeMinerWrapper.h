@@ -40,7 +40,7 @@ public:
 
     /** Returns how many trees have been added with addTree()
       */
-    int getTreeCount(){
+    int getAddedTreeCount(){
         return database.size();
     }
 

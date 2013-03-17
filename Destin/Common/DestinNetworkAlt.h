@@ -141,11 +141,7 @@ public:
         return destin;
     }
 
-    void displayFeatures(int layer, int node_start, int nodes){
-        DisplayLayerFeatures(destin, layer, node_start, nodes);
-    }
-
-    /** print given node's centroid's locations
+    /** Print given node's centroid's locations.
      *  The Centroids consists of 3 main parts, the dimensions which cluster
      *  on the nodes input, the dimensions which cluster on its previous belief
      *  and the dimensions which cluster on the parents previous belief.
@@ -160,7 +156,7 @@ public:
 
     /** Shows an image representing winning centroids
       * Each pixel represents a node where the grayscale color is determined
-      * by the node's winning_centroid_index / # of centroids.
+      * by the node's winning_centroid_index divided by # of centroids per node.
       * @param layer = layer to show
       * @param zoom = scales the image by this factor
       */
@@ -214,22 +210,21 @@ public:
         centroidImageWeightParameter = exp;
     }
 
-
+    /** Updates the generated centroid images for all layers.
+      */
     void updateCentroidImages(){
         Cig_UpdateCentroidImages(destin, getCentroidImages(), centroidImageWeightParameter);
     }
 
     /** Returns the centroid image as a float array.
       * Then displays it.
+      * Opencv cvWaitKey function must be called after to see the image.
       */
     float * getCentroidImage(int layer, int centroid);
 
-    /** Gets the generated centroid images as an opencv Mat image.
-      */
-    cv::Mat getCentroidImageM(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false);
-
-    /** Generates representative images for all centroids then displays the chosen image.
-      * Currently only works for uniform destin. cvWaitKey() must be called after to see the image.
+    /** Returns generated centroid image.
+      * Mehod updateCentroidImages should be called to get a refreshed version of the image.
+      * Currently only works when isUniform instance variable is true.
       * The contrast of the image can be enhanced by setting the weight exponent
       * parameter larger than 1.0 via setCentImgWeightExponent() method, and further by
       * passing enhanceContrast parameter as true.
@@ -239,18 +234,21 @@ public:
       * @param enhanceContrast - if true, the image contrast is enhanced using the opencv function cvEqualizeHist as a post processing step
       * @param window_name - name to give the display window
       */
+    cv::Mat getCentroidImageM(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false);
+
+
+    /** Displays the image generated from getCentroidImageM method.
+      * Opencv cvWaitKey function must be called after to see the image.
+      */
     void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" );
 
+    /** Saves the image generated from getCentroidImageM method.
+      */
     void saveCentroidImage(int layer, int centroid, string filename, int disp_width = 256, bool enhanceContrast = false);
 
     /** Displays all the centroid images of a layer into one large image.
-      * The centroid images are arranged into a grid and are seperated by a black boarder.
-      * If there's not a square number of centroid images, then empty (black) centroid images
-      * are added to the bottom right of the grid until the number is a square number. For example
-      * if there are 15 centroid images, then it will display a 4x4 grid with the bottom right corner empty.
-      * Only works with uniform destin.
-      * cvWaitKey() must be called after for the image to appear.
-      *
+      * Displays the image generated from method getLayerCentroidImages.
+      * Opencv cvWaitKey function must be called after to see the image.
       * @param layer - what layer the centroids belong to
       * @param scale_width - resizes the square image grid width to this size.
       * @param boarder_width - how wide, in pixels, the black border is that seperates the images.
@@ -262,6 +260,32 @@ public:
                                     string window_title="Centroid Images"
                                     );
 
+    /** Creates an image that arranges all the centroid images of a layer into a grid.
+      * The centroid images are arranged into a grid and are seperated by a black boarder.
+      * If there's not a square number of centroid images, then empty (black) centroid images
+      * are added to the bottom right of the grid until the number is a square number. For example
+      * if there are 15 centroid images, then it will display a 4x4 grid with the bottom right corner empty.
+      * Only works with uniform destin.
+      *
+      * @param layer - what layer the centroids belong to
+      * @param scale_width - resizes the square image grid width to this size.
+      * @param boarder_width - how wide, in pixels, the black border is that seperates the images.
+      */
+    cv::Mat getLayerCentroidImages(int layer,
+                                  int scale_width = 1000,
+                                  int border_width = 5);
+
+    /** Saves the image generated from getLayerCentroidImages method to disk.
+      * @param layer - which layer to generate the image for
+      * @param filename - Where to save the file. The image format is based on the file extention.
+      *     Has been tested on *.png.
+      * @param scale_width - resizes the square image grid width to this size.
+      * @param border_width -  how wide, in pixels, the black border is that seperates the images.
+      */
+    void saveLayerCentroidImages(int layer, const string & filename,
+                                  int scale_width = 1000,
+                                  int border_width = 5
+                                  );
 
 
 

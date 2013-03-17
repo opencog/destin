@@ -120,12 +120,6 @@ void DestinNetworkAlt::isTraining(bool isTraining) {
     }
 }
 
-
-/** print given node's centroid's locations
- *  The Centroids consists of 3 main parts, the dimensions which cluster
- *  on the nodes input, the dimensions which cluster on its previous belief
- *  and the dimensions which cluster on the parents previous belief.
- */
 void DestinNetworkAlt::printNodeCentroidPositions(int layer, int row, int col){
     Node * n = getNode(layer, row, col);
     for(int centroid  = 0 ; centroid < n->nb ; centroid++){
@@ -150,10 +144,6 @@ void DestinNetworkAlt::printNodeCentroidPositions(int layer, int row, int col){
     }
 }
 
-/** Prints a grid of winning centroid numbers for a layer.
-  * The grid is the size of the layer in nodes. Each
-  * node has a winning centroid number.
-  */
 void DestinNetworkAlt::printWinningCentroidGrid(int layer){
     uint width = (uint)sqrt(destin->layerSize[layer]);
     uint nidx = 0;
@@ -167,12 +157,6 @@ void DestinNetworkAlt::printWinningCentroidGrid(int layer){
     }
 }
 
-/** Shows an image representing winning centroids
-  * Each pixel represents a node where the grayscale color is determined
-  * by the node's winning_centroid_index / # of centroids.
-  * @param layer = layer to show
-  * @param zoom = scales the image by this factor
-  */
 void DestinNetworkAlt::imageWinningCentroidGrid(int layer, int zoom, const string& window_name){
     uint width = (uint)sqrt(destin->layerSize[layer]);
 
@@ -245,9 +229,6 @@ void DestinNetworkAlt::setPreviousBeliefDamping(float lambda){
 }
 
 
-/** Loads a destin structure from the given file
- * Destroy the current destin structure before loading the new one.
- */
 void DestinNetworkAlt::load(const char * fileName){
     if(centroidImages != NULL){
         Cig_DestroyCentroidImages(destin,  centroidImages);
@@ -274,12 +255,6 @@ void DestinNetworkAlt::load(const char * fileName){
 
 }
 
-/** Moves the given centroid to its node's input last observation.
-  * @param layer
-  * @param row
-  * @param col
-  * @param centroid - centroid to move
-  */
 void DestinNetworkAlt::moveCentroidToInput(int layer, int row, int col, int centroid){
     Node * n = getNode(layer, row, col);
     if(centroid >= destin->nb[layer]){
@@ -289,9 +264,6 @@ void DestinNetworkAlt::moveCentroidToInput(int layer, int row, int col, int cent
     memcpy(cent, n->observation, n->ns * sizeof(float));
 }
 
-/** Returns the centroid image as a float array.
-  * Then displays it.
-  */
 float * DestinNetworkAlt::getCentroidImage(int layer, int centroid){
     if(!destin->isUniform){
         printf("getCentroidImage: must be uniform");
@@ -302,8 +274,7 @@ float * DestinNetworkAlt::getCentroidImage(int layer, int centroid){
     return getCentroidImages()[layer][centroid];
 }
 
-/** Gets the generated centroid images as an opencv Mat image.
-  */
+
 cv::Mat DestinNetworkAlt::getCentroidImageM(int layer, int centroid, int disp_width, bool enhanceContrast){
     if(!isUniform){
         throw std::logic_error("can't displayCentroidImage with non uniform DeSTIN.");
@@ -333,17 +304,6 @@ cv::Mat DestinNetworkAlt::getCentroidImageM(int layer, int centroid, int disp_wi
     return centroidImageResized;
 }
 
-/** Generates representative images for all centroids then displays the chosen image.
-  * Currently only works for uniform destin. cvWaitKey() must be called after to see the image.
-  * The contrast of the image can be enhanced by setting the weight exponent
-  * parameter larger than 1.0 via setCentImgWeightExponent() method, and further by
-  * passing enhanceContrast parameter as true.
-  * @param layer - which layer the centroid belongs
-  * @param centroid - which centroid of the given layer to display.
-  * @param disp_width - scales the square centroid image to this width to be displayed. Defaults to 256 pixels
-  * @param enhanceContrast - if true, the image contrast is enhanced using the opencv function cvEqualizeHist as a post processing step
-  * @param window_name - name to give the display window
-  */
 void DestinNetworkAlt::displayCentroidImage(int layer, int centroid, int disp_width, bool enhanceContrast, string window_name){
     getCentroidImageM(layer, centroid, disp_width, enhanceContrast);
     cv::imshow(window_name.c_str(), centroidImageResized);
@@ -354,24 +314,19 @@ void DestinNetworkAlt::saveCentroidImage(int layer, int centroid, string filenam
     cv::imwrite(filename, centroidImageResized);
 }
 
-/** Displays all the centroid images of a layer into one large image.
-  * The centroid images are arranged into a grid and are seperated by a black boarder.
-  * If there's not a square number of centroid images, then empty (black) centroid images
-  * are added to the bottom right of the grid until the number is a square number. For example
-  * if there are 15 centroid images, then it will display a 4x4 grid with the bottom right corner empty.
-  * Only works with uniform destin.
-  * cvWaitKey() must be called after for the image to appear.
-  *
-  * @param layer - what layer the centroids belong to
-  * @param scale_width - resizes the square image grid width to this size.
-  * @param boarder_width - how wide, in pixels, the black border is that seperates the images.
-  * @param window_title - name given to the window that is displayed.
-  */
 void DestinNetworkAlt::displayLayerCentroidImages(int layer,
                                 int scale_width,
                                 int border_width,
                                 string window_title
                                 ){
+
+    cv::imshow(window_title, getLayerCentroidImages(layer, scale_width, border_width));
+    return;
+}
+
+cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
+                              int scale_width,
+                              int border_width){
     if(!isUniform){
         throw std::logic_error("can't displayLayerCentroidImages with non uniform DeSTIN.");
     }
@@ -404,9 +359,18 @@ void DestinNetworkAlt::displayLayerCentroidImages(int layer,
             subimage_resized.copyTo( dest );
     }
 
-    layerCentroidsImage = big_img;
-    cv::imshow(window_title, layerCentroidsImage);
+    //cv::Mat toShow;
+    big_img.convertTo(layerCentroidsImage, CV_8UC1, 255);
+
+    //layerCentroidsImage = big_img;
+    return layerCentroidsImage;
+
 }
 
-
-
+void DestinNetworkAlt::saveLayerCentroidImages(int layer, const string & filename,
+                              int scale_width,
+                              int border_width
+                              ){
+    cv::imwrite(filename, getLayerCentroidImages(layer, scale_width, border_width) );
+    return;
+}

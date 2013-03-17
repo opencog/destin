@@ -55,6 +55,13 @@ public:
         return (float *)grayMats[currentImage].data;
     }
 
+    /** Same as getGrayImageFloat()
+      * Here to be compatible with VideoSource
+      */
+    float * getOutput(){
+        return getGrayImageFloat();
+    }
+
     /** Gets the current image as an opencv color Mat (image.)
       * @params rows, cols - scales the image to this size
       */
@@ -117,13 +124,17 @@ public:
         }
     }
 
+    bool grab(){
+        findNextImage();
+        return true;
+    }
 
     /** Finds the next image to show.
       * Finds an image that has a class that is enabled.
       * If it finds an image, it remebers the spot so another call
       * to this method will start from that spot.
       * Wraps to the begining of the batch when it reaches the end.
-      * @throws logic_error - if it cant find an image of an enabled class or no classes are enabled.
+      * @throws logic_error - if it cant find an image
       * @returns index of the image found
       */
     int findNextImage(){
