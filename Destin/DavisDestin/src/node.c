@@ -123,6 +123,127 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
 #endif
 }
 
+// 2013.4.11
+// CZT
+//
+void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
+{
+    n = &n[nIdx];
+
+    uint i, j;
+    uint ni, nb, np, ns, nc;
+
+    // Length of input vector
+    ni = n->ni;
+
+    // Number of centroids
+    nb = n->nb;
+
+    // Number of centroids of the parent
+    np = n->np;
+
+    // Sum of ni + nb + np + nc
+    ns = n->ns;
+
+    // 'Context'
+    nc = n->nc;
+
+    // Check to see if bottom layer image input data is available
+    if( n->layer > 0 )
+    {
+        // If not, use input from the child nodes
+        for( i=0; i < ni; i++ )
+        {
+            n->observation[i] = n->input[n->inputOffsets[i]];
+        }
+    } else {
+        // If so, use input from the input image
+        for( i=0; i < ni; i++ )
+        {
+            n->observation[i] = framePtr[n->inputOffsets[i]];
+
+            // 2013.4.11
+            // CZT
+            //
+            n->observation_c1[i] = framePtr[n->inputOffsets[i]];
+        }
+    }
+
+    // set these to uniform for now.
+    // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
+    for( i=0; i < nb; i++ )
+    {
+#ifdef RECURRENCE_ON
+        n->observation[i+ni] = n->pBelief[i] * n->gamma;
+#else
+        n->observation[i+ni] = 1 / (float) nb;
+
+        // 2013.4.11
+        // CZT
+        //
+        n->observation_c1[i+ni] = 1/(float)nb;
+#endif
+    }
+
+    for( i=0; i < np; i++ )
+    {
+#ifdef RECURRENCE_ON
+        n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
+#else
+        n->observation[i+ni+nb] = 1 / (float) np;
+
+        // 2013.4.11
+        // CZT
+        //
+        n->observation_c1[i+ni+nb] = 1/(float)np;
+#endif
+    }
+
+    for( i=0; i < nc; i++ )
+    {
+        // Apply context
+        n->observation[i+ni+nb+np] = 0;
+
+        // 2013.4.11
+        // CZT
+        //
+        n->observation_c1[i+ni+nb+np] = 0;
+    }
+
+
+    // 2013.4.11
+    // CZT
+    //
+    if(n->layer == 0)
+    {
+        for(j=1; j<n->d->extRatio; ++j)
+        {
+            for(i=0; i<ni; ++i)
+            {
+                n->observation_c1[i+ns+(j-1)*ni] = framePtr[n->inputOffsets[i] + n->d->size*j];
+            }
+        }
+    }
+
+#ifdef CHECK_OBS
+    for(i = 0 ; i < n->ns ; i++){
+        float o = n->observation[i];
+        if(isinf(o)){
+            oops("observation was inf at index %i\n", i);
+        }
+        if(isnan(o)){
+            oops("observation was nan at index %i\n", i);
+        }
+        if(o < 0){
+            oops("observation was negative at index %i\n", i);
+        }
+        if(o > 1){
+            oops("observation was greater than 1.0 at index %i\n", i);
+        }
+    }
+#endif
+}
+
 // CPU implementation of CalculateDistances kernel
 void CalculateDistances( Node *n, uint nIdx )
 {
@@ -169,6 +290,106 @@ void CalculateDistances( Node *n, uint nIdx )
 
             // Calculate the difference between the input (observation) and the centroid's current location
             delta = n->observation[j] - n->mu[bRow+j];
+            // Start distance calculation
+            delta *= delta;
+#ifdef CHECK_BELIEF_ZERO
+            if(isnan(delta)){
+                oops("delta was nan\n");
+            }
+            if(isinf(delta)){
+                oops("delta was inf. obs: %e, mu: %e\n", n->observation[j], n->mu[bRow + j]);
+            }
+#endif
+            // Reduce the distance by the starvation factor
+            delta *= starv[i];
+
+            // Add the resulting distance to our Euclidean distance sum for this centroid
+            sumEuc += delta;
+
+            // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
+            sumMal += delta / sigma[bRow+j];
+        }
+
+        // Dead code
+        n->genObservation[i] = sumMal;
+
+        // Take the square root of the distance to finalize the distance calculation
+        sumEuc = sqrt(sumEuc);
+        sumMal = sqrt(sumMal);
+
+        // Calculate intermediate belief in the current centroid based on the distance between the centroid and the input vector data
+        n->beliefEuc[i] = ( sumEuc < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumEuc);
+        n->beliefMal[i] = ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal);
+
+#ifdef CHECK_BELIEF_ZERO
+        if(n->beliefEuc[i] < EPSILON){
+            oops("n->beliefEuc == 0, sumEuc:%e \n", sumEuc);
+        }
+        if(n->beliefMal[i] < EPSILON){
+            oops("n->beliefMal == 0, sumMal:%e\n", sumMal);
+        }
+#endif
+    }
+}
+
+// 2013.4.11
+// CZT
+//
+void CalculateDistances_c1( Node *n, uint nIdx )
+{
+    // delta = difference between the input vector and a centroid
+    float delta;
+    // sumEuc = the Euclidean distance between the input vector and a centroid
+    // sumMal = the Mahalanobis distance between the input vector and a centroid, taking the tightness of the cluster into account
+    float sumEuc, sumMal;
+
+    // Get a node from the pointer to the list of nodes
+    n = &n[nIdx];
+
+    // i = counter for loop through centroids
+    // j = counter for loop through
+    uint i, j;
+
+    // Get the total length of the input vector
+    const uint ns = n->ns;
+    // Get the context (?)
+    const uint nc = n->nc;
+
+
+    // Get the sigma array depending on whether uniform or non-uniform destin is being used
+    float * sigma = n->d->isUniform ? n->d->uf_sigma[n->layer] : n->sigma;
+    // Get the dynamic starvation factor array depending on whether uniform or non-uniform destin is being used
+    float * starv = n->d->isUniform ? n->d->uf_starv[n->layer] : n->starv;
+
+    // iterate over each belief
+    for( i=0; i < n->nb; i++ )
+    {
+        // Reset distances for the centroid that will be processed in this loop
+        sumEuc = 0;
+        sumMal = 0;
+
+        // mu contains the probabilities (or grayscales) of the centroids in this node
+        // bRow = start index of the probabilities (or grayscales) of the current centroid
+        uint bRow = i*ns;
+
+        // iterate over each state for belief
+        // Loop through the items in the vector, ignoring the context
+        for( j=0; j < ns-nc; j++ )
+        {
+            // mu contains the probabilities (or grayscales) of the centroids in this node
+
+            // Calculate the difference between the input (observation) and the centroid's current location
+            delta = n->observation[j] - n->mu[bRow+j];
+            // 2013.4.11
+            // CZT
+            //
+            //delta = n->observation_c1[j] - n->mu[bRow+j];
+
+            if(n->observation[j] != n->observation_c1[j])
+            {
+                printf("Error!\n");
+            }
+
             // Start distance calculation
             delta *= delta;
 #ifdef CHECK_BELIEF_ZERO

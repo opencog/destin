@@ -78,13 +78,80 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     isTraining(true);
 }
 
+// 2013.4.11
+// CZT
+//
+void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
+        unsigned int centroid_counts [], bool isUniform, int size, int extRatio)
+        {
+    training = true;
+    beta = .01;
+    lambda = .1;
+    gamma = .1;
+    isUniform = isUniform;
+    centroidImages = NULL;
+    centroidImageWeightParameter = 1.0;
+
+    uint input_dimensionality = 16;
+    uint c, l;
+    callback = NULL;
+    initTemperatures(layers, centroid_counts);
+    float starv_coef = 0.05;
+    uint n_classes = 0;//doesn't look like its used
+    uint num_movements = 0; //this class does not use movements
+
+    //figure out how many layers are needed to support the given
+    //image width.
+    bool supported = false;
+    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
+        if (c == width) {
+            supported = true;
+            break;
+        }
+    }
+    if(!supported){
+        throw std::logic_error("given image width is not supported.");
+    }
+    if (layers != l) {
+        throw std::logic_error("Image width does not match the given number of layers.");
+    }
+    destin = InitDestin_c1(
+            input_dimensionality,
+            layers,
+            centroid_counts,
+            n_classes,
+            beta,
+            lambda,
+            gamma,
+            temperatures,
+            starv_coef,
+            num_movements,
+            isUniform,
+            // 2013.4.11
+            // CZT
+            //
+            size,
+            extRatio
+     );
+
+    setBeliefTransform(DST_BT_NONE);
+    SetLearningStrat(destin, CLS_FIXED);
+    ClearBeliefs(destin);
+    destin->fixedLearnRate = 0.1;
+    isTraining(true);
+}
+
 DestinNetworkAlt::~DestinNetworkAlt() {
     if(centroidImages != NULL){
         Cig_DestroyCentroidImages(destin,  centroidImages);
     }
 
     if(destin!=NULL){
-        DestroyDestin(destin);
+        //DestroyDestin(destin);
+        // 2013.4.11
+        // CZT
+        //
+        DestroyDestin_c1(destin);
         destin = NULL;
     }
     if(temperatures!=NULL){
@@ -111,6 +178,15 @@ void DestinNetworkAlt::doDestin( //run destin with the given input
     if(this->callback != NULL){
         this->callback->callback(*this );
     }
+}
+
+// 2013.4.11
+// CZT
+//
+void DestinNetworkAlt::doDestin_c1( //run destin with the given input
+        float * input_dev //pointer to input memory on device
+        ) {
+    FormulateBelief_c1(destin, input_dev);
 }
 
 void DestinNetworkAlt::isTraining(bool isTraining) {

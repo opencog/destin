@@ -80,6 +80,13 @@ public:
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [], bool isUniform );
 
+    // 2013.4.11
+    // CZT
+    //
+    void reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
+    unsigned int centroid_counts [], bool isUniform,
+                          int size, int extRatio);
+
     virtual ~DestinNetworkAlt();
 
     float *** getCentroidImages();
@@ -91,6 +98,13 @@ public:
     void setTemperatures(float temperatures[]);
 
     void doDestin( //run destin with the given input
+            float * input_dev //pointer to input memory on device
+            );
+
+    // 2013.4.11
+    // CZT
+    //
+    void doDestin_c1( //run destin with the given input
             float * input_dev //pointer to input memory on device
             );
 

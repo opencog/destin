@@ -404,6 +404,254 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     return d;
 }
 
+// 2013.4.11
+// CZT
+//
+Destin * InitDestin_c1( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
+                        int size, int extRatio)
+{
+    uint nInputPipeline;
+    uint i, l, maxNb, maxNs;
+    size_t bOffset ;
+
+    Destin *d;
+
+    // initialize a new Destin object
+    MALLOC(d, Destin, 1);
+
+    // 2013.4.11
+    // CZT
+    //
+    d->size = size;
+    d->extRatio = extRatio;
+
+    d->serializeVersion = SERIALIZE_VERSION;
+    d->nNodes = 0;
+    d->nLayers = nl;
+
+    d->nMovements = nMovements;
+    d->isUniform = isUniform;
+    d->muSumSqDiff = 0;
+
+    SetLearningStrat(d, CLS_DECAY);
+    SetBeliefTransform(d, DST_BT_NONE);
+
+    d->fixedLearnRate = 0.1;
+
+    MALLOC(d->inputLabel, uint, nc);
+    for( i=0; i < nc; i++ )
+    {
+        d->inputLabel[i] = 0;
+    }
+    d->nc = nc;
+
+    MALLOC(d->temp, float, nl);
+    memcpy(d->temp, temp, sizeof(float)*nl);
+
+    MALLOC(d->nb, uint, nl);
+    memcpy(d->nb, nb, sizeof(uint)*nl);
+
+    // get number of nodes to allocate
+    // starting from the top layer with one node,
+    // each subsequent layer has 4x the nodes.
+    //
+    // eg., 2-layer: 05 nodes
+    //      3-layer: 21 nodes
+    //      4-layer: 85 nodes
+    //
+    // also keep track of the number of beliefs
+    // to allocate
+
+    MALLOC(d->layerSize, uint, nl);
+    MALLOC(d->layerNodeOffsets, uint, nl);
+    MALLOC(d->layerWidth, uint, nl);
+
+    // init the train mask (determines which layers should be training)
+    MALLOC(d->layerMask, uint, d->nLayers);
+    for( i=0; i < d->nLayers; i++ )
+    {
+        d->layerMask[i] = 0;
+    }
+
+    uint nNodes = 0;
+    uint nBeliefs = 0;
+    for( i=0, l=nl ; l != 0; l--, i++ )
+    {
+        d->layerSize[i] = 1 << 2*(l-1);
+        d->layerWidth[i] = (uint)sqrt(d->layerSize[i]);
+        d->layerNodeOffsets[i] = nNodes;
+
+        nNodes += d->layerSize[i];
+
+        nBeliefs += d->layerSize[i] * nb[i];
+    }
+
+    d->nNodes = nNodes;
+
+    // input pipeline -- all beliefs are copied from the output of each
+    // node to the input of the next node on each timestep. we want
+    // the belief of each node except for the top node (its output goes
+    // to no input to another node) to be easily copied to the input
+    // of the next node, so we allocate a static buffer for it.
+    nInputPipeline = nBeliefs - nb[nl-1];
+
+    d->nInputPipeline = nInputPipeline;
+
+    // allocate node pointers on host
+    MALLOC(d->nodes, Node, nNodes);
+
+    // allocate space for inputs to nodes
+    MALLOC(d->inputPipeline, float, nInputPipeline);
+
+    // allocate space for beliefs for nodes on host
+    MALLOC(d->belief, float, nBeliefs);
+
+    d->nBeliefs = nBeliefs;
+
+    if(isUniform){
+        // allocate for each layer an array of size number = n centroids for that layer
+        // that counts how many nodes in a layer pick the given centroid as winner.
+        MALLOC(d->uf_winCounts, uint *, d->nLayers);
+        MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
+        //used to calculate the shared centroid delta averages
+        MALLOC(d->uf_avgDelta, float *, d->nLayers);
+        MALLOC(d->uf_sigma, float *, d->nLayers);
+
+        // layer shared centroid starvation vectors
+        MALLOC(d->uf_starv, float *, d->nLayers);
+
+        for(l = 0 ; l < d->nLayers ; l++){
+            MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
+            MALLOC( d->uf_persistWinCounts[l], long, d->nb[l] );
+            MALLOC( d->uf_starv[l], float, d->nb[l]);
+
+            for(i = 0 ; i < d->nb[l]; i++){
+                d->uf_persistWinCounts[l][i] = 0;
+                d->uf_starv[l][i] = 1;
+            }
+        }
+    }
+
+    // init belief and input offsets (pointers to big belief and input chunks we
+    // allocated above)
+    bOffset = 0;
+
+    // keep track of the max num of beliefs and states.  we need this information
+    // to correctly call kernels later
+    maxNb = 0;
+    maxNs = 0;
+
+    uint n = 0;
+    uint child_layer_offset = 0;
+
+    // initialize the rest of the network
+
+    for( l=0; l < nl; l++ )
+    {
+        // update max belief
+        if( nb[l] > maxNb )
+        {
+            maxNb = nb[l];
+        }
+
+        uint np = (l == nl - 1) ? 0 : nb[l + 1];
+
+        ni = l == 0 ? ni : 4*nb[l-1];
+
+        if( ni + nb[l] + np > maxNs )
+        {
+            maxNs = ni + nb[l] + np;
+        }
+
+        float * sharedCentroids;
+
+        // calculate the state dimensionality (number of inputs + number of beliefs)
+        uint ns = ni + nb[l] + np + nc;
+        if(isUniform){
+            MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
+            MALLOC(sharedCentroids, float, ns*nb[l]);
+            MALLOC(d->uf_sigma[l], float, ns*nb[l]);
+        }else{
+            sharedCentroids = NULL;
+        }
+
+
+        uint inputOffsets[ni];
+        for( i=0; i < d->layerSize[l]; i++, n++ )
+        {
+            CalcNodeInputOffsets(d,
+                                 l, // layer
+                                 i, // linear node position in the current layer
+                                 child_layer_offset,
+                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
+                                 inputOffsets);
+            /*InitNode(
+                        n,
+                        d,
+                        l,
+                        ni,
+                        nb[l],
+                        np,
+                        nc,
+                        ns,
+                        starvCoeff,
+                        beta,
+                        gamma,
+                        lambda,
+                        temp[l],
+                        &d->nodes[n],
+                        inputOffsets,
+                        (l == 0 ? NULL : d->inputPipeline),
+                        &d->belief[bOffset],
+                        sharedCentroids
+                    );*/
+
+            // 2013.4.11
+            // CZT
+            //
+            InitNode_c1(
+                        n,
+                        d,
+                        l,
+                        ni,
+                        nb[l],
+                        np,
+                        nc,
+                        ns,
+                        starvCoeff,
+                        beta,
+                        gamma,
+                        lambda,
+                        temp[l],
+                        &d->nodes[n],
+                        inputOffsets,
+                        (l == 0 ? NULL : d->inputPipeline),
+                        &d->belief[bOffset],
+                        sharedCentroids
+                    );
+
+            if(l > 0){
+                MALLOC( d->nodes[n].children, Node *, 4 );
+            }
+
+            // increment belief offset (so beliefs are mapped contiguously in memory)
+            bOffset += nb[l];
+        }//next node
+
+        if(l > 0){
+            // where the beliefs of the next layer begin
+            child_layer_offset += ni * d->layerSize[l];
+        }
+
+    }//next layer
+
+    LinkParentBeliefToChildren( d );
+    d->maxNb = maxNb;
+    d->maxNs = maxNs;
+
+    return d;
+}
+
 void LinkParentBeliefToChildren( Destin *d )
 {
     uint l, cr, cc, pr, pc, child_layer_width;
@@ -458,6 +706,57 @@ void DestroyDestin( Destin * d )
         }
 
         DestroyNode( &d->nodes[i] );
+    }
+
+    FREE(d->temp);
+    FREE(d->nb);
+    FREE(d->nodes);
+    FREE(d->layerMask);
+    FREE(d->inputPipeline);
+    FREE(d->belief);
+    FREE(d->layerSize);
+    FREE(d->layerNodeOffsets);
+    FREE(d->layerWidth);
+    FREE(d->inputLabel);
+    FREE(d);
+}
+
+// 2013.4.11
+// CZT
+//
+void DestroyDestin_c1( Destin * d )
+{
+    uint i;
+
+    if(d->isUniform){
+        for(i = 0 ; i < d->nLayers; i++)
+        {
+            //since all nodes in a layer share the same centroids
+            //then this only need to free mu once per layer
+            FREE(GetNodeFromDestin(d, i, 0,0)->mu);
+
+            FREE(d->uf_avgDelta[i]);
+            FREE(d->uf_winCounts[i]); //TODO: should be condionally alloced and delloc based of if using uniform destin
+            FREE(d->uf_persistWinCounts[i]);
+            FREE(d->uf_sigma[i]);
+            FREE(d->uf_starv[i]);
+        }
+        FREE(d->uf_avgDelta);
+        FREE(d->uf_winCounts);
+        FREE(d->uf_persistWinCounts);
+        FREE(d->uf_sigma);
+        FREE(d->uf_starv);
+    }
+
+    for( i=0; i < d->nNodes; i++ )
+    {
+        if(d->isUniform)
+        {
+            //mu already has been freed so set it to NULL
+            d->nodes[i].mu = NULL;
+        }
+
+        DestroyNode_c1( &d->nodes[i] );
     }
 
     FREE(d->temp);
@@ -766,6 +1065,136 @@ void InitNode
 
 }
 
+// 2013.4.11
+// CZT
+//
+void InitNode_c1
+    (
+    uint         nodeIdx,
+    Destin *     d,
+    uint         layer,
+    uint         ni,
+    uint         nb,
+    uint         np,
+    uint         nc,
+    uint         ns,
+    float       starvCoeff,
+    float       beta,
+    float       gamma,
+    float       lambda,
+    float       temp,
+    Node        *node,
+    uint        *inputOffsets,
+    float       *input_host,
+    float       *belief_host,
+    float       *sharedCentroids
+    )
+{
+
+    // Initialize node parameters
+    node->d             = d;
+    node->nIdx          = nodeIdx;
+    node->nb            = nb;
+    node->ni            = ni;
+    node->np            = np;
+    node->ns            = ns;
+    node->nc            = nc;
+    node->starvCoeff    = starvCoeff;
+    node->beta          = beta;
+    node->nLambda        = lambda;
+    node->gamma         = gamma;
+    node->temp          = temp;
+    node->winner        = 0;
+    node->layer         = layer;
+
+    if(sharedCentroids == NULL){
+        //not uniform so each node gets own centroids
+        MALLOC( node->mu, float, nb*ns );
+    }else{
+        node->mu = sharedCentroids;
+    }
+
+    MALLOC( node->beliefEuc, float, nb );
+    MALLOC( node->beliefMal, float, nb );
+    MALLOC( node->observation, float, ns );
+    MALLOC( node->genObservation, float, ns );
+
+    // 2013.4.11
+    // CZT
+    //
+    if(layer == 0)
+    {
+        MALLOC(node->observation_c1, float, ns+ni*(d->extRatio-1));
+    }
+    else
+    {
+        MALLOC(node->observation_c1, float, ns);
+    }
+
+    if(d->isUniform){
+        //uniform destin uses shared counts
+        node->starv = d->uf_starv[layer];
+        node->nCounts = NULL;
+        node->sigma = NULL;
+    }else{
+        MALLOC( node->starv, float, nb );
+        MALLOC( node->nCounts, long, nb );
+        MALLOC( node->sigma, float, nb*ns );
+    }
+
+    MALLOC( node->delta, float, ns);
+    node->children = NULL;
+
+    // copy the input offset for the inputs (should be NULL for non-input nodes)
+    MALLOC(node->inputOffsets, uint, ni);
+    memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
+
+    // point to the block-allocated space
+    node->input = input_host;
+    uint i,j;
+    if(input_host != NULL){
+        for(i = 0 ; i < ni ; i++){
+            node->input[node->inputOffsets[i]] = 0.5; //prevent nans caused by uninitialized memory
+        }
+    }
+
+    node->pBelief = belief_host;
+
+
+    for( i=0; i < nb; i++ )
+    {
+        // init belief (node output)
+        node->pBelief[i] = 1 / (float)nb;
+        node->beliefEuc[i] = 1 / (float)nb;
+        node->beliefMal[i] = 1 / (float)nb;
+
+        if(!d->isUniform){
+            node->nCounts[i] = 0;
+            // init starv trace to one
+            node->starv[i] = 1.0f;
+        }
+
+        // init mu and sigma
+        for(j=0; j < ns; j++)
+        {
+            node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
+            if(d->isUniform){
+                //TODO: all the nodes in the layer are initing the same shared sigma vectors redundantly, may
+                //want to initialize this outside of the node
+                node->d->uf_sigma[layer][i * ns + j] = INIT_SIGMA;
+            }else{
+                node->sigma[i*ns+j] = INIT_SIGMA;
+            }
+        }
+    }
+
+    for( i=0; i < ns; i++ )
+    {
+        node->observation[i] = (float) rand() / (float) RAND_MAX;
+    }
+
+}
+
 // deallocate the node.
 void DestroyNode( Node *n)
 {
@@ -781,6 +1210,52 @@ void DestroyNode( Node *n)
     FREE( n->beliefMal );
     FREE( n->observation );
     FREE( n->genObservation );
+
+    FREE( n->delta );
+
+    if( n->children != NULL )
+    {
+        FREE( n->children );
+    }
+
+    n->children = NULL;
+
+    // if it is a zero-layer node, free the input offset array on the host
+    if( n->inputOffsets != NULL)
+    {
+        FREE(n->inputOffsets);
+    }
+}
+
+// 2013.4.11
+// CZT
+//
+void DestroyNode_c1( Node *n)
+{
+
+    if(!n->d->isUniform){
+        FREE( n->mu );
+        FREE( n->sigma );
+        FREE( n->nCounts );
+        FREE( n->starv );
+    }
+
+    FREE( n->beliefEuc );
+    FREE( n->beliefMal );
+    FREE( n->observation );
+    FREE( n->genObservation );
+
+    // 2013.4.11
+    // CZT
+    //
+    if(n->observation_c1 != NULL)
+    {
+        FREE(n->observation_c1);
+    }
+    if(n->mu_c1 != NULL)
+    {
+        FREE(n->mu_c1);
+    }
 
     FREE( n->delta );
 

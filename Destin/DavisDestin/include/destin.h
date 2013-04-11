@@ -55,7 +55,11 @@ typedef struct Destin {
     float       ** uf_sigma;            //shared centroids sigma, one array per layer of size nb x ns
     float       ** uf_starv;            //shared centroids starvation
 
-
+    // 2013.4.11
+    // CZT
+    //
+    int size;
+    int extRatio;
 } Destin  ;
 /* Destin Struct Definition End */
 
@@ -78,6 +82,24 @@ Destin * InitDestin(                    // initialize Destin.
                     bool               // is uniform - if nodes in a layer share one list of centroids
                 );
 
+// 2013.4.11
+// CZT
+//
+Destin * InitDestin_c1(                    // initialize Destin.
+    uint,               // input dimensionality for first layer, input must be square
+    uint,               // number of layers
+    uint *,             // belief dimensionality for each layer
+    uint,               // number of classes
+    float,              // beta coeff
+    float,              // lambda coeff
+    float,              // gamma coeff
+    float *,            // temperature for each layer
+    float,              // starv coeff
+    uint,               // number of movements per digit presentation
+    bool,               // is uniform - if nodes in a layer share one list of centroids
+    int,
+    int
+);
 
 void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
                     Destin *            // initialized destin pointer
@@ -114,7 +136,22 @@ void DestroyDestin(
                     Destin *
                   );
 
+// 2013.4.11
+// CZT
+//
+void DestroyDestin_c1(
+                    Destin *
+                  );
+
 void FormulateBelief(                   // form belief operation.  gets the current belief from Destin
+                    Destin *,           // network to obtain belief from
+                    float *             // input
+                );
+
+// 2013.4.11
+// CZT
+//
+void FormulateBelief_c1(                   // form belief operation.  gets the current belief from Destin
                     Destin *,           // network to obtain belief from
                     float *             // input
                 );

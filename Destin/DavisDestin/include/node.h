@@ -52,6 +52,12 @@ typedef struct Node {
     float * delta;           // vector that stores difference between observation and mu shared centroid vector
     uint    layer;          // layer this node belongs in
     /* HOST VARIABLES END */
+
+    // 2013.4.11
+    // CZT
+    //
+    float * observation_c1;
+    float * mu_c1;
 } Node;
 
 /* Node Functions Begin */
@@ -77,7 +83,39 @@ void  InitNode(                         // initialize a node.
                  float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                 );
 
+// 2013.4.11
+// CZT
+//
+void  InitNode_c1(                         // initialize a node.
+                 uint,                  // node index
+                 struct Destin *,       // reference to parent destin network
+                 uint,                  // layer this node belongs to
+                 uint,                  // belief dimensionality (# centroids)
+                 uint,                  // input dimensionality (# input values)
+                 uint,                  // parent belief dimensionality
+                 uint,                  // number of classes
+                 uint,                  // ns = state dimensionality (number of inputs + number of previous beliefs + number of parent's previous beliefs)
+                                        // = ni + nb + np + nc
+                 float,                 // starvation coefficient
+                 float,                 // beta (sigma step size)
+                 float,                 // lambda
+                 float,                 // gamma
+                 float,                 // temperature
+                 Node *,                // pointer node on host
+                 uint *,                // input offsets from input image (NULL for any non-input node)
+                 float *,               // pointer to input on host
+                 float *,               // pointer to belief on host
+                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                );
+
 void DestroyNode(
+                 Node *
+                );
+
+// 2013.4.11
+// CZT
+//
+void DestroyNode_c1(
                  Node *
                 );
 
@@ -87,7 +125,24 @@ void GetObservation(
                     uint                // node index
                 );
 
+// 2013.4.11
+// CZT
+//
+void GetObservation_c1(
+                    Node *,             // pointer to list of nodes
+                    float *,            // pointer to input frame
+                    uint                // node index
+                );
+
 void CalculateDistances(
+                    Node *,             // pointer to list of nodes
+                    uint                // node index
+                );
+
+// 2013.4.11
+// CZT
+//
+void CalculateDistances_c1(
                     Node *,             // pointer to list of nodes
                     uint                // node index
                 );
