@@ -155,6 +155,11 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
         for( i=0; i < ni; i++ )
         {
             n->observation[i] = n->input[n->inputOffsets[i]];
+
+            // 2013.4.11
+            // CZT
+            //
+            n->observation_c1[i] = n->input[n->inputOffsets[i]];
         }
     } else {
         // If so, use input from the input image
@@ -343,6 +348,11 @@ void CalculateDistances_c1( Node *n, uint nIdx )
     // sumMal = the Mahalanobis distance between the input vector and a centroid, taking the tightness of the cluster into account
     float sumEuc, sumMal;
 
+    // 2013.4.12
+    // CZT
+    //
+    float delta_c1;
+
     // Get a node from the pointer to the list of nodes
     n = &n[nIdx];
 
@@ -360,6 +370,11 @@ void CalculateDistances_c1( Node *n, uint nIdx )
     float * sigma = n->d->isUniform ? n->d->uf_sigma[n->layer] : n->sigma;
     // Get the dynamic starvation factor array depending on whether uniform or non-uniform destin is being used
     float * starv = n->d->isUniform ? n->d->uf_starv[n->layer] : n->starv;
+
+    // 2013.4.12
+    // CZT
+    //
+    float * sigma_c1 = n->d->isUniform ? n->d->uf_sigma_c1[n->layer] : n->sigma_c1;
 
     // iterate over each belief
     for( i=0; i < n->nb; i++ )
@@ -379,16 +394,11 @@ void CalculateDistances_c1( Node *n, uint nIdx )
             // mu contains the probabilities (or grayscales) of the centroids in this node
 
             // Calculate the difference between the input (observation) and the centroid's current location
-            delta = n->observation[j] - n->mu[bRow+j];
+            //delta = n->observation[j] - n->mu[bRow+j];
             // 2013.4.11
             // CZT
             //
-            //delta = n->observation_c1[j] - n->mu[bRow+j];
-
-            if(n->observation[j] != n->observation_c1[j])
-            {
-                printf("Error!\n");
-            }
+            delta = n->observation_c1[j] - n->mu[bRow+j];
 
             // Start distance calculation
             delta *= delta;
@@ -409,6 +419,54 @@ void CalculateDistances_c1( Node *n, uint nIdx )
             // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
             sumMal += delta / sigma[bRow+j];
         }
+
+        /*// 2013.4.12
+        // CZT
+        //
+        if(n->layer == 0)
+        {
+            uint bRow_c1 = i*(ns+(n->d->extRatio-1)*n->ni);
+            for( j=0; j < ns+(n->d->extRatio-1)*n->ni; j++ )
+            {
+                // 2013.4.11
+                // CZT
+                //
+                delta_c1 = n->observation_c1[j] - n->mu_c1[bRow_c1+j];
+
+                // Start distance calculation
+                delta_c1 *= delta_c1;
+                // Reduce the distance by the starvation factor
+                delta_c1 *= starv[i];
+
+                // Add the resulting distance to our Euclidean distance sum for this centroid
+                sumEuc += delta_c1;
+
+                // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
+                sumMal += delta_c1 / sigma_c1[bRow+j];
+            }
+        }
+        else
+        {
+            uint bRow_c1 = i*ns;
+            for( j=0; j < ns; j++ )
+            {
+                // 2013.4.11
+                // CZT
+                //
+                delta_c1 = n->observation_c1[j] - n->mu_c1[bRow_c1+j];
+
+                // Start distance calculation
+                delta_c1 *= delta_c1;
+                // Reduce the distance by the starvation factor
+                delta_c1 *= starv[i];
+
+                // Add the resulting distance to our Euclidean distance sum for this centroid
+                sumEuc += delta_c1;
+
+                // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
+                sumMal += delta_c1 / sigma_c1[bRow+j];
+            }
+        }*/
 
         // Dead code
         n->genObservation[i] = sumMal;
@@ -574,11 +632,93 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
 
         // otherwise, use the class label to move the last n_c
         // components of the winning centroid
-        } else {
+        }
+        // 2013.4.1
+        // CZT
+        // As 'nc' is set to 0, the 'else' part will never be invoked!!!
+        //
+        else {
             delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
         }
         n->delta[i] = delta;
     }
+    return;
+}
+
+// 2013.4.12
+// CZT
+//
+void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
+{
+    // whoa!  zero comments here -- my bad
+
+    // grab the node we want to work with.  this is a carryover
+    // from the kernel behavior -- kind of like n = &n[blockIdx.x].
+    // we could just pass a pointer to the node we actually want.
+    n = &n[nIdx];
+
+    // just an iterator
+    uint i;
+
+    // gets the row offset for the mu/sigma matrices to update
+    uint winnerOffset = n->winner * n->ns;
+
+    // the difference between an element of the observation and
+    // an element of the mu matrix
+    float delta;
+
+    // keeps track of squared error for a node.  added together
+    // with the sq. err. for all the other nodes in the network,
+    // it gives you a feel for when the network approaches
+    // convergence.
+    n->muSqDiff = 0;
+
+    // this is the offset in the observation vector where
+    // the class labels start.
+    uint ncStart = n->ni + n->nb + n->np;
+
+    for( i=0; i < n->ns; i++ )
+    {
+        // if we are less than ncStart, we are not looking at
+        // class labels.
+        if( i < ncStart )
+        {
+            delta = n->observation[i] - n->mu[winnerOffset+i];
+
+        // otherwise, use the class label to move the last n_c
+        // components of the winning centroid
+        }
+        // 2013.4.1
+        // CZT
+        // As 'nc' is set to 0, the 'else' part will never be invoked!!!
+        //
+        else {
+            delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
+        }
+        n->delta[i] = delta;
+    }
+
+    /*// 2013.4.12
+    // CZT
+    //
+    if(n->layer == 0)
+    {
+        uint winnerOffset_c1 = n->winner * (n->ns + (n->d->extRatio-1)*n->ni);
+        for( i=0; i < n->ns + (n->d->extRatio-1)*n->ni; ++i )
+        {
+            delta = n->observation_c1[i] - n->mu_c1[winnerOffset_c1+i];
+            n->delta_c1[i] = delta;
+        }
+    }
+    else
+    {
+        uint winnerOffset_c1 = n->winner * n->ns;
+        for(i=0; i<n->ns; ++i)
+        {
+            delta = n->observation_c1[i] - n->mu_c1[winnerOffset_c1+i];
+            n->delta_c1[i] = delta;
+        }
+    }*/
     return;
 }
 
@@ -591,6 +731,40 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
         for(s = 0; s < n->ns ; s++){
             n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
         }
+    }
+    return;
+}
+
+// 2013.4.12
+// CZT
+//
+void Uniform_AverageDeltas_c1(Node * n, uint nIdx){
+    n = &n[nIdx];
+    int count = n->d->uf_winCounts[n->layer][n->winner];
+    if(count > 0){
+        uint s;
+        for(s = 0; s < n->ns ; s++){
+            n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
+        }
+
+        /*// 2013.4.12
+        // CZT
+        //
+        if(n->layer == 0)
+        {
+            for(s=0; s < n->ns + (n->d->extRatio-1)*n->ni; ++s)
+            {
+                n->d->uf_avgDelta_c1[n->layer][n->winner * (n->ns + (n->d->extRatio-1)*n->ni) + s]
+                        += n->delta_c1[s] / (float)count;
+            }
+        }
+        else
+        {
+            for(s=0; s < n->ns; ++s)
+            {
+                n->d->uf_avgDelta_c1[n->layer][n->winner * n->ns + s] += n->delta_c1[s] / (float)count;
+            }
+        }*/
     }
     return;
 }
@@ -626,6 +800,64 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     return;
 }
 
+// 2013.4.12
+// CZT
+//
+void Uniform_ApplyDeltas_c1(Destin * d, uint layer, float * layerSharedSigma){
+    uint c, s, ns;
+    float diff, learnRate, dt;
+
+    //iterate over shared centroids
+    Node * n = GetNodeFromDestin(d, layer, 0,0);
+    for(c = 0 ; c < d->nb[layer]; c++){
+
+        //use learning strategy function pointer to get the learning rate
+        learnRate = d->centLearnStratFunc(d, NULL, layer, c);
+
+        //get the first node of the current layers
+        ns = n->ns;
+        for(s = 0 ; s < ns ; s++){
+            //move the centroid with the averaged delta
+            dt = d->uf_avgDelta[layer][c * ns + s];
+            diff = dt * learnRate;
+            n->mu[c * ns + s] += diff; //all nodes in a layer share this n->mu pointer
+#ifdef CHECK_BIG_MU
+            if ( n->mu[c * ns + s] > 1.0){
+                oops("Big mu value:%e at line %i\n",n->mu[c * ns + s],__LINE__ );
+            }
+#endif
+            n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
+            //TODO: write unit test for layerSharedSigma
+            layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
+        }
+
+        /*// 2013.4.12
+        // CZT
+        //
+        if(n->layer == 0)
+        {
+            ns = n->ns + n->ni*(n->d->extRatio-1);
+        }
+        else
+        {
+            ns = n->ns;
+        }
+        for(s=0; s<ns; ++s)
+        {
+            dt = d->uf_avgDelta_c1[layer][c*ns + s];
+            diff = dt * learnRate;
+            n->mu_c1[c*ns + s] += diff;
+#ifdef CHECK_BIG_MU
+            if ( n->mu[c * ns + s] > 1.0){
+                oops("Big mu value:%e at line %i\n",n->mu[c * ns + s],__LINE__ );
+            }
+#endif
+            n->muSqDiff += diff*diff;
+            layerSharedSigma[c*ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
+        }*/
+    }
+    return;
+}
 
 void MoveCentroids( Node *n, uint nIdx ){
     n = &n[nIdx];

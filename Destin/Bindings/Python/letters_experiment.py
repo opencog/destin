@@ -10,12 +10,20 @@ experiment_root_dir="./experiment_runs"
 ims = pd.ImageSouceImpl()
 
 
-letters = "LO+"
+#letters = "LO+"
+letters = "ABCDEFG"
 for l in letters:
     #ims.addImage("/home/ted/Dropbox/destin/treeimgs/%s.png" % l)
-    ims.addImage("/home/ted/Pictures/treeminingletters/%s.png" % l)
+    #ims.addImage("/home/ted/Pictures/treeminingletters/%s.png" % l)    
+    # Testing fld
+    # 2013.4.11
+    # CZT
+    #
+    #ims.addImage("/home/teaera/Downloads/2/%s.png" % l)
+    ims.addImage("/home/teaera/Downloads/destin_toshare/train images/%s.png" % l)
     
-centroids =  [2,2,8,32,40,32,15,len(letters)]    
+#centroids =  [2,2,8,32,40,32,15,len(letters)]
+centroids =  [4,8,16,32,64,32,16,len(letters)]
 layers = len(centroids)
 top_layer = layers - 1
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
@@ -30,7 +38,7 @@ weight_exponent = 4
 save_root="./saves/"
 
 def train():
-    for i in range(1600):
+    for i in range(3500):
         if i % 10 == 0:
             print "Iteration " + str(i)
             
@@ -130,7 +138,7 @@ else:
     dn.load(to_load)
     
 dn.save("+LO.dst")
-dci(7,0,False, weight_exponent)
+#dci(7,0,False, weight_exponent)
 dcis(7)
 
 tm = pd.DestinTreeManager(dn, 0)

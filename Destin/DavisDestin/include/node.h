@@ -58,6 +58,8 @@ typedef struct Node {
     //
     float * observation_c1;
     float * mu_c1;
+    float * sigma_c1;
+    float * delta_c1;
 } Node;
 
 /* Node Functions Begin */
@@ -105,7 +107,9 @@ void  InitNode_c1(                         // initialize a node.
                  uint *,                // input offsets from input image (NULL for any non-input node)
                  float *,               // pointer to input on host
                  float *,               // pointer to belief on host
-                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 float *,                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+
+                 float * // 2013.4.11 CZT
                 );
 
 void DestroyNode(
@@ -159,6 +163,15 @@ void CalcCentroidMovement(
                     uint                // node index
                 );
 
+// 2013.4.12
+// CZT
+//
+void CalcCentroidMovement_c1(
+                    Node *,             // pointer to list of nodes
+                    uint *,             // pointer to current class label
+                    uint                // node index
+                );
+
 void MoveCentroids(
                     Node *,             // pointer to list of nodes
                     uint                // node index
@@ -174,7 +187,24 @@ void Uniform_AverageDeltas(
                     uint                // node index
                 );
 
+// 2013.4.12
+// CZT
+//
+void Uniform_AverageDeltas_c1(
+                    Node *,             // pointer to list of nodes
+                    uint                // node index
+                );
+
 void Uniform_ApplyDeltas(
+                    struct Destin *,
+                    uint,               // layer to apply deltas
+                    float *             // shared sigma float array to use. Table nb x ns
+                );
+
+// 2013.4.12
+// CZT
+//
+void Uniform_ApplyDeltas_c1(
                     struct Destin *,
                     uint,               // layer to apply deltas
                     float *             // shared sigma float array to use. Table nb x ns

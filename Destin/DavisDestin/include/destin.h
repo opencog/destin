@@ -60,6 +60,8 @@ typedef struct Destin {
     //
     int size;
     int extRatio;
+    float ** uf_sigma_c1;
+    float ** uf_avgDelta_c1;
 } Destin  ;
 /* Destin Struct Definition End */
 

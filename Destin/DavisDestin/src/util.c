@@ -517,6 +517,12 @@ Destin * InitDestin_c1( uint ni, uint nl, uint *nb, uint nc, float beta, float l
         MALLOC(d->uf_avgDelta, float *, d->nLayers);
         MALLOC(d->uf_sigma, float *, d->nLayers);
 
+        // 2013.4.12
+        // CZT
+        //
+        MALLOC(d->uf_sigma_c1, float *, d->nLayers);
+        MALLOC(d->uf_avgDelta_c1, float *, d->nLayers);
+
         // layer shared centroid starvation vectors
         MALLOC(d->uf_starv, float *, d->nLayers);
 
@@ -564,7 +570,6 @@ Destin * InitDestin_c1( uint ni, uint nl, uint *nb, uint nc, float beta, float l
         }
 
         float * sharedCentroids;
-
         // calculate the state dimensionality (number of inputs + number of beliefs)
         uint ns = ni + nb[l] + np + nc;
         if(isUniform){
@@ -575,6 +580,35 @@ Destin * InitDestin_c1( uint ni, uint nl, uint *nb, uint nc, float beta, float l
             sharedCentroids = NULL;
         }
 
+        // 2013.4.11
+        // CZT
+        // If 'uniform', the centroids should be shared!!!
+        //
+        float * sharedCentroids_c1;
+        uint ns_c1 = ni*extRatio + nb[l] + np + nc;
+        if(isUniform)
+        {
+            // 2013.4.12
+            // CZT
+            // If layer is 0, it should be extended! Otherwise, not!
+            //
+            if(l==0)
+            {
+                MALLOC(sharedCentroids_c1, float, ns_c1*nb[l]);
+                MALLOC(d->uf_sigma_c1[l], float, ns_c1*nb[l]);
+                MALLOC(d->uf_avgDelta_c1[l], float, ns_c1*nb[l]);
+            }
+            else
+            {
+                MALLOC(sharedCentroids_c1, float, ns*nb[l]);
+                MALLOC(d->uf_sigma_c1[l], float, ns*nb[l]);
+                MALLOC(d->uf_avgDelta_c1[l], float, ns*nb[l]);
+            }
+        }
+        else
+        {
+            sharedCentroids_c1 = NULL;
+        }
 
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
@@ -627,7 +661,11 @@ Destin * InitDestin_c1( uint ni, uint nl, uint *nb, uint nc, float beta, float l
                         inputOffsets,
                         (l == 0 ? NULL : d->inputPipeline),
                         &d->belief[bOffset],
-                        sharedCentroids
+                        sharedCentroids,
+                        // 2013.4.11
+                        // CZT
+                        //
+                        sharedCentroids_c1
                     );
 
             if(l > 0){
@@ -740,12 +778,24 @@ void DestroyDestin_c1( Destin * d )
             FREE(d->uf_persistWinCounts[i]);
             FREE(d->uf_sigma[i]);
             FREE(d->uf_starv[i]);
+
+            // 2013.4.12
+            // CZT
+            //
+            FREE(d->uf_sigma_c1[i]);
+            FREE(d->uf_avgDelta_c1[i]);
         }
         FREE(d->uf_avgDelta);
         FREE(d->uf_winCounts);
         FREE(d->uf_persistWinCounts);
         FREE(d->uf_sigma);
         FREE(d->uf_starv);
+
+        // 2013.4.12
+        // CZT
+        //
+        FREE(d->uf_sigma_c1);
+        FREE(d->uf_avgDelta_c1);
     }
 
     for( i=0; i < d->nNodes; i++ )
@@ -1087,7 +1137,8 @@ void InitNode_c1
     uint        *inputOffsets,
     float       *input_host,
     float       *belief_host,
-    float       *sharedCentroids
+    float       *sharedCentroids,
+    float * sharedCentroids_c1
     )
 {
 
@@ -1114,6 +1165,26 @@ void InitNode_c1
         node->mu = sharedCentroids;
     }
 
+    // 2013.4.11
+    // CZT
+    // Init mu_c1;
+    //
+    if(sharedCentroids_c1 == NULL)
+    {
+        if(layer == 0)
+        {
+            MALLOC(node->mu_c1, float, nb*(ns+(d->extRatio-1)*ni));
+        }
+        else
+        {
+            MALLOC(node->mu_c1, float, nb*ns);
+        }
+    }
+    else
+    {
+        node->mu_c1 = sharedCentroids_c1;
+    }
+
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
     MALLOC( node->observation, float, ns );
@@ -1121,6 +1192,7 @@ void InitNode_c1
 
     // 2013.4.11
     // CZT
+    // Init observation_c1;
     //
     if(layer == 0)
     {
@@ -1142,8 +1214,39 @@ void InitNode_c1
         MALLOC( node->sigma, float, nb*ns );
     }
 
+    // 2013.4.12
+    // CZT
+    //
+    if(d->isUniform)
+    {
+        node->sigma_c1 = NULL;
+    }
+    else
+    {
+        if(layer == 0)
+        {
+            MALLOC(node->sigma_c1, float, nb*(ns+ni*(d->extRatio-1)));
+        }
+        else
+        {
+            MALLOC(node->sigma_c1, float, nb*ns);
+        }
+    }
+
     MALLOC( node->delta, float, ns);
     node->children = NULL;
+
+    // 2013.4.12
+    // CZT
+    //
+    if(layer == 0)
+    {
+        MALLOC(node->delta_c1, float, ns+ni*(d->extRatio-1));
+    }
+    else
+    {
+        MALLOC(node->delta_c1, float, ns);
+    }
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
     MALLOC(node->inputOffsets, uint, ni);
@@ -1193,6 +1296,65 @@ void InitNode_c1
         node->observation[i] = (float) rand() / (float) RAND_MAX;
     }
 
+    // 2013.4.11, 2013.4.12
+    // CZT
+    //
+    if(layer == 0)
+    {
+        for(i=0; i<nb; ++i)
+        {
+            for(j=0; j<ns+(d->extRatio-1)*ni; ++j)
+            {
+                node->mu_c1[i*(ns+(d->extRatio-1)*ni) + j] = (float)rand() / (float)RAND_MAX;
+
+                if(d->isUniform)
+                {
+                    node->d->uf_sigma_c1[layer][i*(ns+(d->extRatio-1)*ni) + j] = INIT_SIGMA;
+                }
+                else
+                {
+                    node->sigma_c1[i*(ns+(d->extRatio-1)*ni) + j] = INIT_SIGMA;
+                }
+            }
+        }
+    }
+    else
+    {
+        for(i=0; i<nb; ++i)
+        {
+            for(j=0; j<ns; ++j)
+            {
+                node->mu_c1[i*ns + j] = (float)rand() / (float)RAND_MAX;
+
+                if(d->isUniform)
+                {
+                    node->d->uf_sigma_c1[layer][i*ns + j] = INIT_SIGMA;
+                }
+                else
+                {
+                    node->sigma_c1[i*ns + j] = INIT_SIGMA;
+                }
+            }
+        }
+    }
+
+    // 2013.4.11
+    // CZT
+    //
+    if(layer == 0)
+    {
+        for(i=0; i<ns+(d->extRatio-1)*ni; ++i)
+        {
+            node->observation_c1[i] = (float)rand() / (float)RAND_MAX;
+        }
+    }
+    else
+    {
+        for(i=0; i<ns; ++i)
+        {
+            node->observation_c1[i] = (float)rand() / (float)RAND_MAX;
+        }
+    }
 }
 
 // deallocate the node.
@@ -1245,7 +1407,7 @@ void DestroyNode_c1( Node *n)
     FREE( n->observation );
     FREE( n->genObservation );
 
-    // 2013.4.11
+    // 2013.4.11, 2013,4.12
     // CZT
     //
     if(n->observation_c1 != NULL)
@@ -1255,6 +1417,14 @@ void DestroyNode_c1( Node *n)
     if(n->mu_c1 != NULL)
     {
         FREE(n->mu_c1);
+    }
+    if(n->sigma_c1 != NULL)
+    {
+        FREE(n->sigma_c1);
+    }
+    if(n->delta_c1 != NULL)
+    {
+        FREE(n->delta_c1);
     }
 
     FREE( n->delta );
