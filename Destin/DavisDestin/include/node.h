@@ -177,6 +177,14 @@ void MoveCentroids(
                     uint                // node index
                 );
 
+// 2013.4.16
+// CZT
+//
+void MoveCentroids_c1(
+                    Node *,             // pointer to list of nodes
+                    uint                // node index
+                );
+
 void UpdateStarvation(
                     Node *,             // pointer to list of nodes
                     uint                // node index

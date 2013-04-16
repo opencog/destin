@@ -440,6 +440,7 @@ void FormulateBelief( Destin *d, float *image )
     memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
 }
 
+//#define USE_C1
 // 2013.4.11
 // CZT
 //
@@ -485,7 +486,12 @@ void FormulateBelief_c1( Destin *d, float *image )
             // 2013.4.11
             // CZT
             //
+#ifndef USE_C1
+            CalculateDistances( d->nodes, n );
+#endif
+#ifdef USE_C1
             CalculateDistances_c1(d->nodes, n);
+#endif
 
             // Normalize the calculations and get the winning centroid
             NormalizeBeliefGetWinner( d->nodes, n );
@@ -495,7 +501,16 @@ void FormulateBelief_c1( Destin *d, float *image )
             {
                 // Calculate the required centroid movement
                 //TODO: merge CalculateDistances with CalcCentroidMovement
+                //CalcCentroidMovement( d->nodes, d->inputLabel, n );
+                // 2013.4.15
+                // CZT
+                //
+#ifndef USE_C1
                 CalcCentroidMovement( d->nodes, d->inputLabel, n );
+#endif
+#ifdef USE_C1
+                CalcCentroidMovement_c1(d->nodes, d->inputLabel, n);
+#endif
 
                 // Check if the network is uniform
                 if(!d->isUniform){
@@ -517,10 +532,29 @@ void FormulateBelief_c1( Destin *d, float *image )
             // Loop through the nodes in the current layer
             for(n = n_start ; n < n_end ; n++){
                 // Average shared centroid's movements
+                //Uniform_AverageDeltas(d->nodes, n);
+                // 2013.4.15
+                // CZT
+                //
+#ifndef USE_C1
                 Uniform_AverageDeltas(d->nodes, n);
+#endif
+#ifdef USE_C1
+                Uniform_AverageDeltas_c1(d->nodes, n);
+#endif
             }
             // Move the shared centroids
+            //Uniform_ApplyDeltas(d, l, d->uf_sigma[l] );
+            // 2013.4.15
+            // CZT
+            //
+#ifndef USE_C1
             Uniform_ApplyDeltas(d, l, d->uf_sigma[l] );
+#endif
+#ifdef USE_C1
+            Uniform_ApplyDeltas_c1(d, l, d->uf_sigma_c1[l]);
+#endif
+
             // In uniform destin, muSqDiff for the layer is stored in the 0th node of the layer.
             d->muSumSqDiff += GetNodeFromDestin(d, l, 0, 0)->muSqDiff;
 

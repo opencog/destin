@@ -78,7 +78,7 @@ private:
 public:
 
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform );
+            unsigned int centroid_counts [], bool isUniform);
 
     // 2013.4.11
     // CZT

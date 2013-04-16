@@ -228,11 +228,11 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
                 n->observation_c1[i+ns+(j-1)*ni] = framePtr[n->inputOffsets[i] + n->d->size*j];
             }
         }
-    }
+    }/**/
 
 #ifdef CHECK_OBS
-    for(i = 0 ; i < n->ns ; i++){
-        float o = n->observation[i];
+    for(i = 0 ; i < n->ns+n->ni*(n->d->extRatio-1) ; i++){
+        float o = n->observation_c1[i];
         if(isinf(o)){
             oops("observation was inf at index %i\n", i);
         }
@@ -387,7 +387,7 @@ void CalculateDistances_c1( Node *n, uint nIdx )
         // bRow = start index of the probabilities (or grayscales) of the current centroid
         uint bRow = i*ns;
 
-        // iterate over each state for belief
+        /*// iterate over each state for belief
         // Loop through the items in the vector, ignoring the context
         for( j=0; j < ns-nc; j++ )
         {
@@ -418,9 +418,9 @@ void CalculateDistances_c1( Node *n, uint nIdx )
 
             // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
             sumMal += delta / sigma[bRow+j];
-        }
+        }*/
 
-        /*// 2013.4.12
+        // 2013.4.12
         // CZT
         //
         if(n->layer == 0)
@@ -466,7 +466,7 @@ void CalculateDistances_c1( Node *n, uint nIdx )
                 // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
                 sumMal += delta_c1 / sigma_c1[bRow+j];
             }
-        }*/
+        }/**/
 
         // Dead code
         n->genObservation[i] = sumMal;
@@ -677,7 +677,7 @@ void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
     // the class labels start.
     uint ncStart = n->ni + n->nb + n->np;
 
-    for( i=0; i < n->ns; i++ )
+    /*for( i=0; i < n->ns; i++ )
     {
         // if we are less than ncStart, we are not looking at
         // class labels.
@@ -696,9 +696,9 @@ void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
             delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
         }
         n->delta[i] = delta;
-    }
+    }*/
 
-    /*// 2013.4.12
+    // 2013.4.12
     // CZT
     //
     if(n->layer == 0)
@@ -718,7 +718,7 @@ void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
             delta = n->observation_c1[i] - n->mu_c1[winnerOffset_c1+i];
             n->delta_c1[i] = delta;
         }
-    }*/
+    }/**/
     return;
 }
 
@@ -743,11 +743,11 @@ void Uniform_AverageDeltas_c1(Node * n, uint nIdx){
     int count = n->d->uf_winCounts[n->layer][n->winner];
     if(count > 0){
         uint s;
-        for(s = 0; s < n->ns ; s++){
+        /*for(s = 0; s < n->ns ; s++){
             n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
-        }
+        }*/
 
-        /*// 2013.4.12
+        // 2013.4.12
         // CZT
         //
         if(n->layer == 0)
@@ -764,7 +764,7 @@ void Uniform_AverageDeltas_c1(Node * n, uint nIdx){
             {
                 n->d->uf_avgDelta_c1[n->layer][n->winner * n->ns + s] += n->delta_c1[s] / (float)count;
             }
-        }*/
+        }/**/
     }
     return;
 }
@@ -814,7 +814,7 @@ void Uniform_ApplyDeltas_c1(Destin * d, uint layer, float * layerSharedSigma){
         //use learning strategy function pointer to get the learning rate
         learnRate = d->centLearnStratFunc(d, NULL, layer, c);
 
-        //get the first node of the current layers
+        /*//get the first node of the current layers
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){
             //move the centroid with the averaged delta
@@ -829,9 +829,9 @@ void Uniform_ApplyDeltas_c1(Destin * d, uint layer, float * layerSharedSigma){
             n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
             //TODO: write unit test for layerSharedSigma
             layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
-        }
+        }*/
 
-        /*// 2013.4.12
+        // 2013.4.12
         // CZT
         //
         if(n->layer == 0)
@@ -854,7 +854,7 @@ void Uniform_ApplyDeltas_c1(Destin * d, uint layer, float * layerSharedSigma){
 #endif
             n->muSqDiff += diff*diff;
             layerSharedSigma[c*ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
-        }*/
+        }/**/
     }
     return;
 }
@@ -890,7 +890,88 @@ void MoveCentroids( Node *n, uint nIdx ){
         // update the variance of the winning centroid
         n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);    
     }
-}   
+}
+
+// 2013.4.16
+// CZT
+//
+void MoveCentroids_c1( Node *n, uint nIdx ){
+    n = &n[nIdx];
+
+    // gets the row offset for the mu/sigma matrices to update
+    uint winnerOffset = n->winner*n->ns;
+
+    // increment number of counts for winning centroid.
+    n->nCounts[n->winner]++;
+
+    /*
+    int i;
+    float learnRate = n->d->centLearnStratFunc(n->d, n, 0, 0);
+    for(i = 0 ; i < n->ns ; i++){
+        // calculate how much we move the centroid.  the 1 / nCounts
+        // term can be switched out for a different learning rate
+        // whether fixed or adaptive.
+        float delta = n->delta[i];
+        // 2013.4.16
+        // CZT
+        //
+
+        float dTmp = learnRate * delta;
+
+        // move the winning centroid
+        n->mu[winnerOffset+i] += dTmp;
+        // 2013.4.16
+        // CZT
+        //
+
+        // increment the sq. difference
+        n->muSqDiff += dTmp * dTmp;
+
+        // update the variance of the winning centroid
+        n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);
+        // 2013.4.16
+        // CZT
+        //
+    }*/
+
+    // 2013.4.16
+    // CZT
+    //
+    uint winnerOffset_c1 = (n->layer == 0 ? n->winner*(n->ns + n->ni*(n->d->extRatio-1)) : n->winner*n->ns);
+    int ns_c1 = (n->layer == 0 ? (n->ns + n->ni*(n->d->extRatio-1)) : n->ns);
+
+    int i;
+    float learnRate = n->d->centLearnStratFunc(n->d, n, 0, 0);
+    for(i = 0 ; i < ns_c1; i++){
+        // calculate how much we move the centroid.  the 1 / nCounts
+        // term can be switched out for a different learning rate
+        // whether fixed or adaptive.
+        //float delta = n->delta[i];
+        // 2013.4.16
+        // CZT
+        //
+        float delta = n->delta_c1[i];
+
+        float dTmp = learnRate * delta;
+
+        // move the winning centroid
+        //n->mu[winnerOffset+i] += dTmp;
+        // 2013.4.16
+        // CZT
+        //
+        n->mu_c1[winnerOffset_c1 + i] += dTmp;
+
+        // increment the sq. difference
+        n->muSqDiff += dTmp * dTmp;
+
+        // update the variance of the winning centroid
+        //n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);
+        // 2013.4.16
+        // CZT
+        //
+        n->sigma_c1[winnerOffset_c1 + i] += n->beta * (delta*delta - n->sigma_c1[winnerOffset_c1 + i]);
+    }
+}
 
 void UpdateStarvation(Node *n, uint nIdx)
 {

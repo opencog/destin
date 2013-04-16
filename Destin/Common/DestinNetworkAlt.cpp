@@ -84,6 +84,11 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
 void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
         unsigned int centroid_counts [], bool isUniform, int size, int extRatio)
         {
+    // 2013.4.15
+    // CZT
+    //
+    free();
+
     training = true;
     beta = .01;
     lambda = .1;
@@ -138,7 +143,7 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
     SetLearningStrat(destin, CLS_FIXED);
     ClearBeliefs(destin);
     destin->fixedLearnRate = 0.1;
-    isTraining(true);
+    isTraining(true);/**/
 }
 
 DestinNetworkAlt::~DestinNetworkAlt() {
@@ -147,11 +152,11 @@ DestinNetworkAlt::~DestinNetworkAlt() {
     }
 
     if(destin!=NULL){
-        //DestroyDestin(destin);
+        DestroyDestin(destin);
         // 2013.4.11
         // CZT
         //
-        DestroyDestin_c1(destin);
+        //DestroyDestin_c1(destin);
         destin = NULL;
     }
     if(temperatures!=NULL){

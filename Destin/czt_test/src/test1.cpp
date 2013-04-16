@@ -9,6 +9,7 @@ I want to re-do what I thought again!!!
 #include "Transporter.h"
 #include "unit_test.h"
 #include <time.h>
+#include "macros.h"
 
 //#define TEST_ORG
 //#define TEST_IN_ORG
@@ -51,28 +52,9 @@ double printFPS(bool print){
 }
 
 /*
-  2013.4.8
-
-  Append depth value and construct the PixelInfo vector.
-*/
-/*PixelInfo * combineWithDepth(float * fIn, int size)
-{
-    PixelInfo * tempOut;
-    MALLOC(tempOut, PixelInfo, size);
-    int i;
-    for(i=0; i<size; ++i)
-    {
-        tempOut[i].pixelValue = fIn[i];
-        tempOut[i].depthValue = (float)rand() / (float)RAND_MAX;
-    }
-
-    return tempOut;
-}*/
-
-/*
   2013.4.9
 */
-void * combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut)
+void combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut)
 {
     int i,j;
     for(i=0; i<size; ++i)
@@ -83,11 +65,10 @@ void * combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut)
     {
         for(j=0; j<size; ++j)
         {
-            tempOut[size*i+j] = (float)rand() / (float)RAND_MAX;
+            //tempOut[size*i+j] = (float)rand() / (float)RAND_MAX;
+            tempOut[size*i+j] = 0.5;
         }
     }
-
-    return tempOut;
 }
 
 int main(int argc, char ** argv)
@@ -203,6 +184,9 @@ int main(int argc, char ** argv)
     //
     int size = 512*512;
     int extRatio = 2;
+    int inputSize = size*extRatio;
+    float * tempIn;
+    MALLOC(tempIn, float, inputSize); //
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
     network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
@@ -223,19 +207,9 @@ int main(int argc, char ** argv)
         //
         //network->doDestin(t.getDest());
 
-        // Method1:
-        //
-        //PixelInfo * tempIn;
-        //tempIn = combineWithDepth(t.getDest(), 512*512);
-        //network->doDestin(getPixelValue(tempIn, 512*512));
-        //network->doDestin_c1(tempIn, 512*512);
-
         // Method2:
-        float * tempIn;
-        MALLOC(tempIn, float, size*extRatio);
         combineWithDepth_1(t.getDest(), size, extRatio, tempIn);
         network->doDestin_c1(tempIn);
-        FREE(tempIn);
         //break;
 
         if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
@@ -294,6 +268,7 @@ int main(int argc, char ** argv)
         printf("OffSet: %d\n", network->getNode(0, 0, 0)->inputOffsets[i]);
     }*/
 
+    FREE(tempIn);
     delete network;
 #endif
 
