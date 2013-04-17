@@ -440,7 +440,7 @@ void FormulateBelief( Destin *d, float *image )
     memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
 }
 
-//#define USE_C1
+#define USE_C1
 // 2013.4.11
 // CZT
 //

@@ -65,8 +65,8 @@ void combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut)
     {
         for(j=0; j<size; ++j)
         {
-            //tempOut[size*i+j] = (float)rand() / (float)RAND_MAX;
-            tempOut[size*i+j] = 0.5;
+            tempOut[size*i+j] = (float)rand() / (float)RAND_MAX;
+            //tempOut[size*i+j] = 0.5;
         }
     }
 }
@@ -173,6 +173,7 @@ int main(int argc, char ** argv)
   Step 4: 'extRatio';
 */
 #ifdef TEST_STEP1
+    //VideoSource vs(false, "./Various.avi");
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
     SupportedImageWidths siw = W512;
@@ -183,7 +184,8 @@ int main(int argc, char ** argv)
     // CZT
     //
     int size = 512*512;
-    int extRatio = 2;
+    int extRatio = 1; // Use this parameter to control the size!!!
+
     int inputSize = size*extRatio;
     float * tempIn;
     MALLOC(tempIn, float, inputSize); //
