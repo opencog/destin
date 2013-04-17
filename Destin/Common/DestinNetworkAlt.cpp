@@ -120,7 +120,7 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
     if (layers != l) {
         throw std::logic_error("Image width does not match the given number of layers.");
     }
-    destin = InitDestin_c1(
+    destin = InitDestin_c2( // Use _c2!
             input_dimensionality,
             layers,
             centroid_counts,

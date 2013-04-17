@@ -442,7 +442,7 @@ void CalculateDistances_c1( Node *n, uint nIdx )
                 sumEuc += delta_c1;
 
                 // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
-                sumMal += delta_c1 / sigma_c1[bRow+j];
+                sumMal += delta_c1 / sigma_c1[bRow_c1+j];
             }
         }
         else
@@ -464,7 +464,7 @@ void CalculateDistances_c1( Node *n, uint nIdx )
                 sumEuc += delta_c1;
 
                 // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
-                sumMal += delta_c1 / sigma_c1[bRow+j];
+                sumMal += delta_c1 / sigma_c1[bRow_c1+j];
             }
         }/**/
 
@@ -847,11 +847,7 @@ void Uniform_ApplyDeltas_c1(Destin * d, uint layer, float * layerSharedSigma){
             dt = d->uf_avgDelta_c1[layer][c*ns + s];
             diff = dt * learnRate;
             n->mu_c1[c*ns + s] += diff;
-#ifdef CHECK_BIG_MU
-            if ( n->mu[c * ns + s] > 1.0){
-                oops("Big mu value:%e at line %i\n",n->mu[c * ns + s],__LINE__ );
-            }
-#endif
+
             n->muSqDiff += diff*diff;
             layerSharedSigma[c*ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
         }/**/

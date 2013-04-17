@@ -103,6 +103,25 @@ Destin * InitDestin_c1(                    // initialize Destin.
     int
 );
 
+// 2013.4.17
+// CZT
+//
+Destin * InitDestin_c2(                    // initialize Destin.
+    uint,               // input dimensionality for first layer, input must be square
+    uint,               // number of layers
+    uint *,             // belief dimensionality for each layer
+    uint,               // number of classes
+    float,              // beta coeff
+    float,              // lambda coeff
+    float,              // gamma coeff
+    float *,            // temperature for each layer
+    float,              // starv coeff
+    uint,               // number of movements per digit presentation
+    bool,               // is uniform - if nodes in a layer share one list of centroids
+    int,
+    int
+);
+
 void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
                     Destin *            // initialized destin pointer
                 );

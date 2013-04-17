@@ -211,7 +211,8 @@ int main(int argc, char ** argv)
 
         // Method2:
         combineWithDepth_1(t.getDest(), size, extRatio, tempIn);
-        network->doDestin_c1(tempIn);
+        //network->doDestin_c1(tempIn);
+        network->doDestin(tempIn);
         //break;
 
         if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
