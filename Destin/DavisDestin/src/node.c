@@ -159,7 +159,7 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
             // 2013.4.11
             // CZT
             //
-            n->observation_c1[i] = n->input[n->inputOffsets[i]];
+            //n->observation_c1[i] = n->input[n->inputOffsets[i]];
         }
     } else {
         // If so, use input from the input image
@@ -170,7 +170,7 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
             // 2013.4.11
             // CZT
             //
-            n->observation_c1[i] = framePtr[n->inputOffsets[i]];
+            //n->observation_c1[i] = framePtr[n->inputOffsets[i]];
         }
     }
 
@@ -186,7 +186,7 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
         // 2013.4.11
         // CZT
         //
-        n->observation_c1[i+ni] = 1/(float)nb;
+        //n->observation_c1[i+ni] = 1/(float)nb;
 #endif
     }
 
@@ -200,7 +200,7 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
         // 2013.4.11
         // CZT
         //
-        n->observation_c1[i+ni+nb] = 1/(float)np;
+        //n->observation_c1[i+ni+nb] = 1/(float)np;
 #endif
     }
 
@@ -212,7 +212,7 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
         // 2013.4.11
         // CZT
         //
-        n->observation_c1[i+ni+nb+np] = 0;
+        //n->observation_c1[i+ni+nb+np] = 0;
     }
 
 
@@ -225,7 +225,7 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
         {
             for(i=0; i<ni; ++i)
             {
-                n->observation_c1[i+ns+(j-1)*ni] = framePtr[n->inputOffsets[i] + n->d->size*j];
+                n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->size*j];
             }
         }
     }/**/
