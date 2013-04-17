@@ -673,52 +673,11 @@ void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
     // convergence.
     n->muSqDiff = 0;
 
-    // this is the offset in the observation vector where
-    // the class labels start.
-    uint ncStart = n->ni + n->nb + n->np;
-
-    /*for( i=0; i < n->ns; i++ )
+    for( i=0; i < n->ns; i++ )
     {
-        // if we are less than ncStart, we are not looking at
-        // class labels.
-        if( i < ncStart )
-        {
-            delta = n->observation[i] - n->mu[winnerOffset+i];
-
-        // otherwise, use the class label to move the last n_c
-        // components of the winning centroid
-        }
-        // 2013.4.1
-        // CZT
-        // As 'nc' is set to 0, the 'else' part will never be invoked!!!
-        //
-        else {
-            delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
-        }
+        delta = n->observation[i] - n->mu[winnerOffset+i];
         n->delta[i] = delta;
-    }*/
-
-    // 2013.4.12
-    // CZT
-    //
-    if(n->layer == 0)
-    {
-        uint winnerOffset_c1 = n->winner * (n->ns + (n->d->extRatio-1)*n->ni);
-        for( i=0; i < n->ns + (n->d->extRatio-1)*n->ni; ++i )
-        {
-            delta = n->observation_c1[i] - n->mu_c1[winnerOffset_c1+i];
-            n->delta_c1[i] = delta;
-        }
     }
-    else
-    {
-        uint winnerOffset_c1 = n->winner * n->ns;
-        for(i=0; i<n->ns; ++i)
-        {
-            delta = n->observation_c1[i] - n->mu_c1[winnerOffset_c1+i];
-            n->delta_c1[i] = delta;
-        }
-    }/**/
     return;
 }
 
