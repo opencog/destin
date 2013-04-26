@@ -10,10 +10,17 @@ I want to re-do what I thought again!!!
 #include "unit_test.h"
 #include <time.h>
 #include "macros.h"
+//
+#include "stereovision.h"
+#include "stereocamera.h"
 
 //#define TEST_ORG
 //#define TEST_IN_ORG
-#define TEST_STEP1
+//#define TEST_STEP1
+// 2013.4.19
+// CZT
+//
+#define TEST_STEP2
 
 using namespace cv;
 void testNan(float * array, int len){
@@ -69,6 +76,15 @@ void combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut)
             //tempOut[size*i+j] = 0.5;
         }
     }
+}
+
+IplImage * convert_c2(cv::Mat in)
+{
+    IplImage * out = new IplImage(in);
+    IplImage * real_out;
+    real_out = cvCreateImage(cvGetSize(out), IPL_DEPTH_8U, 1);
+    cvCvtColor(out, real_out, CV_BGR2GRAY);
+    return real_out;
 }
 
 int main(int argc, char ** argv)
@@ -219,7 +235,7 @@ int main(int argc, char ** argv)
             continue;
         }
 
-        // Clean screen
+        // Clean screencvRemap
         printf("\033[2J\033[1;1H");
         printf("----------------TEST_STEP1----------------\n");
 
@@ -272,6 +288,86 @@ int main(int argc, char ** argv)
 
     FREE(tempIn);
     delete network;
+#endif
+
+/*****************************************************************************/
+/*
+  2013.4.19
+
+  Try to use 2 cams!!!
+*/
+#ifdef TEST_STEP2
+    VideoSource vs1(true, "", CV_CAP_ANY);
+    VideoSource vs2(true, "", CV_CAP_ANY+1);
+    vs1.enableDisplayWindow_c1("left");
+    vs2.enableDisplayWindow_c1("right");
+    vs1.grab();
+    vs2.grab();/**/
+
+    int result;
+    StereoVision * sv = new StereoVision(640, 480);
+    result = sv->calibrationLoad("calibration.dat");
+    printf("calibrationLoad() status: %d\n", result);
+    CvSize imageSize = sv->getImageSize();
+    CvMat * imageRectifiedPair = cvCreateMat( imageSize.height, imageSize.width*2,CV_8UC3 );
+    IplImage * img_l;
+    IplImage * img_r;
+
+
+    // Method 1
+    // Should use 'VideoSource' part!!!
+    //
+    while(vs1.grab() && vs2.grab())
+    {
+        img_l = convert_c2(vs1.getOutput_c1());
+        img_r = convert_c2(vs2.getOutput_c1());
+        result = sv->stereoProcess(img_l, img_r);
+        cvShowImage("depth", sv->imageDepthNormalized);
+
+        CvMat part;
+        cvGetCols( imageRectifiedPair, &part, 0, imageSize.width );
+        cvCvtColor( sv->imagesRectified[0], &part, CV_GRAY2BGR );
+        cvGetCols( imageRectifiedPair, &part, imageSize.width,imageSize.width*2 );
+        cvCvtColor( sv->imagesRectified[1], &part, CV_GRAY2BGR );
+        for(int j = 0; j < imageSize.height; j += 16 )
+            cvLine( imageRectifiedPair, cvPoint(0,j),cvPoint(imageSize.width*2,j),CV_RGB((j%3)?0:255,((j+1)%3)?0:255,((j+2)%3)?0:255));
+        cvShowImage( "rectified", imageRectifiedPair );
+    }/**/
+
+    // Method 2
+    // Should comment the 'VideoSourece' Part!!! Here we use 'StereoCamera' class instead!!!
+    //
+    /*StereoCamera camera;
+    if(camera.setup(imageSize) == 0)
+    {
+        while(true)
+        {
+            camera.capture();
+            img_l = camera.getFramesGray(0);
+            img_r = camera.getFramesGray(1);
+            cvShowImage("left", img_l);
+            cvShowImage("right", img_r);
+
+            sv->stereoProcess(camera.getFramesGray(0), camera.getFramesGray(1));
+            cvShowImage("depth", sv->imageDepthNormalized);
+
+            CvMat part;
+            cvGetCols( imageRectifiedPair, &part, 0, imageSize.width );
+            cvCvtColor( sv->imagesRectified[0], &part, CV_GRAY2BGR );
+            cvGetCols( imageRectifiedPair, &part, imageSize.width,imageSize.width*2 );
+            cvCvtColor( sv->imagesRectified[1], &part, CV_GRAY2BGR );
+            for(int j = 0; j < imageSize.height; j += 16 )
+                cvLine( imageRectifiedPair, cvPoint(0,j),cvPoint(imageSize.width*2,j),CV_RGB((j%3)?0:255,((j+1)%3)?0:255,((j+2)%3)?0:255));
+            cvShowImage( "rectified", imageRectifiedPair );
+
+            cvWaitKey(10);
+        }
+    }*/
+
+    cvReleaseImage(&img_l);
+    cvReleaseImage(&img_r);
+    cvReleaseMat(&imageRectifiedPair);
+    FREE(sv);
 #endif
 
 	return 0;

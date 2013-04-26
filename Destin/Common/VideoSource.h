@@ -52,6 +52,12 @@ private:
 	//title on the window which displays the video output
 #define DESTIN_VIDEO_WINDOW_TITLE  "DeSTIN Input Video"
 
+    // 2013.4.19
+    // CZT
+    // Defined title for windows:
+    //
+    string win_title;
+
 	bool edge_detection; //if true shows video in edge detection mode ( shows image outlines)
 
     bool showWindow; //shows video or webcam input in window for user. 
@@ -147,6 +153,12 @@ public:
 	float * getOutput() {
 		return float_frame;
 	}
+
+    cv::Mat getOutput_c1() {
+        //return greyscaled_frame;
+        return original_frame;
+    }
+
 	/**
 	 * Shows the output of the video or webcam to the screen in a window
 	 */
@@ -155,6 +167,15 @@ public:
 		cv::namedWindow(DESTIN_VIDEO_WINDOW_TITLE, CV_WINDOW_AUTOSIZE);
         showWindow = true;
 	}
+
+    // 2013.4.19
+    // CZT
+    //
+    void enableDisplayWindow_c1(string win_title) {//don't know how to unshow it yet
+        cv::namedWindow(win_title, CV_WINDOW_AUTOSIZE);
+        this->win_title = win_title;
+        showWindow = true;
+    }
 
 	/**
 	 * When set to true, "Canny" edge detection is applied to the video source

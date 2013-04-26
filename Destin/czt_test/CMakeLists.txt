@@ -10,7 +10,14 @@
 
 #FIND_PACKAGE(OpenCV REQUIRED)
 
-INCLUDE_DIRECTORIES(../Common ../DavisDestin/include)
+SET(temp_set
+    include/stereovision.h
+    src/stereovision.cpp
+    include/stereocamera.h
+    src/stereocamera.cpp
+)
 
-ADD_EXECUTABLE(test1 src/test1.cpp  ../Common/VideoSource)
+INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include)
+
+ADD_EXECUTABLE(test1 src/test1.cpp  ../Common/VideoSource ${temp_set})
 TARGET_LINK_LIBRARIES(test1 ${OpenCV_LIBS} common destinalt avutil)

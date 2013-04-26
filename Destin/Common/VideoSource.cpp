@@ -32,9 +32,16 @@ bool VideoSource::grab() {
             cv::Canny(greyscaled_frame, greyscaled_frame, 0, 30, 3); // apply edge detection
         }
 
-        if(showWindow){
+        /*if(showWindow){
             cv::imshow( DESTIN_VIDEO_WINDOW_TITLE, greyscaled_frame); //show video to output window
 
+        }*/
+
+        // 2013.4.19
+        // CZT
+        //
+        if(showWindow){
+            cv::imshow(this->win_title, greyscaled_frame); //show video to output window
         }
 
         // some strange issues with waitkey, see http://opencv.willowgarage.com/wiki/documentation/c/highgui/WaitKey
