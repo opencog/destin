@@ -17,7 +17,12 @@ SET(temp_set
     src/stereocamera.cpp
 )
 
+ADD_LIBRARY( temp_lib SHARED ${temp_set})
+
 INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include)
 
 ADD_EXECUTABLE(test1 src/test1.cpp  ../Common/VideoSource ${temp_set})
 TARGET_LINK_LIBRARIES(test1 ${OpenCV_LIBS} common destinalt avutil)
+
+ADD_EXECUTABLE(test2 src/test2.cpp  ../Common/VideoSource ${temp_set})
+TARGET_LINK_LIBRARIES(test2 ${OpenCV_LIBS} common destinalt avutil)

@@ -19,6 +19,9 @@
 #include "SomPresentor.hpp"
 #include "BeliefExporter.h"
 #include "DestinTreeManager.h"
+
+#include "czt_lib.h"
+#include "czt_lib2.h"
 %}
 
 
@@ -60,6 +63,9 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "cent_image_gen.h"
 %include "belief_transform.h"
 %include "DestinTreeManager.h"
+
+%include "czt_lib.h"/**/
+%include "czt_lib2.h"/**/
 
 /* use c++ vector like a python list */
 %include "std_vector.i"

@@ -42,7 +42,6 @@ public:
         nImages++;
     }
 
-
 };
 
 #endif

@@ -157,6 +157,7 @@ public:
     cv::Mat getOutput_c1() {
         //return greyscaled_frame;
         return original_frame;
+        //return flipped_frame;
     }
 
 	/**

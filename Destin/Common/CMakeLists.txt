@@ -18,11 +18,8 @@ add_library( common SHARED
     ImageSourceImpl.h
     DestinTreeManager
 
-    # 2013.4.19
-    # CZT
-    #
-    #VideoSource_c1.h
-    #VideoSource_c1.cpp
+    czt_lib.h
+    czt_lib2.h
 )
 
 add_executable( testCifarSource TestCifar.cc )
