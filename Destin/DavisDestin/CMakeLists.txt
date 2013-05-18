@@ -46,7 +46,7 @@ ADD_LIBRARY( destinalt SHARED ${destalt_sources})
 TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS})
 
 ADD_LIBRARY( destinalt_test SHARED ${destalt_sources})
-TARGET_LINK_LIBRARIES( destinalt_test ${OpenCV_LIBS})
+TARGET_LINK_LIBRARIES( destinalt_test ${OpenCV_LIBS} m)
 SET_TARGET_PROPERTIES(destinalt_test PROPERTIES COMPILE_DEFINITIONS "UNIT_TEST")
 
 
