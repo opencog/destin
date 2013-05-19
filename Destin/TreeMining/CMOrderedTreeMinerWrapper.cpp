@@ -1,58 +1,64 @@
 #include "CMOrderedTreeMinerWrapper.h"
 
 
-void CMOrderedTreeMinerWrapper::addTree(short description[], int length){
-    int total = length;
-    short temp;
+
+void CMOrderedTreeMinerWrapper::vectorToTextTree(vector<short> treeDescription, int tid, TextTree & out){
+    arrayToTextTree(treeDescription.data(), treeDescription.size(), tid, out);
+}
+
+void CMOrderedTreeMinerWrapper::arrayToTextTree(short treeDescription[], int length, int tid, TextTree & out){
     stack<short> tempK;
 
-    TextTree rhs; // have no clue why its called rhs
+    out.tid = tid;
 
-    rhs.tid = current_tid++;
+    short temp = treeDescription[0]; //read in the root label
 
-    temp = description[0]; //read in the root label
-
-    rhs.vLabel.push_back(temp);
-    rhs.firstChild.push_back(-1); //temporarily, the root has no child
-    rhs.nextSibling.push_back(-1); //the root has no sibling
-    rhs.parent.push_back(-1); //the root has no parent
-    rhs.vNumber = 1;
+    out.vLabel.push_back(temp);
+    out.firstChild.push_back(-1); //temporarily, the root has no child
+    out.nextSibling.push_back(-1); //the root has no sibling
+    out.parent.push_back(-1); //the root has no parent
+    out.vNumber = 1;
 
     tempK.push(0); //the index of the root
 
-    for ( short i = 1; i < total; i++ ) {
-        temp = description[i];
+    for ( short i = 1; i < length; i++ ) {
+        temp = treeDescription[i];
         if ( temp == -1 ) { //a backtrack
             tempK.pop();
             continue; //nothing to do with the TextTree
         }
 
-        rhs.vLabel.push_back(temp); //add the new vertex label
+        out.vLabel.push_back(temp); //add the new vertex label
 
-        if (rhs.firstChild[tempK.top()] == -1) { //if the current node has no child yet
-            rhs.firstChild[tempK.top()] = rhs.vNumber;
+        if (out.firstChild[tempK.top()] == -1) { //if the current node has no child yet
+            out.firstChild[tempK.top()] = out.vNumber;
         }
         else { //if the current node has children already, find the rightmost child, its nextSibling is the new node
             short j = tempK.top();
-            j = rhs.firstChild[j];
-            while ( rhs.nextSibling[j] != -1 ) j = rhs.nextSibling[j];
-            rhs.nextSibling[j] = rhs.vNumber;
+            j = out.firstChild[j];
+            while ( out.nextSibling[j] != -1 ) j = out.nextSibling[j];
+            out.nextSibling[j] = out.vNumber;
         }
 
-        rhs.firstChild.push_back(-1); //the new node has no child yet
-        rhs.nextSibling.push_back(-1); //the new node has no right sibling yet
-        rhs.parent.push_back(tempK.top()); //the parent of the new node is the current node
-        tempK.push(rhs.vNumber);
-        rhs.vNumber++;
-        if(rhs.vNumber >= CMR_MAX_TREE_NODES){
+        out.firstChild.push_back(-1); //the new node has no child yet
+        out.nextSibling.push_back(-1); //the new node has no right sibling yet
+        out.parent.push_back(tempK.top()); //the parent of the new node is the current node
+        tempK.push(out.vNumber);
+        out.vNumber++;
+        if(out.vNumber >= CMR_MAX_TREE_NODES){
             throw std::domain_error("CMOrderedTreeMinerWrapper::addTree: tree has too many nodes.\n");
         }
     }
+    return;
+}
 
-    database.push_back(rhs);
+void CMOrderedTreeMinerWrapper::addTree(short treeDescription[], int length){
+    TextTree tt;
+    arrayToTextTree(treeDescription, length, ++current_tid, tt);
+    database.push_back(tt);
 
-    for(int i = 0 ; i < rhs.vLabel.size() ; i++){
-        short l = rhs.vLabel[i];
+    for(int i = 0 ; i < tt.vLabel.size() ; i++){
+        short l = tt.vLabel[i];
         if(l < MIN_VERTEX){
             MIN_VERTEX = l;
         }else if(l > MAX_VERTEX){

@@ -49,8 +49,10 @@ typedef struct Node {
 
     struct Node ** children;// array of 4 child node pointers
 
-    float * delta;           // vector that stores difference between observation and mu shared centroid vector
+    float * delta;          // vector that stores difference between observation and mu shared centroid vector
     uint    layer;          // layer this node belongs in
+    uint    row;            // row of the layer this node belongs
+    uint    col;            // column of the layer this node belongs
     /* HOST VARIABLES END */
 
 } Node;

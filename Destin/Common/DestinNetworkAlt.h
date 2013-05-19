@@ -74,6 +74,7 @@ private:
      */
     void initTemperatures(int layers, uint * centroids);
 
+    const int inputImageWidth;
 
 public:
 
@@ -95,6 +96,11 @@ public:
             bool isExtend, int size, int extRatio);*/
 
     virtual ~DestinNetworkAlt();
+
+
+    int getInputImageWidth(){
+        return inputImageWidth;
+    }
 
     float *** getCentroidImages();
 

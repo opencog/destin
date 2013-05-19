@@ -2082,6 +2082,10 @@ void InitNode
     node->winner        = 0;
     node->layer         = layer;
 
+    int relativeIndex = nodeIdx - d->layerNodeOffsets[layer];
+    node->row           = relativeIndex / d->layerWidth[layer];
+    node->col           = relativeIndex - node->row * d->layerWidth[layer];
+
     if(sharedCentroids == NULL){
         //not uniform so each node gets own centroids
         MALLOC( node->mu, float, nb*ns );

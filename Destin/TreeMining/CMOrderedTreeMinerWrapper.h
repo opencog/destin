@@ -89,6 +89,8 @@ public:
     void treeToVector(TextTree & tt, vector<short> & v_out);
 
 
+    void vectorToTextTree(vector<short> treeDesciption, int tid, TextTree & out);
+    void arrayToTextTree(short description[], int length, int tid, TextTree & out);
 
     /** Adjusts the database so that each tree represents one time slice.
       *

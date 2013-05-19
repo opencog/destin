@@ -519,6 +519,8 @@ int testFindSubtreeLocations(){
     assertIntEquals(0, locations.at(0));
     assertIntEquals(5, locations.at(1));
 
+    assertIntEquals(-1, tmw.findSubtreeLocation(tmw.getAddedTree(9), tmw.getAddedTree(6)));
+
     return 0;
 }
 

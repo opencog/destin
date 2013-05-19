@@ -180,6 +180,10 @@ public:
         //return flipped_frame;
     }
 
+    cv::Mat & getOutputColorMat(){
+        return flipped_frame;
+    }
+
 	/**
 	 * Shows the output of the video or webcam to the screen in a window
 	 */
