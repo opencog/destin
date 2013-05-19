@@ -36,8 +36,8 @@ private:
 
 	//video as originally comes out of the webcam
 	cv::Mat original_frame;
-	//video after it has been resized to the target_size
-	cv::Mat rescaled_frame;
+    //video after it has been resized to the target_size
+    cv::Mat rescaled_frame;
 	//video after it has been resize and converted to greyscale
 	cv::Mat greyscaled_frame;
     //video after it has been flip flipped
@@ -109,16 +109,21 @@ public:
 			throw runtime_error(mess.str());
 		}
 
+        cap->set(CV_CAP_PROP_FRAME_WIDTH, target_size.width);
+        cap->set(CV_CAP_PROP_FRAME_HEIGHT, target_size.height);
         cvMoveWindow(DESTIN_VIDEO_WINDOW_TITLE, 50, 50);
         av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
 	}
 
 	bool isOpened() {
 		return cap->isOpened();
-	}
+    }
 
-	/**
-	 * setSize - rescales video output to this size
+    /** Sets the size of the video output.
+     * If the webcam can't supply the exact size image, it may
+     * supply the resolution that is closest but smaller than what is asked.
+     * In that case, the software will manually upscale the image the
+     * rest of the way to match the exact size.
 	 */
 	void setSize(int width, int height) {
 		if(target_size.width != width || target_size.height != height){
@@ -126,6 +131,8 @@ public:
 			float_frame = new float[width * height];
 		}
 		target_size = cv::Size(width, height);
+        cap->set(CV_CAP_PROP_FRAME_WIDTH, width);
+        cap->set(CV_CAP_PROP_FRAME_HEIGHT, height);
 	}
    
 

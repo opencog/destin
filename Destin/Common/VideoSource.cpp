@@ -43,8 +43,15 @@ void VideoSource::processFrame(){
 
     original_size = original_frame.size();
 
-    // see http://opencv.willowgarage.com/documentation/cpp/imgproc_geometric_image_transformations.html#resize
-    cv::resize(original_frame, rescaled_frame, target_size, 1.0, 1.0); //resize image to target_size
+    if(original_size == target_size){
+        rescaled_frame = original_frame;
+    }else{
+        // The camera may not deliver the size you ask for. It may
+        // try to find the closest resolution it can.
+        // So we have to resize it manually to ge the exact size we want.
+        // see http://opencv.willowgarage.com/documentation/cpp/imgproc_geometric_image_transformations.html#resize
+        cv::resize(original_frame, rescaled_frame, target_size, 1.0, 1.0);
+    }
 
     if(flip){
         cv::flip(rescaled_frame, flipped_frame, 1);
@@ -75,7 +82,6 @@ bool VideoSource::grab(){
         int currentFrame = (int)cap->get(CV_CAP_PROP_POS_FRAMES);
         int totalFrames = (int)cap->get(CV_CAP_PROP_FRAME_COUNT);
 
-        cout << currentFrame << " " << totalFrames << endl;
         // rewind if at the end of the video
         if(currentFrame >= totalFrames){
             cap->set(CV_CAP_PROP_POS_FRAMES,0);
