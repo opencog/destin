@@ -140,9 +140,11 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
      );
 
     setBeliefTransform(DST_BT_NONE);
-    SetLearningStrat(destin, CLS_FIXED);
     ClearBeliefs(destin);
-    destin->fixedLearnRate = 0.1;
+
+    /*SetLearningStrat(destin, CLS_FIXED);
+    destin->fixedLearnRate = 0.1;*/
+    SetLearningStrat(destin, CLS_DECAY);/**/
     isTraining(true);/**/
 }
 

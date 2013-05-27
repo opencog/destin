@@ -15,9 +15,9 @@ I want to re-do what I thought again!!!
 #include "stereocamera.h"
 #include "czt_lib.h"
 
-#define TEST_ORG
+//#define TEST_ORG
 //#define TEST_IN_ORG
-//#define TEST_STEP1
+#define TEST_STEP1
 // 2013.4.19
 // CZT
 //
@@ -247,7 +247,7 @@ int main(int argc, char ** argv)
     vs.grab();//throw away first frame in case its garbage
     int frameCount = 0;
 
-    double totalFps = 0.0;
+    /*double totalFps = 0.0;
     while(vs.grab()){
         frameCount++;
 
@@ -298,7 +298,7 @@ int main(int argc, char ** argv)
             printf("belief graph layer: %i\n",l);
             network->printBeliefGraph(l,0,0);
         }
-    }/**/
+    }*/
 
     /*// 2013.4.9
     // CZT
@@ -310,7 +310,7 @@ int main(int argc, char ** argv)
         printf("Layer %d has %d nodes!\n", i, network->getNetwork()->layerSize[i]);
     }*/
 
-    /*// 2013.4.10
+    // 2013.4.10
     // CZT
     //
     int ni=4*4;
@@ -318,7 +318,7 @@ int main(int argc, char ** argv)
     for(i=0; i<ni; ++i)
     {
         printf("OffSet: %d\n", network->getNode(0, 0, 0)->inputOffsets[i]);
-    }*/
+    }/**/
 
     FREE(tempIn);
     delete network;

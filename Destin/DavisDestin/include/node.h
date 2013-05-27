@@ -143,14 +143,6 @@ void CalculateDistances(
                     uint                // node index
                 );
 
-// 2013.4.11
-// CZT
-//
-void CalculateDistances_c1(
-                    Node *,             // pointer to list of nodes
-                    uint                // node index
-                );
-
 void NormalizeBeliefGetWinner(
                     Node *,             // pointer to list of nodes
                     uint                // node index
@@ -177,14 +169,6 @@ void MoveCentroids(
                     uint                // node index
                 );
 
-// 2013.4.16
-// CZT
-//
-void MoveCentroids_c1(
-                    Node *,             // pointer to list of nodes
-                    uint                // node index
-                );
-
 void UpdateStarvation(
                     Node *,             // pointer to list of nodes
                     uint                // node index
@@ -195,24 +179,7 @@ void Uniform_AverageDeltas(
                     uint                // node index
                 );
 
-// 2013.4.12
-// CZT
-//
-void Uniform_AverageDeltas_c1(
-                    Node *,             // pointer to list of nodes
-                    uint                // node index
-                );
-
 void Uniform_ApplyDeltas(
-                    struct Destin *,
-                    uint,               // layer to apply deltas
-                    float *             // shared sigma float array to use. Table nb x ns
-                );
-
-// 2013.4.12
-// CZT
-//
-void Uniform_ApplyDeltas_c1(
                     struct Destin *,
                     uint,               // layer to apply deltas
                     float *             // shared sigma float array to use. Table nb x ns

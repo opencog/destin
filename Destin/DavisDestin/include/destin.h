@@ -84,25 +84,6 @@ Destin * InitDestin(                    // initialize Destin.
                     bool               // is uniform - if nodes in a layer share one list of centroids
                 );
 
-// 2013.4.11
-// CZT
-//
-Destin * InitDestin_c1(                    // initialize Destin.
-    uint,               // input dimensionality for first layer, input must be square
-    uint,               // number of layers
-    uint *,             // belief dimensionality for each layer
-    uint,               // number of classes
-    float,              // beta coeff
-    float,              // lambda coeff
-    float,              // gamma coeff
-    float *,            // temperature for each layer
-    float,              // starv coeff
-    uint,               // number of movements per digit presentation
-    bool,               // is uniform - if nodes in a layer share one list of centroids
-    int,
-    int
-);
-
 // 2013.4.17
 // CZT
 //
