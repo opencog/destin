@@ -203,7 +203,7 @@ int testVarArgs(void){
    assertIntArrayEqualsV(an_int_array, 4, 2, 4, 6, 8);
 
    long a_long_array[] = {3, 6, 9, 12};
-   assertLongArrayEqualsV(a_long_array, 4, 3, 6, 9, 12);
+   assertLongArrayEqualsV(a_long_array, 4L, 3L, 6L, 9L, 12L);
 
    bool a_bool_array[] = {false, false, true, true};
    assertBoolArrayEqualsV(a_bool_array, 4, false, false, true, true);

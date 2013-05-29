@@ -268,8 +268,8 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
 }\
 
 
-/** test long array with variable arguments
-* must write long constants as 1L, 2L ect.
+/** Test long array with variable arguments
+* MUST write long constants as 1L, 2L ect. or bad things will happen.
 */
 #define assertLongArrayEqualsV( act, len, expecteds... ){\
     if(! _assertLongArrayEqualsV(act, len, __LINE__, expecteds )){\

@@ -11,4 +11,4 @@ TestTreeMiner.cc
 )
 
 target_link_libraries(cm_ordered_treeminer_wrapper cm_ordered_treeminer)
-target_link_libraries(testTreeMiner common destinalt_test cm_ordered_treeminer_wrapper)
+target_link_libraries(testTreeMiner common destinalt_test cm_ordered_treeminer_wrapper avutil)
