@@ -237,7 +237,7 @@ public:
     float * getCentroidImage(int layer, int centroid);
 
     /** Returns generated centroid image.
-      * Mehod updateCentroidImages should be called to get a refreshed version of the image.
+      * Method updateCentroidImages should be called to get a refreshed version of the image.
       * Currently only works when isUniform instance variable is true.
       * The contrast of the image can be enhanced by setting the weight exponent
       * parameter larger than 1.0 via setCentImgWeightExponent method, and further by
