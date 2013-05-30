@@ -5,6 +5,10 @@
 #include "DestinNetworkAlt.h"
 #include "CMOrderedTreeMinerWrapper.h"
 
+/**
+ * Performs subtree mining using CMOrderedTreeMinerWrapper.
+ * Is able to display the found mined trees.
+ */
 class DestinTreeManager {
 
     DestinNetworkAlt & destin;
