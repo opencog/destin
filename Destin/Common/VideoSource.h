@@ -91,7 +91,7 @@ public:
 	 */
 	VideoSource(bool use_device, std::string video_file, int dev_no = 0) :
         target_size(512, 512), edge_detection(false), showWindow(false),
-        flip(true), isDevice(use_device) {
+        flip(true), isDevice(use_device), win_title(DESTIN_VIDEO_WINDOW_TITLE) {
 
 		float_frame = new float[target_size.area()];
 		stringstream mess;
