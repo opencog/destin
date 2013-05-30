@@ -11,70 +11,96 @@
 using namespace std;
 
 
-bool VideoSource::grab() {
-    if (cap->grab()) {
-        cap->retrieve(original_frame); //retrieve the captured frame
+void VideoSource::convert(cv::Mat & in, float * out) {
 
-        original_size = original_frame.size();
+    if(in.channels()!=1){
+        throw runtime_error("Excepted a grayscale image with one channel.");
+    }
 
-        // see http://opencv.willowgarage.com/documentation/cpp/imgproc_geometric_image_transformations.html#resize
-        cv::resize(original_frame, rescaled_frame, target_size ,1.0,1.0); //resize image to target_size
+    if(in.depth()!=CV_8U){
+        throw runtime_error("Expected image to have bit depth of 8bits unsigned integers ( CV_8U )");
+    }
 
-        cv::flip(rescaled_frame, flipped_frame, 1);
-
-        cvtColor(flipped_frame, greyscaled_frame, CV_BGR2GRAY); //turn the image grey scale
-
-        //convert the greyscaled_frame into a float array for DeSTIN
-        convert(greyscaled_frame, this->float_frame);
-
-        if(edge_detection){
-            cv::GaussianBlur(greyscaled_frame, greyscaled_frame, cv::Size(7,7) , .75, .75); // blur the image
-            cv::Canny(greyscaled_frame, greyscaled_frame, 0, 30, 3); // apply edge detection
+    cv::Point p(0, 0);
+    int i = 0 ;
+    for (p.y = 0; p.y < in.rows; p.y++) {
+        for (p.x = 0; p.x < in.cols; p.x++) {
+            //i = frame.at<uchar>(p);
+            //use something like frame.at<Vec3b>(p)[channel] in case of trying to support color images.
+            //There would be 3 channels for a color image (one for each of r, g, b)
+            out[i] = (float)in.at<uchar>(p) / 255.0f;
+            i++;
         }
-
-        /*if(showWindow){
-            cv::imshow( DESTIN_VIDEO_WINDOW_TITLE, greyscaled_frame); //show video to output window
-
-        }*/
-
-        // 2013.4.19
-        // CZT
-        //
-        if(showWindow){
-            cv::imshow(this->win_title, greyscaled_frame); //show video to output window
-        }
-
-        // some strange issues with waitkey, see http://opencv.willowgarage.com/wiki/documentation/c/highgui/WaitKey
-        //Needs this so it gives time for the computer to update. If its too small, it wont be drawn at all,
-        //if its too high, then the frames per seconds drops.
-
-        if(showWindow && cv::waitKey(5)>=0){ //stop the video when a key is pressed
-            return false;
-        }
-        return true;
-    } else {
-        //this logic rewinds the video to the beginning if it can.
-        if(cap->get(CV_CAP_PROP_FRAME_COUNT) > 0){
-            if(cap->get(CV_CAP_PROP_POS_AVI_RATIO) > 0.9){   // if reached near end of video
-                cap->set(CV_CAP_PROP_POS_FRAMES,0);         // move to beginning
-                if(cap->grab()){                            // if can get a frame
-                    //cout << "video rewind " << endl;
-                    return this->grab();                    // get the next frame
-                }else{
-                    cout << "couldn't rewind and grab first frame." << endl;
-                }
-            }else{
-                cout << "couldn't get video and not end of video. was: " <<  cap->get(CV_CAP_PROP_POS_AVI_RATIO) << endl;
-            }
-        }else{
-            cout << "frame count not larger than 0\n";
-        }
-
-        cout << "Reached end of video stream." << endl;
-        return false;
     }
 }
 
+
+/**
+ * @brief Retrieve, transform and show the image.
+ */
+void VideoSource::processFrame(){
+    cap->retrieve(original_frame); //retrieve the captured frame
+
+    original_size = original_frame.size();
+
+    // see http://opencv.willowgarage.com/documentation/cpp/imgproc_geometric_image_transformations.html#resize
+    cv::resize(original_frame, rescaled_frame, target_size, 1.0, 1.0); //resize image to target_size
+
+    if(flip){
+        cv::flip(rescaled_frame, flipped_frame, 1);
+    } else {
+        flipped_frame = rescaled_frame;
+    }
+
+    cvtColor(flipped_frame, greyscaled_frame, CV_BGR2GRAY); //turn the image grey scale
+
+    //convert the greyscaled_frame into a float array for DeSTIN
+    convert(greyscaled_frame, this->float_frame);
+
+    if(edge_detection){
+        cv::GaussianBlur(greyscaled_frame, greyscaled_frame, cv::Size(7,7) , .75, .75); // blur the image
+        cv::Canny(greyscaled_frame, greyscaled_frame, 0, 30, 3); // apply edge detection
+    }
+
+    if(showWindow){
+        cv::imshow(this->win_title, greyscaled_frame); //show video to output window
+    }
+    return;
+}
+
+bool VideoSource::grab(){
+
+    // if a video, rewind it if it's at the end of the video.
+    if(!isDevice){
+        int currentFrame = (int)cap->get(CV_CAP_PROP_POS_FRAMES);
+        int totalFrames = (int)cap->get(CV_CAP_PROP_FRAME_COUNT);
+
+        cout << currentFrame << " " << totalFrames << endl;
+        // rewind if at the end of the video
+        if(currentFrame >= totalFrames){
+            cap->set(CV_CAP_PROP_POS_FRAMES,0);
+        }
+    }
+
+
+    if(cap->grab()){
+        processFrame(); // Retrieve, transform and show the image.
+    } else {
+        cerr << "Could not grab the frame." << endl;
+        return false;
+    }
+
+    // Some strange issues with waitkey, see http://opencv.willowgarage.com/wiki/documentation/c/highgui/WaitKey
+    // waitKey needs to be called to give the OS time to update drawn images.
+    // If the time given is too small, the images wont be updated at all.
+    // If the time given is too high, then destin frames per seconds drops.
+    // Waitkey also returns a value other than 0 if a key is pressed.
+    if(showWindow && cv::waitKey(5)>=0){
+        cerr << "Key pressed, stopping video." << endl;
+        return false;
+    }
+    return true;
+}
 
 bool VideoSource::rewind(){
      if(cap->get(CV_CAP_PROP_FRAME_COUNT) == 0){

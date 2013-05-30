@@ -61,32 +61,23 @@ private:
 	bool edge_detection; //if true shows video in edge detection mode ( shows image outlines)
 
     bool showWindow; //shows video or webcam input in window for user. 
+
+    bool flip;      //
+
+    bool isDevice;  // true if using webcam, otherwise using video file as the source.
+
+
 	/**
 	 * convert - converts from an OpenCV Mat greyscal 8bit uchar image into
-         * a float array where each element is normalized to 0 to 1.0, with 1.0 being black.
+     * a float array where each element is normalized to 0 to 1.0, with 1.0 being black.
 	 *
 	 * Assumes out points to a preallocated float array big enough to hold the
 	 * converted image ( should be of size target_size)
 	 */
-	void convert(cv::Mat & in, float * out) {
-		if(in.channels()!=1){
-			throw runtime_error("Excepted a grayscale image with one channel.");
-		}
-		if(in.depth()!=CV_8U){
-			throw runtime_error("Expected image to have bit depth of 8bits unsigned integers ( CV_8U )");
-		}
-		cv::Point p(0, 0);
-		int i = 0 ;
-		for (p.y = 0; p.y < in.rows; p.y++) {
-			for (p.x = 0; p.x < in.cols; p.x++) {
-				//i = frame.at<uchar>(p);
-				//use something like frame.at<Vec3b>(p)[channel] in case of trying to support color images.
-				//There would be 3 channels for a color image (one for each of r, g, b)
-				out[i] = (float)in.at<uchar>(p) / 255.0f;
-				i++;
-			}
-		}
-	}
+    void convert(cv::Mat & in, float * out);
+
+    void processFrame();
+
 public:
 	/**
 	 * use_device - if true then will find the default device i.e. webcam as input
@@ -99,7 +90,8 @@ public:
 	 *
 	 */
 	VideoSource(bool use_device, std::string video_file, int dev_no = 0) :
-		target_size(512, 512), edge_detection(false), showWindow(false) {
+        target_size(512, 512), edge_detection(false), showWindow(false),
+        flip(true), isDevice(use_device) {
 
 		float_frame = new float[target_size.area()];
 		stringstream mess;
@@ -135,6 +127,15 @@ public:
 		}
 		target_size = cv::Size(width, height);
 	}
+   
+
+    /**
+        If true, then the video is flipped on the vertical axis ( mirror flipped).
+        Defaults to true.
+    */
+    void setFlip(bool isFlipped){
+        this->flip = isFlipped;
+    }
 
 	~VideoSource() {
 		delete cap;
