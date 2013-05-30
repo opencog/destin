@@ -1,4 +1,5 @@
 #include "DestinNetworkAlt.h"
+#include <stdio.h>
 
 void DestinNetworkAlt::initTemperatures(int layers, uint * centroids){
     temperatures = new float[layers];
@@ -403,6 +404,11 @@ void DestinNetworkAlt::displayLayerCentroidImages(int layer,
                                 string window_title
                                 ){
 
+    if(layer < 0 || layer >= getLayerCount()){
+
+        std::cerr << "displayLayerCentroidImages: layer out of bounds " << std::endl;
+        return;
+    }
     cv::imshow(window_title, getLayerCentroidImages(layer, scale_width, border_width));
     return;
 }
