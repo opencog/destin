@@ -166,14 +166,14 @@ void CMOrderedTreeMinerWrapper::timeShiftDatabase(int treeDepth){
 }
 
 
-bool CMOrderedTreeMinerWrapper::treeMatchesHelper(const TextTree & parent_tree,
-                       const TextTree & child_tree,
-                       const short pt_start_node,
-                       const short ct_start_node){
+int CMOrderedTreeMinerWrapper::treeMatchesHelper(const TextTree & parent_tree,
+                                                  const TextTree & child_tree,
+                                                  const short pt_start_node // parent tree start node
+                                                  ){
 
-    short cn_ct = ct_start_node; //cn_ct = current node child tree
+
+    short cn_ct = 0; //cn_ct = current node child tree
     short cn_pt = pt_start_node; //cn_pt = current node parent tree
-
     while(true){
         if(parent_tree.vLabel.at(cn_pt) == child_tree.vLabel.at(cn_ct)){
             short fc_ct = child_tree.firstChild.at(cn_ct); // fc_ct =  first child of current node of child tree
@@ -181,22 +181,22 @@ bool CMOrderedTreeMinerWrapper::treeMatchesHelper(const TextTree & parent_tree,
                 //has child
                 short fc_pt = parent_tree.firstChild.at(cn_pt); // first child of current node of parent tree
                 if(fc_pt == -1){
-                    return false;
+                    return -1;
                 }
                 cn_ct = fc_ct; // set current node to
                 cn_pt = fc_pt;
             }else while(true){
-                int ct_next_sib = child_tree.nextSibling.at(cn_ct) ;
+                int ct_next_sib = child_tree.nextSibling.at(cn_ct) ; // next sibling of the current node of the child tree
                 if(ct_next_sib != -1){
                     cn_ct = ct_next_sib;
                     cn_pt = parent_tree.nextSibling.at(cn_pt);
                     if(cn_pt == -1){
-                        return false; //there was no next sibling
+                        return -1; //there was no next sibling
                     }
                     break; //break back to begining of outer while loop
                 }else{
-                    if(cn_ct == ct_start_node){
-                        return true;
+                    if(cn_ct == 0){
+                        return cn_pt;
                     }
                     cn_ct = child_tree.parent.at(cn_ct);
                     cn_pt = parent_tree.parent.at(cn_pt);
@@ -205,27 +205,62 @@ bool CMOrderedTreeMinerWrapper::treeMatchesHelper(const TextTree & parent_tree,
         }else{
             cn_pt = parent_tree.nextSibling.at(cn_pt);
             if(cn_pt == -1){
-                return false; //current node of parent tree had no sibling
+                return -1; //current node of parent tree had no sibling
             }
         }
     }//end while
 }
 
-// TODO: could be made faster by not checking the bottom "[ child tree depth - 1 ]" nodes
-bool CMOrderedTreeMinerWrapper::isSubTreeOfHelper(const TextTree & parent_tree, const TextTree & child_tree, const short pt_vertex){
-    if(treeMatchesHelper(parent_tree, child_tree, pt_vertex, 0)){
-        return true;
+/**
+ * @brief CMOrderedTreeMinerWrapper::isSubTreeOfHelper
+ * In a recursive fashion, scan through the parent tree one node at a time.
+ * At each parent node (vertex) detect if the child tree can fit there.
+ * @param parent_tree - look for child_tree in this tree
+ * @param child_tree - look for this tree in parent_tree
+ * @param pt_vertex - Parent tree vertex. Position of child root node in parent tree to look.
+ * @return true if child_tree is a subtree of the parent_tree at the pt_vertex position
+ */
+// TODO: Could be made faster by not checking the bottom "[ child tree depth - 1 ]" nodes.
+// TODO: Remove bounds check on vectors ( remove .at method, just use [] operator).
+// TODO: May not need this outer isSubTreeOfHelper method. May just need treeMatchesHelper.
+int CMOrderedTreeMinerWrapper::isSubTreeOfHelper(const TextTree & parent_tree, const TextTree & child_tree, const short pt_vertex){
+    if(pt_vertex >= parent_tree.vLabel.size()){
+        return -1;
     }
-    int child = parent_tree.firstChild.at(pt_vertex);
+
+    int match_pos; // match position - vertex of parent tree where root of child tree is a subtree
+    match_pos = treeMatchesHelper(parent_tree, child_tree, pt_vertex);
+    if(match_pos != -1){
+        return match_pos;
+    }
+
+    int child = parent_tree.firstChild.at(pt_vertex); // child of the parent node
+    // TODO: may be able to simplify by incrementing pt_vertex by one // instead of going to first child, should be the same thing if going depth first.
     if(child !=-1){
-        if(isSubTreeOfHelper(parent_tree, child_tree, child)){
-            return true;
+        match_pos = isSubTreeOfHelper(parent_tree, child_tree, child);
+        if( match_pos != -1 ){
+            return match_pos;
         }
-        while( (child = parent_tree.nextSibling.at(child)) != -1){
-            if(isSubTreeOfHelper(parent_tree, child_tree, child)){
-                return true;
+        while( (child = parent_tree.nextSibling.at(child)) != -1){ // visit the rest of the children
+            match_pos = isSubTreeOfHelper(parent_tree, child_tree, child);
+            if(match_pos != -1){
+                return match_pos;
             }
         }
     }
-    return false;
+    return -1;
+}
+
+vector<int> CMOrderedTreeMinerWrapper::findSubtreeLocations(TextTree & haystack, TextTree & needle){
+    vector<int> locations;
+    for(int pos = 0; pos < haystack.vNumber; /*empty*/){
+        int foundPos = isSubTreeOfHelper(haystack, needle, pos);
+        if(foundPos == -1){
+            pos++;
+        }else{
+            locations.push_back(foundPos);
+            pos = foundPos + 1;
+        }
+    }
+    return locations;
 }

@@ -153,6 +153,9 @@ public:
         cout << getMinedTreeStructureAsString(treeIndex);
     }
 
+    /** Same as printMinedTreeStructure but returns the string
+     * instead of printing to stdout.
+     */
     string getMinedTreeStructureAsString(const int treeIndex){
         stringstream ss;
         printHelper(minedTrees.at(treeIndex), 0, 0, ss);
@@ -160,7 +163,7 @@ public:
     }
 
     /** Same as printMinedTreeStructure but shows trees
-      * in the database.
+      * in the original tree database instead of mined subtrees.
       */
     void printAddedTreeStructure(const int treeIndex){
         stringstream ss;

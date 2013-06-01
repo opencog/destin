@@ -422,7 +422,7 @@ int testIsSubtreeOf(){
     short t10[5] = {2,6,-1,8,-1}; tmw.addTree(t10, 5); // #11
 
     assertIntEquals(2, tmw.getAddedTree(8).vLabel.at(5));
-    assertTrue (tmw.treeMatchesHelper(tmw.getAddedTree(8), tmw.getAddedTree(11), 5, 0 ));
+    assertTrue (tmw.treeMatchesHelper(tmw.getAddedTree(8), tmw.getAddedTree(11), 5 ) != -1);
 
     assertTrue (tmw.isSubTreeOf(tmw.getAddedTree(8), tmw.getAddedTree(11)) );
 
@@ -433,6 +433,88 @@ int testIsSubtreeOf(){
     return 0;
 }
 
+int testFindSubtreeLocations(){
+    CMOrderedTreeMinerWrapper tmw;
+
+    short t0[7] = {0,1,-1,2,-1,3,-1};   tmw.addTree(t0, 7); // #0
+    short t1[1] = {4};                  tmw.addTree(t1, 1); // #1
+    short t2[1] = {2};                  tmw.addTree(t2, 1); // #2
+    short t3[1] = {2};                  tmw.addTree(t3, 1); // #3
+    short t4[3] = {2,2,-1};             tmw.addTree(t4, 3); // #4
+
+    short t5[17] = {0,1,2,3,-1,-1,-1,5,1,2,-1,2,7,-1,-1,-1,-1};
+                                        tmw.addTree(t5, 17);// #5
+
+    short t6[3] = {1,2,-1};             tmw.addTree(t6, 3); // #6
+    short t7[3] = {0,5,-1};             tmw.addTree(t7, 3); // #7
+    short t8[1] = {1};                  tmw.addTree(t8, 1); // #8
+
+    short t9[25] = {0,1,3,-1,6,-1,8,-1,-1,0,1,3,7,-1,-1,8,-1,6,-1,-1,0,1,-1,-1,-1};
+                                        tmw.addTree(t9,25);// #9
+
+    short t10[5] = {1,3,-1,6,-1};       tmw.addTree(t10, 5);// #10
+    short t11[3] = {0,1,-1};            tmw.addTree(t11, 3);// #11
+    short t12[3] = {0,0,-1};            tmw.addTree(t12, 3);// #12
+
+    // shouldn't find one node with label 4 in the bigger tree
+    assertIntEquals(-1, tmw.findSubtreeLocation(tmw.getAddedTree(0), tmw.getAddedTree(1) ));
+
+    vector<int> locations = tmw.findSubtreeLocations(tmw.getAddedTree(0), tmw.getAddedTree(1) );
+    assertIntEquals(0, locations.size()); // should be no locations, so zero size.
+
+
+    // One node tree matched on one node tree should fine one match location.
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(2), tmw.getAddedTree(3) );
+    assertIntEquals(1, locations.size());
+    assertIntEquals(0, locations.at(0));
+
+    // The one node tree should be found in the two locations.
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(4), tmw.getAddedTree(2) );
+    assertIntEquals(2, locations.size());
+    assertIntEquals(0, locations.at(0));
+    assertIntEquals(1, locations.at(1));
+
+    // The one node tree should be found at node position 2.
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(0), tmw.getAddedTree(2) );
+    assertIntEquals(2, locations.at(0));
+    assertIntEquals(1, locations.size());
+
+    // The two node tree should be found at two positions in the large tree.
+    assertTrue(tmw.isSubTreeOf(tmw.getAddedTree(5), tmw.getAddedTree(6)));
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(5), tmw.getAddedTree(6) );
+    assertIntEquals(2, locations.size());
+    assertIntEquals(1, locations.at(0));
+    assertIntEquals(5, locations.at(1));
+
+    // The two node tree should be found at one position in the large tree.
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(5), tmw.getAddedTree(7) );
+    assertIntEquals(1, locations.size());
+    assertIntEquals(0, locations.at(0));
+
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(5), tmw.getAddedTree(2) );
+    assertIntEquals(3, locations.size());
+    assertIntEquals(2, locations.at(0));
+    assertIntEquals(6, locations.at(1));
+    assertIntEquals(7, locations.at(2));
+
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(9), tmw.getAddedTree(10) );
+    assertIntEquals(2, locations.size());
+    assertIntEquals(1, locations.at(0));
+    assertIntEquals(6, locations.at(1));
+
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(9), tmw.getAddedTree(11) );
+    assertIntEquals(3, locations.size());
+    assertIntEquals(0, locations.at(0));
+    assertIntEquals(5, locations.at(1));
+    assertIntEquals(11, locations.at(2));
+
+    locations = tmw.findSubtreeLocations(tmw.getAddedTree(9), tmw.getAddedTree(12) );
+    assertIntEquals(2, locations.size());
+    assertIntEquals(0, locations.at(0));
+    assertIntEquals(5, locations.at(1));
+
+    return 0;
+}
 
 int main(int argc, char ** argv){
     RUN(testTreeToVector);
@@ -442,6 +524,7 @@ int main(int argc, char ** argv){
     RUN(testDisplayTree);
     RUN(testTimeSliceTreeExporter);
     RUN(testIsSubtreeOf);
+    RUN(testFindSubtreeLocations);
     UT_REPORT_RESULTS();
     return 0;
 }

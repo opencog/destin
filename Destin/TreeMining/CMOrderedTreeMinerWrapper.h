@@ -17,6 +17,11 @@ using std::vector;
 void dfsVisit(const short current, const TextTree& rhs, vector<short>& zakiCode);
 
 
+/**
+ * @brief The CMOrderedTreeMinerWrapper class.
+ * Wrapper for CMOrderedTreeMiner which we try to leave
+ * as unmodified as possible.
+ */
 class CMOrderedTreeMinerWrapper {
 
     int support;
@@ -25,7 +30,7 @@ class CMOrderedTreeMinerWrapper {
     vector<TextTree> database;
     short MAX_VERTEX, MIN_VERTEX;
 
-    bool isSubTreeOfHelper(const TextTree & parent_tree, const TextTree & child_tree, const short pt_vertex);
+    int isSubTreeOfHelper(const TextTree & parent_tree, const TextTree & child_tree, const short pt_vertex);
 
     /**
       * Assumes that all the trees in the database have all the same size and structure
@@ -46,7 +51,7 @@ public:
 
     /** Adds a tree to the database to be mined.
       *
-      * The tree is given a depth first search path.
+      * The tree is input as a depth first path array.
       *
       * For example, this 3 node tree
       *
@@ -54,10 +59,16 @@ public:
       *     / \
       *    3   2
       *
-      * Would be input as an array [5, 3, -1, 2, -1]
+      * Would be input as an array [5, 3, -1, 2, -1].
       * The -1 entries represent a back track in the search path.
+      * The search path needs to end at root, so it should end in one or more -1s
+      * unless it's a one node tree, which in that case the search path will
+      * be of length 1 with just the node.
+      *
+      * @param treeDescription - depth first path array of tree to add.
+      * @param length - length of the treeDescription array.
       */
-    void addTree(short description[], int length);
+    void addTree(short treeDescription[], int length);
 
     TextTree & getAddedTree(int index){
         return database.at(index);
@@ -103,7 +114,7 @@ public:
     void timeShiftDatabase(int treeDepth);
 
 
-    /** @return true if the child tree is a copy of the parent tree and same structure
+    /** Determines if the child tree is a copy of the parent tree and same structure
       * or only has some nodes missing, but not if the child tree nodes
       * are in the wrong order or has more nodes in certain places, or the
       * nodes have different labels.
@@ -124,12 +135,13 @@ public:
       * @param parent_tree
       * @param child_tree
       * @param pt_start_node - consider this node as the new root of the parent tree
-      * @param ct_start_node - consider this node as the new root of the child tree
+      * @return position in the parent tree where the root node of the
+      * child tree matches or -1 if it does not match. The position is the index
+      * of the depth first path array of the parent tree with the back traces ( -1s ) removed.
       */
-    bool treeMatchesHelper(const TextTree & parent_tree,
+    int treeMatchesHelper(const TextTree & parent_tree,
                            const TextTree & child_tree,
-                           const short pt_start_node,
-                           const short ct_start_node);
+                           const short pt_start_node);
 
 
     /** Determines if child tree (needle) is a subtree of parent tree (haystack)
@@ -137,8 +149,30 @@ public:
       * @param needle - searches for this subtree in the containing tree
      */
     bool isSubTreeOf(TextTree & haystack, TextTree & needle){
+        return isSubTreeOfHelper(haystack, needle, 0) != -1;
+    }
+
+    /**
+     * Same as findSubtreeLocations method but only returns the first found location.
+     * @param haystack - Parent tree. Searches in this tree for the child subtree
+     * @param needle - Child subtree. Search for this child subtree in the parent subtree.
+     * @return Location in the parent tree of the root of the first match of the needle subtree.
+     */
+    int findSubtreeLocation(TextTree & haystack, TextTree & needle){
         return isSubTreeOfHelper(haystack, needle, 0);
     }
+
+    /**
+     * Finds the parent tree vertex locations where the child subtree is found.
+     * Each parent vertex locations is at the root of a found child subtree. The parent
+     * vertex locations are indicies to the parent trees depth first array description with
+     * the -1 backtraces removed.
+     *
+     * @param haystack - Parent tree. Searches in this tree for the child subtree
+     * @param needle - Child subtree. Search for this child subtree in the parent subtree.
+     * @return vector of parent tree verticies where the root of the child subtree is found.
+     */
+    vector<int> findSubtreeLocations(TextTree & haystack, TextTree & needle);
 
 
 };
