@@ -78,9 +78,6 @@ void DestinTreeManager::setBottomLayer(unsigned int bottom){
     return;
 }
 
-/** Displays an image representation of the tree.
-  * The input tree descibes
-  */
 cv::Mat DestinTreeManager::getTreeImg(const std::vector<short> & tree){
     if(tree.size()==0){
         std::cerr << " DestinTreeManager::getTreeImg: tree was empty.\n";

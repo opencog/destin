@@ -204,7 +204,7 @@ public:
     }
 
     /** Loads a destin structure from the given file
-     * Destroy the current destin structure before loading the new one.
+     * Destroys the current destin structure before loading the new one.
      */
     void load(const char * fileName);
 

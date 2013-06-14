@@ -164,13 +164,16 @@ public:
 
     /**
      * Finds the parent tree vertex locations where the child subtree is found.
-     * Each parent vertex locations is at the root of a found child subtree. The parent
-     * vertex locations are indicies to the parent trees depth first array description with
+     * Each of the parent vertex locations is at the root of a found child subtree. The parent
+     * vertex locations are indicies of the parent tree's depth first array description with
      * the -1 backtraces removed.
+     *
+     * For example, if the child subtree is found in 4 different places of the parent subtree
+     * then the returned list will be of size 4.
      *
      * @param haystack - Parent tree. Searches in this tree for the child subtree
      * @param needle - Child subtree. Search for this child subtree in the parent subtree.
-     * @return vector of parent tree verticies where the root of the child subtree is found.
+     * @return list of parent tree verticies where the root of the child subtree is found.
      */
     vector<int> findSubtreeLocations(TextTree & haystack, TextTree & needle);
 

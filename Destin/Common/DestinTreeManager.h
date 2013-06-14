@@ -32,7 +32,7 @@ class DestinTreeManager {
     // helper method for getTreeImg()
     void calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out);
 
-
+    // helper for getMinedTreeStructureAsString
     void printHelper(TextTree & pt, short vertex, int level, stringstream & ss);
 
 public:
@@ -83,12 +83,15 @@ public:
       * image. The deeper the child image is in the tree, the smaller its overwriting image is.
       * The location of child images are determined by their position in the tree,
       * and relative to their parent images.
+      * @param tree - the tree to get the image for. See CMOrderedTreeMinerWrapper::addTree method for the format.
       * @return the image as an opencv Mat
+      *
       */
     cv::Mat getTreeImg(const std::vector<short> & tree);
 
     /** Displays the image given tree generated with getTreeImg()
       * cv::waitKey must be called after for it to show.
+      * @param tree - the tree to get the image for. See CMOrderedTreeMinerWrapper::addTree method for the format.
       */
     void displayTree(const std::vector<short> & tree);
 

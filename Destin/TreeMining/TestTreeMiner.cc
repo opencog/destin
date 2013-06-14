@@ -8,6 +8,20 @@
 
 using std::vector;
 
+/*
+ * This file contains many unit tests.
+ * Each unit test is run with the RUN() macro in the main function.
+ * See unit_test.h to see what the RUN() function does.
+ * If a unit test passes, its function returns 0.
+ * The unit tests consists of assert statements.
+ * If an assert statement passes, the unit test continues. If the assert
+ * statement fails then it forces an exit of the function by returning 1.
+ * The UT_REPORT_RESULTS() macro at the end of the main() function
+ * will report if there were any unit tests failures. If there were
+ * any failures the unit test executable exists with 1, which can
+ * be detected in a shell script as a failure. See Destin/run_tests.sh
+ */
+
 int testTreeToVector(){
 
     // format is as follows:
