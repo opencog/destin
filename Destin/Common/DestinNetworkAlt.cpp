@@ -80,7 +80,10 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
 
 // 2013.4.11
 // CZT
-//
+// To extend the input as we want, like gray-scale with depth or RGB, the method
+// here is to use the extRatio to extend some parameters to contain more inform-
+// ation.
+// This function could not be invoked if the input size is just 512*512.
 void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
         unsigned int centroid_counts [], bool isUniform, int size, int extRatio)
         {
@@ -91,8 +94,8 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
 
     training = true;
     beta = .01;
-    lambda = .1;
-    gamma = .1;
+    lambda = .1; // 0.1
+    gamma = .1;  // 0.1
     isUniform = isUniform;
     centroidImages = NULL;
     centroidImageWeightParameter = 1.0;
@@ -148,6 +151,375 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
     isTraining(true);/**/
 }
 
+// 2013.6.3
+// CZT
+// If adding centroids; Only for uniform!
+void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int layers,
+        unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer)
+{
+    training = true;
+    beta = .01;
+    lambda = .1; // 0.1
+    gamma = .1;  // 0.1
+    isUniform = isUniform;
+    centroidImages = NULL;
+    centroidImageWeightParameter = 1.0;
+
+    uint input_dimensionality = 16;
+    uint c, l;
+    callback = NULL;
+    initTemperatures(layers, centroid_counts);
+    float starv_coef = 0.05;
+    uint n_classes = 0;//doesn't look like its used
+    uint num_movements = 0; //this class does not use movements
+
+    //figure out how many layers are needed to support the given
+    //image width.
+    bool supported = false;
+    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
+        if (c == width) {
+            supported = true;
+            break;
+        }
+    }
+    if(!supported){
+        throw std::logic_error("given image width is not supported.");
+    }
+    if (layers != l) {
+        throw std::logic_error("Image width does not match the given number of layers.");
+    }
+    addCentroid2(
+                destin,
+            input_dimensionality,
+            layers,
+            centroid_counts,
+            n_classes,
+            beta,
+            lambda,
+            gamma,
+            temperatures,
+            starv_coef,
+            num_movements,
+            isUniform,
+            size,
+            extRatio,
+                currLayer,
+                getSharedCentroids(),
+                getStarv(),
+                getSigma(),
+                getAvgDelta(),
+                getWinCounts(),
+                getPersistWinCounts(),
+                getPersistWinCounts_detailed()
+     );
+
+    setBeliefTransform(DST_BT_NONE);
+    ClearBeliefs(destin);
+    SetLearningStrat(destin, CLS_DECAY);
+    isTraining(true);
+}
+
+// 2013.6.6
+// CZT
+// If killing centroids; Only for uniform!
+void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned int layers,
+        unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer, int kill_ind)
+{
+    training = true;
+    beta = .01;
+    lambda = .1; // 0.1
+    gamma = .1;  // 0.1
+    isUniform = isUniform;
+    centroidImages = NULL;
+    centroidImageWeightParameter = 1.0;
+
+    uint input_dimensionality = 16;
+    uint c, l;
+    callback = NULL;
+    initTemperatures(layers, centroid_counts);
+    float starv_coef = 0.05;
+    uint n_classes = 0;//doesn't look like its used
+    uint num_movements = 0; //this class does not use movements
+
+    //figure out how many layers are needed to support the given
+    //image width.
+    bool supported = false;
+    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
+        if (c == width) {
+            supported = true;
+            break;
+        }
+    }
+    if(!supported){
+        throw std::logic_error("given image width is not supported.");
+    }
+    if (layers != l) {
+        throw std::logic_error("Image width does not match the given number of layers.");
+    }
+    killCentroid(
+                destin,
+            input_dimensionality,
+            layers,
+            centroid_counts,
+            n_classes,
+            beta,
+            lambda,
+            gamma,
+            temperatures,
+            starv_coef,
+            num_movements,
+            isUniform,
+            size,
+            extRatio,
+                currLayer,
+                kill_ind,
+                getSharedCentroids(),
+                getStarv(),
+                getSigma(),
+                getAvgDelta(),
+                getWinCounts(),
+                getPersistWinCounts(),
+                getPersistWinCounts_detailed()
+     );
+
+    setBeliefTransform(DST_BT_NONE);
+    ClearBeliefs(destin);
+    SetLearningStrat(destin, CLS_DECAY);
+    isTraining(true);
+}
+
+/*****************************************************************************/
+// 2013.6.4
+// CZT
+// Get sharedCentroids or mu; Only for uniform!
+float ** DestinNetworkAlt::getSharedCentroids()
+{
+    float ** sharedCentroids;
+    MALLOC(sharedCentroids, float *, destin->nLayers);
+    int i;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        Node * currNode = getNode(i, 0, 0);
+        MALLOC(sharedCentroids[i], float, currNode->nb*currNode->ns);
+        for(int j=0; j<currNode->nb*currNode->ns; ++j)
+        {
+            sharedCentroids[i][j] = currNode->mu[j];
+        }
+    }
+    return sharedCentroids;
+}
+
+// 2013.6.5
+// CZT
+// Get uf_starv; Only for uniform!
+float ** DestinNetworkAlt::getStarv()
+{
+    float ** starv;
+    MALLOC(starv, float *, destin->nLayers);
+    int i;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        MALLOC(starv[i], float, destin->nb[i]);
+        for(int j=0; j<destin->nb[i]; ++j)
+        {
+            starv[i][j] = destin->uf_starv[i][j];
+        }
+    }
+    return starv;
+}
+
+// 2013.6.6
+// CZT
+// Get uf_winCounts; Only for uniform!
+uint ** DestinNetworkAlt::getWinCounts()
+{
+    uint ** winCounts;
+    MALLOC(winCounts, uint *, destin->nLayers);
+    int i;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        MALLOC(winCounts[i], uint, destin->nb[i]);
+        for(int j=0; j<destin->nb[i]; ++j)
+        {
+            winCounts[i][j] = destin->uf_winCounts[i][j];
+        }
+    }
+    return winCounts;
+}
+
+// 2013.6.6
+// CZT
+// Get uf_persistWinCounts; Only for uniform!
+long ** DestinNetworkAlt::getPersistWinCounts()
+{
+    long ** persistWinCounts;
+    MALLOC(persistWinCounts, long *, destin->nLayers);
+    int i;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        MALLOC(persistWinCounts[i], long, destin->nb[i]);
+        for(int j=0; j<destin->nb[i]; ++j)
+        {
+            persistWinCounts[i][j] = destin->uf_persistWinCounts[i][j];
+        }
+    }
+    return persistWinCounts;
+}
+
+// 2013.6.5
+// CZT
+// Get uf_sigma; Only for uniform!
+float ** DestinNetworkAlt::getSigma()
+{
+    float ** sigma;
+    MALLOC(sigma, float *, destin->nLayers);
+    int i;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        Node * currNode = getNode(i, 0, 0);
+        MALLOC(sigma[i], float, currNode->nb*currNode->ns);
+        for(int j=0; j<currNode->nb*currNode->ns; ++j)
+        {
+            sigma[i][j] = destin->uf_sigma[i][j];
+        }
+    }
+    return sigma;
+}
+
+// 2013.6.5
+// CZT
+// Get uf_avgDelta; Only for uniform!
+float ** DestinNetworkAlt::getAvgDelta()
+{
+    float ** avgDelta;
+    MALLOC(avgDelta, float *, destin->nLayers);
+    int i;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        Node * currNode = getNode(i, 0, 0);
+        MALLOC(avgDelta[i], float, currNode->nb*currNode->ns);
+        for(int j=0; j<currNode->nb*currNode->ns; ++j)
+        {
+            avgDelta[i][j] = destin->uf_avgDelta[i][j];
+        }
+    }
+    return avgDelta;
+}
+
+// 2013.6.13
+// CZT
+// Get uf_persistWinCounts_detailed; Only for uniform!
+long ** DestinNetworkAlt::getPersistWinCounts_detailed()
+{
+    long ** persistWinCounts_detailed;
+    MALLOC(persistWinCounts_detailed, long *, destin->nLayers);
+    int i;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        MALLOC(persistWinCounts_detailed[i], long, destin->nb[i]);
+        for(int j=0; j<destin->nb[i]; ++j)
+        {
+            persistWinCounts_detailed[i][j] = destin->uf_persistWinCounts_detailed[i][j];
+        }
+    }
+    return persistWinCounts_detailed;
+}
+
+// 2013.6.14
+// CZT
+// Calculate 'variance' for a specific layer; Only for uniform!
+float * DestinNetworkAlt::getVariance(int layer)
+{
+    float * variance;
+    MALLOC(variance, float, destin->nb[layer]);
+    Node * currNode = getNode(layer, 0, 0);
+    int i,j;
+    for(i=0; i<currNode->nb; ++i)
+    {
+        float fTemp = 0.0;
+        for(j=0; j<currNode->ns; ++j)
+        {
+            fTemp += destin->uf_sigma[layer][i*currNode->ns+j];
+        }
+        variance[i] = fTemp/currNode->ns;
+    }
+    return variance;
+}
+
+// 2013.6.14
+// CZT
+// Calculate 'weight' for a specific layer; Only for uniform!
+float * DestinNetworkAlt::getWeight(int layer)
+{
+    float * weight;
+    MALLOC(weight, float, destin->nb[layer]);
+    Node * currNode = getNode(layer, 0, 0);
+    float fSum = 0.0;
+    int i;
+    for(i=0; i<currNode->nb; ++i)
+    {
+        fSum += destin->uf_persistWinCounts_detailed[layer][i];
+    }
+    for(i=0; i<currNode->nb; ++i)
+    {
+        weight[i] = destin->uf_persistWinCounts_detailed[layer][i]/fSum;
+    }
+    return weight;
+}
+
+// 2013.6.14
+// CZT
+// variance * weight, weighted variance, intra; Only for uniform!
+float DestinNetworkAlt::getIntra(int layer)
+{
+    float * variance = getVariance(layer);
+    float * weight = getWeight(layer);
+    float intra=0.0;
+    int i;
+    for(i=0; i<destin->nb[layer]; ++i)
+    {
+        intra += variance[i]*weight[i];
+    }
+    return intra/destin->nb[layer];
+}
+
+// 2013.6.14
+// CZT
+// inter
+#define MAX_INTER 1000000
+float DestinNetworkAlt::getInter(int layer)
+{
+    float inter=MAX_INTER;
+    Node * currNode = getNode(layer, 0, 0);
+    int i,j,k;
+    for(i=0; i<currNode->nb-1; ++i)
+    {
+        for(j=i+1; j<currNode->nb; ++j)
+        {
+            float fSum = 0.0;
+            for(k=0; k<currNode->ns; ++k)
+            {
+                fSum += (currNode->mu[i*currNode->ns+k]-currNode->mu[j*currNode->ns+k])
+                        * (currNode->mu[i*currNode->ns+k]-currNode->mu[j*currNode->ns+k]);
+            }
+            if(fSum < inter)
+            {
+                inter = fSum;
+            }
+        }
+    }
+    return inter;
+}
+
+// 2013.6.14
+// CZT
+// Get validity
+float DestinNetworkAlt::getValidity(int layer)
+{
+    return getIntra(layer)/getInter(layer);
+}
+/*****************************************************************************/
+
 DestinNetworkAlt::~DestinNetworkAlt() {
     if(centroidImages != NULL){
         Cig_DestroyCentroidImages(destin,  centroidImages);
@@ -155,10 +527,6 @@ DestinNetworkAlt::~DestinNetworkAlt() {
 
     if(destin!=NULL){
         DestroyDestin(destin);
-        // 2013.4.11
-        // CZT
-        //
-        //DestroyDestin_c1(destin);
         destin = NULL;
     }
     if(temperatures!=NULL){

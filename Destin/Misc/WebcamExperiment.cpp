@@ -41,15 +41,15 @@ void printFPS(bool print){
 
 int main(int argc, char ** argv){
 
-    //VideoSource vs(false, "./Various.avi");
-    VideoSource vs(true, "");
+    VideoSource vs(false, "./Various.avi");
+    //VideoSource vs(true, "");
 
     vs.enableDisplayWindow();
 
     SupportedImageWidths siw = W512;
 
     // Left to Right is bottom layer to top
-    uint centroid_counts[]  = {2,6,6,4,4,4,4,2};
+    uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
     bool isUniform = true;
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
@@ -82,15 +82,15 @@ int main(int argc, char ** argv){
 
         printf("Frame: %i\n", frameCount);
         printFPS(true);
-        int layer = 1;
+        int layer = 7; // Original: 1
         Node & n = *network->getNode(layer,0,0);
         printf("Node %i,0,0 winner: %i\n",layer, n.winner);
         printf("Node centroids: %i\n", n.nb);
 
-        printf("Node starv:");
+        /*printf("Node starv:");
         printFloatArray(n.starv, n.nb);
         printf("Starv coef: %f \n", n.starvCoeff);
-        printf("\n");
+        printf("\n");*/
 
         printf("layer %i node 0 centroid locations:\n", layer);
         network->printNodeCentroidPositions(layer, 0, 0);

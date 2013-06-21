@@ -15,13 +15,15 @@ I want to re-do what I thought again!!!
 #include "stereocamera.h"
 #include "czt_lib.h"
 
-//#define TEST_ORG
+#define TEST_ORG
 //#define TEST_IN_ORG
-#define TEST_STEP1
+//#define TEST_STEP1
 // 2013.4.19
-// CZT
 //
 //#define TEST_STEP2
+// 2013.5.29
+//
+//#define TEST_STEP3
 
 using namespace cv;
 void testNan(float * array, int len){
@@ -473,6 +475,9 @@ int main(int argc, char ** argv)
     FREE(float_depth);
     FREE(float_combined);
     delete network;
+#endif
+
+#ifdef TEST_STEP3
 #endif
 
 	return 0;

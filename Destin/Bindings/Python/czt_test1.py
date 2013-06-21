@@ -166,7 +166,6 @@ cm.processFld("/home/teaera/Work/RECORD/2013.5.21/downloads", "/home/teaera/Work
 # STEP 3.
 # Train original images;
 '''
-'''
 numImg = 2
 centroids=[4,8,16,32,32,16,4,1]
 for i in range(8):
@@ -177,3 +176,46 @@ cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.21/z_2")
 cm.train_ims(dn, ims, maxCount=2000)
 cm.dcis(dn, 7)
 cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.24_13.jpg")
+'''
+
+#############################################################################
+# 2013.6.14
+# I want to use matplotlib to draw the curve of validity!
+import matplotlib.pyplot as plt
+#
+centroids = [6,8,10,12,12,8,6,4]
+size = 512*512
+extRatio = 1
+isUniform = True
+dn = cm.init_destin(centroids=centroids, extRatio=extRatio)
+ims = pd.ImageSouceImpl()
+ims.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg")
+#cl2 = pd.czt_lib2()
+#fOut = cl2.createFloatArr(size)
+valDict = {}
+for i in range(8):
+    valDict[str(i)] = []
+maxCount = 3000
+for i in range(maxCount):
+    if i % 10 == 0:
+        print "Iteration " + str(i)
+        for j in range(8):
+            valDict[str(j)].append(dn.getValidity(j))
+    '''
+    '''
+    if i % 100 == 0:
+        centroids[0] += 1
+        dn.updateDestin_add(pd.W512, 8, centroids, isUniform,
+                            size, extRatio, 0)
+    ims.findNextImage()
+    f = ims.getGrayImageFloat()
+    #cl2.combineInfo_extRatio(f, size, extRatio, fOut)    
+    dn.doDestin_c1(f)
+#
+'''
+'''
+for i in range(8):
+    plt.figure()
+    plt.plot(range(len(valDict[str(i)])), valDict[str(i)], "r*-")
+    plt.savefig("/home/teaera/Pictures/2013.6.18_"+str(i)+".jpg")
+plt.show()
