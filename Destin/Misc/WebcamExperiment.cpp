@@ -41,16 +41,17 @@ void printFPS(bool print){
 
 int main(int argc, char ** argv){
 
-    VideoSource vs(false, "./Various.avi");
-    //VideoSource vs(true, "");
+    //VideoSource vs(false, "./Various.avi");
+    VideoSource vs(true, "");
 
     vs.enableDisplayWindow();
 
     SupportedImageWidths siw = W512;
 
     // Left to Right is bottom layer to top
-    uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
-    bool isUniform = true;
+    uint centroid_counts[]  = {4,4,4,4,4,4,4,2};
+    //bool isUniform = true;
+    bool isUniform = false;
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
 

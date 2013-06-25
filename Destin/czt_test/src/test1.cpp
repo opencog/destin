@@ -13,17 +13,18 @@ I want to re-do what I thought again!!!
 //
 #include "stereovision.h"
 #include "stereocamera.h"
+#include "czt_lib2.h"
 #include "czt_lib.h"
 
-#define TEST_ORG
+//#define TEST_ORG
 //#define TEST_IN_ORG
 //#define TEST_STEP1
 // 2013.4.19
 //
 //#define TEST_STEP2
-// 2013.5.29
-//
-//#define TEST_STEP3
+// 2013.6.25
+// RGB
+#define TEST_STEP3
 
 using namespace cv;
 void testNan(float * array, int len){
@@ -160,7 +161,6 @@ int main(int argc, char ** argv)
     while(vs.grab()){
 
         frameCount++;
-
 
         t.setSource(vs.getOutput());
         t.transport(); //move video from host to card
@@ -477,7 +477,65 @@ int main(int argc, char ** argv)
     delete network;
 #endif
 
+// 2013.6.25
 #ifdef TEST_STEP3
+    VideoSource vs(true, "");
+    vs.enableDisplayWindow();
+    vs.turnOnColor();
+    czt_lib2 * cl2 = new czt_lib2();
+
+    SupportedImageWidths siw = W512;
+    uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
+    bool isUniform = true;
+    int nLayers = 8;
+    int size = 512*512;
+    int extRatio = 3;
+
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayers, centroid_counts, isUniform);
+    network->reinitNetwork_c1(siw, nLayers, centroid_counts, isUniform, size, extRatio);
+    float * tempIn;
+    MALLOC(tempIn, float, size*extRatio);
+
+    Transporter t;
+    vs.grab();//throw away first frame in case its garbage
+    int frameCount = 0;
+
+    double totalFps = 0.0;
+    while(vs.grab()){
+        frameCount++;
+        cl2->combineBGR(vs.getBFrame(), vs.getGFrame(), vs.getRFrame(), size, tempIn);
+        network->doDestin_c1(tempIn);
+
+        if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
+            totalFps += printFPS(false);
+            continue;
+        }
+
+        // New clear screen method (might give less flickering...?)
+        printf("\033[2J\033[1;1H");
+        printf("----------------TEST_ORG----------------\n");
+
+        printf("Frame: %i\n", frameCount);
+        totalFps += printFPS(true);
+        printf("Average FPS now: %f\n", totalFps/frameCount);
+
+        int layer = 7;
+        Node & n = *network->getNode(layer,0,0);
+        printf("Node %i,0,0 winner: %i\n",layer, n.winner);
+        printf("Node centroids: %i\n", n.nb);
+
+        printf("Node starv:");
+        printFloatArray(n.starv, n.nb);
+        printf("Starv coef: %f \n", n.starvCoeff);
+        printf("\n");
+
+        for(int l = 0 ; l < 8 ; l++){
+            printf("belief graph layer: %i\n",l);
+            network->printBeliefGraph(l,0,0);
+        }
+    }
+    delete network;
+    delete tempIn;
 #endif
 
 	return 0;

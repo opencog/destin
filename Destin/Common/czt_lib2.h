@@ -83,4 +83,16 @@ public:
     {
         return a>b?a:b;
     }
+
+    // 2013.6.25
+    void combineBGR(float * b, float * g, float * r, int size, float * out)
+    {
+        int i;
+        for(i=0; i<size; ++i)
+        {
+            out[i] = b[i];
+            out[size+i] = g[i];
+            out[size+size+i] = r[i];
+        }
+    }
 };
