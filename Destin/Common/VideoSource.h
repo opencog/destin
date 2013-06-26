@@ -95,7 +95,7 @@ public:
 	 *
 	 */
 	VideoSource(bool use_device, std::string video_file, int dev_no = 0) :
-		target_size(512, 512), edge_detection(false), showWindow(false), isShowColor(false) {
+        target_size(512, 512), edge_detection(false), showWindow(false), isShowColor(false), flip(true) {
 
 		float_frame = new float[target_size.area()];
 		stringstream mess;
@@ -113,8 +113,8 @@ public:
 			throw runtime_error(mess.str());
 		}
 
-        cap->set(CV_CAP_PROP_FRAME_WIDTH, target_size.width);
-        cap->set(CV_CAP_PROP_FRAME_HEIGHT, target_size.height);
+        /*cap->set(CV_CAP_PROP_FRAME_WIDTH, target_size.width);
+        cap->set(CV_CAP_PROP_FRAME_HEIGHT, target_size.height);*/
         cvMoveWindow(DESTIN_VIDEO_WINDOW_TITLE, 50, 50);
         av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
 	}
