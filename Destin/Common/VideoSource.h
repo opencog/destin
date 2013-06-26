@@ -151,6 +151,13 @@ public:
 	~VideoSource() {
 		delete cap;
 		delete [] float_frame;
+
+        if(isShowColor)
+        {
+            delete [] bFrame;
+            delete [] gFrame;
+            delete [] rFrame;
+        }
 	}
 
 
@@ -220,9 +227,6 @@ public:
         std::vector<cv::Mat> bgr(channels);
         cv::split(this->flipped_frame, bgr);
 
-        bFrame = new float[target_size.area()];
-        gFrame = new float[target_size.area()];
-        rFrame = new float[target_size.area()];
         convert(bgr[0], bFrame);
         convert(bgr[1], gFrame);
         convert(bgr[2], rFrame);
@@ -277,6 +281,9 @@ public:
     void turnOnColor()
     {
         this->isShowColor = true;
+        bFrame = new float[target_size.area()];
+        gFrame = new float[target_size.area()];
+        rFrame = new float[target_size.area()];
     }
 };
 
