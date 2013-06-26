@@ -87,7 +87,7 @@ void VideoSource::processFrame(){
 bool VideoSource::grab(){
 
     // if a video, rewind it if it's at the end of the video.
-    /*if(!isDevice){
+    if(!isDevice){
         int currentFrame = (int)cap->get(CV_CAP_PROP_POS_FRAMES);
         int totalFrames = (int)cap->get(CV_CAP_PROP_FRAME_COUNT);
 
@@ -95,7 +95,7 @@ bool VideoSource::grab(){
         if(currentFrame >= totalFrames){
             cap->set(CV_CAP_PROP_POS_FRAMES,0);
         }
-    }*/
+    }
 
 
     if(cap->grab()){
