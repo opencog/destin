@@ -69,8 +69,17 @@ void VideoSource::processFrame(){
         cv::Canny(greyscaled_frame, greyscaled_frame, 0, 30, 3); // apply edge detection
     }
 
+    // 2013.6.25
+    if(isShowColor){
+        splitBGR();
+    }
+
     if(showWindow){
-        cv::imshow(this->win_title, greyscaled_frame); //show video to output window
+		if(isShowColor){
+			cv::imshow(this->win_title, greyscaled_frame); //show video to output window
+		}else{
+			cv::imshow(this->win_title, flipped_frame);
+		}
     }
     return;
 }

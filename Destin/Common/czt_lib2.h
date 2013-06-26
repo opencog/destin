@@ -25,7 +25,7 @@ public:
             for(j=0; j<size; ++j)
             {
                 tempOut[size*i+j] = (float)rand() / (float)RAND_MAX;
-                //tempOut[size*i+j] = 0.5;
+                //tempOut[size*i+j] = 0.9;
             }
         }
     }
@@ -73,5 +73,26 @@ public:
         cv::Mat _tempMat1;
         tempMat1.convertTo(_tempMat1, CV_32FC1, 1.0/255.0);
         tempOut = (float *)_tempMat1.data;
+    }
+
+    //*************************************************************************
+    // 2013.5.27
+    // template demo
+    template <class T>
+    T getMax(T a, T b)
+    {
+        return a>b?a:b;
+    }
+
+    // 2013.6.25
+    void combineBGR(float * b, float * g, float * r, int size, float * out)
+    {
+        int i;
+        for(i=0; i<size; ++i)
+        {
+            out[i] = b[i];
+            out[size+i] = g[i];
+            out[size+size+i] = r[i];
+        }
     }
 };

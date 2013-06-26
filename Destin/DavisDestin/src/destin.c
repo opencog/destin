@@ -486,7 +486,10 @@ void FormulateBelief_c1( Destin *d, float *image )
 
 
             // Normalize the calculations and get the winning centroid
-            NormalizeBeliefGetWinner( d->nodes, n );
+            //NormalizeBeliefGetWinner( d->nodes, n );
+            // 2013.6.21
+            // CZT
+            NormalizeBeliefGetWinner_c1( d->nodes, n );
 
             // Check if centroids should be updated (1 = yes)
             if( d->layerMask[l] == 1 )

@@ -55,8 +55,13 @@ private:
     // 2013.4.19
     // CZT
     // Defined title for windows:
-    //
     string win_title;
+
+    // 2013.6.25
+    float * bFrame;
+    float * gFrame;
+    float * rFrame;
+    bool isShowColor;
 
 	bool edge_detection; //if true shows video in edge detection mode ( shows image outlines)
 
@@ -90,8 +95,7 @@ public:
 	 *
 	 */
 	VideoSource(bool use_device, std::string video_file, int dev_no = 0) :
-        target_size(512, 512), edge_detection(false), showWindow(false),
-        flip(true), isDevice(use_device), win_title(DESTIN_VIDEO_WINDOW_TITLE) {
+		target_size(512, 512), edge_detection(false), showWindow(false), isShowColor(false) {
 
 		float_frame = new float[target_size.area()];
 		stringstream mess;
@@ -205,6 +209,75 @@ public:
      *  @return - true if it did rewind false otherwise
      */
     bool rewind();
+
+    // 2013.6.25
+    void splitBGR()
+    {
+        int channels = this->flipped_frame.channels();
+        int height = this->flipped_frame.rows;
+        int width = this->flipped_frame.cols;
+
+        std::vector<cv::Mat> bgr(channels);
+        cv::split(this->flipped_frame, bgr);
+
+        bFrame = new float[target_size.area()];
+        gFrame = new float[target_size.area()];
+        rFrame = new float[target_size.area()];
+        convert(bgr[0], bFrame);
+        convert(bgr[1], gFrame);
+        convert(bgr[2], rFrame);
+
+//#define SHOW_SPLIT
+#ifdef SHOW_SPLIT
+        // Create a black board
+        cv::Mat bk;
+        bk.create(this->flipped_frame.rows, this->flipped_frame.cols, CV_8UC1);
+        bk = cv::Scalar(0);
+        // Used for merging
+        std::vector<cv::Mat> mbgr(channels);
+        cv::Mat bm;
+        cv::Mat gm;
+        cv::Mat rm;
+        // B
+        mbgr[0] = bgr[0];
+        mbgr[1] = bk;
+        mbgr[2] = bk;
+        cv::merge(mbgr, bm);
+        // G
+        mbgr[0] = bk;
+        mbgr[1] = bgr[1];
+        mbgr[2] = bk;
+        cv::merge(mbgr, gm);
+        // R
+        mbgr[0] = bk;
+        mbgr[1] = bk;
+        mbgr[2] = bgr[2];
+        cv::merge(mbgr, rm);
+        //
+        cv::imshow("bgr", this->flipped_frame);
+        cv::imshow("b", bm);
+        cv::imshow("g", gm);
+        cv::imshow("r", rm);
+#endif
+    }
+
+    // 2013.6.25
+    float * getBFrame()
+    {
+        return bFrame;
+    }
+    float * getGFrame()
+    {
+        return gFrame;
+    }
+    float * getRFrame()
+    {
+        return rFrame;
+    }
+    void turnOnColor()
+    {
+        this->isShowColor = true;
+    }
 };
 
 #endif /* VIDEOSOURCE_H_ */

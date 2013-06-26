@@ -82,7 +82,7 @@ public:
 
     // 2013.4.11
     // CZT
-    //
+    // Reinitialize the network: extend the input!
     void reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
     unsigned int centroid_counts [], bool isUniform,
                           int size, int extRatio);
@@ -107,6 +107,31 @@ public:
     void doDestin_c1( //run destin with the given input
             float * input_dev //pointer to input memory on device
             );
+
+    // 2013.6.3
+    void updateDestin_add(SupportedImageWidths width, unsigned int layers,
+            unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer);
+    // 2013.6.6
+    void updateDestin_kill(SupportedImageWidths width, unsigned int layers,
+            unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer, int kill_ind);
+
+    /*************************************************************************/
+    // 2013.6.4
+    float ** getSharedCentroids();
+    // 2013.6.5
+    float ** getStarv();
+    float ** getSigma();
+    float ** getAvgDelta();
+    // 2013.6.6
+    uint ** getWinCounts();
+    long ** getPersistWinCounts();
+    long ** getPersistWinCounts_detailed();
+    // 2013.6.14
+    float * getVariance(int layer);
+    float * getWeight(int layer);
+    float getIntra(int layer);
+    float getInter(int layer);
+    float getValidity(int layer);
 
     void isTraining(bool isTraining);
 

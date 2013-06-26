@@ -17,6 +17,7 @@ float CLS_Decay(Destin * d, Node * n, uint layer, uint centroid){
         //
         //learnRate = wincount == 0 ? 0.0 : 1.0 / (float)wincount; //TODO: test persist win counts over multiple calls to FormulateBeliefs
         learnRate = (float)(0.1 + 0.9/(1.0 + ceil(sqrt(sqrt(wincount)))));
+        //learnRate = (float)(0.1 + 0.9/(1.0 + ceil(sqrt(wincount))));
     }else{
         learnRate = 1 / (float) n->nCounts[n->winner];
     }

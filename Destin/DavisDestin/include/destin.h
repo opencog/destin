@@ -55,13 +55,17 @@ typedef struct Destin {
     float       ** uf_sigma;            //shared centroids sigma, one array per layer of size nb x ns
     float       ** uf_starv;            //shared centroids starvation
 
+    /*The following is coded by CZT*/
     // 2013.4.11
-    // CZT
-    //
     int size;
     int extRatio;
-    float ** uf_sigma_c1;
-    float ** uf_avgDelta_c1;
+    // 2013.6.10
+    int sizeInd;
+    int * nearInd;
+    // 2013.6.13
+    long ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
+                                           // I think one more counting array should be necessary;
+    /*END*/
 } Destin  ;
 /* Destin Struct Definition End */
 
@@ -103,6 +107,17 @@ Destin * InitDestin_c2(                    // initialize Destin.
     int
 );
 
+// 2013.5.31
+void addCentroid2(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
+                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int size, int extRatio,
+                  int currLayer, float **sharedCen, float **starv, float **sigma, float **avgDelta,
+                  uint ** winCounts, long ** persistWinCounts, long ** persistWinCounts_detailed);
+// 2013.6.6
+void killCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
+                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int size, int extRatio,
+                  int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
+                  float **avgDelta, uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed);
+
 void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
                     Destin *            // initialized destin pointer
                 );
@@ -135,13 +150,6 @@ void ResetStarvTrace(                   // reset the starv trace to 1's
         );
 
 void DestroyDestin(
-                    Destin *
-                  );
-
-// 2013.4.11
-// CZT
-//
-void DestroyDestin_c1(
                     Destin *
                   );
 

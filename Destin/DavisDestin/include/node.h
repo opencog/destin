@@ -53,13 +53,6 @@ typedef struct Node {
     uint    layer;          // layer this node belongs in
     /* HOST VARIABLES END */
 
-    // 2013.4.11
-    // CZT
-    //
-    float * observation_c1;
-    float * mu_c1;
-    float * sigma_c1;
-    float * delta_c1;
 } Node;
 
 /* Node Functions Begin */
@@ -85,10 +78,12 @@ void  InitNode(                         // initialize a node.
                  float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                 );
 
-// 2013.4.11
-// CZT
-//
-void  InitNode_c1(                         // initialize a node.
+// 2013.6.21
+void evenInitForMu(float * tempMu, int tempNb, int tempNs);
+
+// 2013.6.3
+// addCentroid2_node
+void addCentroid2_node(
                  uint,                  // node index
                  struct Destin *,       // reference to parent destin network
                  uint,                  // layer this node belongs to
@@ -107,19 +102,34 @@ void  InitNode_c1(                         // initialize a node.
                  uint *,                // input offsets from input image (NULL for any non-input node)
                  float *,               // pointer to input on host
                  float *,               // pointer to belief on host
-                 float *,                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                );
 
-                 float * // 2013.4.11 CZT
+// 2013.6.6
+// killCentroid_node
+void killCentroid_node(
+                 uint,                  // node index
+                 struct Destin *,       // reference to parent destin network
+                 uint,                  // layer this node belongs to
+                 uint,                  // belief dimensionality (# centroids)
+                 uint,                  // input dimensionality (# input values)
+                 uint,                  // parent belief dimensionality
+                 uint,                  // number of classes
+                 uint,                  // ns = state dimensionality (number of inputs + number of previous beliefs + number of parent's previous beliefs)
+                                        // = ni + nb + np + nc
+                 float,                 // starvation coefficient
+                 float,                 // beta (sigma step size)
+                 float,                 // lambda
+                 float,                 // gamma
+                 float,                 // temperature
+                 Node *,                // pointer node on host
+                 uint *,                // input offsets from input image (NULL for any non-input node)
+                 float *,               // pointer to input on host
+                 float *,               // pointer to belief on host
+                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                 );
 
 void DestroyNode(
-                 Node *
-                );
-
-// 2013.4.11
-// CZT
-//
-void DestroyNode_c1(
                  Node *
                 );
 
@@ -148,6 +158,12 @@ void NormalizeBeliefGetWinner(
                     uint                // node index
                 );
 
+// 2013.6.21
+// To keep uf_persistWinCounts_detailed
+void NormalizeBeliefGetWinner_c1(
+                    Node *,             // pointer to list of nodes
+                    uint                // node index
+                );
 
 void CalcCentroidMovement(
                     Node *,             // pointer to list of nodes
