@@ -20,11 +20,13 @@ I want to re-do what I thought again!!!
 
 int main(int argc, char ** argv)
 {
+//#define TEST_CL2
+#ifdef TEST_CL2
 //*****************************************************************************
 // Add Random depth information
 // Test czt_lib2 (which is my own library of functions!)
 
-    /*czt_lib2 * cl2 = new czt_lib2();
+    czt_lib2 * cl2 = new czt_lib2();
     ImageSouceImpl isi;
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
 
@@ -32,8 +34,7 @@ int main(int argc, char ** argv)
     uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
     bool isUniform = true;
     int size = 512*512;
-    //int extRatio = 2;
-    int extRatio = 1;
+    int extRatio = 2;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
     network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
 
@@ -55,10 +56,11 @@ int main(int argc, char ** argv)
         network->doDestin_c1(tempIn);
     }
 
-    network->displayLayerCentroidImages(7, 1000);
+    network->displayLayerCentroidImages_c1(7, 1000);
     cv::waitKey(10000);
-    //network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.10_A_addRandom.jpg");
-    //network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.10_A.jpg");*/
+    network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.10_A_addRandom.jpg");
+    //network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.10_A.jpg");
+#endif
 
 //*****************************************************************************
 // This is to test the combined information and show the centroids for combined
@@ -212,7 +214,7 @@ int main(int argc, char ** argv)
     //network->displayLayerCentroidImages(7, 1000);
     //cv::waitKey(10000);*/
 
-#define TEST_2013_5_30
+//#define TEST_2013_5_30
 //#define TEST_ADD
 //#define RUN_BEFORE
 #define RUN_NOW

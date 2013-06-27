@@ -178,6 +178,31 @@ float*** Cig_CreateCentroidImages(Destin * d, float weightParameter){
     for(l = 0 ; l < d->nLayers; l++){
         MALLOC(images[l], float *, d->nb[l]);
         for(c = 0 ; c < d->nb[l]; c++){
+            MALLOC(images[l][c], float, image_width * image_width);
+        }
+        image_width *= 2;
+    }
+
+    Cig_UpdateCentroidImages(d, images, weightParameter);
+
+    return images;
+}
+
+// CZT
+float*** Cig_CreateCentroidImages_c1(Destin * d, float weightParameter){
+
+    if(!d->isUniform){
+        return NULL;
+    }
+
+    // allocate memory for the centroid images
+    float *** images;
+    MALLOC(images, float **, d->nLayers);
+    int l, c, image_width = sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni);
+    //int l, c, image_width = GetNodeFromDestin(d, 0, 0, 0)->ni;
+    for(l = 0 ; l < d->nLayers; l++){
+        MALLOC(images[l], float *, d->nb[l]);
+        for(c = 0 ; c < d->nb[l]; c++){
             // 2013.5.9
             // CZT
             //
@@ -189,7 +214,7 @@ float*** Cig_CreateCentroidImages(Destin * d, float weightParameter){
         image_width *= 2;
     }
 
-    Cig_UpdateCentroidImages(d, images, weightParameter);
+    Cig_UpdateCentroidImages_c1(d, images, weightParameter);
 
     return images;
 }
@@ -200,6 +225,73 @@ int Cig_GetCentroidImageWidth(Destin * d, int layer){
 }
 
 void Cig_UpdateCentroidImages(Destin * d,
+                              float *** images,    // preallocated images to update
+                              float weighParameter // higher value means higher contrast
+                              ){
+
+    int p, l, c, prev_image_width,image_width;
+
+    Node * n;
+    image_width = sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni);
+    prev_image_width = image_width;
+    for(l = 0 ; l < 1 ; l++){
+        n = GetNodeFromDestin(d, l, 0, 0);
+
+        for(c = 0 ; c < d->nb[l]; c++){
+            for(p = 0 ; p < n->ni ; p++){
+                images[l][c][p] = n->mu[c * n->ns + p];
+            }
+        }
+
+        prev_image_width = image_width;
+        image_width *= 2;
+    }
+
+    int child_section, i;
+    for(l = 1 ; l < d->nLayers ; l++){
+        n = GetNodeFromDestin(d, l, 0, 0);
+
+        float ** combined_images;
+        MALLOC(combined_images, float *, 4);
+        for(i = 0 ; i < 4 ; i++){
+            MALLOC(combined_images[i], float, prev_image_width * prev_image_width);
+        }
+
+        for(c = 0 ; c < d->nb[l]; c++){
+            // combine the child layer's shared centroids according
+            // to the weights given in
+            for(child_section = 0 ; child_section < 4 ; child_section++){
+
+                // For the current sub section of the current centroid,
+                // generate its representative image and store it in
+                // the appropriate section of combined_images;
+                Cig_BlendImages(images[l - 1],
+                              &n->mu[c * n->ns + child_section * d->nb[l - 1]],
+                              d->nb[l - 1],
+                              //l==1 ? prev_image_width*prev_image_width*d->extRatio : prev_image_width*prev_image_width, // CZT
+                              prev_image_width * prev_image_width,
+                              weighParameter,
+                              combined_images[child_section]);
+                }
+
+            Cig_ConcatImages(combined_images, prev_image_width, prev_image_width, images[l][c] );
+        }
+
+        for(i = 0 ; i < 4 ; i++){
+            FREE(combined_images[i]);
+            combined_images[i] = NULL;
+        }
+        FREE(combined_images);
+        combined_images = NULL;
+
+        prev_image_width = image_width;
+        image_width *= 2;
+    }
+    return;
+}
+
+// CZT
+void Cig_UpdateCentroidImages_c1(Destin * d,
                               float *** images,    // preallocated images to update
                               float weighParameter // higher value means higher contrast
                               ){

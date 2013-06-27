@@ -26,6 +26,9 @@ void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
         case CLS_DECAY:
             d->centLearnStratFunc = &CLS_Decay;
             break;
+        case CLS_DECAY_c1:
+            d->centLearnStratFunc = &CLS_Decay_c1;
+            break;
         default:
             fprintf(stderr, "Warning: Invalid centroid update strategy enum value %i. Setting null.\n", strategy);
             d->centLearnStratFunc = NULL;

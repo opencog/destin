@@ -91,6 +91,10 @@ public:
 
     float *** getCentroidImages();
 
+    // 2013.6.27
+    // CZT
+    float *** getCentroidImages_c1();
+
     void setBeliefTransform(BeliefTransformEnum e){
         SetBeliefTransform(destin, e);
     }
@@ -326,7 +330,19 @@ public:
                                   int border_width = 5
                                   );
 
-
+    // CZT
+    void saveLayerCentroidImages_c1(int layer, const string & filename,
+                                  int scale_width = 1000,
+                                  int border_width = 5
+                                  );
+    cv::Mat getLayerCentroidImages_c1(int layer,
+                                  int scale_width = 1000,
+                                  int border_width = 5);
+    void displayLayerCentroidImages_c1(int layer,
+                                    int scale_width = 600,
+                                    int border_width = 5,
+                                    string window_title="Centroid Images"
+                                    );
 
 };
 

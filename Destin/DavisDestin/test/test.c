@@ -399,7 +399,6 @@ int testUniformFormulate(){
 
     FormulateBelief(d, image);
 
-
     //check that the shared centroids were moved to the correct positions
     assertFloatArrayEqualsEV(n->mu, 2e-8, 4 * 9,
         0.05,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 0, unchanged because it wasn't a winner

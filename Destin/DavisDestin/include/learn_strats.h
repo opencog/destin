@@ -8,7 +8,8 @@
 // centroid movement / learning rate.
 typedef  enum {
     CLS_FIXED,      // Centroid learn strategy fixed - fixed centroid learning rate
-    CLS_DECAY       // Centroid learn strategy decay learning rate decays with 1 / N where N = number
+    CLS_DECAY,       // Centroid learn strategy decay learning rate decays with 1 / N where N = number
+    CLS_DECAY_c1 // 2013.6.27, still under discussion!
                     // of times the centroid has won
 } CentroidLearnStrat;
 
@@ -47,5 +48,14 @@ float CLS_Fixed(
                 uint,                       // Which layer the node is in
                 uint                        // Which centroid to calulate the learning rate for
                 );
+
+// 2013.6.27
+// Still under discussion
+float CLS_Decay_c1(
+        struct Destin *,            // Destin network to calculate the learn rate for
+        struct Node *,              // node to calculate learning rate for
+        uint,                       // Which layer the node is in
+        uint                        // Which centroid to calulate the learning rate for
+        );
 
 #endif

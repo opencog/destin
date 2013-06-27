@@ -23,6 +23,12 @@ float *** DestinNetworkAlt::getCentroidImages(){
     return centroidImages;
 }
 
+float *** DestinNetworkAlt::getCentroidImages_c1(){
+    if(centroidImages==NULL){
+        centroidImages = Cig_CreateCentroidImages_c1(destin, centroidImageWeightParameter);
+    }
+    return centroidImages;
+}
 
 DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
         unsigned int centroid_counts [], bool isUniform ) :
@@ -148,7 +154,7 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
 
     /*SetLearningStrat(destin, CLS_FIXED);
     destin->fixedLearnRate = 0.1;*/
-    SetLearningStrat(destin, CLS_DECAY);/**/
+    SetLearningStrat(destin, CLS_DECAY_c1); //
     isTraining(true);/**/
 }
 
@@ -216,7 +222,7 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
 
     setBeliefTransform(DST_BT_NONE);
     ClearBeliefs(destin);
-    SetLearningStrat(destin, CLS_DECAY);
+    SetLearningStrat(destin, CLS_DECAY_c1); //
     isTraining(true);
 }
 
@@ -285,7 +291,7 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
 
     setBeliefTransform(DST_BT_NONE);
     ClearBeliefs(destin);
-    SetLearningStrat(destin, CLS_DECAY);
+    SetLearningStrat(destin, CLS_DECAY_c1); //
     isTraining(true);
 }
 
@@ -821,7 +827,6 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
 
     //layerCentroidsImage = big_img;
     return layerCentroidsImage;
-
 }
 
 void DestinNetworkAlt::saveLayerCentroidImages(int layer, const string & filename,
@@ -829,5 +834,72 @@ void DestinNetworkAlt::saveLayerCentroidImages(int layer, const string & filenam
                               int border_width
                               ){
     cv::imwrite(filename, getLayerCentroidImages(layer, scale_width, border_width) );
+    return;
+}
+
+/*****************************************************************************/
+// CZT
+void DestinNetworkAlt::saveLayerCentroidImages_c1(int layer, const string & filename,
+                              int scale_width,
+                              int border_width
+                              ){
+    cv::imwrite(filename, getLayerCentroidImages_c1(layer, scale_width, border_width) );
+    return;
+}
+
+cv::Mat DestinNetworkAlt::getLayerCentroidImages_c1(int layer,
+                              int scale_width,
+                              int border_width){
+    if(!isUniform){
+        throw std::logic_error("can't displayLayerCentroidImages with non uniform DeSTIN.");
+    }
+
+    int images = getBeliefsPerNode(layer);
+    int images_wide = ceil(sqrt(images));
+    int sub_img_width = (int)((double)scale_width / (double)images_wide - (double)border_width);
+
+    int wpb = sub_img_width + border_width; // sub image width plus boarder. Each image gets a right and bottom boarder only.
+
+    int images_high = ceil((float)images / (float)images_wide);
+
+    // initialize the big image as solid black
+    cv::Mat big_img = cv::Mat::zeros(wpb*images_high, wpb*images_wide, CV_32FC1);
+
+    int r, c, x, y;
+    // copies the subimages into the correct place in the big image
+    for(int i = 0 ; i < images ; i++){
+            r = i  / images_wide;
+            c = i - r * images_wide;
+            x = c * wpb;
+            y = r * wpb;
+            int w = Cig_GetCentroidImageWidth(destin, layer);
+            cv::Mat subimage(w, w, CV_32FC1, getCentroidImages()[layer][i]);
+            cv::Mat subimage_resized;
+            cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
+            cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );
+            cv::Mat dest = big_img( roi );
+
+            subimage_resized.copyTo( dest );
+    }
+
+    //cv::Mat toShow;
+    big_img.convertTo(layerCentroidsImage, CV_8UC1, 255);
+
+    //layerCentroidsImage = big_img;
+    return layerCentroidsImage;
+}
+
+void DestinNetworkAlt::displayLayerCentroidImages_c1(int layer,
+                                int scale_width,
+                                int border_width,
+                                string window_title
+                                ){
+
+    if(layer < 0 || layer >= getLayerCount()){
+
+        std::cerr << "displayLayerCentroidImages: layer out of bounds " << std::endl;
+        return;
+    }
+    cv::imshow(window_title, getLayerCentroidImages_c1(layer, scale_width, border_width));
     return;
 }
