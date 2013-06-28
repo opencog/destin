@@ -103,16 +103,16 @@ int main(int argc, char ** argv)
         network->doDestin_c1(tempIn);
     }
 
-    //network->displayLayerCentroidImages(7, 1000);
+    //network->displayLayerCentroidImages_c1(7, 1000);
     //cv::waitKey(10000);
-    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.13_level7.jpg");
-    network->saveLayerCentroidImages(6, "/home/teaera/Pictures/2013.5.13_level6.jpg");
-    network->saveLayerCentroidImages(5, "/home/teaera/Pictures/2013.5.13_level5.jpg");
-    network->saveLayerCentroidImages(4, "/home/teaera/Pictures/2013.5.13_level4.jpg");
-    network->saveLayerCentroidImages(3, "/home/teaera/Pictures/2013.5.13_level3.jpg");
-    network->saveLayerCentroidImages(2, "/home/teaera/Pictures/2013.5.13_level2.jpg");
-    network->saveLayerCentroidImages(1, "/home/teaera/Pictures/2013.5.13_level1.jpg");
-    network->saveLayerCentroidImages(0, "/home/teaera/Pictures/2013.5.13_level0.jpg");*/
+    network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.13_level7.jpg");
+    network->saveLayerCentroidImages_c1(6, "/home/teaera/Pictures/2013.5.13_level6.jpg");
+    network->saveLayerCentroidImages_c1(5, "/home/teaera/Pictures/2013.5.13_level5.jpg");
+    network->saveLayerCentroidImages_c1(4, "/home/teaera/Pictures/2013.5.13_level4.jpg");
+    network->saveLayerCentroidImages_c1(3, "/home/teaera/Pictures/2013.5.13_level3.jpg");
+    network->saveLayerCentroidImages_c1(2, "/home/teaera/Pictures/2013.5.13_level2.jpg");
+    network->saveLayerCentroidImages_c1(1, "/home/teaera/Pictures/2013.5.13_level1.jpg");
+    network->saveLayerCentroidImages_c1(0, "/home/teaera/Pictures/2013.5.13_level0.jpg");*/
 
 //*****************************************************************************
 // To test the number of centroids for each layer!
@@ -163,11 +163,13 @@ int main(int argc, char ** argv)
         network->doDestin_c1(isi.getGrayImageFloat());
     }
 
-    network->displayLayerCentroidImages(7, 1000);
+    network->displayLayerCentroidImages_c1(7, 1000);
     cv::waitKey(5000);
-    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.24_5.jpg");*/
+    network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.24_5.jpg");*/
 
-/*//*****************************************************************************
+//#define TEST_params
+#ifdef TEST_params
+//*****************************************************************************
 // For testing some parameters:
 
     ImageSouceImpl isi;
@@ -211,12 +213,13 @@ int main(int argc, char ** argv)
     //{
     //  printf("%f\n",dn->belief[i]);
     //}
-    //network->displayLayerCentroidImages(7, 1000);
-    //cv::waitKey(10000);*/
+    network->displayLayerCentroidImages_c1(7, 1000);
+    cv::waitKey(10000);
+#endif
 
-//#define TEST_2013_5_30
+#define TEST_2013_5_30
 //#define TEST_ADD
-//#define RUN_BEFORE
+#define RUN_BEFORE
 #define RUN_NOW
 //#define SHOW_BEFORE
 #define SHOW_NOW
@@ -224,15 +227,14 @@ int main(int argc, char ** argv)
 //#define TEST_uf_persistWinCounts
 //#define TEST_uf_persistWinCounts_detailed
 //#define TEST_uf_avgDelta //uf_sigma
-#define TEST_mu
+//#define TEST_mu
 //#define TEST_observation
 //#define TEST_beliefMal
 //#define TEST_intra
 //#define TEST_inter
-//#define TEST_VALIDITY
-
+#define TEST_VALIDITY
 #ifdef TEST_2013_5_30
-//*****************************************************************************
+/*****************************************************************************/
     ImageSouceImpl isi;
     //isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
     isi.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg");
@@ -251,7 +253,8 @@ int main(int argc, char ** argv)
     uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
     bool isUniform = true;
     int size = 512*512;
-    int extRatio = 2;
+    //int extRatio = 2;
+    int extRatio = 1;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
     network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
 
@@ -261,18 +264,19 @@ int main(int argc, char ** argv)
     int maxCount = 3000;
 
 #ifdef RUN_BEFORE
-    frameCount = 0;
-    while(frameCount < maxCount){
+    frameCount = 1;
+    while(frameCount <= maxCount){
         frameCount++;
         if(frameCount % 10 == 0)
         {
-            printf("Count %d;\n", frameCount);
+            //printf("Count %d;\n", frameCount);
 #ifdef TEST_VALIDITY
+            printf("%d\n", frameCount/10);
             for(int i=0; i<8; ++i)
             {
-                printf("%e ", network->getValidity(i));
+                printf("%e  %e  %e\n", network->getIntra(i), network->getInter(i), network->getValidity(i));
             }
-            printf("\n");
+            printf("---\n");
 #endif // TEST_VALIDITY
         }
 
@@ -286,9 +290,9 @@ int main(int argc, char ** argv)
 #ifdef SHOW_BEFORE
     tempLayer = 7;
     //tempLayer = currLayer;
-    network->displayLayerCentroidImages(tempLayer, 1000);
+    network->displayLayerCentroidImages_c1(tempLayer, 1000);
     cv::waitKey(3000);
-    network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_before.jpg");
+    network->saveLayerCentroidImages_c1(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_before.jpg");
 #endif // SHOW_BEFORE
 
     Destin * d = network->getNetwork();
@@ -515,8 +519,8 @@ int main(int argc, char ** argv)
     network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);*/
 
 #ifdef RUN_NOW
-    frameCount = 0;
-    while(frameCount < maxCount){
+    frameCount = 1;
+    while(frameCount <= maxCount){
         frameCount++;
         if(frameCount % 10 == 0)
         {
@@ -533,9 +537,9 @@ int main(int argc, char ** argv)
 #ifdef SHOW_NOW
     tempLayer = 7;
     //tempLayer = currLayer;
-    network->displayLayerCentroidImages(tempLayer, 1000);
+    network->displayLayerCentroidImages_c1(tempLayer, 1000);
     cv::waitKey(3000);
-    network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_now.jpg");
+    network->saveLayerCentroidImages_c1(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_now.jpg");
 #endif // SHOW_NOW
 
     // I don't why I shoud 'reload' these nodes again?
@@ -719,6 +723,7 @@ int main(int argc, char ** argv)
 
 #endif // TEST_add
 #endif // TEST_2013_5_30
+/*END of TEST_2013_5_30*/
 
 	return 0;
 }

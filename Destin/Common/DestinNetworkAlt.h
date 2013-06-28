@@ -131,11 +131,11 @@ public:
     long ** getPersistWinCounts();
     long ** getPersistWinCounts_detailed();
     // 2013.6.14
-    float * getVariance(int layer);
-    float * getWeight(int layer);
-    float getIntra(int layer);
-    float getInter(int layer);
-    float getValidity(int layer);
+    double * getVariance(int layer);
+    double * getWeight(int layer);
+    double getIntra(int layer);
+    double getInter(int layer);
+    double getValidity(int layer);
 
     void isTraining(bool isTraining);
 

@@ -435,15 +435,15 @@ long ** DestinNetworkAlt::getPersistWinCounts_detailed()
 // 2013.6.14
 // CZT
 // Calculate 'variance' for a specific layer; Only for uniform!
-float * DestinNetworkAlt::getVariance(int layer)
+double * DestinNetworkAlt::getVariance(int layer)
 {
-    float * variance;
-    MALLOC(variance, float, destin->nb[layer]);
+    double * variance;
+    MALLOC(variance, double, destin->nb[layer]);
     Node * currNode = getNode(layer, 0, 0);
     int i,j;
     for(i=0; i<currNode->nb; ++i)
     {
-        float fTemp = 0.0;
+        double fTemp = 0.0;
         for(j=0; j<currNode->ns; ++j)
         {
             fTemp += destin->uf_sigma[layer][i*currNode->ns+j];
@@ -456,12 +456,12 @@ float * DestinNetworkAlt::getVariance(int layer)
 // 2013.6.14
 // CZT
 // Calculate 'weight' for a specific layer; Only for uniform!
-float * DestinNetworkAlt::getWeight(int layer)
+double * DestinNetworkAlt::getWeight(int layer)
 {
-    float * weight;
-    MALLOC(weight, float, destin->nb[layer]);
+    double * weight;
+    MALLOC(weight, double, destin->nb[layer]);
     Node * currNode = getNode(layer, 0, 0);
-    float fSum = 0.0;
+    double fSum = 0.0;
     int i;
     for(i=0; i<currNode->nb; ++i)
     {
@@ -477,11 +477,11 @@ float * DestinNetworkAlt::getWeight(int layer)
 // 2013.6.14
 // CZT
 // variance * weight, weighted variance, intra; Only for uniform!
-float DestinNetworkAlt::getIntra(int layer)
+double DestinNetworkAlt::getIntra(int layer)
 {
-    float * variance = getVariance(layer);
-    float * weight = getWeight(layer);
-    float intra=0.0;
+    double * variance = getVariance(layer);
+    double * weight = getWeight(layer);
+    double intra=0.0;
     int i;
     for(i=0; i<destin->nb[layer]; ++i)
     {
@@ -494,16 +494,16 @@ float DestinNetworkAlt::getIntra(int layer)
 // CZT
 // inter
 #define MAX_INTER 1000000
-float DestinNetworkAlt::getInter(int layer)
+double DestinNetworkAlt::getInter(int layer)
 {
-    float inter=MAX_INTER;
+    double inter=MAX_INTER;
     Node * currNode = getNode(layer, 0, 0);
     int i,j,k;
     for(i=0; i<currNode->nb-1; ++i)
     {
         for(j=i+1; j<currNode->nb; ++j)
         {
-            float fSum = 0.0;
+            double fSum = 0.0;
             for(k=0; k<currNode->ns; ++k)
             {
                 fSum += (currNode->mu[i*currNode->ns+k]-currNode->mu[j*currNode->ns+k])
@@ -521,9 +521,11 @@ float DestinNetworkAlt::getInter(int layer)
 // 2013.6.14
 // CZT
 // Get validity
-float DestinNetworkAlt::getValidity(int layer)
+double DestinNetworkAlt::getValidity(int layer)
 {
-    return getIntra(layer)/getInter(layer);
+    double intra = getIntra(layer);
+    double inter = getInter(layer);
+    return intra/inter;
 }
 /*****************************************************************************/
 
@@ -873,7 +875,8 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages_c1(int layer,
             x = c * wpb;
             y = r * wpb;
             int w = Cig_GetCentroidImageWidth(destin, layer);
-            cv::Mat subimage(w, w, CV_32FC1, getCentroidImages()[layer][i]);
+            // !!!
+            cv::Mat subimage(w, w, CV_32FC1, getCentroidImages_c1()[layer][i]);
             cv::Mat subimage_resized;
             cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
             cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );

@@ -16,16 +16,6 @@ I want to re-do what I thought again!!!
 #include "czt_lib2.h"
 #include "czt_lib.h"
 
-//#define TEST_ORG
-//#define TEST_IN_ORG
-//#define TEST_STEP1
-// 2013.4.19
-//
-//#define TEST_STEP2
-// 2013.6.25
-// RGB
-#define TEST_STEP3
-
 using namespace cv;
 void testNan(float * array, int len){
     for(int i = 0 ; i < len ; i++){
@@ -127,6 +117,7 @@ void convert(cv::Mat & in, float * out) {
 int main(int argc, char ** argv)
 {
 
+//#define TEST_ORG
 /*****************************************************************************/
 /*
   2013.4.5
@@ -149,9 +140,6 @@ int main(int argc, char ** argv)
     bool isUniform = true;
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-#ifdef TEST_IN_ORG
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, 512*512, 1);
-#endif
 
     Transporter t;
     vs.grab();//throw away first frame in case its garbage
@@ -209,6 +197,7 @@ int main(int argc, char ** argv)
     delete network;
 #endif
 
+//#define TEST_STEP1
 /*****************************************************************************/
 /*
   2013.4.5
@@ -326,6 +315,7 @@ int main(int argc, char ** argv)
     delete network;
 #endif
 
+//#define TEST_STEP2
 /*****************************************************************************/
 /*
   2013.4.19
@@ -477,7 +467,11 @@ int main(int argc, char ** argv)
     delete network;
 #endif
 
-// 2013.6.25
+//#define TEST_STEP3
+/*****************************************************************************/
+/*
+  2013.6.25 BGR
+*/
 #ifdef TEST_STEP3
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
@@ -540,5 +534,3 @@ int main(int argc, char ** argv)
 
 	return 0;
 }
-
-//***

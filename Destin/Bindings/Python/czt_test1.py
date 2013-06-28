@@ -181,6 +181,8 @@ cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.24_13.jpg")
 #############################################################################
 # 2013.6.14
 # I want to use matplotlib to draw the curve of validity!
+# 2013.6.27
+# Draw intra and inter seperately!
 import matplotlib.pyplot as plt
 #
 centroids = [6,8,10,12,12,8,6,4]
@@ -193,29 +195,64 @@ ims.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg")
 #cl2 = pd.czt_lib2()
 #fOut = cl2.createFloatArr(size)
 valDict = {}
+intraDict = {}
+interDict = {}
 for i in range(8):
     valDict[str(i)] = []
-maxCount = 3000
-for i in range(maxCount):
+    intraDict[str(i)] = []
+    interDict[str(i)] = []
+#maxCount = 3000
+maxCount = 1000
+for i in range(1, maxCount+1):
     if i % 10 == 0:
         print "Iteration " + str(i)
         for j in range(8):
             valDict[str(j)].append(dn.getValidity(j))
-    '''
+            intraDict[str(j)].append(dn.getIntra(j))
+            interDict[str(j)].append(dn.getInter(j))
     '''
     if i % 100 == 0:
         centroids[0] += 1
         dn.updateDestin_add(pd.W512, 8, centroids, isUniform,
                             size, extRatio, 0)
+    '''
     ims.findNextImage()
     f = ims.getGrayImageFloat()
     #cl2.combineInfo_extRatio(f, size, extRatio, fOut)    
     dn.doDestin_c1(f)
 #
 '''
-'''
 for i in range(8):
     plt.figure()
     plt.plot(range(len(valDict[str(i)])), valDict[str(i)], "r*-")
     plt.savefig("/home/teaera/Pictures/2013.6.18_"+str(i)+".jpg")
 plt.show()
+'''
+
+for i in range(8):
+    plt.figure()
+    plt.plot(intraDict[str(i)], "r*-")
+    plt.savefig("/home/teaera/Pictures/2013.6.28_intra_"+str(i)+".jpg")
+    plt.figure()
+    plt.plot(interDict[str(i)], "r*-")
+    plt.savefig("/home/teaera/Pictures/2013.6.28_inter_"+str(i)+".jpg")
+    plt.figure()
+    plt.plot(valDict[str(i)], "r*-")
+    plt.savefig("/home/teaera/Pictures/2013.6.28_validity_"+str(i)+".jpg")
+'''
+plt.show()
+'''
+
+'''
+valMax = []
+intraMax = []
+interMax = []
+for i in range(8):
+    valDict[str(i)].sort(reverse=True)
+    intraDict[str(i)].sort(reverse=True)
+    interDict[str(i)].sort(reverse=True)
+    #
+    valMax.append(valDict[str(i)][0])
+    intraMax.append(valDict[str(i)][0])
+    interMax.append(valDict[str(i)][0])
+'''
