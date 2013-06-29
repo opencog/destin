@@ -10,19 +10,20 @@
 
 #FIND_PACKAGE(OpenCV REQUIRED)
 
-SET(temp_set
+ADD_LIBRARY( stereovision SHARED 
     include/stereovision.h
     src/stereovision.cpp
     include/stereocamera.h
     src/stereocamera.cpp
 )
 
-ADD_LIBRARY( temp_lib SHARED ${temp_set})
+SET(testlibs ${OpenCV_LIBS} common destinalt avutil stereovision)
+    
 
 INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include)
 
-ADD_EXECUTABLE(test1 src/test1.cpp  ../Common/VideoSource ${temp_set})
-TARGET_LINK_LIBRARIES(test1 ${OpenCV_LIBS} common destinalt avutil)
+ADD_EXECUTABLE(test1 src/test1.cpp )
+TARGET_LINK_LIBRARIES(test1 ${testlibs})
 
-ADD_EXECUTABLE(test2 src/test2.cpp  ../Common/VideoSource ${temp_set})
-TARGET_LINK_LIBRARIES(test2 ${OpenCV_LIBS} common destinalt avutil)
+ADD_EXECUTABLE(test2 src/test2.cpp )
+TARGET_LINK_LIBRARIES(test2 ${testlibs})
