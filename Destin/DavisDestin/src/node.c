@@ -659,7 +659,10 @@ void MoveCentroids( Node *n, uint nIdx ){
         n->muSqDiff += dTmp * dTmp;
 
         // update the variance of the winning centroid
-        n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);    
+        n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);
+
+        // Ben:
+        //n->absvar[winnerOffset+i]  += n->beta * ( fabs(delta) - n->absvar[winnerOffset+i]);
     }
 }
 
