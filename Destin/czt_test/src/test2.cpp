@@ -20,7 +20,7 @@ I want to re-do what I thought again!!!
 
 int main(int argc, char ** argv)
 {
-//#define TEST_CL2
+#define TEST_CL2
 #ifdef TEST_CL2
 //*****************************************************************************
 // Add Random depth information
@@ -217,7 +217,7 @@ int main(int argc, char ** argv)
     cv::waitKey(10000);
 #endif
 
-#define TEST_2013_5_30
+//#define TEST_2013_5_30
 //#define TEST_ADD
 #define RUN_BEFORE
 #define RUN_NOW
