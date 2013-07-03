@@ -185,16 +185,24 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
 #endif
     }
 
-    // 2013.4.11
-    // CZT
-    //
-    if(n->layer == 0)
+    for( i=0; i < nc; i++ )
     {
-        for(j=1; j<n->d->extRatio; ++j)
+        // Apply context
+        n->observation[i+ni+nb+np] = 0;
+    }
+
+    // 2013.4.11, 2013.7.3
+    // CZT: use 'isExtend';
+    if(n->d->isExtend)
+    {
+        if(n->layer == 0)
         {
-            for(i=0; i<ni; ++i)
+            for(j=1; j<n->d->extRatio; ++j)
             {
-                n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->size*j];
+                for(i=0; i<ni; ++i)
+                {
+                    n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->size*j];
+                }
             }
         }
     }
@@ -487,7 +495,8 @@ void NormalizeBeliefGetWinner_c1( Node *n, uint nIdx )
         if( c == 1){//only increment this once even if multiple nodes pick this shared centroid
             n->d->uf_persistWinCounts[n->layer][n->winner]++;
         }
-        // !!!
+        // 2013.7.3
+        // CZT: the detailed record of winning;
         if(n->d->uf_persistWinCounts_detailed != NULL)
         {
             n->d->uf_persistWinCounts_detailed[n->layer][n->winner]++;
@@ -578,9 +587,24 @@ void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
     // convergence.
     n->muSqDiff = 0;
 
+    // this is the offset in the observation vector where
+    // the class labels start.
+    uint ncStart = n->ni + n->nb + n->np;
+    uint ncEnd = n->ni + n->nb + n->np + n->nc;
+
+    // 2013.7.3
+    // CZT: to keep the original structure, I still add the if-statement to
+    // check nc;
     for( i=0; i < n->ns; i++ )
     {
-        delta = n->observation[i] - n->mu[winnerOffset+i];
+        if(i>=ncStart && i<ncEnd)
+        {
+            delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
+        }
+        else
+        {
+            delta = n->observation[i] - n->mu[winnerOffset+i];
+        }
         n->delta[i] = delta;
     }
     return;

@@ -78,22 +78,19 @@ private:
 public:
 
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform);
+            unsigned int centroid_counts [], bool isUniform,
+            bool isExtend=false, int size=512*512, int extRatio=1);
 
     // 2013.4.11
     // CZT
     // Reinitialize the network: extend the input!
-    void reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
+    /*void reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
     unsigned int centroid_counts [], bool isUniform,
-                          int size, int extRatio);
+                          int size, int extRatio);*/
 
     virtual ~DestinNetworkAlt();
 
     float *** getCentroidImages();
-
-    // 2013.6.27
-    // CZT
-    float *** getCentroidImages_c1();
 
     void setBeliefTransform(BeliefTransformEnum e){
         SetBeliefTransform(destin, e);
@@ -102,13 +99,6 @@ public:
     void setTemperatures(float temperatures[]);
 
     void doDestin( //run destin with the given input
-            float * input_dev //pointer to input memory on device
-            );
-
-    // 2013.4.11
-    // CZT
-    //
-    void doDestin_c1( //run destin with the given input
             float * input_dev //pointer to input memory on device
             );
 
@@ -130,12 +120,12 @@ public:
     uint ** getWinCounts();
     long ** getPersistWinCounts();
     long ** getPersistWinCounts_detailed();
-    // 2013.6.14
+    /*// 2013.6.14
     double * getVariance(int layer);
     double * getWeight(int layer);
     double getIntra(int layer);
     double getInter(int layer);
-    double getValidity(int layer);
+    double getValidity(int layer);*/
 
     void isTraining(bool isTraining);
 
@@ -331,7 +321,7 @@ public:
                                   );
 
     // CZT
-    void saveLayerCentroidImages_c1(int layer, const string & filename,
+    /*void saveLayerCentroidImages_c1(int layer, const string & filename,
                                   int scale_width = 1000,
                                   int border_width = 5
                                   );
@@ -342,7 +332,7 @@ public:
                                     int scale_width = 600,
                                     int border_width = 5,
                                     string window_title="Centroid Images"
-                                    );
+                                    );*/
 
 };
 

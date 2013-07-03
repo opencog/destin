@@ -81,9 +81,9 @@ void  InitNode(                         // initialize a node.
 // 2013.6.21
 void evenInitForMu(float * tempMu, int tempNb, int tempNs);
 
-// 2013.6.3
-// addCentroid2_node
-void addCentroid2_node(
+// 2013.6.3, 2013.7.3
+// updateCentroid_node
+void updateCentroid_node(
                  uint,                  // node index
                  struct Destin *,       // reference to parent destin network
                  uint,                  // layer this node belongs to

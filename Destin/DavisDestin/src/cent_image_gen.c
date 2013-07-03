@@ -203,12 +203,19 @@ float*** Cig_CreateCentroidImages_c1(Destin * d, float weightParameter){
     for(l = 0 ; l < d->nLayers; l++){
         MALLOC(images[l], float *, d->nb[l]);
         for(c = 0 ; c < d->nb[l]; c++){
-            // 2013.5.9
-            // CZT
-            //
+            // 2013.5.9, 2013.7.3
+            // CZT: use 'isExtend';
+            if(d->isExtend)
+            {
+                MALLOC(images[l][c], float, (l==0 ? image_width*image_width*d->extRatio : image_width*image_width));
+            }
+            else
+            {
+                MALLOC(images[l][c], float, image_width * image_width);
+            }
             //MALLOC(images[l][c], float, image_width * image_width);
             //printf("Layer: %d; Size: %d.\n", l, image_width*image_width);
-            MALLOC(images[l][c], float, (l==0 ? image_width*image_width*d->extRatio : image_width*image_width));
+            //MALLOC(images[l][c], float, (l==0 ? image_width*image_width*d->extRatio : image_width*image_width));
             //printf("Layer: %d; Size: %d.\n", l, l==0 ? image_width*image_width*d->extRatio : image_width*image_width);
         }
         image_width *= 2;
@@ -309,17 +316,19 @@ void Cig_UpdateCentroidImages_c1(Destin * d,
                 images[l][c][p] = n->mu[c * n->ns + p];
             }
 
-            // 2013.5.9
-            // CZT
-            //
-            int nRatio;
-            for(nRatio=1; nRatio<d->extRatio; ++nRatio)
+            // 2013.5.9, 2013.7.3
+            // CZT: for layer 0, if 'isExtend', there should be more information;
+            if(d->isExtend)
             {
-                for(p=0; p<n->ni; ++p)
+                int nRatio;
+                for(nRatio=1; nRatio<d->extRatio; ++nRatio)
                 {
-                    images[l][c][n->ni*nRatio + p] = n->mu[c*n->ns + n->ni*nRatio + n->nb + n->np + p];
+                    for(p=0; p<n->ni; ++p)
+                    {
+                        images[l][c][n->ni*nRatio + p] = n->mu[c*n->ns + n->ni*nRatio + n->nb + n->np + p];
+                    }
                 }
-            }/**/
+            }
         }
 
         prev_image_width = image_width;
@@ -344,20 +353,25 @@ void Cig_UpdateCentroidImages_c1(Destin * d,
                 // For the current sub section of the current centroid,
                 // generate its representative image and store it in
                 // the appropriate section of combined_images;
-                /*Cig_BlendImages(images[l - 1],
-                              &n->mu[c * n->ns + child_section * d->nb[l - 1]],
-                              d->nb[l - 1],
-                              //l==1 ? prev_image_width*prev_image_width*d->extRatio : prev_image_width*prev_image_width, // CZT
-                              prev_image_width * prev_image_width,
-                              weighParameter,
-                              combined_images[child_section]);*/
-                Cig_BlendImages_c1(images[l - 1],
-                              &n->mu[c * n->ns + child_section * d->nb[l - 1]],
-                              d->nb[l - 1],
-                              prev_image_width * prev_image_width,
-                              weighParameter,
-                              combined_images[child_section], l, d->extRatio);/**/
+                if(d->isExtend)
+                {
+                    Cig_BlendImages_c1(images[l - 1],
+                                  &n->mu[c * n->ns + child_section * d->nb[l - 1]],
+                                  d->nb[l - 1],
+                                  prev_image_width * prev_image_width,
+                                  weighParameter,
+                                  combined_images[child_section], l, d->extRatio);/**/
                 }
+                else
+                {
+                    Cig_BlendImages(images[l - 1],
+                                  &n->mu[c * n->ns + child_section * d->nb[l - 1]],
+                                  d->nb[l - 1],
+                                  prev_image_width * prev_image_width,
+                                  weighParameter,
+                                  combined_images[child_section]);
+                }
+            }
 
             Cig_ConcatImages(combined_images, prev_image_width, prev_image_width, images[l][c] );
         }

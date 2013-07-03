@@ -408,7 +408,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 }
 
 Destin * InitDestin_c2( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
-                        int size, int extRatio )
+                        bool isExtend, int size, int extRatio)
 {
     uint nInputPipeline;
     uint i, l, maxNb, maxNs;
@@ -420,9 +420,9 @@ Destin * InitDestin_c2( uint ni, uint nl, uint *nb, uint nc, float beta, float l
     // initialize a new Destin object
     MALLOC(d, Destin, 1);
 
-    // 2013.4.17
-    // CZT
-    //
+    // 2013.4.17, 2013.7.3
+    // CZT: 'isExtend' is the key;
+    d->isExtend = isExtend;
     d->size = size;
     d->extRatio = extRatio;
 
@@ -579,11 +579,11 @@ Destin * InitDestin_c2( uint ni, uint nl, uint *nb, uint nc, float beta, float l
         float * sharedCentroids;
 
         // calculate the state dimensionality (number of inputs + number of beliefs)
-        //uint ns = ni + nb[l] + np + nc;
+        uint ns = ni + nb[l] + np + nc;
         // 2013.4.17
         // CZT
-        //
-        uint ns = (l == 0 ? ni*extRatio+nb[l]+np+nc : ni+nb[l]+np+nc);
+        if(isExtend)
+            ns = (l == 0 ? ni*extRatio+nb[l]+np+nc : ni+nb[l]+np+nc);
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
@@ -1113,7 +1113,7 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                                  child_layer_offset,
                                  (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
                                  inputOffsets);
-            addCentroid2_node(
+            updateCentroid_node(
                         n,
                         d,
                         l,
@@ -1158,7 +1158,7 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
 // 2013.6.3
 // addCentroid2_node
 // Keep 'mu', 'uf_sigma';
-void addCentroid2_node
+void updateCentroid_node
     (
     uint         nodeIdx,
     Destin *     d,
@@ -1587,7 +1587,7 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                                  child_layer_offset,
                                  (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
                                  inputOffsets);
-            killCentroid_node(
+            updateCentroid_node(
                         n,
                         d,
                         l,
@@ -1631,7 +1631,7 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
 /*****************************************************************************/
 // 2013.6.6
 // killCentroid_noe
-void killCentroid_node
+/*void killCentroid_node
     (
     uint         nodeIdx,
     Destin *     d,
@@ -1743,7 +1743,7 @@ void killCentroid_node
     {
         node->observation[i] = (float) rand() / (float) RAND_MAX;
     }
-}
+}*/
 
 void LinkParentBeliefToChildren( Destin *d )
 {

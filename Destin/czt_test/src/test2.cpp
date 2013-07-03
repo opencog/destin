@@ -20,7 +20,7 @@ I want to re-do what I thought again!!!
 
 int main(int argc, char ** argv)
 {
-#define TEST_CL2
+//#define TEST_CL2
 #ifdef TEST_CL2
 //*****************************************************************************
 // Add Random depth information
@@ -33,18 +33,19 @@ int main(int argc, char ** argv)
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
     bool isUniform = true;
+    bool isExtend = true;
     int size = 512*512;
     int extRatio = 2;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
+    //DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
 
     int inputSize = size*extRatio;
     float * tempIn;
     MALLOC(tempIn, float, inputSize);
 
-    int frameCount = 0;
+    int frameCount = 1;
     int maxCount = 3000;
-    while(frameCount < maxCount){
+    while(frameCount <= maxCount){
         frameCount++;
         if(frameCount % 10 == 0)
         {
@@ -53,66 +54,72 @@ int main(int argc, char ** argv)
 
         isi.findNextImage();
         cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
-        network->doDestin_c1(tempIn);
+        //network->doDestin(isi.getGrayImageFloat());
+        network->doDestin(tempIn);
     }
 
-    network->displayLayerCentroidImages_c1(7, 1000);
+    network->displayLayerCentroidImages(7, 1000);
     cv::waitKey(10000);
-    network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.10_A_addRandom.jpg");
-    //network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.10_A.jpg");
+    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.7.3_A_level7.jpg");
+    network->saveLayerCentroidImages(6, "/home/teaera/Pictures/2013.7.3_A_level6.jpg");
+    network->saveLayerCentroidImages(5, "/home/teaera/Pictures/2013.7.3_A_level5.jpg");
+    network->saveLayerCentroidImages(4, "/home/teaera/Pictures/2013.7.3_A_level4.jpg");
+    network->saveLayerCentroidImages(3, "/home/teaera/Pictures/2013.7.3_A_level3.jpg");
+    network->saveLayerCentroidImages(2, "/home/teaera/Pictures/2013.7.3_A_level2.jpg");
+    network->saveLayerCentroidImages(1, "/home/teaera/Pictures/2013.7.3_A_level1.jpg");
+    network->saveLayerCentroidImages(0, "/home/teaera/Pictures/2013.7.3_A_level0.jpg");
 #endif
 
+//#define TEST_CL_and_CL2
+#ifdef TEST_CL_and_CL2
 //*****************************************************************************
 // This is to test the combined information and show the centroids for combined
 // information!
-//
-
-    /*czt_lib2 * cl2 = new czt_lib2();
+    czt_lib2 * cl2 = new czt_lib2();
     czt_lib * cl = new czt_lib();
 
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
     bool isUniform = true;
+    bool isExtend = true;
     int size = 512*512;
     int extRatio = 2;
-    //int extRatio = 1;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
 
     int inputSize = size*extRatio;
     float * tempIn1, * tempIn2, * tempIn;
     MALLOC(tempIn1, float, size);
     MALLOC(tempIn2, float, size);
     MALLOC(tempIn, float, inputSize);
-    //cl2->combineImgs("/home/teaera/Work/RECORD/2013.5.8/pro_3/1.jpg", "/home/teaera/Work/RECORD/2013.5.8/pro_add_3/1.jpg", tempIn);
     cl->isNeedResize("/home/teaera/Work/RECORD/2013.5.8/pro_3/1.jpg");
     tempIn1 = cl->get_float512();
     cl->isNeedResize("/home/teaera/Work/RECORD/2013.5.8/pro_add_3/1.jpg");
     tempIn2 = cl->get_float512();
     cl2->combineInfo_depth(tempIn1, tempIn2, size, tempIn);
 
-    int frameCount = 0;
-    int maxCount = 5000;
-    while(frameCount < maxCount){
+    int frameCount = 1;
+    int maxCount = 3000;
+    while(frameCount <= maxCount){
         frameCount++;
         if(frameCount % 10 == 0)
         {
             printf("Count %d;\n", frameCount);
         }
 
-        network->doDestin_c1(tempIn);
+        network->doDestin(tempIn);
     }
 
-    //network->displayLayerCentroidImages_c1(7, 1000);
-    //cv::waitKey(10000);
-    network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.13_level7.jpg");
-    network->saveLayerCentroidImages_c1(6, "/home/teaera/Pictures/2013.5.13_level6.jpg");
-    network->saveLayerCentroidImages_c1(5, "/home/teaera/Pictures/2013.5.13_level5.jpg");
-    network->saveLayerCentroidImages_c1(4, "/home/teaera/Pictures/2013.5.13_level4.jpg");
-    network->saveLayerCentroidImages_c1(3, "/home/teaera/Pictures/2013.5.13_level3.jpg");
-    network->saveLayerCentroidImages_c1(2, "/home/teaera/Pictures/2013.5.13_level2.jpg");
-    network->saveLayerCentroidImages_c1(1, "/home/teaera/Pictures/2013.5.13_level1.jpg");
-    network->saveLayerCentroidImages_c1(0, "/home/teaera/Pictures/2013.5.13_level0.jpg");*/
+    network->displayLayerCentroidImages(7, 1000);
+    cv::waitKey(10000);
+    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.13_level7.jpg");
+    network->saveLayerCentroidImages(6, "/home/teaera/Pictures/2013.5.13_level6.jpg");
+    network->saveLayerCentroidImages(5, "/home/teaera/Pictures/2013.5.13_level5.jpg");
+    network->saveLayerCentroidImages(4, "/home/teaera/Pictures/2013.5.13_level4.jpg");
+    network->saveLayerCentroidImages(3, "/home/teaera/Pictures/2013.5.13_level3.jpg");
+    network->saveLayerCentroidImages(2, "/home/teaera/Pictures/2013.5.13_level2.jpg");
+    network->saveLayerCentroidImages(1, "/home/teaera/Pictures/2013.5.13_level1.jpg");
+    network->saveLayerCentroidImages(0, "/home/teaera/Pictures/2013.5.13_level0.jpg");
+#endif
 
 //*****************************************************************************
 // To test the number of centroids for each layer!
@@ -148,7 +155,6 @@ int main(int argc, char ** argv)
     int size = 512*512;
     int extRatio = 1;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
 
     int frameCount = 0;
     int maxCount = 2000;
@@ -160,12 +166,12 @@ int main(int argc, char ** argv)
         }
 
         isi.findNextImage();
-        network->doDestin_c1(isi.getGrayImageFloat());
+        network->doDestin(isi.getGrayImageFloat());
     }
 
-    network->displayLayerCentroidImages_c1(7, 1000);
+    network->displayLayerCentroidImages(7, 1000);
     cv::waitKey(5000);
-    network->saveLayerCentroidImages_c1(7, "/home/teaera/Pictures/2013.5.24_5.jpg");*/
+    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.24_5.jpg");*/
 
 //#define TEST_params
 #ifdef TEST_params
@@ -181,7 +187,6 @@ int main(int argc, char ** argv)
     int size = 512*512;
     int extRatio = 1;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
 
     int frameCount = 0;
     int maxCount = 500;
@@ -193,7 +198,7 @@ int main(int argc, char ** argv)
         }
 
         isi.findNextImage();
-        network->doDestin_c1(isi.getGrayImageFloat());
+        network->doDestin(isi.getGrayImageFloat());
     }
 
     Destin * dn = network->getNetwork();
@@ -213,15 +218,15 @@ int main(int argc, char ** argv)
     //{
     //  printf("%f\n",dn->belief[i]);
     //}
-    network->displayLayerCentroidImages_c1(7, 1000);
+    network->displayLayerCentroidImages(7, 1000);
     cv::waitKey(10000);
 #endif
 
-//#define TEST_2013_5_30
-//#define TEST_ADD
+#define TEST_2013_5_30
+#define TEST_ADD
 #define RUN_BEFORE
 #define RUN_NOW
-//#define SHOW_BEFORE
+#define SHOW_BEFORE
 #define SHOW_NOW
 #define TEST_nb
 //#define TEST_uf_persistWinCounts
@@ -230,9 +235,6 @@ int main(int argc, char ** argv)
 //#define TEST_mu
 //#define TEST_observation
 //#define TEST_beliefMal
-//#define TEST_intra
-//#define TEST_inter
-#define TEST_VALIDITY
 #ifdef TEST_2013_5_30
 /*****************************************************************************/
     ImageSouceImpl isi;
@@ -248,20 +250,21 @@ int main(int argc, char ** argv)
 #define TEST_layer7
 
     SupportedImageWidths siw = W512;
-    //uint centroid_counts[]  = {1,8,16,32,32,16,8,4};
+    uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
+    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
-    uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
+    //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
     bool isUniform = true;
+    bool isExtend = true;
     int size = 512*512;
-    //int extRatio = 2;
-    int extRatio = 1;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
+    int extRatio = 2;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
+    //
 
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);
     int frameCount;
-    int maxCount = 3000;
+    int maxCount = 2000;
 
 #ifdef RUN_BEFORE
     frameCount = 1;
@@ -269,30 +272,22 @@ int main(int argc, char ** argv)
         frameCount++;
         if(frameCount % 10 == 0)
         {
-            //printf("Count %d;\n", frameCount);
-#ifdef TEST_VALIDITY
-            printf("%d\n", frameCount/10);
-            for(int i=0; i<8; ++i)
-            {
-                printf("%e  %e  %e\n", network->getIntra(i), network->getInter(i), network->getValidity(i));
-            }
-            printf("---\n");
-#endif // TEST_VALIDITY
+            printf("Count %d;\n", frameCount);
         }
 
         isi.findNextImage();
-        //network->doDestin_c1(isi.getGrayImageFloat());
         cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
-        network->doDestin_c1(tempIn);
+        network->doDestin(tempIn);
+        //network->doDestin(isi.getGrayImageFloat());
     }
 #endif // RUN_BEFORE
 
 #ifdef SHOW_BEFORE
     tempLayer = 7;
     //tempLayer = currLayer;
-    network->displayLayerCentroidImages_c1(tempLayer, 1000);
+    network->displayLayerCentroidImages(tempLayer, 1000);
     cv::waitKey(3000);
-    network->saveLayerCentroidImages_c1(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_before.jpg");
+    network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_before.jpg");
 #endif // SHOW_BEFORE
 
     Destin * d = network->getNetwork();
@@ -472,31 +467,6 @@ int main(int argc, char ** argv)
     printf("\n");
 #endif // TEST_beliefMal
 
-#ifdef TEST_intra
-    printf("------------TEST_intra\n");
-    /*float * variance = network->getVariance(currLayer);
-    float * weight = network->getWeight(currLayer);
-    for(i=0; i<node1->nb; ++i)
-    {
-        printf("%f  ", variance[i]);
-    }
-    printf("\n");
-    for(i=0; i<node1->nb; ++i)
-    {
-        printf("%f  ", weight[i]);
-    }
-    printf("\n");*/
-    printf("%f\n", network->getIntra(currLayer));
-    printf("\n");
-#endif
-
-#ifdef TEST_inter
-    printf("------------TEST_inter\n");
-    printf("%f\n", network->getInter(currLayer));
-    printf("\n");
-#endif
-
-    //printf("%e\n", network->getIntra(currLayer)/network->getInter(currLayer));
 //---------------------------------------------------------------------------//
     printf("--------------------------------------------------------------\n\n");
 //---------------------------------------------------------------------------//
@@ -528,18 +498,18 @@ int main(int argc, char ** argv)
         }
 
         isi.findNextImage();
-        //network->doDestin_c1(isi.getGrayImageFloat());
         cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
-        network->doDestin_c1(tempIn);
+        network->doDestin(tempIn);
+        //network->doDestin(isi.getGrayImageFloat());
     }
 #endif // RUN_NOW
 
 #ifdef SHOW_NOW
     tempLayer = 7;
     //tempLayer = currLayer;
-    network->displayLayerCentroidImages_c1(tempLayer, 1000);
+    network->displayLayerCentroidImages(tempLayer, 1000);
     cv::waitKey(3000);
-    network->saveLayerCentroidImages_c1(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_now.jpg");
+    network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_now.jpg");
 #endif // SHOW_NOW
 
     // I don't why I shoud 'reload' these nodes again?

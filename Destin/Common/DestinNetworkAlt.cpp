@@ -18,20 +18,15 @@ void DestinNetworkAlt::initTemperatures(int layers, uint * centroids){
 
 float *** DestinNetworkAlt::getCentroidImages(){
     if(centroidImages==NULL){
-        centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
-    }
-    return centroidImages;
-}
-
-float *** DestinNetworkAlt::getCentroidImages_c1(){
-    if(centroidImages==NULL){
+        //centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
+        // CZT: _c1!
         centroidImages = Cig_CreateCentroidImages_c1(destin, centroidImageWeightParameter);
     }
     return centroidImages;
 }
 
 DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform ) :
+        unsigned int centroid_counts [], bool isUniform, bool isExtend, int size, int extRatio ) :
         training(true),
         beta(.01),
         lambda(.1),
@@ -64,7 +59,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     if (layers != l) {
         throw std::logic_error("Image width does not match the given number of layers.");
     }
-    destin = InitDestin(
+    /*destin = InitDestin(
             input_dimensionality,
             layers,
             centroid_counts,
@@ -76,12 +71,29 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
             starv_coef,
             num_movements,
             isUniform
-     );
+     );*/
+    destin = InitDestin_c2(
+                input_dimensionality,
+                layers,
+                centroid_counts,
+                n_classes,
+                beta,
+                lambda,
+                gamma,
+                temperatures,
+                starv_coef,
+                num_movements,
+                isUniform,
+                isExtend,
+                size,
+                extRatio
+         );
 
     setBeliefTransform(DST_BT_NONE);
-    SetLearningStrat(destin, CLS_FIXED);
     ClearBeliefs(destin);
-    destin->fixedLearnRate = 0.1;
+    //SetLearningStrat(destin, CLS_FIXED);
+    //destin->fixedLearnRate = 0.1;
+    SetLearningStrat(destin, CLS_DECAY_c1);
     isTraining(true);
 }
 
@@ -91,7 +103,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
 // here is to use the extRatio to extend some parameters to contain more inform-
 // ation.
 // This function could not be invoked if the input size is just 512*512.
-void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
+/*void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
         unsigned int centroid_counts [], bool isUniform, int size, int extRatio)
         {
     // 2013.4.15
@@ -151,12 +163,9 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
 
     setBeliefTransform(DST_BT_NONE);
     ClearBeliefs(destin);
-
-    /*SetLearningStrat(destin, CLS_FIXED);
-    destin->fixedLearnRate = 0.1;*/
     SetLearningStrat(destin, CLS_DECAY_c1); //
-    isTraining(true);/**/
-}
+    isTraining(true);
+}*/
 
 // 2013.6.3
 // CZT
@@ -432,7 +441,7 @@ long ** DestinNetworkAlt::getPersistWinCounts_detailed()
     return persistWinCounts_detailed;
 }
 
-// 2013.6.14
+/*// 2013.6.14
 // CZT
 // Calculate 'variance' for a specific layer; Only for uniform!
 double * DestinNetworkAlt::getVariance(int layer)
@@ -526,7 +535,7 @@ double DestinNetworkAlt::getValidity(int layer)
     double intra = getIntra(layer);
     double inter = getInter(layer);
     return intra/inter;
-}
+}*/
 /*****************************************************************************/
 
 DestinNetworkAlt::~DestinNetworkAlt() {
@@ -557,20 +566,13 @@ void DestinNetworkAlt::setTemperatures(float temperatures[]){
 void DestinNetworkAlt::doDestin( //run destin with the given input
         float * input_dev //pointer to input memory on device
         ) {
-    FormulateBelief(destin, input_dev);
+    //FormulateBelief(destin, input_dev);
+    // CZT: _c1
+    FormulateBelief_c1(destin, input_dev);
 
     if(this->callback != NULL){
         this->callback->callback(*this );
     }
-}
-
-// 2013.4.11
-// CZT
-//
-void DestinNetworkAlt::doDestin_c1( //run destin with the given input
-        float * input_dev //pointer to input memory on device
-        ) {
-    FormulateBelief_c1(destin, input_dev);
 }
 
 void DestinNetworkAlt::isTraining(bool isTraining) {
@@ -841,10 +843,11 @@ void DestinNetworkAlt::saveLayerCentroidImages(int layer, const string & filenam
 
 /*****************************************************************************/
 // CZT
-void DestinNetworkAlt::saveLayerCentroidImages_c1(int layer, const string & filename,
+/*void DestinNetworkAlt::saveLayerCentroidImages_c1(int layer, const string & filename,
                               int scale_width,
                               int border_width
                               ){
+    // CZT: _c1!
     cv::imwrite(filename, getLayerCentroidImages_c1(layer, scale_width, border_width) );
     return;
 }
@@ -875,7 +878,7 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages_c1(int layer,
             x = c * wpb;
             y = r * wpb;
             int w = Cig_GetCentroidImageWidth(destin, layer);
-            // !!!
+            // CZT: _c1!
             cv::Mat subimage(w, w, CV_32FC1, getCentroidImages_c1()[layer][i]);
             cv::Mat subimage_resized;
             cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
@@ -903,6 +906,7 @@ void DestinNetworkAlt::displayLayerCentroidImages_c1(int layer,
         std::cerr << "displayLayerCentroidImages: layer out of bounds " << std::endl;
         return;
     }
+    // CZT: _c1!
     cv::imshow(window_title, getLayerCentroidImages_c1(layer, scale_width, border_width));
     return;
-}
+}*/
