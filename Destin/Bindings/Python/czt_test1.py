@@ -184,7 +184,7 @@ cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.24_13.jpg")
 # 2013.6.27
 # Draw intra and inter seperately!
 import matplotlib.pyplot as plt
-#
+'''
 centroids = [6,8,10,12,12,8,6,4]
 size = 512*512
 extRatio = 1
@@ -210,18 +210,11 @@ for i in range(1, maxCount+1):
             valDict[str(j)].append(dn.getValidity(j))
             intraDict[str(j)].append(dn.getIntra(j))
             interDict[str(j)].append(dn.getInter(j))
-    '''
-    if i % 100 == 0:
-        centroids[0] += 1
-        dn.updateDestin_add(pd.W512, 8, centroids, isUniform,
-                            size, extRatio, 0)
-    '''
     ims.findNextImage()
     f = ims.getGrayImageFloat()
     #cl2.combineInfo_extRatio(f, size, extRatio, fOut)    
     dn.doDestin_c1(f)
 #
-'''
 for i in range(8):
     plt.figure()
     plt.plot(range(len(valDict[str(i)])), valDict[str(i)], "r*-")
@@ -229,30 +222,37 @@ for i in range(8):
 plt.show()
 '''
 
-for i in range(8):
-    plt.figure()
-    plt.plot(intraDict[str(i)], "r*-")
-    plt.savefig("/home/teaera/Pictures/2013.6.28_intra_"+str(i)+".jpg")
-    plt.figure()
-    plt.plot(interDict[str(i)], "r*-")
-    plt.savefig("/home/teaera/Pictures/2013.6.28_inter_"+str(i)+".jpg")
-    plt.figure()
-    plt.plot(valDict[str(i)], "r*-")
-    plt.savefig("/home/teaera/Pictures/2013.6.28_validity_"+str(i)+".jpg")
+#############################################################################
+# 2013.7.4
+# Keep how to use 2-webcam as input;
 '''
-plt.show()
+network = init_destin()
+#
+vs1 = pd.VideoSource(False, "/home/teaera/destin_ted_temp/Destin/Misc/ABCD.avi")
+#vs1 = pd.VideoSource(True, "", 0)
+#vs2 = pd.VideoSource(True, "", 0+1)
+vs1.enableDisplayWindow_c1("left")
+#vs2.enableDisplayWindow_c1("right")
+vs1.grab()
+#vs2.grab()
+
+maxCount = 16000
+currCount = 0
+t1 = pd.Transporter()
+while(vs1.grab()):
+#while(vs1.grab() and vs2.grab()):
+    currCount += 1
+    if currCount <= maxCount:
+        if currCount % 10 == 0:
+            print "Iteration " + str(currCount)
+        t1.setSource(vs1.getOutput())
+        t1.transport()
+        network.doDestin_c1(t1.getDest())
+        #network.doDestin(t1.getDest())
+    else:
+        break
 '''
 
-'''
-valMax = []
-intraMax = []
-interMax = []
-for i in range(8):
-    valDict[str(i)].sort(reverse=True)
-    intraDict[str(i)].sort(reverse=True)
-    interDict[str(i)].sort(reverse=True)
-    #
-    valMax.append(valDict[str(i)][0])
-    intraMax.append(valDict[str(i)][0])
-    interMax.append(valDict[str(i)][0])
-'''
+#############################################################################
+# 2013.7.5
+# After I merged the changes in DeSTIN, the mod should be changed;

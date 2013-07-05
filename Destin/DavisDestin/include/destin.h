@@ -56,19 +56,17 @@ typedef struct Destin {
     float       ** uf_starv;            //shared centroids starvation
 
     /*The following is coded by CZT*/
-    // 2013.4.11
-    int size;
-    int extRatio;
     // 2013.6.10
     int sizeInd;
     int * nearInd;
-    // 2013.6.13
+    //2013.7.2
+    bool isExtend;
+    int size;
+    int extRatio;
+    // 2013.6.13, 2013.7.3
     long ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
                                            // I think one more counting array should be necessary;
-    /*
-      2013.7.2
-      */
-    bool isExtend;
+    float ** uf_absvar;
     /*END*/
 } Destin  ;
 /* Destin Struct Definition End */
@@ -93,8 +91,8 @@ Destin * InitDestin(                    // initialize Destin.
                 );
 
 // 2013.4.17
-// CZT
-//
+// CZT:
+// TODO: should replace the codes in 'InitDestin';
 Destin * InitDestin_c2(                    // initialize Destin.
     uint,               // input dimensionality for first layer, input must be square
     uint,               // number of layers
@@ -114,12 +112,12 @@ Destin * InitDestin_c2(                    // initialize Destin.
 void addCentroid2(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int size, int extRatio,
                   int currLayer, float **sharedCen, float **starv, float **sigma, float **avgDelta,
-                  uint ** winCounts, long ** persistWinCounts, long ** persistWinCounts_detailed);
+                  uint ** winCounts, long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 // 2013.6.6
 void killCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int size, int extRatio,
                   int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
-                  float **avgDelta, uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed);
+                  float **avgDelta, uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 
 void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
                     Destin *            // initialized destin pointer
@@ -162,8 +160,8 @@ void FormulateBelief(                   // form belief operation.  gets the curr
                 );
 
 // 2013.4.11
-// CZT
-//
+// CZT:
+// TODO: should replace the codes in 'FormulateBelief';
 void FormulateBelief_c1(                   // form belief operation.  gets the current belief from Destin
                     Destin *,           // network to obtain belief from
                     float *             // input
@@ -212,10 +210,6 @@ struct Node * GetNodeFromDestinI(
 void Uniform_ResetStats(
                             Destin *
                           );
-
-
-
-
 
 /* Destin Functions End */
 

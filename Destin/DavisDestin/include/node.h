@@ -82,32 +82,8 @@ void  InitNode(                         // initialize a node.
 void evenInitForMu(float * tempMu, int tempNb, int tempNs);
 
 // 2013.6.3, 2013.7.3
-// updateCentroid_node
+// CZT: updateCentroid_node for adding or killing;
 void updateCentroid_node(
-                 uint,                  // node index
-                 struct Destin *,       // reference to parent destin network
-                 uint,                  // layer this node belongs to
-                 uint,                  // belief dimensionality (# centroids)
-                 uint,                  // input dimensionality (# input values)
-                 uint,                  // parent belief dimensionality
-                 uint,                  // number of classes
-                 uint,                  // ns = state dimensionality (number of inputs + number of previous beliefs + number of parent's previous beliefs)
-                                        // = ni + nb + np + nc
-                 float,                 // starvation coefficient
-                 float,                 // beta (sigma step size)
-                 float,                 // lambda
-                 float,                 // gamma
-                 float,                 // temperature
-                 Node *,                // pointer node on host
-                 uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to input on host
-                 float *,               // pointer to belief on host
-                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
-                );
-
-// 2013.6.6
-// killCentroid_node
-void killCentroid_node(
                  uint,                  // node index
                  struct Destin *,       // reference to parent destin network
                  uint,                  // layer this node belongs to
@@ -140,8 +116,7 @@ void GetObservation(
                 );
 
 // 2013.4.11
-// CZT
-//
+// CZT:
 void GetObservation_c1(
                     Node *,             // pointer to list of nodes
                     float *,            // pointer to input frame
@@ -159,7 +134,7 @@ void NormalizeBeliefGetWinner(
                 );
 
 // 2013.6.21
-// To keep uf_persistWinCounts_detailed
+// CZT: to keep uf_persistWinCounts_detailed;
 void NormalizeBeliefGetWinner_c1(
                     Node *,             // pointer to list of nodes
                     uint                // node index
@@ -172,8 +147,7 @@ void CalcCentroidMovement(
                 );
 
 // 2013.4.12
-// CZT
-//
+// CZT:
 void CalcCentroidMovement_c1(
                     Node *,             // pointer to list of nodes
                     uint *,             // pointer to current class label

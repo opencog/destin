@@ -97,76 +97,6 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     isTraining(true);
 }
 
-// 2013.4.11
-// CZT
-// To extend the input as we want, like gray-scale with depth or RGB, the method
-// here is to use the extRatio to extend some parameters to contain more inform-
-// ation.
-// This function could not be invoked if the input size is just 512*512.
-/*void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int size, int extRatio)
-        {
-    // 2013.4.15
-    // CZT
-    //
-    free();
-
-    training = true;
-    beta = .01;
-    lambda = .1; // 0.1
-    gamma = .1;  // 0.1
-    isUniform = isUniform;
-    centroidImages = NULL;
-    centroidImageWeightParameter = 1.0;
-
-    uint input_dimensionality = 16;
-    uint c, l;
-    callback = NULL;
-    initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
-
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
-    }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
-    }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-    destin = InitDestin_c2( // Use _c2!
-            input_dimensionality,
-            layers,
-            centroid_counts,
-            n_classes,
-            beta,
-            lambda,
-            gamma,
-            temperatures,
-            starv_coef,
-            num_movements,
-            isUniform,
-            // 2013.4.11
-            // CZT
-            //
-            size,
-            extRatio
-     );
-
-    setBeliefTransform(DST_BT_NONE);
-    ClearBeliefs(destin);
-    SetLearningStrat(destin, CLS_DECAY_c1); //
-    isTraining(true);
-}*/
-
 // 2013.6.3
 // CZT
 // If adding centroids; Only for uniform!
@@ -226,7 +156,8 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
                 getAvgDelta(),
                 getWinCounts(),
                 getPersistWinCounts(),
-                getPersistWinCounts_detailed()
+                getPersistWinCounts_detailed(),
+                getAbsvar()
      );
 
     setBeliefTransform(DST_BT_NONE);
@@ -295,7 +226,8 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
                 getAvgDelta(),
                 getWinCounts(),
                 getPersistWinCounts(),
-                getPersistWinCounts_detailed()
+                getPersistWinCounts_detailed(),
+                getAbsvar()
      );
 
     setBeliefTransform(DST_BT_NONE);
@@ -423,8 +355,7 @@ float ** DestinNetworkAlt::getAvgDelta()
 }
 
 // 2013.6.13
-// CZT
-// Get uf_persistWinCounts_detailed; Only for uniform!
+// CZT: get uf_persistWinCounts_detailed, only for uniform!
 long ** DestinNetworkAlt::getPersistWinCounts_detailed()
 {
     long ** persistWinCounts_detailed;
@@ -439,6 +370,133 @@ long ** DestinNetworkAlt::getPersistWinCounts_detailed()
         }
     }
     return persistWinCounts_detailed;
+}
+
+// 2013.7.4
+// CZT: get uf_absvar, only for uniform;
+float ** DestinNetworkAlt::getAbsvar()
+{
+    float ** absvar;
+    MALLOC(absvar, float *, destin->nLayers);
+    int i, j;
+    for(i=0; i<destin->nLayers; ++i)
+    {
+        Node * currNode = getNode(i, 0, 0);
+        MALLOC(absvar[i], float, currNode->nb*currNode->ns);
+        for(j=0; j<currNode->nb*currNode->ns; ++j)
+        {
+            absvar[i][j] = destin->uf_absvar[i][j];
+        }
+    }
+    return absvar;
+}
+
+// 2013.7.4
+// CZT: get sep;
+float * DestinNetworkAlt::getSep(int layer)
+{
+    Node * currNode = getNode(layer, 0, 0);
+    float * sep;
+    MALLOC(sep, float, currNode->nb);
+    int i,j,k;
+    for(i=0; i<currNode->nb; ++i)
+    {
+        sep[i] = 1.0;
+    }
+    for(i=0; i<currNode->nb; ++i)
+    {
+        for(j=0; j<currNode->nb; ++j)
+        {
+            if( i != j )
+            {
+                float fSum = 0.0;
+                float fTemp;
+                if(layer == 0 && destin->isExtend)
+                {
+                    for(k=0; k<currNode->ni; ++k)
+                    {
+                        fSum += fabs(currNode->mu[i*currNode->ns + k]
+                                     - currNode->mu[j*currNode->ns + k]);
+                    }
+                    for(k=currNode->ni+currNode->nb+currNode->np+currNode->nc;
+                        k<currNode->ns; ++k)
+                    {
+                        fSum += fabs(currNode->mu[i*currNode->ns + k]
+                                     - currNode->mu[j*currNode->ns + k]);
+                    }
+                    fTemp = fSum / (currNode->ni * destin->extRatio);
+                }
+                else
+                {
+                    for(k=0; k<currNode->ni; ++k)
+                    {
+                        fSum += fabs(currNode->mu[i*currNode->ns + k]
+                                     - currNode->mu[j*currNode->ns + k]);
+                    }
+                    fTemp = fSum / currNode->ni;
+                }
+
+                //printf("%d  %d  %f\n", i, j, fTemp);
+
+                if(fTemp < sep[i])
+                {
+                    sep[i] = fTemp;
+                }
+            }
+        }
+    }
+    return sep;
+}
+
+// 2013.7.4
+// CZT: get var;
+float * DestinNetworkAlt::getVar(int layer)
+{
+    Node * currNode = getNode(layer, 0, 0);
+    float * var;
+    MALLOC(var, float, currNode->nb);
+    int i,j;
+    for(i=0; i<currNode->nb; ++i)
+    {
+        float fSum = 0.0;
+        if(layer==0 && destin->isExtend)
+        {
+            for(j=0; j<currNode->ni; ++j)
+            {
+                fSum += destin->uf_absvar[layer][i*currNode->ns + j];
+            }
+            for(j=currNode->ni+currNode->nb+currNode->np+currNode->nc;
+                j<currNode->ns; ++j)
+            {
+                fSum += destin->uf_absvar[layer][i*currNode->ns + j];
+            }
+            var[i] = fSum / (currNode->ni * destin->extRatio);
+        }
+        else
+        {
+            for(j=0; j<currNode->ni; ++j)
+            {
+                fSum += destin->uf_absvar[layer][i*currNode->ns + j];
+            }
+            var[i] = fSum / currNode->ni;
+        }
+    }
+    return var;
+}
+
+// 2013.7.4
+// CZT: get quality;
+float DestinNetworkAlt::getQuality(float * sep, float * var, int layer)
+{
+    float qua = 0.0;
+    int currNb = destin->nb[layer];
+    int i;
+    for(i=0; i<currNb; ++i)
+    {
+        qua += sep[i] - var[i];
+    }
+    //return qua;
+    return qua/currNb;
 }
 
 /*// 2013.6.14
@@ -842,71 +900,3 @@ void DestinNetworkAlt::saveLayerCentroidImages(int layer, const string & filenam
 }
 
 /*****************************************************************************/
-// CZT
-/*void DestinNetworkAlt::saveLayerCentroidImages_c1(int layer, const string & filename,
-                              int scale_width,
-                              int border_width
-                              ){
-    // CZT: _c1!
-    cv::imwrite(filename, getLayerCentroidImages_c1(layer, scale_width, border_width) );
-    return;
-}
-
-cv::Mat DestinNetworkAlt::getLayerCentroidImages_c1(int layer,
-                              int scale_width,
-                              int border_width){
-    if(!isUniform){
-        throw std::logic_error("can't displayLayerCentroidImages with non uniform DeSTIN.");
-    }
-
-    int images = getBeliefsPerNode(layer);
-    int images_wide = ceil(sqrt(images));
-    int sub_img_width = (int)((double)scale_width / (double)images_wide - (double)border_width);
-
-    int wpb = sub_img_width + border_width; // sub image width plus boarder. Each image gets a right and bottom boarder only.
-
-    int images_high = ceil((float)images / (float)images_wide);
-
-    // initialize the big image as solid black
-    cv::Mat big_img = cv::Mat::zeros(wpb*images_high, wpb*images_wide, CV_32FC1);
-
-    int r, c, x, y;
-    // copies the subimages into the correct place in the big image
-    for(int i = 0 ; i < images ; i++){
-            r = i  / images_wide;
-            c = i - r * images_wide;
-            x = c * wpb;
-            y = r * wpb;
-            int w = Cig_GetCentroidImageWidth(destin, layer);
-            // CZT: _c1!
-            cv::Mat subimage(w, w, CV_32FC1, getCentroidImages_c1()[layer][i]);
-            cv::Mat subimage_resized;
-            cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
-            cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );
-            cv::Mat dest = big_img( roi );
-
-            subimage_resized.copyTo( dest );
-    }
-
-    //cv::Mat toShow;
-    big_img.convertTo(layerCentroidsImage, CV_8UC1, 255);
-
-    //layerCentroidsImage = big_img;
-    return layerCentroidsImage;
-}
-
-void DestinNetworkAlt::displayLayerCentroidImages_c1(int layer,
-                                int scale_width,
-                                int border_width,
-                                string window_title
-                                ){
-
-    if(layer < 0 || layer >= getLayerCount()){
-
-        std::cerr << "displayLayerCentroidImages: layer out of bounds " << std::endl;
-        return;
-    }
-    // CZT: _c1!
-    cv::imshow(window_title, getLayerCentroidImages_c1(layer, scale_width, border_width));
-    return;
-}*/

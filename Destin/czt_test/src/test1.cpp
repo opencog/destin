@@ -121,7 +121,6 @@ int main(int argc, char ** argv)
 /*****************************************************************************/
 /*
   2013.4.5
-
   I want to test the original destin codes again and learn the CMake further!
 */
 #ifdef TEST_ORG
@@ -212,8 +211,11 @@ int main(int argc, char ** argv)
 
   2013.4.10
   Step 4: 'extRatio';
+
+  2013.7.5
+  TODO: the following codes could be removed; just the tests in the beginning;
 */
-#ifdef TEST_STEP1
+/*#ifdef TEST_STEP1
     //VideoSource vs(false, "./Various.avi");
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
@@ -238,7 +240,7 @@ int main(int argc, char ** argv)
     vs.grab();//throw away first frame in case its garbage
     int frameCount = 0;
 
-    /*double totalFps = 0.0;
+    double totalFps = 0.0;
     while(vs.grab()){
         frameCount++;
 
@@ -289,9 +291,9 @@ int main(int argc, char ** argv)
             printf("belief graph layer: %i\n",l);
             network->printBeliefGraph(l,0,0);
         }
-    }*/
+    }
 
-    /*// 2013.4.9
+    // 2013.4.9
     // CZT
     // I want to see the detailed struct for Destin and Node.
     //
@@ -299,7 +301,7 @@ int main(int argc, char ** argv)
     for(i=0; i<8; ++i)
     {
         printf("Layer %d has %d nodes!\n", i, network->getNetwork()->layerSize[i]);
-    }*/
+    }
 
     // 2013.4.10
     // CZT
@@ -309,18 +311,21 @@ int main(int argc, char ** argv)
     for(i=0; i<ni; ++i)
     {
         printf("OffSet: %d\n", network->getNode(0, 0, 0)->inputOffsets[i]);
-    }/**/
+    }
 
     FREE(tempIn);
     delete network;
-#endif
+#endif*/
 
 //#define TEST_STEP2
 /*****************************************************************************/
 /*
   2013.4.19
-
   Try to use 2 cams!!!
+
+  2013.7.5
+  TODO: the following codes could be referred as how to use 2-webcam input;
+  could be removed sometime;
 */
 #ifdef TEST_STEP2
     VideoSource vs1(true, "", CV_CAP_ANY);
@@ -467,10 +472,11 @@ int main(int argc, char ** argv)
     delete network;
 #endif
 
-//#define TEST_STEP3
+#define TEST_STEP3
 /*****************************************************************************/
 /*
-  2013.6.25 BGR
+  2013.7.5
+  CZT: to process BGR, 1-webcam video input;
 */
 #ifdef TEST_STEP3
     VideoSource vs(true, "");
@@ -481,12 +487,12 @@ int main(int argc, char ** argv)
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
     bool isUniform = true;
+    bool isExtend = true;
     int nLayers = 8;
     int size = 512*512;
     int extRatio = 3;
 
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayers, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, nLayers, centroid_counts, isUniform, size, extRatio);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayers, centroid_counts, isUniform, isExtend, size, extRatio);
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);
 
@@ -498,7 +504,7 @@ int main(int argc, char ** argv)
     while(vs.grab()){
         frameCount++;
         cl2->combineBGR(vs.getBFrame(), vs.getGFrame(), vs.getRFrame(), size, tempIn);
-        network->doDestin_c1(tempIn);
+        network->doDestin(tempIn);
 
         if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
             totalFps += printFPS(false);
@@ -529,7 +535,7 @@ int main(int argc, char ** argv)
         }
     }
     delete network;
-    delete tempIn;
+    FREE(tempIn);
 #endif
 
 	return 0;

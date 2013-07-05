@@ -81,13 +81,6 @@ public:
             unsigned int centroid_counts [], bool isUniform,
             bool isExtend=false, int size=512*512, int extRatio=1);
 
-    // 2013.4.11
-    // CZT
-    // Reinitialize the network: extend the input!
-    /*void reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
-    unsigned int centroid_counts [], bool isUniform,
-                          int size, int extRatio);*/
-
     virtual ~DestinNetworkAlt();
 
     float *** getCentroidImages();
@@ -110,18 +103,22 @@ public:
             unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer, int kill_ind);
 
     /*************************************************************************/
-    // 2013.6.4
+    // 2013.6.4-6, 2013.7.4
+    // CZT: keep the value for updating DeSTIN, adding or killing centroids;
     float ** getSharedCentroids();
-    // 2013.6.5
     float ** getStarv();
     float ** getSigma();
     float ** getAvgDelta();
-    // 2013.6.6
     uint ** getWinCounts();
     long ** getPersistWinCounts();
     long ** getPersistWinCounts_detailed();
-    /*// 2013.6.14
-    double * getVariance(int layer);
+    float ** getAbsvar();
+    //
+    float * getSep(int layer);
+    float * getVar(int layer);
+    float getQuality(float *sep, float *var, int layer);
+    // 2013.6.14
+    /*double * getVariance(int layer);
     double * getWeight(int layer);
     double getIntra(int layer);
     double getInter(int layer);
@@ -319,20 +316,6 @@ public:
                                   int scale_width = 1000,
                                   int border_width = 5
                                   );
-
-    // CZT
-    /*void saveLayerCentroidImages_c1(int layer, const string & filename,
-                                  int scale_width = 1000,
-                                  int border_width = 5
-                                  );
-    cv::Mat getLayerCentroidImages_c1(int layer,
-                                  int scale_width = 1000,
-                                  int border_width = 5);
-    void displayLayerCentroidImages_c1(int layer,
-                                    int scale_width = 600,
-                                    int border_width = 5,
-                                    string window_title="Centroid Images"
-                                    );*/
 
 };
 

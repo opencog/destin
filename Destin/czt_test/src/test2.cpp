@@ -20,6 +20,7 @@ I want to re-do what I thought again!!!
 
 int main(int argc, char ** argv)
 {
+
 //#define TEST_CL2
 #ifdef TEST_CL2
 //*****************************************************************************
@@ -75,6 +76,7 @@ int main(int argc, char ** argv)
 //*****************************************************************************
 // This is to test the combined information and show the centroids for combined
 // information!
+
     czt_lib2 * cl2 = new czt_lib2();
     czt_lib * cl = new czt_lib();
 
@@ -121,109 +123,8 @@ int main(int argc, char ** argv)
     network->saveLayerCentroidImages(0, "/home/teaera/Pictures/2013.5.13_level0.jpg");
 #endif
 
-//*****************************************************************************
-// To test the number of centroids for each layer!
-
-    /*ImageSouceImpl isi;
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/6.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/7.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/8.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/9.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/14.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/20.jpg");
-
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/1.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/2.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/3.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/4.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/5.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/10.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/11.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/12.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/13.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/15.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/16.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/17.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/18.jpg");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/19.jpg");
-
-    SupportedImageWidths siw = W512;
-    uint centroid_counts[]  = {40,80,160,320,320,120,40,10};
-    //uint centroid_counts[]  = {80,160,320,640,640,320,160,80};
-    //uint centroid_counts[]  = {320,320,640,640,640,320,320,80};
-    bool isUniform = true;
-    int size = 512*512;
-    int extRatio = 1;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-
-    int frameCount = 0;
-    int maxCount = 2000;
-    while(frameCount < maxCount){
-        frameCount++;
-        if(frameCount % 10 == 0)
-        {
-            printf("Count %d;\n", frameCount);
-        }
-
-        isi.findNextImage();
-        network->doDestin(isi.getGrayImageFloat());
-    }
-
-    network->displayLayerCentroidImages(7, 1000);
-    cv::waitKey(5000);
-    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.24_5.jpg");*/
-
-//#define TEST_params
-#ifdef TEST_params
-//*****************************************************************************
-// For testing some parameters:
-
-    ImageSouceImpl isi;
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine/14.jpg");
-
-    SupportedImageWidths siw = W512;
-    uint centroid_counts[]  = {2,4,6,8,6,4,2,1};
-    bool isUniform = true;
-    int size = 512*512;
-    int extRatio = 1;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-
-    int frameCount = 0;
-    int maxCount = 500;
-    while(frameCount < maxCount){
-        frameCount++;
-        if(frameCount % 10 == 0)
-        {
-            printf("Count %d;\n", frameCount);
-        }
-
-        isi.findNextImage();
-        network->doDestin(isi.getGrayImageFloat());
-    }
-
-    Destin * dn = network->getNetwork();
-    int nLayer = dn->nLayers;
-    int i,j;
-    for(i=0; i<nLayer; ++i)
-    {
-        printf("Layer %d:\n", i);
-        for(j=0; j<centroid_counts[i]; ++j)
-        {
-            printf("%ld    ", dn->uf_persistWinCounts[i][j]);
-        }
-        printf("\n----------------\n");
-    }
-
-    //for(i=0; i<dn->nBeliefs; ++i)
-    //{
-    //  printf("%f\n",dn->belief[i]);
-    //}
-    network->displayLayerCentroidImages(7, 1000);
-    cv::waitKey(10000);
-#endif
-
 #define TEST_2013_5_30
-#define TEST_ADD
+//#define TEST_ADD
 #define RUN_BEFORE
 #define RUN_NOW
 #define SHOW_BEFORE
@@ -235,6 +136,8 @@ int main(int argc, char ** argv)
 //#define TEST_mu
 //#define TEST_observation
 //#define TEST_beliefMal
+//#define TEST_sep
+//#define TEST_var
 #ifdef TEST_2013_5_30
 /*****************************************************************************/
     ImageSouceImpl isi;
@@ -250,8 +153,10 @@ int main(int argc, char ** argv)
 #define TEST_layer7
 
     SupportedImageWidths siw = W512;
-    uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
+    //uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
     //uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
+                                                     // HumanFace_1500_case1
+    uint centroid_counts[]  = {8,16,32,32,16,8,4,1}; // HumanFace_1500_case2
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
     //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
     bool isUniform = true;
@@ -259,12 +164,12 @@ int main(int argc, char ** argv)
     int size = 512*512;
     int extRatio = 2;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
-    //
+    //DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
 
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);
     int frameCount;
-    int maxCount = 2000;
+    int maxCount = 1500;
 
 #ifdef RUN_BEFORE
     frameCount = 1;
@@ -272,7 +177,17 @@ int main(int argc, char ** argv)
         frameCount++;
         if(frameCount % 10 == 0)
         {
-            printf("Count %d;\n", frameCount);
+            //printf("Count %d;\n", frameCount);
+            for(int i=0; i<8; ++i)
+            {
+                float * sep = network->getSep(i);
+                float * var = network->getVar(i);
+                float qua = network->getQuality(sep, var, i);
+                printf("%f  ", qua);
+                cl2->free_f1dim(sep);
+                cl2->free_f1dim(var);
+            }
+            printf("\n");
         }
 
         isi.findNextImage();
@@ -353,7 +268,8 @@ int main(int argc, char ** argv)
             for(j=0; j<network->getNode(l,0,0)->ns; ++j)
             {
                 //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
-                printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
+                //printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
+                printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
             }
             printf("\n");
         }
@@ -467,26 +383,49 @@ int main(int argc, char ** argv)
     printf("\n");
 #endif // TEST_beliefMal
 
+#ifdef TEST_sep
+    printf("------------TEST_sep\n");
+    tempLayer = 1;
+    float * sep = network->getSep(tempLayer);
+    for(i=0; i<d->nb[tempLayer]; ++i)
+    {
+        printf("%e  ", sep[i]);
+    }
+    printf("\n");
+    FREE(sep);
+#endif // TEST_sep
+
+#ifdef TEST_var
+    printf("------------TEST_var\n");
+    tempLayer = 1;
+    float * var = network->getVar(tempLayer);
+    for(i=0; i<d->nb[tempLayer]; ++i)
+    {
+        printf("%e  ", var[i]);
+    }
+    printf("\n");
+    FREE(var);
+#endif // TEST_var
 //---------------------------------------------------------------------------//
     printf("--------------------------------------------------------------\n\n");
 //---------------------------------------------------------------------------//
 
 #ifdef TEST_ADD
     // Add
-    centroid_counts[currLayer]++;
+    /*centroid_counts[currLayer]++;
     network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);
     centroid_counts[currLayer]++;
     network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);
     centroid_counts[currLayer]++;
-    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);/**/
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);*/
 
     // Kill
-    /*centroid_counts[currLayer]--;
-    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);
     centroid_counts[currLayer]--;
     network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);
     centroid_counts[currLayer]--;
-    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);*/
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);/**/
 
 #ifdef RUN_NOW
     frameCount = 1;
@@ -577,7 +516,7 @@ int main(int argc, char ** argv)
             for(j=0; j<network->getNode(l,0,0)->ns; ++j)
             {
                 //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
-                printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
+                printf("%e  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
             }
             printf("\n");
         }

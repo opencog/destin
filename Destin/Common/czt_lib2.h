@@ -13,6 +13,14 @@ public:
         return outFloatArr;
     }
 
+    void free_f1dim(float * input)
+    {
+        if(input != NULL)
+        {
+            free(input);
+        }
+    }
+
     void combineInfo_extRatio(float * tempIn, int size, int extRatio, float * tempOut)
     {
         int i,j;

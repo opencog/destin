@@ -39,10 +39,12 @@ def load_ims_fld(ims, fld):
 Used to init DeSTIN, but compatible by setting 'extRatio'!
 '''
 def init_destin(siw=pd.W512, nLayer=8, centroids=[4,8,16,32,64,32,16,8],
-                isUniform=True, size=512*512, extRatio=1):
-    temp_network = pd.DestinNetworkAlt(pd.W512, nLayer, centroids, isUniform)
-    temp_network.reinitNetwork_c1(pd.W512, nLayer, centroids, isUniform, size, extRatio)
-    temp_network.setFixedLearnRate(.1)
+                isUniform=True, size=512*512, extRatio=1, isExtend=False):
+    if isExtend:
+        temp_network = pd.DestinNetworkAlt(pd.W512, nLayer, centroids, isUniform,
+                                           isExtend, size, extRatio)
+    else:
+        temp_network = pd.DestinNetworkAlt(pd.W512, nLayer, centroids, isUniform)
     temp_network.setBeliefTransform(pd.DST_BT_NONE)
     return temp_network
 
@@ -103,3 +105,23 @@ def train_only(network, tempIn, maxCount=16000):
         if i % 10 == 0:
             print "Iteration " + str(i)
         network.doDestin_c1(tempIn)
+
+#############################################################################
+def drawCurve(inFile, times):
+    fCont = open(inFile).read().split("\n")[:times]
+    quality = {}
+    for i in range(8):
+        quality[str(i)] = []
+    for i in range(times):
+        lCont = fCont[i].split("  ")[:8]
+        for i in range(8):
+            quality[str(i)].append(float(lCont[i]))
+    import matplotlib.pyplot as plt
+    for i in range(8):
+        plt.figure()
+        plt.plot(quality[str(i)], "r*-")
+        plt.savefig("/home/teaera/Pictures/2013.7.4_"+str(i)+".jpg")
+    plt.show()
+
+#drawCurve('/home/teaera/destin_ted_temp/Destin/1', 50)
+

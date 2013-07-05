@@ -12,7 +12,7 @@
 #define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
 
 // Use at 2013.6.5
-#define RECURRENCE_ON // if defined then it clusters on its previous and parent's previous belief.
+//#define RECURRENCE_ON // if defined then it clusters on its previous and parent's previous belief.
 
 #define USE_MAL     // use mahalanobis distance to calulate beliefs ( gives better results )
 //#define USE_EUC   // use euclidian distance to calculate beliefs
@@ -623,6 +623,7 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
     return;
 }
 
+// CZT: uniform;
 void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
     uint c, s, ns;
     float diff, learnRate, dt;
@@ -648,12 +649,17 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
 #endif
             n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
             //TODO: write unit test for layerSharedSigma
-            layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]  );
+            layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]);
+
+            // 2013.7.4
+            // CZT: as Ben suggested, uf_absvar;
+            d->uf_absvar[layer][c*ns + s] += n->beta * (fabs(dt) - d->uf_absvar[layer][c*ns + s]);
         }
     }
     return;
 }
 
+// CZT: for non-uniform;
 void MoveCentroids( Node *n, uint nIdx ){
     n = &n[nIdx];
     
