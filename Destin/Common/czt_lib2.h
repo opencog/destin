@@ -9,7 +9,8 @@ public:
     float * createFloatArr(int size)
     {
         float * outFloatArr;
-        MALLOC(outFloatArr, float, size);
+        //MALLOC(outFloatArr, float, size);
+        outFloatArr = (float *)malloc(size * sizeof(float));
         return outFloatArr;
     }
 

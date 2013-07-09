@@ -472,7 +472,7 @@ int main(int argc, char ** argv)
     delete network;
 #endif
 
-#define TEST_STEP3
+//#define TEST_STEP3
 /*****************************************************************************/
 /*
   2013.7.5

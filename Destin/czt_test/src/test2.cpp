@@ -129,7 +129,7 @@ int main(int argc, char ** argv)
 #define RUN_NOW
 #define SHOW_BEFORE
 #define SHOW_NOW
-#define TEST_nb
+//#define TEST_nb
 //#define TEST_uf_persistWinCounts
 //#define TEST_uf_persistWinCounts_detailed
 //#define TEST_uf_avgDelta //uf_sigma
@@ -154,17 +154,20 @@ int main(int argc, char ** argv)
 
     SupportedImageWidths siw = W512;
     //uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
-    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
+    uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
                                                      // HumanFace_1500_case1
-    uint centroid_counts[]  = {8,16,32,32,16,8,4,1}; // HumanFace_1500_case2
+    //uint centroid_counts[]  = {8,16,16,32,32,16,8,4}; // HumanFace_1500_case2
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
     //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
     bool isUniform = true;
     bool isExtend = true;
     int size = 512*512;
     int extRatio = 2;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
-    //DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
+    //DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
+    /*DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
+    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);*/
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
+    network->setExtend(false);
 
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);
@@ -177,7 +180,7 @@ int main(int argc, char ** argv)
         frameCount++;
         if(frameCount % 10 == 0)
         {
-            //printf("Count %d;\n", frameCount);
+            printf("Count %d;\n", frameCount);
             for(int i=0; i<8; ++i)
             {
                 float * sep = network->getSep(i);
@@ -187,13 +190,20 @@ int main(int argc, char ** argv)
                 cl2->free_f1dim(sep);
                 cl2->free_f1dim(var);
             }
-            printf("\n");
+            printf("\n");/**/
+
+            /*float * sep = network->getSep(0);
+            float * var = network->getVar(0);
+            float qua = network->getQuality(sep, var, 0);
+            cl2->free_f1dim(sep);
+            cl2->free_f1dim(var);
+            printf("---\n");*/
         }
 
         isi.findNextImage();
-        cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
-        network->doDestin(tempIn);
-        //network->doDestin(isi.getGrayImageFloat());
+        /*cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
+        network->doDestin(tempIn);*/
+        network->doDestin_org(isi.getGrayImageFloat());
     }
 #endif // RUN_BEFORE
 

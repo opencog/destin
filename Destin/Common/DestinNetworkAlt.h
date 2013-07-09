@@ -77,9 +77,22 @@ private:
 
 public:
 
+    // 2013.7.8
+    // CZT: 'have to' use the original constructor, because SWIG's bug
+    // of not supporting POLYMOPHISM contructor;
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
+            unsigned int centroid_counts [], bool isUniform);
+
+    // 2013.4.11
+    // CZT
+    // Reinitialize the network: extend the input!
+    void reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [], bool isUniform,
-            bool isExtend=false, int size=512*512, int extRatio=1);
+            int size, int extRatio);
+
+    /*DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
+            unsigned int centroid_counts [], bool isUniform,
+            bool isExtend, int size, int extRatio);*/
 
     virtual ~DestinNetworkAlt();
 
@@ -92,6 +105,12 @@ public:
     void setTemperatures(float temperatures[]);
 
     void doDestin( //run destin with the given input
+            float * input_dev //pointer to input memory on device
+            );
+
+    // 2013.7.8
+    // CZT: the original 'doDestin';
+    void doDestin_org( //run destin with the given input
             float * input_dev //pointer to input memory on device
             );
 
@@ -123,6 +142,8 @@ public:
     double getIntra(int layer);
     double getInter(int layer);
     double getValidity(int layer);*/
+    // 2013.7.8
+    void setExtend(bool isExtend);
 
     void isTraining(bool isTraining);
 
