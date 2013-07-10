@@ -5,3 +5,6 @@ pydestin.py
 saved.som
 saved.dst
 *.pyc
+experiment_runs/
+saves/
+ot.dst

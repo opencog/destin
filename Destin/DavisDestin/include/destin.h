@@ -203,7 +203,7 @@ struct Node * GetNodeFromDestin(
 struct Node * GetNodeFromDestinI(
                         Destin *d,      // pointer to destin object
                         uint l,         // layer
-                        uint nIdx       // node index
+                        uint nIdx       // index of node in the layer. The first node each layer has index 0.
                         );
 
 //resets sharedCentroidsDidWin vector for each layer

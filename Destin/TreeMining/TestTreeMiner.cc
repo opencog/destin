@@ -69,13 +69,6 @@ int testTreeMiner(){
 int testDisplayTree(){
     uint centroids[3] = {2, 2, 2};
     DestinNetworkAlt dn(W16, 3, centroids, true);
-    Destin * d = dn.getNetwork();
-
-    //dn.getNode(0,0,0)->mu
-
-    DestinTreeManager tm(dn, 0);
-
-    vector<short> tree;
 
     Node * n = dn.getNode(0,0,0);
     assertIntEquals(20, n->ns);
@@ -108,11 +101,11 @@ int testDisplayTree(){
     assignFloatArray(&n->mu[n->ns * 1], 8,
                      0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //white
 
-
-
     /****
     * make a tree that represents all black
     ******/
+    DestinTreeManager tm(dn, 0);
+    vector<short> tree;
     tree.push_back(tm.getTreeLabelForCentroid(0,2,0)); //all black
 
     cv::Mat img = tm.getTreeImg(tree);
@@ -208,7 +201,6 @@ int testDisplayTree(){
         }
 
     }
-
 
     return 0;
 }
