@@ -20,8 +20,20 @@ class DestinTreeManager {
     const int nLayers;
 
     CMOrderedTreeMinerWrapper tmw; //tree miner wrapper
-    vector<PatternTree> minedTrees;
+    vector<PatternTree> foundSubtrees; //list of trees that were found during subtree mining.
 
+    struct NodeLocation {
+        int layer;
+        int row;
+        int col;
+    };
+
+    // converts a depth first path (without -1 backtraces) index into a particular node location.
+    // Used while drawing borders around subtree locations.
+    vector<NodeLocation> convertNodeLocation;
+
+    // contructs convertNodeLocation vector
+    void createConvertNodeLocations(const Node * parent);
 
     // helper method for getWinningCentroidTree()
     int buildTree(const Node * parent, int pos, const int child_num);
@@ -40,6 +52,7 @@ public:
     /** Constructor
       * @param destin - which destin network to wrap
       * @param bottom - how deep the extracted destin trees are.
+      * Integer from 0 to number of layers - 1.
       * If 0 then the whole destin heirachy is used. If bottom = # of layers - 1, then
       * only a tree with depth 1, i.e. just the root node is used.
       * Smaller trees are mined faster.
@@ -50,18 +63,22 @@ public:
 
     /** Takes the given label and decodes it into centroid, layer, and child position ( 0 to 3 )
       */
-    void decodeLabel(short label, int & cent_out, int & layer_out, int & child_num_out);
+    void decodeLabel(short label, int & cent_out, int & layer_out, int & child_pos_out);
 
     /** Takes a layer, centroid number and child position and encodes it into one tree label.
       * @return - the encoded tree label.
       */
-    short getTreeLabelForCentroid(const int centroid, const int layer, const int child_num);
+    short getTreeLabelForCentroid(const int centroid, const int layer, const int child_position);
 
     /** Gets a tree of the winning centroid indexes of the destin network, represented a list.
       * Encodes the tree by a depth first search path, using the getTreeLabelForCentroid()
       * method to get the label for each node, and using a -1 to represent a traceback.
       */
     short * getWinningCentroidTree();
+
+    /** Wraps array from getWinningCentroidTree() into a vector
+     */
+    vector<short> getWinningCentroidTreeVector();
 
     /** Returns the length of the tree.
       * Length of the array returned from getWinningCentroidTree().
@@ -106,6 +123,7 @@ public:
 
     /** Adds a tree to be mined with mine() method.
       * The added tree is taken from a call to getWinningCentroidTree()
+      *
       */
     void addTree();
 
@@ -119,30 +137,30 @@ public:
       * cv::waitKey must be called after for it to show.
       * @param treeIndex - which tree to display
       */
-    void displayMinedTree(const int treeIndex);
+    void displayFoundSubtree(const int treeIndex);
 
 
     /** Saves an image of the given found mined subtree to a file.
       */
-    void saveMinedTreeImg(const int treeIndex, const string & filename);
+    void saveFoundSubtreeImg(const int treeIndex, const string & filename);
 
     /** Returns a copy of the given mined tree found from mine() method.
       */
-    std::vector<short> getMinedTree(const int treeIndex);
+    std::vector<short> getFoundSubtree(const int treeIndex);
 
     /** Returns how many frequent subtrees have been found from mine() method.
       */
-    int getMinedTreeCount(){
-        return minedTrees.size();
+    int getFoundSubtreeCount(){
+        return foundSubtrees.size();
     }
 
     /** Prints the given mined tree as a depth first search path list
       *  For example:
       *  size: 7 : (L6,C2,P2) (L5,C4,P0)  (GoUp) (L5,C9,P2)  (GoUp) (L5,C9,P3)  (GoUp)
       */
-    void printMinedTree(const int treeIndex);
+    void printFoundSubtree(const int treeIndex);
 
-    string getMinedTreeAsString(const int treeIndex);
+    string getFoundSubtreeAsString(const int treeIndex);
 
     /** Prints the given mined tree in a treelike fashion
       * For example:
@@ -152,16 +170,16 @@ public:
       *            (L5,C9,P3)
       *  L = Level, C = centroid, P = child position ( 0 to 3 )
       */
-    void printMinedTreeStructure(const int treeIndex){
-        cout << getMinedTreeStructureAsString(treeIndex);
+    void printFoundSubtreeStructure(const int treeIndex){
+        cout << getFoundSubtreeStructureAsString(treeIndex);
     }
 
-    /** Same as printMinedTreeStructure but returns the string
+    /** Same as printFoundSubtreeStructure but returns the string
      * instead of printing to stdout.
      */
-    string getMinedTreeStructureAsString(const int treeIndex){
+    string getFoundSubtreeStructureAsString(const int treeIndex){
         stringstream ss;
-        printHelper(minedTrees.at(treeIndex), 0, 0, ss);
+        printHelper(foundSubtrees.at(treeIndex), 0, 0, ss);
         return ss.str();
     }
 
@@ -208,15 +226,36 @@ public:
       * @return list of indicies of trees, in the tree database, that the
       *         given found frequent subtree is a subtree of.
       */
-    vector<int> matchSubtree(int foundSubtreeIndex){
-        vector<int> matches;
-        for(int i = 0 ; i < getAddedTreeCount() ; i++){
-            if(tmw.isSubTreeOf(tmw.getAddedTree(i), minedTrees.at(foundSubtreeIndex))){
-                matches.push_back(i);
-            }
-        }
-        return matches;
-    }
+    vector<int> matchSubtree(int foundSubtreeIndex);
+
+    /** Draws the border box ( in blue ) of the given subtree onto the canvas image.
+     * The location and size of the box is determined by where the selected found subtree
+     * is currently located in the current winning centroid tree ( given by a call
+     * to the getWinningCentroidTree method ).
+     *
+     * @param foundMinedSubtree - index of one of the subtrees found from calling the mine() method which will be
+     * searched for in the current winning centroid tree.
+     * @param canvas - the image to draw the border box on. Should be a color matrix.
+     * @param justOne - if true, then only the first location the subtree is found is drawn with a box, otherwise
+     * multiple border boxes will be drawn for each location the subtree is found.
+     * @param thickness - the thickness of the box border. Default is 2.
+     */
+    void drawSubtreeBordersOntoImage(int foundMinedSubtree, cv::Mat & canvas, bool justOne = true, int thickness = 2);
+
+    /** Displays the canvas image after it has been drawn on by the drawSubtreeBordersOntoImage method.
+     * @see DestinTreeManager::drawSubtreeBordersOntoImage
+     *
+     * @param foundMinedSubtree - index of one of the subtrees found from calling the mine() method which will be
+     * searched for in the current winning centroid tree.
+     * @param canvas - the image to draw the border box on. Should be a color matrix.
+     * @param justOne - if true, then only the first location the subtree is found is drawn with a box, otherwise
+     * multiple border boxes will be drawn for each location the subtree is found.
+     * @param thickness - the thickness of the box border. Default is 2.
+     * @param waitkey_delay - the delay in milliseconds passed to the cv::waitKey() function so that the
+     *  image will be refreshed. If 0 is passed, then cv::waitKey() will not be called. Default is 300 milliseconds.
+     * @param winname - The name of the window that displays the image.
+     */
+    void displayFoundSubtreeBorders(int foundMinedSubtree, cv::Mat & canvas, bool justOne = true, int thickness = 2, int waitkey_delay = 300, const string & winname = "Tree borders");
 };
 
 

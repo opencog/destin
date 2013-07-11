@@ -2,7 +2,7 @@
 #include "DestinTreeManager.h"
 
 DestinTreeManager::DestinTreeManager(DestinNetworkAlt & destin, int bottom)
-:destin(destin), nLayers(destin.getLayerCount()), winnerTree(NULL)
+    :destin(destin), nLayers(destin.getLayerCount()), winnerTree(NULL)
 {
     labelBucket = ( 1 << ( sizeof(short) * 8 - 1))/nLayers;
     childNumBucket = labelBucket / 4;
@@ -38,22 +38,45 @@ short * DestinTreeManager::getWinningCentroidTree(){
         throw std::logic_error("DestinTreeManager::getWinningCentroidTree only uniform destin is supported.\n");
     }
     if(winnerTree==NULL){
-        winnerTree = new short[getWinningCentroidTreeSize()];
+        winnerTree = new short[getWinningCentroidTreeSize()]; // deleted in deconstructor
     }
 
     buildTree(destin.getNode(nLayers - 1, 0, 0), 0, 0);
     return winnerTree;
 }
 
+vector<short> DestinTreeManager::getWinningCentroidTreeVector(){
+    short * tree = getWinningCentroidTree();
+    short * end = tree + getWinningCentroidTreeSize(); // pointer arrithmetic to get to end of the array
+    vector<short> winTreeVect(tree, end); // copy array to the vector
+    return winTreeVect;
+}
+
 int DestinTreeManager::buildTree(const Node * parent, int pos, const int child_num){
-    winnerTree[pos] = getTreeLabelForCentroid(parent->winner, parent->layer, child_num);
-    if(parent->layer > bottomLayer && parent->children != NULL){
+    int layer = parent->layer;
+    winnerTree[pos] = getTreeLabelForCentroid(parent->winner, layer, child_num);
+    if(layer > bottomLayer && parent->children != NULL){
         for(int i = 0 ; i < 4 ; i++){
             pos = buildTree(parent->children[i], ++pos, i);
             winnerTree[++pos] = -1;
         }
     }
     return pos;
+}
+
+void DestinTreeManager::createConvertNodeLocations(const Node * parent){
+    int layer = parent->layer;
+    NodeLocation nl;
+    nl.col = parent->col;
+    nl.row = parent->row;
+    nl.layer = layer;
+    convertNodeLocation.push_back(nl);
+    if(layer > bottomLayer && parent->children != NULL){
+        for(int i = 0 ; i < 4 ; i++){
+            createConvertNodeLocations(parent->children[i]);
+        }
+    }
+    return;
 }
 
 void DestinTreeManager::setBottomLayer(unsigned int bottom){
@@ -69,12 +92,18 @@ void DestinTreeManager::setBottomLayer(unsigned int bottom){
         nodes_to_subtract += d->layerSize[i];
     }
 
-    winningTreeSize = (destin.getNetwork()->nNodes - nodes_to_subtract - 1) * 2 + 1;
+    int nodes_used = destin.getNetwork()->nNodes - nodes_to_subtract;
+    winningTreeSize = (nodes_used - 1) * 2 + 1;
 
     if(winnerTree!=NULL){
         delete [] winnerTree;
         winnerTree = NULL;
     }
+
+    convertNodeLocation.reserve(nodes_used);
+    convertNodeLocation.clear();
+    createConvertNodeLocations(destin.getNode(nLayers - 1, 0, 0));
+
     return;
 }
 
@@ -129,15 +158,18 @@ void DestinTreeManager::displayTree(const std::vector<short> & tree){
     return;
 }
 
-void DestinTreeManager::displayMinedTree(const int treeIndex){
+void DestinTreeManager::displayFoundSubtree(const int treeIndex){
     vector<short> tree;
-    tmw.treeToVector(minedTrees.at(treeIndex), tree);
+    if(treeIndex >= foundSubtrees.size()){
+        std::cerr << "displayMinedTree: index out of bounds." << std::endl;
+    }
+    tmw.treeToVector(foundSubtrees.at(treeIndex), tree);
     displayTree(tree);
 }
 
-void DestinTreeManager::saveMinedTreeImg(const int treeIndex, const string & filename){
+void DestinTreeManager::saveFoundSubtreeImg(const int treeIndex, const string & filename){
     vector<short> tree;
-    tmw.treeToVector(minedTrees.at(treeIndex), tree);
+    tmw.treeToVector(foundSubtrees.at(treeIndex), tree);
     cv::Mat img = getTreeImg(tree);
     cv::Mat towrite;
     img.convertTo(towrite, CV_8UC1, 255);
@@ -187,14 +219,14 @@ void DestinTreeManager::addTree(){
 }
 
 int DestinTreeManager::mine(const int support){
-    minedTrees.clear();
-    tmw.mine(support, minedTrees);
-    return minedTrees.size();
+    foundSubtrees.clear();
+    tmw.mine(support, foundSubtrees);
+    return foundSubtrees.size();
 }
 
-std::vector<short> DestinTreeManager::getMinedTree(const int treeIndex){
+std::vector<short> DestinTreeManager::getFoundSubtree(const int treeIndex){
     vector<short> out;
-    tmw.treeToVector(minedTrees.at(treeIndex), out);
+    tmw.treeToVector(foundSubtrees.at(treeIndex), out);
     return out;
 }
 
@@ -218,10 +250,10 @@ void DestinTreeManager::printHelper(TextTree & pt, short vertex, int level, stri
     return ;
 }
 
-string DestinTreeManager::getMinedTreeAsString(const int treeIndex){
+string DestinTreeManager::getFoundSubtreeAsString(const int treeIndex){
     vector<short> t;
     stringstream ss;
-    tmw.treeToVector(minedTrees.at(treeIndex), t);
+    tmw.treeToVector(foundSubtrees.at(treeIndex), t);
     ss << "size: " << t.size() << " : ";
     for(int i = 0 ; i < t.size() ; i ++){
         int cent, layer, pos;
@@ -236,11 +268,62 @@ string DestinTreeManager::getMinedTreeAsString(const int treeIndex){
     return ss.str();
 }
 
-void DestinTreeManager::printMinedTree(const int treeIndex){
-    cout << getMinedTreeAsString(treeIndex);
+void DestinTreeManager::printFoundSubtree(const int treeIndex){
+    cout << getFoundSubtreeAsString(treeIndex);
     return;
 }
 
 void DestinTreeManager::timeShiftTrees(){
     tmw.timeShiftDatabase(destin.getLayerCount());
+}
+
+vector<int> DestinTreeManager::matchSubtree(int foundSubtreeIndex){
+    vector<int> matches;
+    for(int i = 0 ; i < getAddedTreeCount() ; i++){
+        if(tmw.isSubTreeOf(tmw.getAddedTree(i), foundSubtrees.at(foundSubtreeIndex))){
+            matches.push_back(i);
+        }
+    }
+    return matches;
+}
+
+void DestinTreeManager::drawSubtreeBordersOntoImage(int foundSubtree, cv::Mat & canvas, bool justOne, int thickness){
+    TextTree & needle = foundSubtrees.at(foundSubtree);
+    TextTree haystack;
+    tmw.arrayToTextTree(getWinningCentroidTree(), getWinningCentroidTreeSize(), 0, haystack);
+    vector<int> locations;
+    if(justOne){
+        int location = tmw.findSubtreeLocation(haystack, needle);
+        if(location != -1){
+            locations.push_back(location);
+        }
+    }else{
+        locations = tmw.findSubtreeLocations(haystack, needle);
+    }
+
+    /// this block draws the border of the found subtree
+    cv::Scalar blue(255,0,0); //BGR color
+    uint * layer_widths =  destin.getNetwork()->layerWidth;
+    int imageWidth = destin.getInputImageWidth();
+    for(int i = 0 ; i < locations.size() ; i++){
+        // find the node location of the subtree
+        NodeLocation & nl = convertNodeLocation.at(locations[i]);
+
+        // create the box around the subtree
+        int box_width = imageWidth / layer_widths[nl.layer]; // how wide the box is
+        cv::Rect box(nl.col * box_width, nl.row * box_width, box_width, box_width);
+
+        // draw the box on the canvas image
+        cv::rectangle(canvas, box, blue, thickness);
+    }
+
+    return;
+}
+
+void DestinTreeManager::displayFoundSubtreeBorders(int foundSubtree, cv::Mat & canvas, bool justOne, int thickness, int waitkey_delay, const string & winname){
+    drawSubtreeBordersOntoImage(foundSubtree, canvas, justOne, thickness);
+    cv::imshow(winname, canvas);
+    if(waitkey_delay != 0){
+        cv::waitKey(waitkey_delay);
+    }
 }

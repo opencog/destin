@@ -9,7 +9,7 @@ typedef struct Node {
     /* HOST VARIABLES BEGIN */
 	struct Destin *  d;			// referece to parent destin network
     // node parameters
-    uint    nIdx;           // node id
+    uint    nIdx;           // node id. Can retrieve this node from a destin heirarchy like this: destin->nodes[nIdx]
     uint     nb;            // number of beliefs ( number of centroids )
     uint     ni;            // number of inputs ( dimensionality of input vector)
     uint     ns;            // number of states ( dimensionality of centroids) = ni+nb+np+nc;
@@ -49,8 +49,10 @@ typedef struct Node {
 
     struct Node ** children;// array of 4 child node pointers
 
-    float * delta;           // vector that stores difference between observation and mu shared centroid vector
+    float * delta;          // vector that stores difference between observation and mu shared centroid vector
     uint    layer;          // layer this node belongs in
+    uint    row;            // row of the layer this node belongs
+    uint    col;            // column of the layer this node belongs
     /* HOST VARIABLES END */
 
 } Node;

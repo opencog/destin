@@ -95,9 +95,8 @@ public:
 	 *
 	 */
 	VideoSource(bool use_device, std::string video_file, int dev_no = 0) :
-        target_size(512, 512), edge_detection(false), showWindow(false), isShowColor(false), flip(true) {
-        //
-        isDevice = use_device;
+        target_size(512, 512), edge_detection(false), showWindow(false),
+        isShowColor(false), flip(true), isDevice(use_device) {
 
 		float_frame = new float[target_size.area()];
 		stringstream mess;
@@ -179,6 +178,10 @@ public:
         //return greyscaled_frame;
         return original_frame;
         //return flipped_frame;
+    }
+
+    cv::Mat & getOutputColorMat(){
+        return flipped_frame;
     }
 
 	/**

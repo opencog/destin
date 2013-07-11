@@ -35,7 +35,8 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
         gamma(.1),
         isUniform(isUniform),
         centroidImages(NULL),
-        centroidImageWeightParameter(1.0)
+        centroidImageWeightParameter(1.0),
+        inputImageWidth(width)
         {
 
     uint input_dimensionality = 16;
