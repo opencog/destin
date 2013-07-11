@@ -133,9 +133,9 @@ public:
     long ** getPersistWinCounts_detailed();
     float ** getAbsvar();
     //
-    float * getSep(int layer);
-    float * getVar(int layer);
-    float getQuality(float *sep, float *var, int layer);
+    float getSep(int layer);
+    float getVar(int layer);
+    float getQuality(int layer);
     // 2013.6.14
     /*double * getVariance(int layer);
     double * getWeight(int layer);
@@ -144,6 +144,7 @@ public:
     double getValidity(int layer);*/
     // 2013.7.8
     void setExtend(bool isExtend);
+
 
     void isTraining(bool isTraining);
 

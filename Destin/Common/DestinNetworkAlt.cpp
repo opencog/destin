@@ -514,7 +514,7 @@ float ** DestinNetworkAlt::getAbsvar()
 
 // 2013.7.4
 // CZT: get sep;
-float * DestinNetworkAlt::getSep(int layer)
+float DestinNetworkAlt::getSep(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
     float * sep;
@@ -566,12 +566,18 @@ float * DestinNetworkAlt::getSep(int layer)
             }
         }
     }
-    return sep;
+    //
+    float fSum = 0.0;
+    for(i=0; i<currNode->nb; ++i)
+    {
+        fSum += sep[i];
+    }
+    return fSum/currNode->nb;
 }
 
 // 2013.7.4
 // CZT: get var;
-float * DestinNetworkAlt::getVar(int layer)
+float DestinNetworkAlt::getVar(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
     float * var;
@@ -602,24 +608,19 @@ float * DestinNetworkAlt::getVar(int layer)
             var[i] = fSum / currNode->ni;
         }
     }
-    return var;
+    float fSum = 0.0;
+    for(i=0; i<currNode->nb; ++i)
+    {
+        fSum += var[i];
+    }
+    return fSum/currNode->nb;
 }
 
 // 2013.7.4
 // CZT: get quality;
-float DestinNetworkAlt::getQuality(float * sep, float * var, int layer)
+float DestinNetworkAlt::getQuality(int layer)
 {
-    float qua = 0.0;
-    int currNb = destin->nb[layer];
-    int i;
-    for(i=0; i<currNb; ++i)
-    {
-        qua += sep[i] - var[i];
-        //printf("%f   %f\n", sep[i], var[i]);
-    }
-    //printf("Quality: %f\n", qua/currNb);
-    //return qua;
-    return qua/currNb;
+    return getSep(layer)-getVar(layer);
 }
 
 // 2013.7.8

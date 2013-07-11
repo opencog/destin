@@ -257,16 +257,17 @@ while(vs1.grab()):
 # 2013.7.5, 2013.7.8
 # After I merged the changes in DeSTIN, the mod should be changed;
 nLayer = 8
-centroids = [4,8,16,32,32,16,8,4]
-#centroids = [8,16,16,32,32,16,8,4]
+#centroids = [4,8,16,32,32,16,8,4]
 #centroids = [8,16,32,64,64,32,12,4]
+#centroids = [4,8,16,32,32,16,8,4]
+#centroids = [8,16,16,32,32,16,8,4]
 #centroids = [8,16,32,64,64,32,12,4]
 #centroids = [8,16,32,64,64,32,12,6]
 #centroids = [8,16,32,64,72,36,18,6]
 #centroids = [16,32,48,72,96,48,24,6]
 #centroids = [32,48,64,72,96,72,24,6]
-#centroids = [40,60,80,90,100,90,24,6]
-centroids = [4,4,4,4,4,4,4,6]
+centroids = [40,60,80,90,100,90,24,6]
+#centroids = [4,4,4,4,4,4,4,6]
 size = 512*512
 #dn = cm.init_destin(centroids=centroids)
 dn = cm.init_destin(centroids=centroids)
@@ -281,8 +282,12 @@ ims = pd.ImageSouceImpl()
 # TEST SIX images
 cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.7.8/test2/")
 
+sepDict = {}
+varDict = {}
 quaDict = {}
 for i in range(nLayer):
+    sepDict[str(i)] = []
+    varDict[str(i)] = []
     quaDict[str(i)] = []
 
 maxCount = 1500
@@ -292,10 +297,10 @@ for i in range(1, maxCount+1):
         for i in range(nLayer):
             sep = dn.getSep(i)
             var = dn.getVar(i)
-            qua = dn.getQuality(sep, var, i)
+            qua = dn.getQuality(i)
+            sepDict[str(i)].append(sep)
+            varDict[str(i)].append(var)
             quaDict[str(i)].append(qua)
-            cl2.free_f1dim(sep)
-            cl2.free_f1dim(var)
     ims.findNextImage()
     f = ims.getGrayImageFloat()
     dn.doDestin_org(f)
@@ -304,8 +309,8 @@ cm.dcis(dn, 7)
 cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.7.8_layer7.jpg")
 for i in range(nLayer):
     plt.figure()
-    plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-")
-    plt.savefig("/home/teaera/Pictures/2013.7.8_"+str(i)+".jpg")
+    plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
+    plt.savefig("/home/teaera/Pictures/2013.7.9_"+str(i)+".jpg")
 plt.show()
 
 

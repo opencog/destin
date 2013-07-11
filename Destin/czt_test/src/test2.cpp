@@ -136,8 +136,6 @@ int main(int argc, char ** argv)
 //#define TEST_mu
 //#define TEST_observation
 //#define TEST_beliefMal
-//#define TEST_sep
-//#define TEST_var
 #ifdef TEST_2013_5_30
 /*****************************************************************************/
     ImageSouceImpl isi;
@@ -181,23 +179,6 @@ int main(int argc, char ** argv)
         if(frameCount % 10 == 0)
         {
             printf("Count %d;\n", frameCount);
-            for(int i=0; i<8; ++i)
-            {
-                float * sep = network->getSep(i);
-                float * var = network->getVar(i);
-                float qua = network->getQuality(sep, var, i);
-                printf("%f  ", qua);
-                cl2->free_f1dim(sep);
-                cl2->free_f1dim(var);
-            }
-            printf("\n");/**/
-
-            /*float * sep = network->getSep(0);
-            float * var = network->getVar(0);
-            float qua = network->getQuality(sep, var, 0);
-            cl2->free_f1dim(sep);
-            cl2->free_f1dim(var);
-            printf("---\n");*/
         }
 
         isi.findNextImage();
@@ -393,29 +374,6 @@ int main(int argc, char ** argv)
     printf("\n");
 #endif // TEST_beliefMal
 
-#ifdef TEST_sep
-    printf("------------TEST_sep\n");
-    tempLayer = 1;
-    float * sep = network->getSep(tempLayer);
-    for(i=0; i<d->nb[tempLayer]; ++i)
-    {
-        printf("%e  ", sep[i]);
-    }
-    printf("\n");
-    FREE(sep);
-#endif // TEST_sep
-
-#ifdef TEST_var
-    printf("------------TEST_var\n");
-    tempLayer = 1;
-    float * var = network->getVar(tempLayer);
-    for(i=0; i<d->nb[tempLayer]; ++i)
-    {
-        printf("%e  ", var[i]);
-    }
-    printf("\n");
-    FREE(var);
-#endif // TEST_var
 //---------------------------------------------------------------------------//
     printf("--------------------------------------------------------------\n\n");
 //---------------------------------------------------------------------------//
