@@ -94,7 +94,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
 // ation.
 // This function could not be invoked if the input size is just 512*512.
 void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int size, int extRatio)
+        unsigned int centroid_counts [], bool isUniform, int inputImageSize, int extRatio)
         {
     // 2013.4.15
     // CZT
@@ -145,7 +145,7 @@ void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int
             num_movements,
             isUniform,
             true,
-            size,
+            inputImageSize,
             extRatio
      );
 

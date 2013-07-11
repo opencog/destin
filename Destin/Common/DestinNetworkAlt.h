@@ -89,7 +89,7 @@ public:
     // Reinitialize the network: extend the input!
     void reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [], bool isUniform,
-            int size, int extRatio);
+            int inputImageSize, int extRatio);
 
     /*DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [], bool isUniform,

@@ -201,7 +201,7 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
             {
                 for(i=0; i<ni; ++i)
                 {
-                    n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->size*j];
+                    n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->inputImageSize*j];
                 }
             }
         }

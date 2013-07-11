@@ -61,7 +61,7 @@ typedef struct Destin {
     int * nearInd;
     //2013.7.2
     bool isExtend;
-    int size;
+    int inputImageSize;
     int extRatio;
     // 2013.6.13, 2013.7.3
     long ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
@@ -105,8 +105,10 @@ Destin * InitDestin_c2(                    // initialize Destin.
     float,              // starv coeff
     uint,               // number of movements per digit presentation
     bool,               // is uniform - if nodes in a layer share one list of centroids
-    bool isExtend, int size,
-    int extRatio);
+    bool,               // isExtend,
+    int,                // input image size in pixels,
+    int                 // extRatio
+);
 
 // 2013.5.31
 void addCentroid2(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,

@@ -465,7 +465,7 @@ Destin * InitDestin_c2( uint ni, uint nl, uint *nb, uint nc, float beta, float l
     // 2013.4.17, 2013.7.3
     // CZT: 'isExtend' is the key;
     d->isExtend = isExtend;
-    d->size = size;
+    d->inputImageSize = size;
     d->extRatio = extRatio;
 
     d->serializeVersion = SERIALIZE_VERSION;
@@ -709,7 +709,7 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
     uint i, l, maxNb, maxNs, j;
     size_t bOffset ;
 
-    d->size = size;
+    d->inputImageSize = size;
     d->extRatio = extRatio;
 
     d->serializeVersion = SERIALIZE_VERSION;
@@ -1391,7 +1391,7 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
     uint i, l, maxNb, maxNs, j;
     size_t bOffset ;
 
-    d->size = size;
+    d->inputImageSize = size;
     d->extRatio = extRatio;
 
     d->serializeVersion = SERIALIZE_VERSION;
