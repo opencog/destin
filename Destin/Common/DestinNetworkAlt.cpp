@@ -257,7 +257,7 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
         throw std::logic_error("Image width does not match the given number of layers.");
     }
     addCentroid2(
-                destin,
+            destin,
             input_dimensionality,
             layers,
             centroid_counts,
@@ -271,15 +271,15 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
             isUniform,
             size,
             extRatio,
-                currLayer,
-                getSharedCentroids(),
-                getStarv(),
-                getSigma(),
-                getAvgDelta(),
-                getWinCounts(),
-                getPersistWinCounts(),
-                getPersistWinCounts_detailed(),
-                getAbsvar()
+            currLayer,
+            getSharedCentroids(),
+            getStarv(),
+            getSigma(),
+            getAvgDelta(),
+            getWinCounts(),
+            getPersistWinCounts(),
+            getPersistWinCounts_detailed(),
+            getAbsvar()
      );
 
     setBeliefTransform(DST_BT_NONE);
@@ -326,7 +326,7 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
         throw std::logic_error("Image width does not match the given number of layers.");
     }
     killCentroid(
-                destin,
+            destin,
             input_dimensionality,
             layers,
             centroid_counts,
@@ -340,16 +340,16 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
             isUniform,
             size,
             extRatio,
-                currLayer,
-                kill_ind,
-                getSharedCentroids(),
-                getStarv(),
-                getSigma(),
-                getAvgDelta(),
-                getWinCounts(),
-                getPersistWinCounts(),
-                getPersistWinCounts_detailed(),
-                getAbsvar()
+            currLayer,
+            kill_ind,
+            getSharedCentroids(),
+            getStarv(),
+            getSigma(),
+            getAvgDelta(),
+            getWinCounts(),
+            getPersistWinCounts(),
+            getPersistWinCounts_detailed(),
+            getAbsvar()
      );
 
     setBeliefTransform(DST_BT_NONE);
