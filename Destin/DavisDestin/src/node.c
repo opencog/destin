@@ -509,63 +509,6 @@ void NormalizeBeliefGetWinner_c1( Node *n, uint nIdx )
 
 void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
 {
-    // whoa!  zero comments here -- my bad
-
-    // grab the node we want to work with.  this is a carryover
-    // from the kernel behavior -- kind of like n = &n[blockIdx.x].
-    // we could just pass a pointer to the node we actually want.
-    n = &n[nIdx];
-
-    // just an iterator
-    uint i;
-
-    // gets the row offset for the mu/sigma matrices to update
-    uint winnerOffset = n->winner * n->ns;
-
-    // the difference between an element of the observation and
-    // an element of the mu matrix
-    float delta;
-
-    // keeps track of squared error for a node.  added together
-    // with the sq. err. for all the other nodes in the network,
-    // it gives you a feel for when the network approaches
-    // convergence.
-    n->muSqDiff = 0;
-
-    // this is the offset in the observation vector where
-    // the class labels start.
-    uint ncStart = n->ni + n->nb + n->np;
-
-    for( i=0; i < n->ns; i++ )
-    {
-        // if we are less than ncStart, we are not looking at
-        // class labels.
-        if( i < ncStart )
-        {
-            delta = n->observation[i] - n->mu[winnerOffset+i];
-
-        // otherwise, use the class label to move the last n_c
-        // components of the winning centroid
-        }
-        // 2013.4.1
-        // CZT
-        // As 'nc' is set to 0, the 'else' part will never be invoked!!!
-        //
-        else {
-            delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
-        }
-        n->delta[i] = delta;
-    }
-    return;
-}
-
-// 2013.4.12
-// CZT
-//
-void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
-{
-    // whoa!  zero comments here -- my bad
-
     // grab the node we want to work with.  this is a carryover
     // from the kernel behavior -- kind of like n = &n[blockIdx.x].
     // we could just pass a pointer to the node we actually want.

@@ -496,11 +496,7 @@ void FormulateBelief_c1( Destin *d, float *image )
             {
                 // Calculate the required centroid movement
                 //TODO: merge CalculateDistances with CalcCentroidMovement
-                //CalcCentroidMovement( d->nodes, d->inputLabel, n );
-                // 2013.4.15
-                // CZT
-                //
-                CalcCentroidMovement_c1(d->nodes, d->inputLabel, n);
+                CalcCentroidMovement(d->nodes, d->inputLabel, n);
 
                 // Check if the network is uniform
                 if(!d->isUniform){

@@ -148,14 +148,6 @@ void CalcCentroidMovement(
                     uint                // node index
                 );
 
-// 2013.4.12
-// CZT:
-void CalcCentroidMovement_c1(
-                    Node *,             // pointer to list of nodes
-                    uint *,             // pointer to current class label
-                    uint                // node index
-                );
-
 void MoveCentroids(
                     Node *,             // pointer to list of nodes
                     uint                // node index
