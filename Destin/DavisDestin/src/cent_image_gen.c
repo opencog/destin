@@ -5,9 +5,6 @@
 #include "destin.h"
 #include "cent_image_gen.h"
 
-#define NORM_WEIGHTS
-//#define DETECT_NORM
-
 void Cig_Normalize(float * weights_in, float * weights_out, int len, float not_used){
     memcpy(weights_out, weights_in, len * sizeof(float));
     int i;
@@ -53,39 +50,9 @@ void Cig_BlendImages(float ** images,       // array of images to blend
     float pix_out;
 
     float * w;
-#ifdef NORM_WEIGHTS
     float norm_weights[nImages];
     Cig_PowerNormalize(weights, norm_weights, nImages, weighParameter);
     w = norm_weights;
-#else
-    w = weights;
-#endif
-
-#ifdef DETECT_NORM
-    // This block is used to investigate if the weights sum to one.
-    // To help in debugging.
-    static float percent = 0.0;
-    static unsigned long int count = 0;
-    static unsigned long int norm_count = 0;
-    static unsigned long int iteration = 0;
-    static float epsilon = 1e-3;
-    static float max_sum = 0;
-    iteration++;
-    if(iteration % 1 == 0){
-        count++;
-        for(i = 0 ; i < nImages ; i++){
-            sum += w[i];
-        }
-        if(sum < (1.0 + epsilon)){
-            norm_count++;
-        }
-        if(sum > max_sum){
-            max_sum = sum;
-        }
-        percent = (float)norm_count / (float)count;
-        printf("norm percent: %f, weight sum: %f, max sum:%f \n", percent, sum, max_sum);
-    }
-#endif
 
     for(p = 0 ; p < img_size ; p++){
         pix_out = 0;
