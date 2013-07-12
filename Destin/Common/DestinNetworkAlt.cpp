@@ -18,9 +18,7 @@ void DestinNetworkAlt::initTemperatures(int layers, uint * centroids){
 
 float *** DestinNetworkAlt::getCentroidImages(){
     if(centroidImages==NULL){
-        //centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
-        // CZT: _c1!
-        centroidImages = Cig_CreateCentroidImages_c1(destin, centroidImageWeightParameter);
+        centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
     }
     return centroidImages;
 }
