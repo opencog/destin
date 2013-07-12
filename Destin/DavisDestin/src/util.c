@@ -287,29 +287,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     d->nBeliefs = nBeliefs;
 
-    /*if(isUniform){
-        // allocate for each layer an array of size number = n centroids for that layer
-        // that counts how many nodes in a layer pick the given centroid as winner.
-        MALLOC(d->uf_winCounts, uint *, d->nLayers);
-        MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
-        //used to calculate the shared centroid delta averages
-        MALLOC(d->uf_avgDelta, float *, d->nLayers);
-        MALLOC(d->uf_sigma, float *, d->nLayers);
-
-        // layer shared centroid starvation vectors
-        MALLOC(d->uf_starv, float *, d->nLayers);
-
-        for(l = 0 ; l < d->nLayers ; l++){
-            MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
-            MALLOC( d->uf_persistWinCounts[l], long, d->nb[l] );
-            MALLOC( d->uf_starv[l], float, d->nb[l]);
-
-            for(i = 0 ; i < d->nb[l]; i++){
-                d->uf_persistWinCounts[l][i] = 0;
-                d->uf_starv[l][i] = 1;
-            }
-        }
-    }*/
     if(isUniform){
         // allocate for each layer an array of size number = n centroids for that layer
         // that counts how many nodes in a layer pick the given centroid as winner.
