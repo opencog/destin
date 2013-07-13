@@ -367,13 +367,10 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         float * sharedCentroids;
 
         // calculate the state dimensionality (number of inputs + number of beliefs)
-        uint ns = ni + nb[l] + np + nc;
         // 2013.4.17
         // CZT
-        if(isExtend)
-        {
-            ns = (l == 0 ? ni*extRatio+nb[l]+np+nc : ni+nb[l]+np+nc);
-        }
+        uint ns = nb[l] + np + nc + ((isExtend && l == 0) ? ni*extRatio : ni);
+
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
