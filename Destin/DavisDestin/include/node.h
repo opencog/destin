@@ -117,14 +117,6 @@ void GetObservation(
                     uint                // node index
                 );
 
-// 2013.4.11
-// CZT:
-void GetObservation_c1(
-                    Node *,             // pointer to list of nodes
-                    float *,            // pointer to input frame
-                    uint                // node index
-                );
-
 void CalculateDistances(
                     Node *,             // pointer to list of nodes
                     uint                // node index

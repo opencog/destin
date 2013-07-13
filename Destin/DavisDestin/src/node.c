@@ -38,7 +38,26 @@
 }
 #endif
 
-// CPU implementation of GetObservation kernel
+void checkObs( Node *n)
+{
+    uint i;
+    for(i = 0 ; i < n->ns ; i++){
+        float o = n->observation[i];
+        if(isinf(o)){
+            oops("observation was inf at index %i\n", i);
+        }
+        if(isnan(o)){
+            oops("observation was nan at index %i\n", i);
+        }
+        if(o < 0){
+            oops("observation was negative at index %i\n", i);
+        }
+        if(o > 1){
+            oops("observation was greater than 1.0 at index %i\n", i);
+        }
+    }
+}
+
 void GetObservation( Node *n, float *framePtr, uint nIdx )
 {
     n = &n[nIdx];
@@ -91,94 +110,6 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < np; i++ )
     {
 #ifdef RECURRENCE_ON
-        //n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
-        n->observation[i+ni+nb] = n->parent_pBelief[i] * n->nLambda;
-#else
-        n->observation[i+ni+nb] = 1 / (float) np;
-#endif
-    }
-
-    for( i=0; i < nc; i++ )
-    {
-        // Apply context
-        n->observation[i+ni+nb+np] = 0;
-    }
-
-#ifdef CHECK_OBS
-    for(i = 0 ; i < n->ns ; i++){
-        float o = n->observation[i];
-        if(isinf(o)){
-            oops("observation was inf at index %i\n", i);
-        }
-        if(isnan(o)){
-            oops("observation was nan at index %i\n", i);
-        }
-        if(o < 0){
-            oops("observation was negative at index %i\n", i);
-        }
-        if(o > 1){
-            oops("observation was greater than 1.0 at index %i\n", i);
-        }
-    }
-#endif
-}
-
-// 2013.4.11
-// CZT
-//
-void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
-{
-    n = &n[nIdx];
-
-    uint i, j;
-    uint ni, nb, np, ns, nc;
-
-    // Length of input vector
-    ni = n->ni;
-
-    // Number of centroids
-    nb = n->nb;
-
-    // Number of centroids of the parent
-    np = n->np;
-
-    // Sum of ni + nb + np + nc
-    ns = n->ns;
-
-    // 'Context'
-    nc = n->nc;
-
-    // Check to see if bottom layer image input data is available
-    if( n->layer > 0 )
-    {
-        // If not, use input from the child nodes
-        for( i=0; i < ni; i++ )
-        {
-            n->observation[i] = n->input[n->inputOffsets[i]];
-        }
-    } else {
-        // If so, use input from the input image
-        for( i=0; i < ni; i++ )
-        {
-            n->observation[i] = framePtr[n->inputOffsets[i]];
-        }
-    }
-
-    // set these to uniform for now.
-    // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
-    for( i=0; i < nb; i++ )
-    {
-#ifdef RECURRENCE_ON
-        n->observation[i+ni] = n->pBelief[i] * n->gamma;
-#else
-        n->observation[i+ni] = 1 / (float) nb;
-#endif
-    }
-
-    for( i=0; i < np; i++ )
-    {
-#ifdef RECURRENCE_ON
-        //n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
         n->observation[i+ni+nb] = n->parent_pBelief[i] * n->nLambda;
 #else
         n->observation[i+ni+nb] = 1 / (float) np;
@@ -206,6 +137,10 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
             }
         }
     }
+
+#ifdef CHECK_OBS
+    // checkObs(n); //TODO:fix and renable for isExtend
+#endif
 }
 
 // CPU implementation of CalculateDistances kernel

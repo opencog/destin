@@ -475,11 +475,7 @@ void FormulateBelief_c1( Destin *d, float *image )
         for(n = n_start; n < n_end; n++ )
         {
             // Get an observation from the source image for the current node if in layer 0, else from the child nodes.
-            //GetObservation( d->nodes, image, n );
-            // 2013.4.11
-            // CZT
-            //
-            GetObservation_c1(d->nodes, image, n);
+            GetObservation( d->nodes, image, n );
 
             // Calculate the distances between the centroids of the current node and the new observation
             CalculateDistances( d->nodes, n );
