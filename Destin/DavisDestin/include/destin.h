@@ -143,14 +143,6 @@ void FormulateBelief(                   // form belief operation.  gets the curr
                     float *             // input
                 );
 
-// 2013.4.11
-// CZT:
-// TODO: should replace the codes in 'FormulateBelief';
-void FormulateBelief_c1(                   // form belief operation.  gets the current belief from Destin
-                    Destin *,           // network to obtain belief from
-                    float *             // input
-                );
-
 void GenerateInputFromBelief(
                     Destin *,
                     float *
