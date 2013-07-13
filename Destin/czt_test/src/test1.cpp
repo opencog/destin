@@ -349,8 +349,8 @@ void testStep2(){
 
     VideoSource vs1(true, "", CV_CAP_ANY);
     VideoSource vs2(true, "", CV_CAP_ANY+1);
-    vs1.enableDisplayWindow_c1("left");
-    vs2.enableDisplayWindow_c1("right");
+    vs1.enableDisplayWindow("left");
+    vs2.enableDisplayWindow("right");
     vs1.grab();
     vs2.grab();/**/
 
