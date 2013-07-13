@@ -39,12 +39,14 @@ void Cig_PowerNormalize(float * weights_in, float * weights_out, int len, float 
     }
 }
 
-void Cig_BlendImages(float ** images,       // array of images to blend
+void Cig_BlendImages(float ** images,   // array of images to blend
                  float * weights,       // weights used to blend images ( will be normalized )
                  int nImages,           // number of images to blend
                  const int img_size,    // number of pixels in each image to blend
                  float weighParameter,  // a value higher than one makes for more contrasting images
-                 float * image_out){    // blended image is stored here. must be preallocated memory of length img_size
+                 float * image_out,     // blended image is stored here. must be preallocated memory of length img_size
+                 int layer,
+                 int extRatio){
 
     int p, i;
     float pix_out;
@@ -54,33 +56,7 @@ void Cig_BlendImages(float ** images,       // array of images to blend
     Cig_PowerNormalize(weights, norm_weights, nImages, weighParameter);
     w = norm_weights;
 
-    for(p = 0 ; p < img_size ; p++){
-        pix_out = 0;
-        for(i = 0 ; i < nImages ; i++){
-            pix_out += w[i] * images[i][p];
-        }
-        image_out[p] = pix_out;
-    }
-    return;
-}
-
-void Cig_BlendImages_c1(float ** images,       // array of images to blend
-                 float * weights,       // weights used to blend images ( will be normalized )
-                 int nImages,           // number of images to blend
-                 const int img_size,    // number of pixels in each image to blend
-                 float weighParameter,  // a value higher than one makes for more contrasting images
-                 float * image_out,
-                        int l, int extRatio){    // blended image is stored here. must be preallocated memory of length img_size
-
-    int p, i;
-    float pix_out;
-
-    float * w;
-    float norm_weights[nImages];
-    Cig_PowerNormalize(weights, norm_weights, nImages, weighParameter);
-    w = norm_weights;
-
-    if(l != 1)
+    if(layer != 1)
     {
         for(p = 0 ; p < img_size ; p++){
             pix_out = 0;
@@ -131,7 +107,6 @@ void Cig_ConcatImages(float ** images,// Array of the 4 images to concat.
     }
 }
 
-// CZT
 float*** Cig_CreateCentroidImages(Destin * d, float weightParameter){
 
     if(!d->isUniform){
@@ -142,7 +117,6 @@ float*** Cig_CreateCentroidImages(Destin * d, float weightParameter){
     float *** images;
     MALLOC(images, float **, d->nLayers);
     int l, c, image_width = sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni);
-    //int l, c, image_width = GetNodeFromDestin(d, 0, 0, 0)->ni;
     for(l = 0 ; l < d->nLayers; l++){
         MALLOC(images[l], float *, d->nb[l]);
         for(c = 0 ; c < d->nb[l]; c++){
@@ -170,7 +144,6 @@ int Cig_GetCentroidImageWidth(Destin * d, int layer){
     return sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni) * pow(2, layer);
 }
 
-// CZT
 void Cig_UpdateCentroidImages(Destin * d,
                               float *** images,    // preallocated images to update
                               float weighParameter // higher value means higher contrast
@@ -226,24 +199,14 @@ void Cig_UpdateCentroidImages(Destin * d,
                 // For the current sub section of the current centroid,
                 // generate its representative image and store it in
                 // the appropriate section of combined_images;
-                if(d->isExtend)
-                {
-                    Cig_BlendImages_c1(images[l - 1],
-                                  &n->mu[c * n->ns + child_section * d->nb[l - 1]],
-                                  d->nb[l - 1],
-                                  prev_image_width * prev_image_width,
-                                  weighParameter,
-                                  combined_images[child_section], l, d->extRatio);/**/
-                }
-                else
-                {
-                    Cig_BlendImages(images[l - 1],
-                                  &n->mu[c * n->ns + child_section * d->nb[l - 1]],
-                                  d->nb[l - 1],
-                                  prev_image_width * prev_image_width,
-                                  weighParameter,
-                                  combined_images[child_section]);
-                }
+                Cig_BlendImages(images[l - 1],
+                              &n->mu[c * n->ns + child_section * d->nb[l - 1]],
+                              d->nb[l - 1],
+                              prev_image_width * prev_image_width,
+                              weighParameter,
+                              combined_images[child_section],
+                              l,
+                              d->extRatio);
             }
 
             Cig_ConcatImages(combined_images, prev_image_width, prev_image_width, images[l][c] );
