@@ -15,7 +15,7 @@
 // and causing an unknown crash.
 // This value should be incremented by the developer when the order of the destin struc
 // fields are moved around or if fields are added, removed, ect.
-#define SERIALIZE_VERSION 2
+#define SERIALIZE_VERSION 3
 
 void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
     d->centLearnStrat = strategy;
