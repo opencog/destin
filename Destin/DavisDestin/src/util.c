@@ -205,6 +205,10 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     // initialize a new Destin object
     MALLOC(d, Destin, 1);
 
+    // 2013.4.17, 2013.7.3
+    // CZT: 'isExtend' is the key;
+    d->isExtend = isExtend;
+
     d->serializeVersion = SERIALIZE_VERSION;
     d->nNodes = 0;
     d->nLayers = nl;
@@ -266,9 +270,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         nBeliefs += d->layerSize[i] * nb[i];
     }
 
-    // 2013.4.17, 2013.7.3
-    // CZT: 'isExtend' is the key;
-    d->isExtend = isExtend;
+
     d->inputImageSize = d->layerSize[0] * ni;
     d->extRatio = extRatio;
 
@@ -295,11 +297,11 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     d->nBeliefs = nBeliefs;
 
     if(isUniform){
-        // allocate for each layer an array of size number = n centroids for that layer
+        // Allocate for each layer an array of size number = n centroids for that layer
         // that counts how many nodes in a layer pick the given centroid as winner.
         MALLOC(d->uf_winCounts, uint *, d->nLayers);
         MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
-        //used to calculate the shared centroid delta averages
+        // Used to calculate the shared centroid delta averages
         MALLOC(d->uf_avgDelta, float *, d->nLayers);
         MALLOC(d->uf_sigma, float *, d->nLayers);
 
@@ -316,19 +318,13 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         for(l = 0 ; l < d->nLayers ; l++){
             MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
             MALLOC( d->uf_persistWinCounts[l], long, d->nb[l] );
-            MALLOC( d->uf_starv[l], float, d->nb[l]);
-
-            // 2013.6.13
-            // CZT
             MALLOC(d->uf_persistWinCounts_detailed[l], long, d->nb[l]);
+            MALLOC( d->uf_starv[l], float, d->nb[l]);
 
             for(i = 0 ; i < d->nb[l]; i++){
                 d->uf_persistWinCounts[l][i] = 0;
-                d->uf_starv[l][i] = 1;
-
-                // 2013.6.13
-                // CZT
                 d->uf_persistWinCounts_detailed[l][i] = 0;
+                d->uf_starv[l][i] = 1;
             }
         }
     }
@@ -436,6 +432,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     return d;
 }
 
+
 /*****************************************************************************/
 // 2013.5.31, 2013.7.4
 // addCentroid2
@@ -445,12 +442,13 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                   int size, int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
                   uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
+    bool isExtend = true;
     uint nInputPipeline;
     uint i, l, maxNb, maxNs, j;
     size_t bOffset ;
 
-    d->inputImageSize = size;
-    d->extRatio = extRatio;
+
+
 
     d->serializeVersion = SERIALIZE_VERSION;
     d->nNodes = 0;
@@ -513,6 +511,10 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         nBeliefs += d->layerSize[i] * nb[i];
     }
 
+
+    d->inputImageSize = d->layerSize[0] * ni;
+    d->extRatio = extRatio;
+
     d->nNodes = nNodes;
 
     // input pipeline -- all beliefs are copied from the output of each
@@ -540,16 +542,19 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         // that counts how many nodes in a layer pick the given centroid as winner.
         MALLOC(d->uf_winCounts, uint *, d->nLayers);
         MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
-        MALLOC(d->uf_persistWinCounts_detailed, long *, d->nLayers);
         // Used to calculate the shared centroid delta averages
         MALLOC(d->uf_avgDelta, float *, d->nLayers);
         MALLOC(d->uf_sigma, float *, d->nLayers);
-        // 2013.7.4
-        // CZT: uf_absvar;
-        MALLOC(d->uf_absvar, float *, d->nLayers);
 
         // layer shared centroid starvation vectors
         MALLOC(d->uf_starv, float *, d->nLayers);
+
+        // 2013.6.13
+        // CZT
+        MALLOC(d->uf_persistWinCounts_detailed, long *, d->nLayers);
+        // 2013.7.4
+        // CZT: uf_absvar, very similar to uf_sigma;
+        MALLOC(d->uf_absvar, float *, d->nLayers);
 
         for(l = 0 ; l < d->nLayers ; l++){
             MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
@@ -675,6 +680,7 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
     /* ---END OF NEW METHOD--- */
 
     // initialize the rest of the network
+
     for( l=0; l < nl; l++ )
     {
         // update max belief
@@ -695,15 +701,15 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         float * sharedCentroids;
 
         // calculate the state dimensionality (number of inputs + number of beliefs)
-        //uint ns = ni + nb[l] + np + nc;
         // 2013.4.17
         // CZT
-        //
-        uint ns = (l == 0 ? ni*extRatio+nb[l]+np+nc : ni+nb[l]+np+nc);
+        uint ns = nb[l] + np + nc + ((isExtend && l == 0) ? ni*extRatio : ni);
+
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
             MALLOC(d->uf_sigma[l], float, ns*nb[l]);
+
             // 2013.7.4
             // CZT: uf_absvar;
             MALLOC(d->uf_absvar[l], float, ns*nb[l]);
@@ -928,6 +934,7 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         }else{
             sharedCentroids = NULL;
         }
+
 
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
