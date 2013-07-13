@@ -135,13 +135,6 @@ void NormalizeBeliefGetWinner(
                     uint                // node index
                 );
 
-// 2013.6.21
-// CZT: to keep uf_persistWinCounts_detailed;
-void NormalizeBeliefGetWinner_c1(
-                    Node *,             // pointer to list of nodes
-                    uint                // node index
-                );
-
 void CalcCentroidMovement(
                     Node *,             // pointer to list of nodes
                     uint *,             // pointer to current class label
