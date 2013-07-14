@@ -184,7 +184,7 @@ int main(int argc, char ** argv)
         isi.findNextImage();
         /*cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
         network->doDestin(tempIn);*/
-        network->doDestin_org(isi.getGrayImageFloat());
+        network->doDestin(isi.getGrayImageFloat());
     }
 #endif // RUN_BEFORE
 

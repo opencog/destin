@@ -26,7 +26,7 @@ Destin * makeDestin(const int layers){
     uint nMovements = 0;
     bool isUniform = true;
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     return d;
 }
@@ -51,7 +51,7 @@ int testInit(){
         .09, .10, .11, .12,
         .13, .14, .15, .16
     };
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = &d->nodes[0];
@@ -69,7 +69,7 @@ int testInit(){
     
     //test uniform destin init
     isUniform = true;
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     printf("Inited uniform.\n");
@@ -93,7 +93,7 @@ int testFormulateNotCrash(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     float image [] = {0.0};
     FormulateBelief(d, image );
@@ -116,7 +116,7 @@ int testForumateStages(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1;
     float image [] = {0.55};
@@ -226,7 +226,7 @@ int testUniform(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     assertTrue(d->isUniform);
 
@@ -378,7 +378,7 @@ int testUniformFormulate(){
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1; //turn on cluster training
     d->layerMask[1] = 1;
@@ -433,7 +433,7 @@ int testSaveDestin1(){
     uint ns0 = ni + nb[0] + nb[1] + nc;
     uint ns1 = 4*nb[0] + nb[1] + 0 + nc;
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
@@ -547,7 +547,7 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTra
     uint nMovements = 4;
     uint i, j;
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, bt);
     turnOnMask(d);
 
@@ -651,7 +651,7 @@ int _testGenerateInputFromBelief(bool isUniform){
     float starvCoef = 0.12;
     uint nMovements = 0;
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
     d->layerMask[2] = 1;
@@ -693,7 +693,7 @@ int testGetNode(){
     float starvCoef = 0.12;
     uint nMovements = 0;
 
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, false);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, false, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     //set node outputs
@@ -882,7 +882,7 @@ int testCentroidImageGeneration(){
     float starvCoef = 0.12;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform);
+    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, false, 0);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = GetNodeFromDestin(d, 0, 0 ,0);

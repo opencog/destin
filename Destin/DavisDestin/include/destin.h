@@ -76,24 +76,7 @@ Destin * CreateDestin(                  // create destin from a config file
                     char *              // filename
         );
 
-Destin * InitDestin(                    // initialize Destin.
-                    uint,               // input dimensionality for first layer, input must be square
-                    uint,               // number of layers
-                    uint *,             // belief dimensionality for each layer
-                    uint,               // number of classes
-                    float,              // beta coeff
-                    float,              // lambda coeff
-                    float,              // gamma coeff
-                    float *,            // temperature for each layer
-                    float,              // starv coeff
-                    uint,               // number of movements per digit presentation
-                    bool               // is uniform - if nodes in a layer share one list of centroids
-                );
-
-// 2013.4.17
-// CZT:
-// TODO: should replace the codes in 'InitDestin';
-Destin * InitDestin_c2(                    // initialize Destin.
+Destin * InitDestin(    // initialize Destin.
     uint,               // input dimensionality for first layer, input must be square
     uint,               // number of layers
     uint *,             // belief dimensionality for each layer
@@ -106,7 +89,6 @@ Destin * InitDestin_c2(                    // initialize Destin.
     uint,               // number of movements per digit presentation
     bool,               // is uniform - if nodes in a layer share one list of centroids
     bool,               // isExtend,
-    int,                // input image size in pixels,
     int                 // extRatio
 );
 

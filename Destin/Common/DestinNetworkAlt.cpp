@@ -23,10 +23,9 @@ float *** DestinNetworkAlt::getCentroidImages(){
     return centroidImages;
 }
 
-// 2013.7.8
-// CZT: the original constructor
+//TODO: comment extRatio parameter
 DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform) :
+        unsigned int centroid_counts [], bool isUniform, int extRatio) :
         training(true),
         beta(.01),
         lambda(.1),
@@ -71,151 +70,18 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
             temperatures,
             starv_coef,
             num_movements,
-            isUniform
-     );
-
-    setBeliefTransform(DST_BT_NONE);
-    ClearBeliefs(destin);
-    //SetLearningStrat(destin, CLS_FIXED);
-    //destin->fixedLearnRate = 0.1;
-    SetLearningStrat(destin, CLS_DECAY_c1);
-    isTraining(true);
-
-    // 2013.7.8
-    destin->isExtend = false;
-}
-
-// 2013.4.11
-// CZT
-// To extend the input as we want, like gray-scale with depth or RGB, the method
-// here is to use the extRatio to extend some parameters to contain more inform-
-// ation.
-// This function could not be invoked if the input size is just 512*512.
-void DestinNetworkAlt::reinitNetwork_c1(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int inputImageSize, int extRatio)
-        {
-    // 2013.4.15
-    // CZT
-    //
-    free();
-
-    training = true;
-    beta = .01;
-    lambda = .1; // 0.1
-    gamma = .1;  // 0.1
-    isUniform = isUniform;
-    centroidImages = NULL;
-    centroidImageWeightParameter = 1.0;
-
-    uint input_dimensionality = 16;
-    uint c, l;
-    callback = NULL;
-    initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
-
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
-    }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
-    }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-    destin = InitDestin_c2( // Use _c2!
-            input_dimensionality,
-            layers,
-            centroid_counts,
-            n_classes,
-            beta,
-            lambda,
-            gamma,
-            temperatures,
-            starv_coef,
-            num_movements,
             isUniform,
             true,
-            inputImageSize,
             extRatio
      );
 
     setBeliefTransform(DST_BT_NONE);
     ClearBeliefs(destin);
-
-    /*SetLearningStrat(destin, CLS_FIXED);
-    destin->fixedLearnRate = 0.1;*/
-    SetLearningStrat(destin, CLS_DECAY_c1); //
-    isTraining(true);/**/
-}
-
-// 2013.7.5
-// CZT: new constructor
-/*DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, bool isExtend, int size, int extRatio ) :
-        training(true),
-        beta(.01),
-        lambda(.1),
-        gamma(.1),
-        isUniform(isUniform),
-        centroidImages(NULL),
-        centroidImageWeightParameter(1.0)
-        {
-
-    uint input_dimensionality = 16;
-    uint c, l;
-    callback = NULL;
-    initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
-
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
-    }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
-    }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-    destin = InitDestin_c2(
-                input_dimensionality,
-                layers,
-                centroid_counts,
-                n_classes,
-                beta,
-                lambda,
-                gamma,
-                temperatures,
-                starv_coef,
-                num_movements,
-                isUniform,
-                isExtend,
-                size,
-                extRatio
-         );
-
-    setBeliefTransform(DST_BT_NONE);
-    ClearBeliefs(destin);
     //SetLearningStrat(destin, CLS_FIXED);
     //destin->fixedLearnRate = 0.1;
     SetLearningStrat(destin, CLS_DECAY_c1);
     isTraining(true);
-}*/
+}
 
 // 2013.6.3
 // CZT
@@ -752,20 +618,6 @@ void DestinNetworkAlt::setTemperatures(float temperatures[]){
 }
 
 void DestinNetworkAlt::doDestin( //run destin with the given input
-        float * input_dev //pointer to input memory on device
-        ) {
-    //FormulateBelief(destin, input_dev);
-    // CZT: _c1
-    FormulateBelief_c1(destin, input_dev);
-
-    if(this->callback != NULL){
-        this->callback->callback(*this );
-    }
-}
-
-// 2013.7.8
-// CZT: the org doDestin;
-void DestinNetworkAlt::doDestin_org( //run destin with the given input
         float * input_dev //pointer to input memory on device
         ) {
     FormulateBelief(destin, input_dev);
