@@ -87,7 +87,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
 // CZT
 // If adding centroids; Only for uniform!
 void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer)
+        unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer)
 {
     training = true;
     beta = .01;
@@ -133,7 +133,6 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
             starv_coef,
             num_movements,
             isUniform,
-            size,
             extRatio,
             currLayer,
             getSharedCentroids(),
@@ -156,7 +155,7 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
 // CZT
 // If killing centroids; Only for uniform!
 void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer, int kill_ind)
+        unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer, int kill_ind)
 {
     training = true;
     beta = .01;
@@ -202,7 +201,6 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
             starv_coef,
             num_movements,
             isUniform,
-            size,
             extRatio,
             currLayer,
             kill_ind,

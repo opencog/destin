@@ -17,6 +17,8 @@
 // fields are moved around or if fields are added, removed, ect.
 #define SERIALIZE_VERSION 3
 
+void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp);
+
 void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
     d->centLearnStrat = strategy;
     switch(strategy){
@@ -195,7 +197,6 @@ void CalcNodeInputOffsets(
 Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
                         bool isExtend, int extRatio)
 {
-    uint nInputPipeline;
     uint i, l, maxNb, maxNs;
     size_t bOffset ;
 
@@ -209,125 +210,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     // CZT: 'isExtend' is the key;
     d->isExtend = isExtend;
 
-    d->serializeVersion = SERIALIZE_VERSION;
-    d->nNodes = 0;
-    d->nLayers = nl;
-
-    d->nMovements = nMovements;
-    d->isUniform = isUniform;
-    d->muSumSqDiff = 0;
-
-    SetLearningStrat(d, CLS_DECAY);
-    SetBeliefTransform(d, DST_BT_NONE);
-
-    d->fixedLearnRate = 0.1;
-
-    MALLOC(d->inputLabel, uint, nc);
-    for( i=0; i < nc; i++ )
-    {
-        d->inputLabel[i] = 0;
-    }
-    d->nc = nc;
-
-    MALLOC(d->temp, float, nl);
-    memcpy(d->temp, temp, sizeof(float)*nl);
-
-    MALLOC(d->nb, uint, nl);
-    memcpy(d->nb, nb, sizeof(uint)*nl);
-
-    // get number of nodes to allocate
-    // starting from the top layer with one node,
-    // each subsequent layer has 4x the nodes.
-    //
-    // eg., 2-layer: 05 nodes
-    //      3-layer: 21 nodes
-    //      4-layer: 85 nodes
-    //
-    // also keep track of the number of beliefs
-    // to allocate
-
-    MALLOC(d->layerSize, uint, nl);
-    MALLOC(d->layerNodeOffsets, uint, nl);
-    MALLOC(d->layerWidth, uint, nl);
-
-    // init the train mask (determines which layers should be training)
-    MALLOC(d->layerMask, uint, d->nLayers);
-    for( i=0; i < d->nLayers; i++ )
-    {
-        d->layerMask[i] = 0;
-    }
-
-    uint nNodes = 0;
-    uint nBeliefs = 0;
-    for( i=0, l=nl ; l != 0; l--, i++ )
-    {
-        d->layerSize[i] = 1 << 2*(l-1);
-        d->layerWidth[i] = (uint)sqrt(d->layerSize[i]);
-        d->layerNodeOffsets[i] = nNodes;
-
-        nNodes += d->layerSize[i];
-
-        nBeliefs += d->layerSize[i] * nb[i];
-    }
-
-
-    d->inputImageSize = d->layerSize[0] * ni;
-    d->extRatio = extRatio;
-
-    d->nNodes = nNodes;
-
-    // input pipeline -- all beliefs are copied from the output of each
-    // node to the input of the next node on each timestep. we want
-    // the belief of each node except for the top node (its output goes
-    // to no input to another node) to be easily copied to the input
-    // of the next node, so we allocate a static buffer for it.
-    nInputPipeline = nBeliefs - nb[nl-1];
-
-    d->nInputPipeline = nInputPipeline;
-
-    // allocate node pointers on host
-    MALLOC(d->nodes, Node, nNodes);
-
-    // allocate space for inputs to nodes
-    MALLOC(d->inputPipeline, float, nInputPipeline);
-
-    // allocate space for beliefs for nodes on host
-    MALLOC(d->belief, float, nBeliefs);
-
-    d->nBeliefs = nBeliefs;
-
-    if(isUniform){
-        // Allocate for each layer an array of size number = n centroids for that layer
-        // that counts how many nodes in a layer pick the given centroid as winner.
-        MALLOC(d->uf_winCounts, uint *, d->nLayers);
-        MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
-        // Used to calculate the shared centroid delta averages
-        MALLOC(d->uf_avgDelta, float *, d->nLayers);
-        MALLOC(d->uf_sigma, float *, d->nLayers);
-
-        // layer shared centroid starvation vectors
-        MALLOC(d->uf_starv, float *, d->nLayers);
-
-        // 2013.6.13
-        // CZT
-        MALLOC(d->uf_persistWinCounts_detailed, long *, d->nLayers);
-        // 2013.7.4
-        // CZT: uf_absvar, very similar to uf_sigma;
-        MALLOC(d->uf_absvar, float *, d->nLayers);
-
-        for(l = 0 ; l < d->nLayers ; l++){
-            MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
-            MALLOC( d->uf_persistWinCounts[l], long, d->nb[l] );
-            MALLOC(d->uf_persistWinCounts_detailed[l], long, d->nb[l]);
-            MALLOC( d->uf_starv[l], float, d->nb[l]);
-
-            for(i = 0 ; i < d->nb[l]; i++){
-                d->uf_persistWinCounts[l][i] = 0;
-                d->uf_persistWinCounts_detailed[l][i] = 0;
-                d->uf_starv[l][i] = 1;
-            }
-        }
-    }
+    initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
 
     // init belief and input offsets (pointers to big belief and input chunks we
     // allocated above)
@@ -433,23 +316,10 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 }
 
 
-/*****************************************************************************/
-// 2013.5.31, 2013.7.4
-// addCentroid2
-// Keep 'shareCentroids', 'uf_starv', 'uf_sigma', 'uf_avgDelta', 'uf_winCounts',
-// 'uf_persistWinCounts', 'uf_persistWinCounts_detailed', 'uf_absvar';
-void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
-                  int size, int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
-                  uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
+//TODO: make this a private function
+void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp)
 {
-    bool isExtend = true;
-    uint nInputPipeline;
-    uint i, l, maxNb, maxNs, j;
-    size_t bOffset ;
-
-
-
-
+    uint l, i;
     d->serializeVersion = SERIALIZE_VERSION;
     d->nNodes = 0;
     d->nLayers = nl;
@@ -522,7 +392,7 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
     // the belief of each node except for the top node (its output goes
     // to no input to another node) to be easily copied to the input
     // of the next node, so we allocate a static buffer for it.
-    nInputPipeline = nBeliefs - nb[nl-1];
+    uint nInputPipeline = nBeliefs - nb[nl-1];
 
     d->nInputPipeline = nInputPipeline;
 
@@ -568,7 +438,26 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                 d->uf_starv[l][i] = 1;
             }
         }
+    }
+}
 
+
+/*****************************************************************************/
+// 2013.5.31, 2013.7.4
+// addCentroid2
+// Keep 'shareCentroids', 'uf_starv', 'uf_sigma', 'uf_avgDelta', 'uf_winCounts',
+// 'uf_persistWinCounts', 'uf_persistWinCounts_detailed', 'uf_absvar';
+void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
+                  int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
+                  uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
+{
+    bool isExtend = true;
+    uint i, l, maxNb, maxNs, j;
+    size_t bOffset ;
+
+    initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
+
+    if(isUniform){
         /*********************************************************************/
         // uf_starv
         // uf_persistWinCounts
@@ -1131,132 +1020,18 @@ void updateCentroid_node
 // CZT
 // killCentroid
 void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
-                  int size, int extRatio, int currLayer, int kill_ind, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
+                  int extRatio, int currLayer, int kill_ind, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
                   uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
-    uint nInputPipeline;
     uint i, l, maxNb, maxNs, j;
     size_t bOffset ;
 
-    d->inputImageSize = size;
-    d->extRatio = extRatio;
-
-    d->serializeVersion = SERIALIZE_VERSION;
-    d->nNodes = 0;
-    d->nLayers = nl;
-
-    d->nMovements = nMovements;
-    d->isUniform = isUniform;
-    d->muSumSqDiff = 0;
-
-    SetLearningStrat(d, CLS_DECAY);
-    SetBeliefTransform(d, DST_BT_NONE);
-
-    d->fixedLearnRate = 0.1;
-
-    MALLOC(d->inputLabel, uint, nc);
-    for( i=0; i < nc; i++ )
-    {
-        d->inputLabel[i] = 0;
-    }
-    d->nc = nc;
-
-    MALLOC(d->temp, float, nl);
-    memcpy(d->temp, temp, sizeof(float)*nl);
-
-    MALLOC(d->nb, uint, nl);
-    memcpy(d->nb, nb, sizeof(uint)*nl);
-
-    // get number of nodes to allocate
-    // starting from the top layer with one node,
-    // each subsequent layer has 4x the nodes.
-    //
-    // eg., 2-layer: 05 nodes
-    //      3-layer: 21 nodes
-    //      4-layer: 85 nodes
-    //
-    // also keep track of the number of beliefs
-    // to allocate
-
-    MALLOC(d->layerSize, uint, nl);
-    MALLOC(d->layerNodeOffsets, uint, nl);
-    MALLOC(d->layerWidth, uint, nl);
-
-    // init the train mask (determines which layers should be training)
-    MALLOC(d->layerMask, uint, d->nLayers);
-    for( i=0; i < d->nLayers; i++ )
-    {
-        d->layerMask[i] = 0;
-    }
-
-    uint nNodes = 0;
-    uint nBeliefs = 0;
-    for( i=0, l=nl ; l != 0; l--, i++ )
-    {
-        d->layerSize[i] = 1 << 2*(l-1);
-        d->layerWidth[i] = (uint)sqrt(d->layerSize[i]);
-        d->layerNodeOffsets[i] = nNodes;
-
-        nNodes += d->layerSize[i];
-
-        nBeliefs += d->layerSize[i] * nb[i];
-    }
-
-    d->nNodes = nNodes;
-
-    // input pipeline -- all beliefs are copied from the output of each
-    // node to the input of the next node on each timestep. we want
-    // the belief of each node except for the top node (its output goes
-    // to no input to another node) to be easily copied to the input
-    // of the next node, so we allocate a static buffer for it.
-    nInputPipeline = nBeliefs - nb[nl-1];
-
-    d->nInputPipeline = nInputPipeline;
-
-    // allocate node pointers on host
-    MALLOC(d->nodes, Node, nNodes);
-
-    // allocate space for inputs to nodes
-    MALLOC(d->inputPipeline, float, nInputPipeline);
-
-    // allocate space for beliefs for nodes on host
-    MALLOC(d->belief, float, nBeliefs);
-
-    d->nBeliefs = nBeliefs;
-
-    if(isUniform){
-        // Allocate for each layer an array of size number = n centroids for that layer
-        // that counts how many nodes in a layer pick the given centroid as winner.
-        MALLOC(d->uf_winCounts, uint *, d->nLayers);
-        MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
-        MALLOC(d->uf_persistWinCounts_detailed, long *, d->nLayers);
-        // Used to calculate the shared centroid delta averages
-        MALLOC(d->uf_avgDelta, float *, d->nLayers);
-        MALLOC(d->uf_sigma, float *, d->nLayers);
-        // 2013.7.4
-        // CZT: uf_absvar
-        MALLOC(d->uf_absvar, float *, d->nLayers);
-
-        // layer shared centroid starvation vectors
-        MALLOC(d->uf_starv, float *, d->nLayers);
-
-        for(l = 0 ; l < d->nLayers ; l++){
-            MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
-            MALLOC( d->uf_persistWinCounts[l], long, d->nb[l] );
-            MALLOC( d->uf_persistWinCounts_detailed[l], long, d->nb[l] );
-            MALLOC( d->uf_starv[l], float, d->nb[l]);
-
-            for(i = 0 ; i < d->nb[l]; i++){
-                d->uf_persistWinCounts[l][i] = 0;
-                d->uf_persistWinCounts_detailed[l][i] = 0;
-                d->uf_starv[l][i] = 1;
-            }
-        }
-
+    initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
         /*********************************************************************/
         // uf_starv
         // uf_persistWinCounts
         // uf_winCounts
+    if(isUniform){
         for(l=0; l<d->nLayers; ++l)
         {
             if(l == currLayer)

@@ -104,10 +104,10 @@ public:
 
     // 2013.6.3
     void updateDestin_add(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer);
+            unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer);
     // 2013.6.6
     void updateDestin_kill(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform, int size, int extRatio, int currLayer, int kill_ind);
+            unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer, int kill_ind);
 
     /*************************************************************************/
     // 2013.6.4-6, 2013.7.4
