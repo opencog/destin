@@ -157,10 +157,7 @@ int main(int argc, char ** argv)
     bool isUniform = true;
     int size = 512*512;
     int extRatio = 2;
-    //DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
-    /*DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);*/
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
 
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);
