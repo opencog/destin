@@ -73,7 +73,7 @@ def train_ims(network, ims, maxCount=16000):
             print "Iteration " + str(i)
         ims.findNextImage()
         f = ims.getGrayImageFloat()    
-        network.doDestin_c1(f)
+        network.doDestin(f)
 
 '''
 Use one folder as input, and use another folder as additional info!
@@ -88,7 +88,7 @@ def train_2flds(network, fld1, fld2, repeatCount=1600):
             print "RepeatTime: " + str(i)
         for each in os.listdir(fld1):
             f = cl.combineImgs(fld1+each, fld2+each)
-            network.doDestin_c1(f)
+            network.doDestin(f)
 
 #############################################################################
 # Testing functions:
@@ -100,13 +100,13 @@ def train_ims_randomInfo(network, ims, size, extRatio, maxCount=16000):
         f1 = ims.getGrayImageFloat()
         f2 = cl2.getFloatArr(size*extRatio)
         cl2.combineInfo_extRatio(f1, size, extRatio, f2)
-        network.doDestin_c1(f2)
+        network.doDestin(f2)
 
 def train_only(network, tempIn, maxCount=16000):
     for i in range(maxCount):
         if i % 10 == 0:
             print "Iteration " + str(i)
-        network.doDestin_c1(tempIn)
+        network.doDestin(tempIn)
 
 #############################################################################
 def drawCurve(inFile, times):

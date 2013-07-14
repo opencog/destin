@@ -213,7 +213,7 @@ for i in range(1, maxCount+1):
     ims.findNextImage()
     f = ims.getGrayImageFloat()
     #cl2.combineInfo_extRatio(f, size, extRatio, fOut)    
-    dn.doDestin_c1(f)
+    dn.doDestin(f)
 #
 for i in range(8):
     plt.figure()
@@ -231,8 +231,8 @@ network = init_destin()
 vs1 = pd.VideoSource(False, cm.homeFld + "/destin_ted_temp/Destin/Misc/ABCD.avi")
 #vs1 = pd.VideoSource(True, "", 0)
 #vs2 = pd.VideoSource(True, "", 0+1)
-vs1.enableDisplayWindow_c1("left")
-#vs2.enableDisplayWindow_c1("right")
+vs1.enableDisplayWindow("left")
+#vs2.enableDisplayWindow("right")
 vs1.grab()
 #vs2.grab()
 
@@ -247,7 +247,7 @@ while(vs1.grab()):
             print "Iteration " + str(currCount)
         t1.setSource(vs1.getOutput())
         t1.transport()
-        network.doDestin_c1(t1.getDest())
+        network.doDestin(t1.getDest())
         #network.doDestin(t1.getDest())
     else:
         break
