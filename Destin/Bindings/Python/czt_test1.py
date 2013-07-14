@@ -15,19 +15,19 @@ import czt_mod as cm
 #############################################################################
 # Pre-processing
 #
-#cm.processFld("/home/teaera/Work/RECORD/2013.5.8/org", "/home/teaera/Work/RECORD/2013.5.8/pro_1")
+#cm.processFld(cm.homeFld + "/Work/RECORD/2013.5.8/org", cm.homeFld + "/Work/RECORD/2013.5.8/pro_1")
 
 #############################################################################
 # 2013.5.7
 '''
 dn = cm.init_destin(extRatio=1)
 ims = pd.ImageSouceImpl()
-#cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_2")
-#cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_2_2")
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_only1")
+#cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_2")
+#cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_2_2")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_only1")
 cm.train_ims(dn, ims, maxCount=5000)
 cm.dcis(dn, 7)
-#cm.saveCens(dn, 7, "/home/teaera/Pictures/2013_5_8_1.jpg")
+#cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013_5_8_1.jpg")
 '''
 
 
@@ -36,7 +36,7 @@ cm.dcis(dn, 7)
 '''
 start_time = time.time()
 dn = cm.init_destin(extRatio=2)
-cm.train_2flds(dn, "/home/teaera/Work/RECORD/2013.5.8/pro_3", "/home/teaera/Work/RECORD/2013.5.8/pro_add_3", 10)
+cm.train_2flds(dn, cm.homeFld + "/Work/RECORD/2013.5.8/pro_3", cm.homeFld + "/Work/RECORD/2013.5.8/pro_add_3", 10)
 end_time = time.time()
 print("Cost: %s secs!" % (str(end_time-start_time)))
 cm.dcis(dn, 7)
@@ -48,7 +48,7 @@ cm.dcis(dn, 7)
 size = 512*512
 extRatio = 1
 dn = cm.init_destin(extRatio=extRatio)
-cm.cl.isNeedResize("/home/teaera/Work/RECORD/2013.5.8/pro_add_3/1.jpg")
+cm.cl.isNeedResize(cm.homeFld + "/Work/RECORD/2013.5.8/pro_add_3/1.jpg")
 f = cm.cl.get_float512()
 cm.train_only(dn, f, 3000)
 cm.dcis(dn, 7)
@@ -59,11 +59,11 @@ cm.dcis(dn, 7)
 '''
 dn = cm.init_destin()
 ims = pd.ImageSouceImpl()
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_only1")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_only1")
 cm.train_ims(dn, ims, maxCount=5000)
 for i in range(8):
-    #cm.saveCens(dn, i, "/home/teaera/Pictures/segmentation_face/%s.jpg"%(str(i)))
-    cm.saveCens(dn, i, "/home/teaera/Pictures/original_face/%s.jpg"%(str(i)))
+    #cm.saveCens(dn, i, cm.homeFld + "/Pictures/segmentation_face/%s.jpg"%(str(i)))
+    cm.saveCens(dn, i, cm.homeFld + "/Pictures/original_face/%s.jpg"%(str(i)))
 '''
 
 #############################################################################
@@ -71,11 +71,11 @@ for i in range(8):
 '''
 dn = cm.init_destin()
 ims = pd.ImageSouceImpl()
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_only1")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_only1")
 cm.train_ims(dn, ims, maxCount=3500)
 cm.dcis(dn, 7)
-#cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.15_fixed.jpg")
-#cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.15_decay.jpg")
+#cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.5.15_fixed.jpg")
+#cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.5.15_decay.jpg")
 '''
 
 #############################################################################
@@ -83,10 +83,10 @@ cm.dcis(dn, 7)
 '''
 dn = cm.init_destin()
 ims = pd.ImageSouceImpl()
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_2_2")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_2_2")
 cm.train_ims(dn, ims, maxCount=5000)
 cm.dcis(dn, 7)
-#cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.15_decay_2.jpg")
+#cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.5.15_decay_2.jpg")
 '''
 
 #############################################################################
@@ -94,12 +94,12 @@ cm.dcis(dn, 7)
 '''
 dn = cm.init_destin(centroids=[8,16,32,64,64,64,32,16])
 ims = pd.ImageSouceImpl()
-#cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_4")
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.8/pro_5")
+#cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_4")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_5")
 cm.train_ims(dn, ims, maxCount=5000)
 cm.dcis(dn, 7)
-#cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.16_1.jpg")
-cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.16_2.jpg")
+#cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.5.16_1.jpg")
+cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.5.16_2.jpg")
 '''
 
 #############################################################################
@@ -111,13 +111,13 @@ cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.16_2.jpg")
 '''
 '''
 # STEP 1. Extract from every folder!
-inFile = "/home/teaera/Downloads/orl_faces/s%s/1.pgm"
-outFile = "/home/teaera/Work/EclipseWorkSpace/Test1_c1/images_c1/%s.pgm"
+inFile = cm.homeFld + "/Downloads/orl_faces/s%s/1.pgm"
+outFile = cm.homeFld + "/Work/EclipseWorkSpace/Test1_c1/images_c1/%s.pgm"
 for i in range(40):
     os.system("cp " + inFile%(str(i+1)) + " " + outFile%(str(i+1)))
 #
 # STEP 2. Processing
-cm.processFld("/home/teaera/Work/RECORD/2013.5.20/org_0", "/home/teaera/Work/RECORD/2013.5.20/pro_0")
+cm.processFld(cm.homeFld + "/Work/RECORD/2013.5.20/org_0", cm.homeFld + "/Work/RECORD/2013.5.20/pro_0")
 '''
 #------#
 '''
@@ -126,7 +126,7 @@ cm.processFld("/home/teaera/Work/RECORD/2013.5.20/org_0", "/home/teaera/Work/REC
 '''
 # Manually copied from out_1 to org_1...
 # STEP 1. 
-inFld = "/home/teaera/Work/RECORD/2013.5.20/org_1/"
+inFld = cm.homeFld + "/Work/RECORD/2013.5.20/org_1/"
 files = os.listdir(inFld)
 files.sort()
 i = 1
@@ -135,7 +135,7 @@ for each in files:
     i += 1
 #
 # STEP 2.
-cm.processFld("/home/teaera/Work/RECORD/2013.5.20/org_1", "/home/teaera/Work/RECORD/2013.5.20/pro_1")
+cm.processFld(cm.homeFld + "/Work/RECORD/2013.5.20/org_1", cm.homeFld + "/Work/RECORD/2013.5.20/pro_1")
 '''
 
 #############################################################################
@@ -144,7 +144,7 @@ cm.processFld("/home/teaera/Work/RECORD/2013.5.20/org_1", "/home/teaera/Work/REC
 #dn = cm.init_destin(centroids=[12,18,24,30,30,24,18,12])
 dn = cm.init_destin()
 ims = pd.ImageSouceImpl()
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.20/pro_2/")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.20/pro_2/")
 cm.train_ims(dn, ims, maxCount=5000)
 cm.dcis(dn, 7)
 '''
@@ -154,7 +154,7 @@ cm.dcis(dn, 7)
 # STEP 1.
 # Transform the downloaded images to gray-scale images first;
 '''
-cm.processFld("/home/teaera/Work/RECORD/2013.5.21/downloads", "/home/teaera/Work/RECORD/2013.5.21/downloads_pro_mine")
+cm.processFld(cm.homeFld + "/Work/RECORD/2013.5.21/downloads", cm.homeFld + "/Work/RECORD/2013.5.21/downloads_pro_mine")
 '''
 
 # STEP 2.
@@ -172,10 +172,10 @@ for i in range(8):
     centroids[i] *= numImg
 dn = cm.init_destin(centroids=centroids)
 ims = pd.ImageSouceImpl()
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.5.21/z_2")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.21/z_2")
 cm.train_ims(dn, ims, maxCount=2000)
 cm.dcis(dn, 7)
-cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.5.24_13.jpg")
+cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.5.24_13.jpg")
 '''
 
 #############################################################################
@@ -191,7 +191,7 @@ extRatio = 1
 isUniform = True
 dn = cm.init_destin(centroids=centroids, extRatio=extRatio)
 ims = pd.ImageSouceImpl()
-ims.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg")
+ims.addImage(cm.homeFld + "/Work/RECORD/2013.5.8/pro_1/3.jpg")
 #cl2 = pd.czt_lib2()
 #fOut = cl2.createFloatArr(size)
 valDict = {}
@@ -218,7 +218,7 @@ for i in range(1, maxCount+1):
 for i in range(8):
     plt.figure()
     plt.plot(range(len(valDict[str(i)])), valDict[str(i)], "r*-")
-    plt.savefig("/home/teaera/Pictures/2013.6.18_"+str(i)+".jpg")
+    plt.savefig(cm.homeFld + "/Pictures/2013.6.18_"+str(i)+".jpg")
 plt.show()
 '''
 
@@ -228,7 +228,7 @@ plt.show()
 '''
 network = init_destin()
 #
-vs1 = pd.VideoSource(False, "/home/teaera/destin_ted_temp/Destin/Misc/ABCD.avi")
+vs1 = pd.VideoSource(False, cm.homeFld + "/destin_ted_temp/Destin/Misc/ABCD.avi")
 #vs1 = pd.VideoSource(True, "", 0)
 #vs2 = pd.VideoSource(True, "", 0+1)
 vs1.enableDisplayWindow_c1("left")
@@ -276,11 +276,11 @@ cl2 = pd.czt_lib2()
 
 ims = pd.ImageSouceImpl()
 # Test just ONE image
-#ims.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/3.jpg")
+#ims.addImage(cm.homeFld + "/Work/RECORD/2013.7.8/test1/3.jpg")
 # Test FOUR images from the folder
-#cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.7.8/test1/")
+#cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.7.8/test1/")
 # TEST SIX images
-cm.load_ims_fld(ims, "/home/teaera/Work/RECORD/2013.7.8/test2/")
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.7.8/test2/")
 
 sepDict = {}
 varDict = {}
@@ -303,14 +303,14 @@ for i in range(1, maxCount+1):
             quaDict[str(i)].append(qua)
     ims.findNextImage()
     f = ims.getGrayImageFloat()
-    dn.doDestin_org(f)
+    dn.doDestin(f)
 
 cm.dcis(dn, 7)
-cm.saveCens(dn, 7, "/home/teaera/Pictures/2013.7.8_layer7.jpg")
+cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.7.8_layer7.jpg")
 for i in range(nLayer):
     plt.figure()
     plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
-    plt.savefig("/home/teaera/Pictures/2013.7.9_"+str(i)+".jpg")
+    plt.savefig(cm.homeFld + "/Pictures/2013.7.9_"+str(i)+".jpg")
 plt.show()
 
 

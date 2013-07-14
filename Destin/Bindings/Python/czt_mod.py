@@ -13,6 +13,11 @@ cl = pd.czt_lib()
 cl2 = pd.czt_lib2()
 
 #############################################################################
+"""
+Save the current user's home folder.
+"""
+homeFld = os.getenv("HOME")
+
 '''
 Display centroids images!
 '''
@@ -120,8 +125,9 @@ def drawCurve(inFile, times):
     for i in range(8):
         plt.figure()
         plt.plot(quality[str(i)], "r*-")
-        plt.savefig("/home/teaera/Pictures/2013.7.5_"+str(i)+".jpg")
+        plt.savefig(homeFld+"/Pictures/2013.7.5_"+str(i)+".jpg")
     plt.show()
 
-#drawCurve('/home/teaera/destin_ted_temp/Destin/1', 150)
+
+#drawCurve(homeFld + '/destin_ted_temp/Destin/1', 150)
 

@@ -2,7 +2,7 @@ import os, errno
 import cv2.cv as cv
 import time
 import pydestin as pd
-
+import czt_mod as czm
 
 experiment_root_dir="./experiment_runs"
 
@@ -13,14 +13,7 @@ ims = pd.ImageSouceImpl()
 #letters = "LO+"
 letters = "ABCDEFG"
 for l in letters:
-    #ims.addImage("/home/ted/Dropbox/destin/treeimgs/%s.png" % l)
-    #ims.addImage("/home/ted/Pictures/treeminingletters/%s.png" % l)    
-    # Testing fld
-    # 2013.4.11
-    # CZT
-    #
-    #ims.addImage("/home/teaera/Downloads/2/%s.png" % l)
-    ims.addImage("/home/teaera/Downloads/destin_toshare/train images/%s.png" % l)
+    ims.addImage(czm.homeFld + "/Downloads/destin_toshare/train images/%s.png" % l)
     
 #centroids =  [2,2,8,32,40,32,15,len(letters)]
 centroids =  [4,8,16,32,64,32,16,len(letters)]
