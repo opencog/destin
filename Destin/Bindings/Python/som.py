@@ -1,7 +1,6 @@
-import time
 import pydestin as pd
 import cv2.cv as cv
-
+import os
 import threading
 
 hg = lambda: None
@@ -22,7 +21,7 @@ If you click on SOM it will show you CIFAR image of the nearest dot.
 
 # Downlaod the required data at http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz
 # Set this variable to the folder containing data_batch_1.bin to data_batch_5.bin
-cifar_dir = "/home/teaera/Downloads/cifar-10-batches-bin"
+cifar_dir = os.getenv("HOME") + "/Downloads/cifar-10-batches-bin"
 
 cifar_batch = 1 #which CIFAR batch to use from 1 to 5
 cs = pd.CifarSource(cifar_dir, cifar_batch)
