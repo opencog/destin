@@ -130,9 +130,6 @@ public:
     double getIntra(int layer);
     double getInter(int layer);
     double getValidity(int layer);*/
-    // 2013.7.8
-    void setExtend(bool isExtend);
-
 
     void isTraining(bool isTraining);
 

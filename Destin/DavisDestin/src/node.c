@@ -38,26 +38,6 @@
 }
 #endif
 
-void checkObs( Node *n)
-{
-    uint i;
-    for(i = 0 ; i < n->ns ; i++){
-        float o = n->observation[i];
-        if(isinf(o)){
-            oops("observation was inf at index %i\n", i);
-        }
-        if(isnan(o)){
-            oops("observation was nan at index %i\n", i);
-        }
-        if(o < 0){
-            oops("observation was negative at index %i\n", i);
-        }
-        if(o > 1){
-            oops("observation was greater than 1.0 at index %i\n", i);
-        }
-    }
-}
-
 void GetObservation( Node *n, float *framePtr, uint nIdx )
 {
     n = &n[nIdx];
@@ -123,24 +103,16 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     }
 
     // 2013.4.11, 2013.7.3
-    // CZT: use 'isExtend';
-    if(n->d->isExtend)
+    if(n->layer == 0)
     {
-        if(n->layer == 0)
+        for(j=1; j<n->d->extRatio; ++j)
         {
-            for(j=1; j<n->d->extRatio; ++j)
+            for(i=0; i<ni; ++i)
             {
-                for(i=0; i<ni; ++i)
-                {
-                    n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->inputImageSize*j];
-                }
+                n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->inputImageSize*j];
             }
         }
     }
-
-#ifdef CHECK_OBS
-    // checkObs(n); //TODO:fix and renable for isExtend
-#endif
 }
 
 // CPU implementation of CalculateDistances kernel

@@ -71,7 +71,6 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
             starv_coef,
             num_movements,
             isUniform,
-            true,
             extRatio
      );
 
@@ -381,7 +380,7 @@ float DestinNetworkAlt::getSep(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
     float * sep;
-    MALLOC(sep, float, currNode->nb);
+    MALLOC(sep, float, currNode->nb); // TODO: fix memory leak here
     int i,j,k;
     for(i=0; i<currNode->nb; ++i)
     {
@@ -395,15 +394,15 @@ float DestinNetworkAlt::getSep(int layer)
             {
                 float fSum = 0.0;
                 float fTemp;
-                if(layer == 0 && destin->isExtend)
+                if(layer == 0)
                 {
                     for(k=0; k<currNode->ni; ++k)
                     {
                         fSum += fabs(currNode->mu[i*currNode->ns + k]
                                      - currNode->mu[j*currNode->ns + k]);
                     }
-                    for(k=currNode->ni+currNode->nb+currNode->np+currNode->nc;
-                        k<currNode->ns; ++k)
+                    for(k=currNode->ni + currNode->nb + currNode->np + currNode->nc;
+                        k < currNode->ns; ++k)
                     {
                         fSum += fabs(currNode->mu[i*currNode->ns + k]
                                      - currNode->mu[j*currNode->ns + k]);
@@ -449,7 +448,7 @@ float DestinNetworkAlt::getVar(int layer)
     for(i=0; i<currNode->nb; ++i)
     {
         float fSum = 0.0;
-        if(layer==0 && destin->isExtend)
+        if(layer==0)
         {
             for(j=0; j<currNode->ni; ++j)
             {
@@ -484,13 +483,6 @@ float DestinNetworkAlt::getVar(int layer)
 float DestinNetworkAlt::getQuality(int layer)
 {
     return getSep(layer)-getVar(layer);
-}
-
-// 2013.7.8
-// CZT: set isExtend;
-void DestinNetworkAlt::setExtend(bool isExtend)
-{
-    destin->isExtend = isExtend;
 }
 
 /*// 2013.6.14

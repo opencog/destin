@@ -60,7 +60,6 @@ typedef struct Destin {
     int sizeInd;
     int * nearInd;
     //2013.7.2
-    bool isExtend;
     int inputImageSize;
     int extRatio;
     // 2013.6.13, 2013.7.3
@@ -88,7 +87,6 @@ Destin * InitDestin(    // initialize Destin.
     float,              // starv coeff
     uint,               // number of movements per digit presentation
     bool,               // is uniform - if nodes in a layer share one list of centroids
-    bool,               // isExtend,
     int                 // extRatio
 );
 

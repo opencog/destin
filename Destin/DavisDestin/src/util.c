@@ -110,7 +110,7 @@ Destin * CreateDestin( char *filename ) {
     printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
     printf("isUniform: %s. belief transform: %s.\n", isUniform ? "YES" : "NO", bts);
 
-    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, false, 0);
+    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, 1);
     SetBeliefTransform(newDestin, bte);
 
     fclose(configFile);
@@ -194,8 +194,7 @@ void CalcNodeInputOffsets(
 
 }
 
-Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
-                        bool isExtend, int extRatio)
+Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
 {
     uint i, l, maxNb, maxNs;
     size_t bOffset ;
@@ -205,10 +204,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     // initialize a new Destin object
     MALLOC(d, Destin, 1);
-
-    // 2013.4.17, 2013.7.3
-    // CZT: 'isExtend' is the key;
-    d->isExtend = isExtend;
 
     initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
 
@@ -248,7 +243,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         // calculate the state dimensionality (number of inputs + number of beliefs)
         // 2013.4.17
         // CZT
-        uint ns = nb[l] + np + nc + ((isExtend && l == 0) ? ni*extRatio : ni);
+        uint ns = nb[l] + np + nc + (( l == 0) ? ni*extRatio : ni);
 
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
@@ -451,7 +446,6 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                   int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
                   uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
-    bool isExtend = true;
     uint i, l, maxNb, maxNs, j;
     size_t bOffset ;
 
@@ -592,7 +586,7 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         // calculate the state dimensionality (number of inputs + number of beliefs)
         // 2013.4.17
         // CZT
-        uint ns = nb[l] + np + nc + ((isExtend && l == 0) ? ni*extRatio : ni);
+        uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
 
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
@@ -1433,7 +1427,6 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->nodes[0].nLambda,    sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
-    fwrite(&d->isExtend,            sizeof(bool),               1,           dFile);
     fwrite(&d->extRatio,            sizeof(int),                1,           dFile);
 
     fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
@@ -1489,7 +1482,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
 
     uint serializeVersion;
     uint nMovements, nc, ni, nl;
-    bool isUniform, isExtend;
+    bool isUniform;
     int extendRatio; //TODO: make this a uint
     uint *nb;
 
@@ -1527,9 +1520,8 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&lambda,      sizeof(float),    1,   dFile);
     freadResult = fread(&gamma,       sizeof(float),    1,   dFile);
     freadResult = fread(&starvCoeff,  sizeof(float),    1,   dFile);
-    freadResult = fread(&isExtend,    sizeof(bool),     1,   dFile);
     freadResult = fread(&extendRatio, sizeof(int),      1,   dFile);
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, isExtend, extendRatio);
+    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, extendRatio);
 
     freadResult = fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
     SetLearningStrat(d, d->centLearnStrat);

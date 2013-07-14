@@ -34,11 +34,9 @@ int main(int argc, char ** argv)
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
     bool isUniform = true;
-    bool isExtend = true;
     int size = 512*512;
     int extRatio = 2;
-    //DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
 
     int inputSize = size*extRatio;
     float * tempIn;
@@ -83,10 +81,9 @@ int main(int argc, char ** argv)
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
     bool isUniform = true;
-    bool isExtend = true;
     int size = 512*512;
     int extRatio = 2;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
 
     int inputSize = size*extRatio;
     float * tempIn1, * tempIn2, * tempIn;
@@ -158,14 +155,12 @@ int main(int argc, char ** argv)
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
     //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
     bool isUniform = true;
-    bool isExtend = true;
     int size = 512*512;
     int extRatio = 2;
     //DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, isExtend, size, extRatio);
     /*DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
     network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);*/
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->setExtend(false);
 
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);

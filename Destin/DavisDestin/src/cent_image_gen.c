@@ -120,16 +120,7 @@ float*** Cig_CreateCentroidImages(Destin * d, float weightParameter){
     for(l = 0 ; l < d->nLayers; l++){
         MALLOC(images[l], float *, d->nb[l]);
         for(c = 0 ; c < d->nb[l]; c++){
-            // 2013.5.9, 2013.7.3
-            // CZT: use 'isExtend';
-            if(d->isExtend)
-            {
-                MALLOC(images[l][c], float, (l==0 ? image_width*image_width*d->extRatio : image_width*image_width));
-            }
-            else
-            {
-                MALLOC(images[l][c], float, image_width * image_width);
-            }
+            MALLOC(images[l][c], float, (l==0 ? image_width*image_width*d->extRatio : image_width*image_width));
         }
         image_width *= 2;
     }
@@ -162,17 +153,12 @@ void Cig_UpdateCentroidImages(Destin * d,
                 images[l][c][p] = n->mu[c * n->ns + p];
             }
 
-            // 2013.5.9, 2013.7.3
-            // CZT: for layer 0, if 'isExtend', there should be more information;
-            if(d->isExtend)
+            int nRatio;
+            for(nRatio=1; nRatio < d->extRatio; ++nRatio)
             {
-                int nRatio;
-                for(nRatio=1; nRatio<d->extRatio; ++nRatio)
+                for(p=0; p<n->ni; ++p)
                 {
-                    for(p=0; p<n->ni; ++p)
-                    {
-                        images[l][c][n->ni*nRatio + p] = n->mu[c*n->ns + n->ni*nRatio + n->nb + n->np + p];
-                    }
+                    images[l][c][n->ni*nRatio + p] = n->mu[c*n->ns + n->ni*nRatio + n->nb + n->np + p];
                 }
             }
         }
