@@ -38,7 +38,6 @@
 }
 #endif
 
-// CPU implementation of GetObservation kernel
 void GetObservation( Node *n, float *framePtr, uint nIdx )
 {
     n = &n[nIdx];
@@ -91,94 +90,6 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < np; i++ )
     {
 #ifdef RECURRENCE_ON
-        //n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
-        n->observation[i+ni+nb] = n->parent_pBelief[i] * n->nLambda;
-#else
-        n->observation[i+ni+nb] = 1 / (float) np;
-#endif
-    }
-
-    for( i=0; i < nc; i++ )
-    {
-        // Apply context
-        n->observation[i+ni+nb+np] = 0;
-    }
-
-#ifdef CHECK_OBS
-    for(i = 0 ; i < n->ns ; i++){
-        float o = n->observation[i];
-        if(isinf(o)){
-            oops("observation was inf at index %i\n", i);
-        }
-        if(isnan(o)){
-            oops("observation was nan at index %i\n", i);
-        }
-        if(o < 0){
-            oops("observation was negative at index %i\n", i);
-        }
-        if(o > 1){
-            oops("observation was greater than 1.0 at index %i\n", i);
-        }
-    }
-#endif
-}
-
-// 2013.4.11
-// CZT
-//
-void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
-{
-    n = &n[nIdx];
-
-    uint i, j;
-    uint ni, nb, np, ns, nc;
-
-    // Length of input vector
-    ni = n->ni;
-
-    // Number of centroids
-    nb = n->nb;
-
-    // Number of centroids of the parent
-    np = n->np;
-
-    // Sum of ni + nb + np + nc
-    ns = n->ns;
-
-    // 'Context'
-    nc = n->nc;
-
-    // Check to see if bottom layer image input data is available
-    if( n->layer > 0 )
-    {
-        // If not, use input from the child nodes
-        for( i=0; i < ni; i++ )
-        {
-            n->observation[i] = n->input[n->inputOffsets[i]];
-        }
-    } else {
-        // If so, use input from the input image
-        for( i=0; i < ni; i++ )
-        {
-            n->observation[i] = framePtr[n->inputOffsets[i]];
-        }
-    }
-
-    // set these to uniform for now.
-    // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
-    for( i=0; i < nb; i++ )
-    {
-#ifdef RECURRENCE_ON
-        n->observation[i+ni] = n->pBelief[i] * n->gamma;
-#else
-        n->observation[i+ni] = 1 / (float) nb;
-#endif
-    }
-
-    for( i=0; i < np; i++ )
-    {
-#ifdef RECURRENCE_ON
-        //n->observation[i+ni+nb] = n->parent_pBelief[i] * n->lambda;
         n->observation[i+ni+nb] = n->parent_pBelief[i] * n->nLambda;
 #else
         n->observation[i+ni+nb] = 1 / (float) np;
@@ -192,17 +103,13 @@ void GetObservation_c1( Node *n, float *framePtr, uint nIdx )
     }
 
     // 2013.4.11, 2013.7.3
-    // CZT: use 'isExtend';
-    if(n->d->isExtend)
+    if(n->layer == 0)
     {
-        if(n->layer == 0)
+        for(j=1; j<n->d->extRatio; ++j)
         {
-            for(j=1; j<n->d->extRatio; ++j)
+            for(i=0; i<ni; ++i)
             {
-                for(i=0; i<ni; ++i)
-                {
-                    n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->size*j];
-                }
+                n->observation[i+j*ni+nb+np+nc] = framePtr[n->inputOffsets[i] + n->d->inputImageSize*j];
             }
         }
     }
@@ -298,109 +205,6 @@ void CalculateDistances( Node *n, uint nIdx )
 
 // CPU implementation of NormalizeBelief kernel
 void NormalizeBeliefGetWinner( Node *n, uint nIdx )
-{
-    // Get a node from the pointer to the list of nodes
-    n = &n[nIdx];
-    
-    // Define variables for normalized Euclidean and Mahalanobis distance
-    float normEuc = 0;
-    float normMal = 0;
-
-    // Pick a value from the Euclidean beliefs to initialize the maxEucVal variable
-    float maxEucVal = n->beliefEuc[0];
-    uint maxEucIdx = 0;
-    
-    // Set the index of the current max Euclidean belief value to the index of the value we just retrieved
-    float maxMalVal = n->beliefMal[0];
-    uint maxMalIdx = 0;
-
-    // Declare looping integer (C requirement)
-    uint i;
-
-    // Loop through the centroids in this node
-    for( i=0; i < n->nb; i++ )
-    {
-        // Sum the beliefs to use for normalization later
-        normEuc += n->beliefEuc[i];
-        normMal += n->beliefMal[i];
-
-        // Check to see if the current Euclidean belief is greater than our current max
-        if( n->beliefEuc[i] > maxEucVal )
-        {
-            // If so, update our max Euclidean belief value and its index
-            maxEucVal = n->beliefEuc[i];
-            maxEucIdx = i;
-        }
-        // Check to see if the current Mahalanobis belief is greater than our current max
-        if( n->beliefMal[i] > maxMalVal )
-        {
-            // If so, update our max Mahalanobis belief value and its index
-            maxMalVal = n->beliefMal[i];
-            maxMalIdx = i;
-        }
-    }
-    // Set the winning centroid of the current node to the index of the centroid with the highest Euclidean belief value
-#ifdef USE_MAL
-    n->winner = maxMalIdx;
-#endif
-#ifdef USE_EUC
-    n->winner = maxEucIdx;
-#endif
-    
-#ifdef CHECK_NORM_LESS_THAN_EPSILON
-    if (normEuc < EPSILON){
-        oops("oops: normEuc was less than EPSILON: %e\n", normEuc);
-    }
-    if (normMal < EPSILON){
-        oops("oops: normMal was less than EPSILON: %e\n", normMal);
-    }
-#endif
-
-
-    // normalize beliefs to sum to 1
-    // TODO: think beliefTranform already does this
-    for( i=0; i < n->nb; i++ )
-    {
-        n->beliefEuc[i] = n->beliefEuc[i] / normEuc;
-        n->beliefMal[i] = n->beliefMal[i] / normMal;
-    }
-
-    n->d->beliefTransformFunc(n);
-
-    for( i=0; i < n->nb; i++ ){
-#ifdef USE_MAL
-        n->pBelief[i] = n->beliefMal[i];
-#endif
-#ifdef USE_EUC
-        n->pBelief[i] = n->beliefEuc[i];
-#endif
-    }
-
-
-    //TODO: test that this works for non uniform
-    if(n->d->isUniform){
-
-        // Add one to the current iteration's wincount of the winning centroid of the node's layer (since this centroid can be
-        // shared between multiple nodes in the same layer)
-        long c;
-        #pragma omp critical //open mp, only 1 thread in this section
-        {
-            c = ++(n->d->uf_winCounts[n->layer][n->winner]); //used when averaging the delta vectors
-        }//omp critical
-
-        // For the first node that declares this centroid the winner update the persistent array of win counts.
-        if( c == 1){//only increment this once even if multiple nodes pick this shared centroid
-            n->d->uf_persistWinCounts[n->layer][n->winner]++;
-        }
-    }
-
-    // Todo: write useful comment here
-    n->genWinner = maxMalIdx;
-}
-
-
-// CPU implementation of NormalizeBelief kernel
-void NormalizeBeliefGetWinner_c1( Node *n, uint nIdx )
 {
     // Get a node from the pointer to the list of nodes
     n = &n[nIdx];
@@ -509,63 +313,6 @@ void NormalizeBeliefGetWinner_c1( Node *n, uint nIdx )
 
 void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
 {
-    // whoa!  zero comments here -- my bad
-
-    // grab the node we want to work with.  this is a carryover
-    // from the kernel behavior -- kind of like n = &n[blockIdx.x].
-    // we could just pass a pointer to the node we actually want.
-    n = &n[nIdx];
-
-    // just an iterator
-    uint i;
-
-    // gets the row offset for the mu/sigma matrices to update
-    uint winnerOffset = n->winner * n->ns;
-
-    // the difference between an element of the observation and
-    // an element of the mu matrix
-    float delta;
-
-    // keeps track of squared error for a node.  added together
-    // with the sq. err. for all the other nodes in the network,
-    // it gives you a feel for when the network approaches
-    // convergence.
-    n->muSqDiff = 0;
-
-    // this is the offset in the observation vector where
-    // the class labels start.
-    uint ncStart = n->ni + n->nb + n->np;
-
-    for( i=0; i < n->ns; i++ )
-    {
-        // if we are less than ncStart, we are not looking at
-        // class labels.
-        if( i < ncStart )
-        {
-            delta = n->observation[i] - n->mu[winnerOffset+i];
-
-        // otherwise, use the class label to move the last n_c
-        // components of the winning centroid
-        }
-        // 2013.4.1
-        // CZT
-        // As 'nc' is set to 0, the 'else' part will never be invoked!!!
-        //
-        else {
-            delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
-        }
-        n->delta[i] = delta;
-    }
-    return;
-}
-
-// 2013.4.12
-// CZT
-//
-void CalcCentroidMovement_c1( Node *n, uint *label, uint nIdx )
-{
-    // whoa!  zero comments here -- my bad
-
     // grab the node we want to work with.  this is a carryover
     // from the kernel behavior -- kind of like n = &n[blockIdx.x].
     // we could just pass a pointer to the node we actually want.

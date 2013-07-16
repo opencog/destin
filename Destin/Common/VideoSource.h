@@ -49,9 +49,6 @@ private:
 	//the original size as it came out of the video device
 	cv::Size original_size;
 
-	//title on the window which displays the video output
-#define DESTIN_VIDEO_WINDOW_TITLE  "DeSTIN Input Video"
-
     // 2013.4.19
     // CZT
     // Defined title for windows:
@@ -96,7 +93,8 @@ public:
 	 */
 	VideoSource(bool use_device, std::string video_file, int dev_no = 0) :
         target_size(512, 512), edge_detection(false), showWindow(false),
-        isShowColor(false), flip(true), isDevice(use_device) {
+        isShowColor(false), flip(true), isDevice(use_device),
+        win_title("DeSTIN Input Video") {
 
 		float_frame = new float[target_size.area()];
 		stringstream mess;
@@ -116,7 +114,7 @@ public:
 
         /*cap->set(CV_CAP_PROP_FRAME_WIDTH, target_size.width);
         cap->set(CV_CAP_PROP_FRAME_HEIGHT, target_size.height);*/
-        cvMoveWindow(DESTIN_VIDEO_WINDOW_TITLE, 50, 50);
+        cvMoveWindow(win_title.c_str(), 50, 50);
         av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
 	}
 
@@ -188,18 +186,14 @@ public:
 	 * Shows the output of the video or webcam to the screen in a window
 	 */
 	//see http://opencv.willowgarage.com/documentation/cpp/user_interface.html#cv-namedwindow
-	void enableDisplayWindow() {//don't know how to unshow it yet
-		cv::namedWindow(DESTIN_VIDEO_WINDOW_TITLE, CV_WINDOW_AUTOSIZE);
-        showWindow = true;
-	}
-
-    // 2013.4.19
-    // CZT
-    //
-    void enableDisplayWindow_c1(string win_title) {//don't know how to unshow it yet
+    void enableDisplayWindow(string win_title) {
         cv::namedWindow(win_title, CV_WINDOW_AUTOSIZE);
         this->win_title = win_title;
         showWindow = true;
+    }
+
+    void enableDisplayWindow() {
+        enableDisplayWindow(win_title);
     }
 
 	/**

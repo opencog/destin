@@ -117,14 +117,6 @@ void GetObservation(
                     uint                // node index
                 );
 
-// 2013.4.11
-// CZT:
-void GetObservation_c1(
-                    Node *,             // pointer to list of nodes
-                    float *,            // pointer to input frame
-                    uint                // node index
-                );
-
 void CalculateDistances(
                     Node *,             // pointer to list of nodes
                     uint                // node index
@@ -135,22 +127,7 @@ void NormalizeBeliefGetWinner(
                     uint                // node index
                 );
 
-// 2013.6.21
-// CZT: to keep uf_persistWinCounts_detailed;
-void NormalizeBeliefGetWinner_c1(
-                    Node *,             // pointer to list of nodes
-                    uint                // node index
-                );
-
 void CalcCentroidMovement(
-                    Node *,             // pointer to list of nodes
-                    uint *,             // pointer to current class label
-                    uint                // node index
-                );
-
-// 2013.4.12
-// CZT:
-void CalcCentroidMovement_c1(
                     Node *,             // pointer to list of nodes
                     uint *,             // pointer to current class label
                     uint                // node index

@@ -9,6 +9,7 @@ import os, errno
 import pydestin as pd
 import cv2.cv as cv
 import shutil
+import czt_mod as czm
 
 def train():
     for i in range(train_frames):
@@ -122,7 +123,7 @@ dn.setCentImgWeightExponent(4)
 ims = pd.ImageSouceImpl() 
 
 letters = "+LO"
-img_path = "/home/ted/Pictures/treeminingletters/"
+img_path = czm.homeFld + "/Pictures/treeminingletters/"
 for l in letters:    
     ims.addImage("%s%s.png" % (img_path, l))
     

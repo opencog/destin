@@ -13,6 +13,11 @@ cl = pd.czt_lib()
 cl2 = pd.czt_lib2()
 
 #############################################################################
+"""
+Save the current user's home folder.
+"""
+homeFld = os.getenv("HOME")
+
 '''
 Display centroids images!
 '''
@@ -39,12 +44,9 @@ def load_ims_fld(ims, fld):
 Used to init DeSTIN, but compatible by setting 'extRatio'!
 '''
 def init_destin(siw=pd.W512, nLayer=8, centroids=[4,8,16,32,64,32,16,8],
-                isUniform=True, size=512*512, extRatio=1, isExtend=False):
-    if isExtend:
-        temp_network = pd.DestinNetworkAlt(pd.W512, nLayer, centroids, isUniform)
-        temp_network.reinitNetwork_c1(pd.W512, nLayer, centroids, isUniform, size, extRatio)
-    else:
-        temp_network = pd.DestinNetworkAlt(pd.W512, nLayer, centroids, isUniform)
+                isUniform=True, extRatio=1):
+    
+    temp_network = pd.DestinNetworkAlt(pd.W512, nLayer, centroids, isUniform, extRatio)
     #temp_network.setBeliefTransform(pd.DST_BT_NONE)
     return temp_network
 
@@ -71,7 +73,7 @@ def train_ims(network, ims, maxCount=16000):
             print "Iteration " + str(i)
         ims.findNextImage()
         f = ims.getGrayImageFloat()    
-        network.doDestin_c1(f)
+        network.doDestin(f)
 
 '''
 Use one folder as input, and use another folder as additional info!
@@ -86,7 +88,7 @@ def train_2flds(network, fld1, fld2, repeatCount=1600):
             print "RepeatTime: " + str(i)
         for each in os.listdir(fld1):
             f = cl.combineImgs(fld1+each, fld2+each)
-            network.doDestin_c1(f)
+            network.doDestin(f)
 
 #############################################################################
 # Testing functions:
@@ -98,13 +100,13 @@ def train_ims_randomInfo(network, ims, size, extRatio, maxCount=16000):
         f1 = ims.getGrayImageFloat()
         f2 = cl2.getFloatArr(size*extRatio)
         cl2.combineInfo_extRatio(f1, size, extRatio, f2)
-        network.doDestin_c1(f2)
+        network.doDestin(f2)
 
 def train_only(network, tempIn, maxCount=16000):
     for i in range(maxCount):
         if i % 10 == 0:
             print "Iteration " + str(i)
-        network.doDestin_c1(tempIn)
+        network.doDestin(tempIn)
 
 #############################################################################
 def drawCurve(inFile, times):
@@ -120,8 +122,9 @@ def drawCurve(inFile, times):
     for i in range(8):
         plt.figure()
         plt.plot(quality[str(i)], "r*-")
-        plt.savefig("/home/teaera/Pictures/2013.7.5_"+str(i)+".jpg")
+        plt.savefig(homeFld+"/Pictures/2013.7.5_"+str(i)+".jpg")
     plt.show()
 
-#drawCurve('/home/teaera/destin_ted_temp/Destin/1', 150)
+
+#drawCurve(homeFld + '/destin_ted_temp/Destin/1', 150)
 

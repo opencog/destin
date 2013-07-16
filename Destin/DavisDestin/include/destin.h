@@ -60,8 +60,7 @@ typedef struct Destin {
     int sizeInd;
     int * nearInd;
     //2013.7.2
-    bool isExtend;
-    int size;
+    int inputImageSize;
     int extRatio;
     // 2013.6.13, 2013.7.3
     long ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
@@ -76,24 +75,7 @@ Destin * CreateDestin(                  // create destin from a config file
                     char *              // filename
         );
 
-Destin * InitDestin(                    // initialize Destin.
-                    uint,               // input dimensionality for first layer, input must be square
-                    uint,               // number of layers
-                    uint *,             // belief dimensionality for each layer
-                    uint,               // number of classes
-                    float,              // beta coeff
-                    float,              // lambda coeff
-                    float,              // gamma coeff
-                    float *,            // temperature for each layer
-                    float,              // starv coeff
-                    uint,               // number of movements per digit presentation
-                    bool               // is uniform - if nodes in a layer share one list of centroids
-                );
-
-// 2013.4.17
-// CZT:
-// TODO: should replace the codes in 'InitDestin';
-Destin * InitDestin_c2(                    // initialize Destin.
+Destin * InitDestin(    // initialize Destin.
     uint,               // input dimensionality for first layer, input must be square
     uint,               // number of layers
     uint *,             // belief dimensionality for each layer
@@ -105,17 +87,17 @@ Destin * InitDestin_c2(                    // initialize Destin.
     float,              // starv coeff
     uint,               // number of movements per digit presentation
     bool,               // is uniform - if nodes in a layer share one list of centroids
-    bool isExtend, int size,
-    int extRatio);
+    int                 // extRatio
+);
 
 // 2013.5.31
 void addCentroid2(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
-                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int size, int extRatio,
+                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, float **sharedCen, float **starv, float **sigma, float **avgDelta,
                   uint ** winCounts, long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 // 2013.6.6
 void killCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
-                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int size, int extRatio,
+                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
                   float **avgDelta, uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 
@@ -155,14 +137,6 @@ void DestroyDestin(
                   );
 
 void FormulateBelief(                   // form belief operation.  gets the current belief from Destin
-                    Destin *,           // network to obtain belief from
-                    float *             // input
-                );
-
-// 2013.4.11
-// CZT:
-// TODO: should replace the codes in 'FormulateBelief';
-void FormulateBelief_c1(                   // form belief operation.  gets the current belief from Destin
                     Destin *,           // network to obtain belief from
                     float *             // input
                 );

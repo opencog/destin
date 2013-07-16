@@ -17,6 +17,30 @@ I want to re-do what I thought again!!!
 #include "czt_lib.h"
 
 using namespace cv;
+
+// helper function prototypes
+void testNan(float * array, int len);
+double printFPS(bool print);
+void combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut);
+void combineWithDepth_2(float * fIn, float * depth, int size, float * tempOut);
+IplImage * convert_c2(cv::Mat in);
+void convert(cv::Mat & in, float * out);
+
+// test function prototypes
+void testOrg();
+void testStep1();
+void testStep2();
+void testStep3();
+
+// main function
+int main(int argc, char ** argv){
+    // run the tests
+    testOrg();
+    //testStep1();
+    //testStep2();
+    //testStep3();
+}
+
 void testNan(float * array, int len){
     for(int i = 0 ; i < len ; i++){
         if(isnan(array[i])){
@@ -114,108 +138,104 @@ void convert(cv::Mat & in, float * out) {
     }
 }
 
-int main(int argc, char ** argv)
-{
+void testOrg(){
+    //#define TEST_ORG
+    /*****************************************************************************/
+    /*
+      2013.4.5
+      I want to test the original destin codes again and learn the CMake further!
+    */
+        VideoSource vs(true, "");
 
-//#define TEST_ORG
-/*****************************************************************************/
-/*
-  2013.4.5
-  I want to test the original destin codes again and learn the CMake further!
-*/
-#ifdef TEST_ORG
-    VideoSource vs(true, "");
+        vs.enableDisplayWindow();
 
-    vs.enableDisplayWindow();
+        SupportedImageWidths siw = W512;
 
-    SupportedImageWidths siw = W512;
+        // Left to Right is bottom layer to top
+        // CZT
+        // From whole image level to small square level
+        //
+        //uint centroid_counts[]  = {3,2,3,2,3,2,3,4};
+        uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
+        bool isUniform = true;
 
-    // Left to Right is bottom layer to top
-    // CZT
-    // From whole image level to small square level
-    //
-    //uint centroid_counts[]  = {3,2,3,2,3,2,3,4};
-    uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
-    bool isUniform = true;
+        DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
 
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
+        Transporter t;
+        vs.grab();//throw away first frame in case its garbage
+        int frameCount = 0;
 
-    Transporter t;
-    vs.grab();//throw away first frame in case its garbage
-    int frameCount = 0;
+        double totalFps = 0.0;
+        while(vs.grab()){
 
-    double totalFps = 0.0;
-    while(vs.grab()){
+            frameCount++;
 
-        frameCount++;
+            t.setSource(vs.getOutput());
+            t.transport(); //move video from host to card
+            testNan(t.getDest(), 512*512);
 
-        t.setSource(vs.getOutput());
-        t.transport(); //move video from host to card
-        testNan(t.getDest(), 512*512);
+            network->doDestin(t.getDest());
 
-        network->doDestin(t.getDest());
+            if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
+                totalFps += printFPS(false);
+                continue;
+            }
 
-        if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
-            totalFps += printFPS(false);
-            continue;
+            // Old clear screen method
+            //printf("\033[2J");
+
+            // New clear screen method (might give less flickering...?)
+            printf("\033[2J\033[1;1H");
+            printf("----------------TEST_ORG----------------\n");
+
+            printf("Frame: %i\n", frameCount);
+            totalFps += printFPS(true);
+            printf("Average FPS now: %f\n", totalFps/frameCount);
+            //int layer = 1;
+            // CZT
+            //
+            int layer = 7;
+            Node & n = *network->getNode(layer,0,0);
+            printf("Node %i,0,0 winner: %i\n",layer, n.winner);
+            printf("Node centroids: %i\n", n.nb);
+
+            printf("Node starv:");
+            printFloatArray(n.starv, n.nb);
+            printf("Starv coef: %f \n", n.starvCoeff);
+            printf("\n");
+
+            // CZT
+            //
+            //printf("layer %i node 0 centroid locations:\n", layer);
+            //network->printNodeCentroidPositions(layer, 0, 0);
+            for(int l = 0 ; l < 8 ; l++){
+                printf("belief graph layer: %i\n",l);
+                network->printBeliefGraph(l,0,0);
+            }
         }
 
-        // Old clear screen method
-        //printf("\033[2J");
+        delete network;
+}
 
-        // New clear screen method (might give less flickering...?)
-        printf("\033[2J\033[1;1H");
-        printf("----------------TEST_ORG----------------\n");
+void testStep1(){
+    /*****************************************************************************/
+    /*
+      2013.4.5
+      Step 1: I want to add the struct, but only use pixelValue and keep the original algorithm
+      running correctly;
 
-        printf("Frame: %i\n", frameCount);
-        totalFps += printFPS(true);
-        printf("Average FPS now: %f\n", totalFps/frameCount);
-        //int layer = 1;
-        // CZT
-        //
-        int layer = 7;
-        Node & n = *network->getNode(layer,0,0);
-        printf("Node %i,0,0 winner: %i\n",layer, n.winner);
-        printf("Node centroids: %i\n", n.nb);
+      2013.4.8
+      Step 2: Modify DavisDestin's CMake file;
 
-        printf("Node starv:");
-        printFloatArray(n.starv, n.nb);
-        printf("Starv coef: %f \n", n.starvCoeff);
-        printf("\n");
+      2013.4.9
+      Step 3: Change to a new method, float *;
 
-        // CZT
-        //
-        //printf("layer %i node 0 centroid locations:\n", layer);
-        //network->printNodeCentroidPositions(layer, 0, 0);
-        for(int l = 0 ; l < 8 ; l++){
-            printf("belief graph layer: %i\n",l);
-            network->printBeliefGraph(l,0,0);
-        }
-    }
+      2013.4.10
+      Step 4: 'extRatio';
 
-    delete network;
-#endif
-
-//#define TEST_STEP1
-/*****************************************************************************/
-/*
-  2013.4.5
-  Step 1: I want to add the struct, but only use pixelValue and keep the original algorithm
-  running correctly;
-
-  2013.4.8
-  Step 2: Modify DavisDestin's CMake file;
-
-  2013.4.9
-  Step 3: Change to a new method, float *;
-
-  2013.4.10
-  Step 4: 'extRatio';
-
-  2013.7.5
-  TODO: the following codes could be removed; just the tests in the beginning;
-*/
-/*#ifdef TEST_STEP1
+      2013.7.5
+      TODO: the following codes could be removed; just the tests in the beginning;
+    */
     //VideoSource vs(false, "./Various.avi");
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
@@ -234,7 +254,6 @@ int main(int argc, char ** argv)
     MALLOC(tempIn, float, inputSize); //
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
 
     Transporter t;
     vs.grab();//throw away first frame in case its garbage
@@ -254,7 +273,7 @@ int main(int argc, char ** argv)
 
         // Method2:
         combineWithDepth_1(t.getDest(), size, extRatio, tempIn);
-        network->doDestin_c1(tempIn);
+        network->doDestin(tempIn);
         //break;
 
         if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
@@ -307,7 +326,6 @@ int main(int argc, char ** argv)
     // CZT
     //
     int ni=4*4;
-    int i;
     for(i=0; i<ni; ++i)
     {
         printf("OffSet: %d\n", network->getNode(0, 0, 0)->inputOffsets[i]);
@@ -315,23 +333,24 @@ int main(int argc, char ** argv)
 
     FREE(tempIn);
     delete network;
-#endif*/
+}
 
-//#define TEST_STEP2
-/*****************************************************************************/
-/*
-  2013.4.19
-  Try to use 2 cams!!!
+void testStep2(){
+    //#define TEST_STEP2
+    /*****************************************************************************/
+    /*
+      2013.4.19
+      Try to use 2 cams!!!
 
-  2013.7.5
-  TODO: the following codes could be referred as how to use 2-webcam input;
-  could be removed sometime;
-*/
-#ifdef TEST_STEP2
+      2013.7.5
+      TODO: the following codes could be referred as how to use 2-webcam input;
+      could be removed sometime;
+    */
+
     VideoSource vs1(true, "", CV_CAP_ANY);
     VideoSource vs2(true, "", CV_CAP_ANY+1);
-    vs1.enableDisplayWindow_c1("left");
-    vs2.enableDisplayWindow_c1("right");
+    vs1.enableDisplayWindow("left");
+    vs2.enableDisplayWindow("right");
     vs1.grab();
     vs2.grab();/**/
 
@@ -353,10 +372,8 @@ int main(int argc, char ** argv)
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,3,5,3,3,2,3,3};
     bool isUniform = true;
-    int size = 512*512;
     int extRatio = 2;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-    network->reinitNetwork_c1(siw, 8, centroid_counts, isUniform, size, extRatio);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
     int frameCount = 0;
     double totalFps = 0.0;
 
@@ -390,7 +407,7 @@ int main(int argc, char ** argv)
         convert(tempMat, float_depth);
         combineWithDepth_2(float_l, float_depth, 512*512, float_combined);/**/
 
-        network->doDestin_c1(float_combined);
+        network->doDestin(float_combined);
         //network->doDestin_c1(float_l);    // extRatio should be 1 for this!
 
         if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
@@ -470,15 +487,15 @@ int main(int argc, char ** argv)
     FREE(float_depth);
     FREE(float_combined);
     delete network;
-#endif
+}
 
-//#define TEST_STEP3
-/*****************************************************************************/
-/*
-  2013.7.5
-  CZT: to process BGR, 1-webcam video input;
-*/
-#ifdef TEST_STEP3
+void testStep3(){
+    //#define TEST_STEP3
+    /*****************************************************************************/
+    /*
+      2013.7.5
+      CZT: to process BGR, 1-webcam video input;
+    */
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
     vs.turnOnColor();
@@ -487,12 +504,11 @@ int main(int argc, char ** argv)
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
     bool isUniform = true;
-    bool isExtend = true;
     int nLayers = 8;
     int size = 512*512;
     int extRatio = 3;
 
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayers, centroid_counts, isUniform, isExtend, size, extRatio);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayers, centroid_counts, isUniform, extRatio);
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);
 
@@ -536,7 +552,5 @@ int main(int argc, char ** argv)
     }
     delete network;
     FREE(tempIn);
-#endif
-
-	return 0;
 }
+

@@ -28,6 +28,20 @@
   free($1);
 }
 
+// This bit fixes the problem when python list is used as an argument in a function that is overloaded. 
+// This lets us be able to have optional parameters in our DestinNetworkAlt constructor and still allow use to 
+// use a python list to define the centroids.
+// See http://www.swig.org/Doc2.0/SWIGDocumentation.html#Typemaps_overloading for more info.
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INT32_ARRAY) unsigned int[] {
+  int res = PyList_Check($input);
+  $1 = res;
+}
+
+%typemap(typecheck, precedence=SWIG_TYPECHECK_DOUBLE_ARRAY) float [] {
+  int res = PyList_Check($input);
+  $1 = res;
+}
+
 // let the user use python list for float [] arguments
 %typemap(in)  float [] {
   // Check if is a list 
@@ -56,4 +70,5 @@
 %typemap(freearg) float [] {
   free($1);
 }
+
 

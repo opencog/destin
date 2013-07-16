@@ -8,6 +8,7 @@ Created on Sat May 18 20:46:36 2013
 import pydestin as pd
 import cv2.cv
 import time
+import czt_mod as czm
 
 layers_to_enum = {
         1: pd.W4,
@@ -33,7 +34,6 @@ Array element value of 1 means the layer is training.
 layerMask = None
 
 """ after a frame is shown this is called """
-
 def the_callback():
     network.printBeliefGraph(top_layer, 0, 0)
 
@@ -43,7 +43,7 @@ def top_node():
     return network.getNode(top_layer, 0, 0)
     
 def init(centroids=[2,4,16,32,64,32,16,8], 
-         video_file="/home/ted/Dropbox/destin/moving_square.mov", 
+         video_file=czm.homeFld + "/Dropbox/destin/moving_square.mov", 
          temperature=2.0,
          learn_rate=0.1):
     global network, layers, video_source, layerMask, top_layer

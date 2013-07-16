@@ -8,7 +8,7 @@
 
 #SET(CMAKE_BUILD_TYPE debug)
 
-#FIND_PACKAGE(OpenCV REQUIRED)
+FIND_PACKAGE(OpenCV REQUIRED)
 
 ADD_LIBRARY( stereovision SHARED 
     include/stereovision.h
@@ -17,9 +17,10 @@ ADD_LIBRARY( stereovision SHARED
     src/stereocamera.cpp
 )
 
-SET(testlibs ${OpenCV_LIBS} common destinalt avutil stereovision)
-    
+TARGET_LINK_LIBRARIES(stereovision ${OpenCV_LIBS})
 
+SET(testlibs common destinalt avutil stereovision)
+    
 INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include)
 
 ADD_EXECUTABLE(test1 src/test1.cpp )
