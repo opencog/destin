@@ -124,12 +124,6 @@ public:
     float getSep(int layer);
     float getVar(int layer);
     float getQuality(int layer);
-    // 2013.6.14
-    /*double * getVariance(int layer);
-    double * getWeight(int layer);
-    double getIntra(int layer);
-    double getInter(int layer);
-    double getValidity(int layer);*/
 
     void isTraining(bool isTraining);
 

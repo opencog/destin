@@ -1,8 +1,3 @@
-/*
-2013.4.5 VERSION
-
-I want to re-do what I thought again!!!
-*/
 #include "stdio.h"
 #include "VideoSource.h"
 #include "DestinNetworkAlt.h"
@@ -13,41 +8,39 @@ I want to re-do what I thought again!!!
 //
 #include "stereovision.h"
 #include "stereocamera.h"
-#include "czt_lib2.h"
+//
+#include "ImageSourceImpl.h"
 #include "czt_lib.h"
+#include "czt_lib2.h"
 
 using namespace cv;
 
-// helper function prototypes
-void testNan(float * array, int len);
+// Helper function prototypes
 double printFPS(bool print);
 void combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut);
 void combineWithDepth_2(float * fIn, float * depth, int size, float * tempOut);
 IplImage * convert_c2(cv::Mat in);
 void convert(cv::Mat & in, float * out);
 
-// test function prototypes
+// Prototypes of testing functions
 void testOrg();
-void testStep1();
 void testStep2();
 void testStep3();
+void test_CL2();
+void test_CL_and_CL2();
+void test_update();
+void test_RandomInput();
 
 // main function
 int main(int argc, char ** argv){
-    // run the tests
-    testOrg();
-    //testStep1();
+    // Run the tests
+    //testOrg();
     //testStep2();
     //testStep3();
-}
-
-void testNan(float * array, int len){
-    for(int i = 0 ; i < len ; i++){
-        if(isnan(array[i])){
-            printf("input had nan\n");
-            exit(1);
-        }
-    }
+    //test_CL2();
+    //test_CL_and_CL2();
+    //test_update();
+    test_RandomInput();
 }
 
 /** meaures time between calls and prints the fps.
@@ -76,9 +69,6 @@ double printFPS(bool print){
     return out;
 }
 
-/*
-  2013.4.9
-*/
 void combineWithDepth_1(float * fIn, int size, int extRatio, float * tempOut)
 {
     int i,j;
@@ -139,159 +129,44 @@ void convert(cv::Mat & in, float * out) {
 }
 
 void testOrg(){
-    //#define TEST_ORG
-    /*****************************************************************************/
-    /*
-      2013.4.5
-      I want to test the original destin codes again and learn the CMake further!
-    */
-        VideoSource vs(true, "");
+    // 2013.4.5
+    // I want to test the original destin codes again and learn the CMake further!
 
-        vs.enableDisplayWindow();
-
-        SupportedImageWidths siw = W512;
-
-        // Left to Right is bottom layer to top
-        // CZT
-        // From whole image level to small square level
-        //
-        //uint centroid_counts[]  = {3,2,3,2,3,2,3,4};
-        uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
-        bool isUniform = true;
-
-        DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
-
-        Transporter t;
-        vs.grab();//throw away first frame in case its garbage
-        int frameCount = 0;
-
-        double totalFps = 0.0;
-        while(vs.grab()){
-
-            frameCount++;
-
-            t.setSource(vs.getOutput());
-            t.transport(); //move video from host to card
-            testNan(t.getDest(), 512*512);
-
-            network->doDestin(t.getDest());
-
-            if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
-                totalFps += printFPS(false);
-                continue;
-            }
-
-            // Old clear screen method
-            //printf("\033[2J");
-
-            // New clear screen method (might give less flickering...?)
-            printf("\033[2J\033[1;1H");
-            printf("----------------TEST_ORG----------------\n");
-
-            printf("Frame: %i\n", frameCount);
-            totalFps += printFPS(true);
-            printf("Average FPS now: %f\n", totalFps/frameCount);
-            //int layer = 1;
-            // CZT
-            //
-            int layer = 7;
-            Node & n = *network->getNode(layer,0,0);
-            printf("Node %i,0,0 winner: %i\n",layer, n.winner);
-            printf("Node centroids: %i\n", n.nb);
-
-            printf("Node starv:");
-            printFloatArray(n.starv, n.nb);
-            printf("Starv coef: %f \n", n.starvCoeff);
-            printf("\n");
-
-            // CZT
-            //
-            //printf("layer %i node 0 centroid locations:\n", layer);
-            //network->printNodeCentroidPositions(layer, 0, 0);
-            for(int l = 0 ; l < 8 ; l++){
-                printf("belief graph layer: %i\n",l);
-                network->printBeliefGraph(l,0,0);
-            }
-        }
-
-        delete network;
-}
-
-void testStep1(){
-    /*****************************************************************************/
-    /*
-      2013.4.5
-      Step 1: I want to add the struct, but only use pixelValue and keep the original algorithm
-      running correctly;
-
-      2013.4.8
-      Step 2: Modify DavisDestin's CMake file;
-
-      2013.4.9
-      Step 3: Change to a new method, float *;
-
-      2013.4.10
-      Step 4: 'extRatio';
-
-      2013.7.5
-      TODO: the following codes could be removed; just the tests in the beginning;
-    */
-    //VideoSource vs(false, "./Various.avi");
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
+
     SupportedImageWidths siw = W512;
-    uint centroid_counts[]  = {4,3,5,3,3,2,3,3};
+    // Bottom to Top
+    //uint centroid_counts[]  = {3,2,3,2,3,2,3,4};
+    uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
     bool isUniform = true;
-
-    // 2013.4.10
-    // CZT
-    //
-    int size = 512*512;
-    int extRatio = 3; // Use this parameter to control the size!!!
-
-    int inputSize = size*extRatio;
-    float * tempIn;
-    MALLOC(tempIn, float, inputSize); //
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
 
     Transporter t;
     vs.grab();//throw away first frame in case its garbage
     int frameCount = 0;
-
     double totalFps = 0.0;
     while(vs.grab()){
         frameCount++;
 
         t.setSource(vs.getOutput());
         t.transport(); //move video from host to card
-        testNan(t.getDest(), 512*512);
 
-        // CZT
-        //
-        //network->doDestin(t.getDest());
-
-        // Method2:
-        combineWithDepth_1(t.getDest(), size, extRatio, tempIn);
-        network->doDestin(tempIn);
-        //break;
+        network->doDestin(t.getDest());
 
         if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
             totalFps += printFPS(false);
             continue;
         }
 
-        // Clean screencvRemap
         printf("\033[2J\033[1;1H");
-        printf("----------------TEST_STEP1----------------\n");
+        printf("----------------TEST_ORG----------------\n");
 
         printf("Frame: %i\n", frameCount);
         totalFps += printFPS(true);
-        printf("Average FPS now: %f\n", totalFps/(frameCount-1));
-        // CZT
-        //
-        //int layer = 1;
-        //int layer = 0;
+        printf("Average FPS now: %f\n", totalFps/frameCount);
+
         int layer = 7;
         Node & n = *network->getNode(layer,0,0);
         printf("Node %i,0,0 winner: %i\n",layer, n.winner);
@@ -302,8 +177,7 @@ void testStep1(){
         printf("Starv coef: %f \n", n.starvCoeff);
         printf("\n");
 
-        // CZT
-        //
+
         //printf("layer %i node 0 centroid locations:\n", layer);
         //network->printNodeCentroidPositions(layer, 0, 0);
         for(int l = 0 ; l < 8 ; l++){
@@ -311,41 +185,13 @@ void testStep1(){
             network->printBeliefGraph(l,0,0);
         }
     }
-
-    // 2013.4.9
-    // CZT
-    // I want to see the detailed struct for Destin and Node.
-    //
-    int i;
-    for(i=0; i<8; ++i)
-    {
-        printf("Layer %d has %d nodes!\n", i, network->getNetwork()->layerSize[i]);
-    }
-
-    // 2013.4.10
-    // CZT
-    //
-    int ni=4*4;
-    for(i=0; i<ni; ++i)
-    {
-        printf("OffSet: %d\n", network->getNode(0, 0, 0)->inputOffsets[i]);
-    }
-
-    FREE(tempIn);
     delete network;
 }
 
 void testStep2(){
-    //#define TEST_STEP2
-    /*****************************************************************************/
-    /*
-      2013.4.19
-      Try to use 2 cams!!!
-
-      2013.7.5
-      TODO: the following codes could be referred as how to use 2-webcam input;
-      could be removed sometime;
-    */
+    // 2013.7.5
+    // TODO: the following codes could be referred as how to use 2-webcam input;
+    // could be removed sometime;
 
     VideoSource vs1(true, "", CV_CAP_ANY);
     VideoSource vs2(true, "", CV_CAP_ANY+1);
@@ -490,12 +336,9 @@ void testStep2(){
 }
 
 void testStep3(){
-    //#define TEST_STEP3
-    /*****************************************************************************/
-    /*
-      2013.7.5
-      CZT: to process BGR, 1-webcam video input;
-    */
+    // 2013.7.5
+    // CZT: to process BGR, 1-webcam video input;
+
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
     vs.turnOnColor();
@@ -554,3 +397,642 @@ void testStep3(){
     FREE(tempIn);
 }
 
+void test_CL2()
+{
+    // Add Random depth information
+    // Test czt_lib2 (which is my own library of functions!)
+
+    czt_lib2 * cl2 = new czt_lib2();
+    ImageSouceImpl isi;
+    isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
+
+    SupportedImageWidths siw = W512;
+    uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
+    bool isUniform = true;
+    int size = 512*512;
+    int extRatio = 2;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
+
+    int inputSize = size*extRatio;
+    float * tempIn;
+    MALLOC(tempIn, float, inputSize);
+
+    int frameCount = 1;
+    int maxCount = 3000;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+        }
+
+        isi.findNextImage();
+        cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
+        //network->doDestin(isi.getGrayImageFloat());
+        network->doDestin(tempIn);
+    }
+
+    network->displayLayerCentroidImages(7, 1000);
+    cv::waitKey(10000);
+    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.7.3_A_level7.jpg");
+    network->saveLayerCentroidImages(6, "/home/teaera/Pictures/2013.7.3_A_level6.jpg");
+    network->saveLayerCentroidImages(5, "/home/teaera/Pictures/2013.7.3_A_level5.jpg");
+    network->saveLayerCentroidImages(4, "/home/teaera/Pictures/2013.7.3_A_level4.jpg");
+    network->saveLayerCentroidImages(3, "/home/teaera/Pictures/2013.7.3_A_level3.jpg");
+    network->saveLayerCentroidImages(2, "/home/teaera/Pictures/2013.7.3_A_level2.jpg");
+    network->saveLayerCentroidImages(1, "/home/teaera/Pictures/2013.7.3_A_level1.jpg");
+    network->saveLayerCentroidImages(0, "/home/teaera/Pictures/2013.7.3_A_level0.jpg");
+
+    delete network;
+}
+
+void test_CL_and_CL2()
+{
+    // This is to test the combined information and show the centroids for combined
+    // information!
+
+    czt_lib2 * cl2 = new czt_lib2();
+    czt_lib * cl = new czt_lib();
+
+    SupportedImageWidths siw = W512;
+    uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
+    bool isUniform = true;
+    int size = 512*512;
+    int extRatio = 2;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
+
+    int inputSize = size*extRatio;
+    float * tempIn1, * tempIn2, * tempIn;
+    MALLOC(tempIn1, float, size);
+    MALLOC(tempIn2, float, size);
+    MALLOC(tempIn, float, inputSize);
+    cl->isNeedResize("/home/teaera/Work/RECORD/2013.5.8/pro_3/1.jpg");
+    tempIn1 = cl->get_float512();
+    cl->isNeedResize("/home/teaera/Work/RECORD/2013.5.8/pro_add_3/1.jpg");
+    tempIn2 = cl->get_float512();
+    cl2->combineInfo_depth(tempIn1, tempIn2, size, tempIn);
+
+    int frameCount = 1;
+    int maxCount = 3000;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+        }
+
+        network->doDestin(tempIn);
+    }
+
+    network->displayLayerCentroidImages(7, 1000);
+    cv::waitKey(10000);
+    network->saveLayerCentroidImages(7, "/home/teaera/Pictures/2013.5.13_level7.jpg");
+    network->saveLayerCentroidImages(6, "/home/teaera/Pictures/2013.5.13_level6.jpg");
+    network->saveLayerCentroidImages(5, "/home/teaera/Pictures/2013.5.13_level5.jpg");
+    network->saveLayerCentroidImages(4, "/home/teaera/Pictures/2013.5.13_level4.jpg");
+    network->saveLayerCentroidImages(3, "/home/teaera/Pictures/2013.5.13_level3.jpg");
+    network->saveLayerCentroidImages(2, "/home/teaera/Pictures/2013.5.13_level2.jpg");
+    network->saveLayerCentroidImages(1, "/home/teaera/Pictures/2013.5.13_level1.jpg");
+    network->saveLayerCentroidImages(0, "/home/teaera/Pictures/2013.5.13_level0.jpg");
+
+    delete network;
+}
+
+void test_update()
+{
+//#define TEST_ADD
+#define RUN_BEFORE
+#define RUN_NOW
+#define SHOW_BEFORE
+#define SHOW_NOW
+//#define TEST_nb
+//#define TEST_uf_persistWinCounts
+//#define TEST_uf_persistWinCounts_detailed
+//#define TEST_uf_avgDelta //uf_sigma
+//#define TEST_mu
+//#define TEST_observation
+//#define TEST_beliefMal
+
+    ImageSouceImpl isi;
+    //isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
+    isi.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg");
+    czt_lib2 * cl2 = new czt_lib2();
+    // currLayer: the layer, in which you want to add centroids or kill centroids;
+    // tempLayer: for backup;
+    uint tempLayer;
+    uint currLayer = 0;
+    uint kill_ind = 0;
+#define TEST_layer0
+#define TEST_layer7
+
+    SupportedImageWidths siw = W512;
+    //uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
+    uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
+                                                     // HumanFace_1500_case1
+    //uint centroid_counts[]  = {8,16,16,32,32,16,8,4}; // HumanFace_1500_case2
+    //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
+    //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
+    bool isUniform = true;
+    int size = 512*512;
+    int extRatio = 2;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
+
+    float * tempIn;
+    MALLOC(tempIn, float, size*extRatio);
+    int frameCount;
+    int maxCount = 1500;
+
+#ifdef RUN_BEFORE
+    frameCount = 1;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+        }
+
+        isi.findNextImage();
+        /*cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
+        network->doDestin(tempIn);*/
+        network->doDestin(isi.getGrayImageFloat());
+    }
+#endif // RUN_BEFORE
+
+#ifdef SHOW_BEFORE
+    tempLayer = 7;
+    //tempLayer = currLayer;
+    network->displayLayerCentroidImages(tempLayer, 1000);
+    cv::waitKey(3000);
+    network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_before.jpg");
+#endif // SHOW_BEFORE
+
+    Destin * d = network->getNetwork();
+    Node * node1 = network->getNode(currLayer, 0, 0);
+#ifndef TEST_layer0
+    Node * node2 = network->getNode(currLayer-1, 0, 0);
+#endif
+#ifndef TEST_layer7
+    Node * node3 = network->getNode(currLayer+1, 0, 0);
+#endif
+    int i, l, j;
+
+#ifdef TEST_nb
+    printf("------------TEST_nb\n");
+    for(i=0; i<d->nLayers; ++i)
+    {
+        Node * tempNode = network->getNode(i, 0, 0);
+        printf("Layer %d\n", i);
+        printf("%d  %d  %d  %d  %d\n", d->nb[i], tempNode->ni, tempNode->nb, tempNode->np, tempNode->ns);
+        printf("------\n");
+    }
+    printf("\n");
+#endif // TEST_nb
+
+#ifdef TEST_uf_persistWinCounts
+    printf("------------TEST_uf_persistWinCounts\n");
+    for(l=0; l<d->nLayers; ++l)
+    {
+        printf("Layer %d\n", l);
+        for(i=0; i<d->nb[l]; ++i)
+        {
+            printf("%ld  ", d->uf_persistWinCounts[l][i]);
+            // uf_persistWinCounts, long;
+            // uf_starv, float;
+            // uf_winCounts, uint;
+        }
+        printf("\n------\n");
+    }
+    printf("\n");
+#endif // TEST_uf_persistWinCounts
+
+#ifdef TEST_uf_persistWinCounts_detailed
+    printf("------------TEST_uf_persistWinCounts_detailed\n");
+    for(l=0; l<d->nLayers; ++l)
+    {
+        printf("Layer %d\n", l);
+        for(i=0; i<d->nb[l]; ++i)
+        {
+            printf("%ld  ", d->uf_persistWinCounts_detailed[l][i]);
+        }
+        printf("\n------\n");
+    }
+    printf("\n");
+#endif // TEST_uf_persistWinCounts_detailed
+
+#ifdef TEST_uf_avgDelta
+    printf("------------TEST_uf_avgDelt\n");
+    for(l=0; l<d->nLayers; ++l)
+    {
+        printf("Layer %d\n", l);
+        for(i=0; i<d->nb[l]; ++i)
+        {
+            for(j=0; j<network->getNode(l,0,0)->ns; ++j)
+            {
+                //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
+                //printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
+                printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
+            }
+            printf("\n");
+        }
+        printf("------\n");
+    }
+    printf("\n");
+#endif // TEST_uf_avgDelta
+
+#ifdef TEST_mu
+    printf("------------TEST_mu\n");
+    printf("------Node: %d,0,0\n", currLayer);
+    for(i=0; i<node1->nb; ++i)
+    {
+        for(j=0; j<node1->ns; ++j)
+        {
+            printf("%f  ", node1->mu[i*node1->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#ifndef TEST_layer0
+    printf("------Node: %d,0,0\n", currLayer-1);
+    for(i=0; i<node2->nb; ++i)
+    {
+        for(j=0; j<node2->ns; ++j)
+        {
+            printf("%f  ", node2->mu[i*node2->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+#ifndef TEST_layer7
+    printf("------Node: %d,0,0\n", currLayer+1);
+    for(i=0; i<node3->nb; ++i)
+    {
+        for(j=0; j<node3->ns; ++j)
+        {
+            printf("%f  ", node3->mu[i*node3->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+    printf("\n");
+#endif // TEST_mu
+
+#ifdef TEST_observation
+    printf("------------TEST_observation\n");
+    printf("------Node: %d,0,0\n", currLayer);
+    for(i=0; i<node1->nb; ++i)
+    {
+        for(j=0; j<node1->ns; ++j)
+        {
+            printf("%f  ", node1->observation[i*node1->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#ifndef TEST_layer0
+    printf("------Node: %d,0,0\n", currLayer-1);
+    for(i=0; i<node2->nb; ++i)
+    {
+        for(j=0; j<node2->ns; ++j)
+        {
+            printf("%f  ", node2->observation[i*node2->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+#ifndef TEST_layer7
+    printf("------Node: %d,0,0\n", currLayer+1);
+    for(i=0; i<node3->nb; ++i)
+    {
+        for(j=0; j<node3->ns; ++j)
+        {
+            printf("%f  ", node3->observation[i*node3->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+    printf("\n");
+#endif // TEST_observation
+
+#ifdef TEST_beliefMal
+    printf("------------TEST_beliefMal\n");
+    printf("------Node: %d,0,0\n", currLayer);
+    for(i=0; i<node1->nb; ++i)
+    {
+        printf("%f  ", node1->beliefMal[i]);
+        // node1->beliefMal
+        // node1->beliefEuc
+    }
+    printf("\n");
+#ifndef TEST_layer0
+    printf("------Node: %d,0,0\n", currLayer-1);
+    for(i=0; i<node2->nb; ++i)
+    {
+        printf("%f  ", node2->beliefMal[i]);
+        // node1->beliefMal
+        // node1->beliefEuc
+    }
+    printf("\n");
+#endif
+#ifndef TEST_layer7
+    printf("------Node: %d,0,0\n", currLayer+1);
+
+    delete network;
+    for(i=0; i<node3->nb; ++i)
+    {
+        printf("%f  ", node3->beliefMal[i]);
+        // node1->beliefMal
+        // node1->beliefEuc
+    }
+    printf("\n");
+#endif
+    printf("\n");
+#endif // TEST_beliefMal
+
+//---------------------------------------------------------------------------//
+    printf("--------------------------------------------------------------\n\n");
+//---------------------------------------------------------------------------//
+
+#ifdef TEST_ADD
+    // Add
+    /*centroid_counts[currLayer]++;
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);
+    centroid_counts[currLayer]++;
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);
+    centroid_counts[currLayer]++;
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);*/
+
+    // Kill
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);/**/
+
+#ifdef RUN_NOW
+    frameCount = 1;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+        }
+
+        isi.findNextImage();
+        cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
+        network->doDestin(tempIn);
+        //network->doDestin(isi.getGrayImageFloat());
+    }
+#endif // RUN_NOW
+
+#ifdef SHOW_NOW
+    tempLayer = 7;
+    //tempLayer = currLayer;
+    network->displayLayerCentroidImages(tempLayer, 1000);
+    cv::waitKey(3000);
+    network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_now.jpg");
+#endif // SHOW_NOW
+
+    // I don't why I shoud 'reload' these nodes again?
+    // Otherwise, the display of node->mu will have some problems?
+    // Maybe my fault somewhere?
+    //
+    node1 = network->getNode(currLayer, 0, 0);
+#ifndef TEST_layer0
+    node2 = network->getNode(currLayer-1, 0, 0);
+#endif
+#ifndef TEST_layer7
+    node3 = network->getNode(currLayer+1, 0, 0);
+#endif
+
+#ifdef TEST_nb
+    printf("------TEST_nb\n");
+    for(i=0; i<d->nLayers; ++i)
+    {
+        Node * tempNode = network->getNode(i, 0, 0);
+        printf("Layer %d\n", i);
+        printf("%d  %d  %d  %d  %d\n", d->nb[i], tempNode->ni, tempNode->nb, tempNode->np, tempNode->ns);
+        printf("------\n");
+    }
+    printf("\n");
+#endif // TEST_nb
+
+#ifdef TEST_uf_persistWinCounts
+    printf("------TEST_uf_persistWinCounts\n");
+    for(l=0; l<d->nLayers; ++l)
+    {
+        printf("Layer %d\n", l);
+        for(i=0; i<d->nb[l]; ++i)
+        {
+            printf("%ld  ", d->uf_persistWinCounts[l][i]);
+            // uf_persistWinCounts, long;
+            // uf_starv, float;
+            // uf_winCounts, uint;
+        }
+        printf("\n------\n");
+    }
+    printf("\n");
+#endif // TEST_uf_persistWinCounts
+
+#ifdef TEST_uf_persistWinCounts_detailed
+    printf("------------TEST_uf_persistWinCounts_detailed\n");
+    for(l=0; l<d->nLayers; ++l)
+    {
+        printf("Layer %d\n", l);
+        for(i=0; i<d->nb[l]; ++i)
+        {
+            printf("%ld  ", d->uf_persistWinCounts_detailed[l][i]);
+        }
+        printf("\n------\n");
+    }
+    printf("\n");
+#endif // TEST_uf_persistWinCounts_detailed
+
+#ifdef TEST_uf_avgDelta
+    printf("------------TEST_uf_avgDelt\n");
+    for(l=0; l<d->nLayers; ++l)
+    {
+        printf("Layer %d\n", l);
+        for(i=0; i<d->nb[l]; ++i)
+        {
+            for(j=0; j<network->getNode(l,0,0)->ns; ++j)
+            {
+                //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
+                printf("%e  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
+            }
+            printf("\n");
+        }
+        printf("------\n");
+    }
+    printf("\n");
+#endif // TEST_uf_avgDelta
+
+#ifdef TEST_mu
+    printf("------------TEST_mu\n");
+    printf("------Node: %d,0,0\n", currLayer);
+    for(i=0; i<node1->nb; ++i)
+    {
+        for(j=0; j<node1->ns; ++j)
+        {
+            printf("%f  ", node1->mu[i*node1->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#ifndef TEST_layer0
+    printf("------Node: %d,0,0\n", currLayer-1);
+    for(i=0; i<node2->nb; ++i)
+    {
+        for(j=0; j<node2->ns; ++j)
+        {
+            printf("%f  ", node2->mu[i*node2->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+#ifndef TEST_layer7
+    printf("------Node: %d,0,0\n", currLayer+1);
+    for(i=0; i<node3->nb; ++i)
+    {
+        for(j=0; j<node3->ns; ++j)
+        {
+            printf("%f  ", node3->mu[i*node3->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+    printf("\n");
+#endif // TEST_mu
+
+#ifdef TEST_observation
+    printf("------------TEST_observation\n");
+    printf("------Node: %d,0,0\n", currLayer);
+    for(i=0; i<node1->nb; ++i)
+    {
+        for(j=0; j<node1->ns; ++j)
+        {
+            printf("%f  ", node1->observation[i*node1->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#ifndef TEST_layer0
+    printf("------Node: %d,0,0\n", currLayer-1);
+    for(i=0; i<node2->nb; ++i)
+    {
+        for(j=0; j<node2->ns; ++j)
+        {
+            printf("%f  ", node2->observation[i*node2->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+#ifndef TEST_layer7
+    printf("------Node: %d,0,0\n", currLayer+1);
+    for(i=0; i<node3->nb; ++i)
+    {
+        for(j=0; j<node3->ns; ++j)
+        {
+            printf("%f  ", node3->observation[i*node3->ns+j]);
+        }
+        printf("\n---\n");
+    }
+#endif
+    printf("\n");
+#endif // TEST_observation
+
+#ifdef TEST_beliefMal
+    printf("------------TEST_beliefMal\n");
+    printf("------Node: %d,0,0\n", currLayer);
+    for(i=0; i<node1->nb; ++i)
+    {
+        printf("%f  ", node1->beliefMal[i]);
+        // node1->beliefMal
+        // node1->beliefEuc
+    }
+    printf("\n");
+#ifndef TEST_layer036392cc2f513670c3f9e28804199602fd8666218
+    printf("------Node: %d,0,0\n", currLayer-1);
+    for(i=0; i<node2->nb; ++i)
+    {
+        printf("%f  ", node2->beliefMal[i]);
+        // node1->beliefMal
+        // node1->beliefEuc
+    }
+    printf("\n");
+#endif
+#ifndef TEST_layer7
+    printf("------Node: %d,0,0\n", currLayer+1);
+    for(i=0; i<node3->nb; ++i)
+    {
+        printf("%f  ", node3->beliefMal[i]);
+        // node1->beliefMal
+        // node1->beliefEuc
+    }
+    printf("\n");
+#endif
+    printf("\n");
+#endif // TEST_beliefMal
+
+#endif // TEST_add
+
+    delete network;
+}
+
+void test_RandomInput()
+{
+    SupportedImageWidths siw = W512;
+    uint nLayer = 8;
+    uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
+    bool isUniform = true;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
+
+    int size = 512*512;
+    czt_lib2 * cl2 = new czt_lib2();
+    float * inArr = cl2->floatArrCreate(size);
+    cl2->floatArrRandomize(inArr, size);
+    cv::Mat inMat(512, 512, CV_8UC1);
+    cl2->convert(inMat, inArr);
+    cv::namedWindow("Test");
+    cv::imshow("Test", inMat);
+    cv::waitKey(5);
+
+    uint frameCount = 1;
+    uint maxCount = 1500;
+    double totalFps = 0.0;
+    while(frameCount <= maxCount || true){
+        frameCount++;
+
+        network->doDestin(inArr);
+        cl2->floatArrRandomize(inArr, size);
+        cl2->convert(inMat, inArr);
+        cv::imshow("Test", inMat);
+        cv::waitKey(5);
+
+        if(frameCount % 2 != 0 ){ //only print every 2rd so display is not so jumpy
+            totalFps += printFPS(false);
+            continue;
+        }
+
+        printf("\033[2J\033[1;1H");
+        printf("Frame: %i\n", frameCount);
+        totalFps += printFPS(true);
+        printf("Average FPS now: %f\n", totalFps/frameCount);
+
+        int layer = 7;
+        Node & n = *network->getNode(layer,0,0);
+        printf("Node %i,0,0 winner: %i\n",layer, n.winner);
+        printf("Node centroids: %i\n", n.nb);
+
+        printf("Node starv:");
+        printFloatArray(n.starv, n.nb);
+        printf("Starv coef: %f \n", n.starvCoeff);
+        printf("\n");
+
+        //printf("layer %i node 0 centroid locations:\n", layer);
+        //network->printNodeCentroidPositions(layer, 0, 0);
+        for(int l = 0 ; l < 8 ; l++){
+            printf("belief graph layer: %i\n",l);
+            network->printBeliefGraph(l,0,0);
+        }
+    }
+
+    free(inArr);
+    delete network;
+}

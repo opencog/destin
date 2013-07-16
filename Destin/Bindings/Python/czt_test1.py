@@ -256,6 +256,7 @@ while(vs1.grab()):
 #############################################################################
 # 2013.7.5, 2013.7.8
 # After I merged the changes in DeSTIN, the mod should be changed;
+'''
 nLayer = 8
 #centroids = [4,8,16,32,32,16,8,4]
 #centroids = [8,16,32,64,64,32,12,4]
@@ -312,7 +313,43 @@ for i in range(nLayer):
     plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
     plt.savefig(cm.homeFld + "/Pictures/2013.7.9_"+str(i)+".jpg")
 plt.show()
-
+'''
 
 #############################################################################
-# TEST_one_imaeg for the following 20 images
+# 2013.7.16
+centroids = [4,4,4,4,4,4,4,4]
+nLayer = 8
+dn = cm.init_destin(centroids=centroids)
+
+size = 512*512
+cl2 = pd.czt_lib2()
+faTemp = cl2.floatArrCreate(size)
+cl2.floatArrRandomize(faTemp, size)
+
+sepDict = {}
+varDict = {}
+quaDict = {}
+for i in range(nLayer):
+    sepDict[str(i)] = []
+    varDict[str(i)] = []
+    quaDict[str(i)] = []
+    
+maxCount = 1500
+for i in range(1, maxCount+1):
+    if i % 10 == 0:
+        print "Iteration " + str(i)
+        for i in range(nLayer):
+            sep = dn.getSep(i)
+            var = dn.getVar(i)
+            qua = dn.getQuality(i)
+            sepDict[str(i)].append(sep)
+            varDict[str(i)].append(var)
+            quaDict[str(i)].append(qua)
+    dn.doDestin(faTemp)
+
+
+for i in range(nLayer):
+    plt.figure()
+    plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
+    plt.savefig(cm.homeFld + "/Pictures/2013.7.16_"+str(i)+".jpg")
+plt.show()

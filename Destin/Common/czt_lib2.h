@@ -6,13 +6,6 @@ using namespace std;
 class czt_lib2
 {
 public:
-    float * createFloatArr(int size)
-    {
-        float * outFloatArr;
-        //MALLOC(outFloatArr, float, size);
-        outFloatArr = (float *)malloc(size * sizeof(float));
-        return outFloatArr;
-    }
 
     void free_f1dim(float * input)
     {
@@ -84,15 +77,6 @@ public:
         tempOut = (float *)_tempMat1.data;
     }
 
-    //*************************************************************************
-    // 2013.5.27
-    // template demo
-    template <class T>
-    T getMax(T a, T b)
-    {
-        return a>b?a:b;
-    }
-
     // 2013.6.25
     void combineBGR(float * b, float * g, float * r, int size, float * out)
     {
@@ -104,4 +88,44 @@ public:
             out[size+size+i] = r[i];
         }
     }
+
+    //*************************************************************************
+    void convert(cv::Mat & in, float * out) {
+        if(in.channels()!=1){
+            throw runtime_error("Excepted a grayscale image with one channel.");
+        }
+        if(in.depth()!=CV_8U){
+            throw runtime_error("Expected image to have bit depth of 8bits unsigned integers ( CV_8U )");
+        }
+        cv::Point p(0, 0);
+        int i = 0 ;
+        for (p.y = 0; p.y < in.rows; p.y++) {
+            for (p.x = 0; p.x < in.cols; p.x++) {
+                //i = frame.at<uchar>(p);
+                //use something like frame.at<Vec3b>(p)[channel] in case of trying to support color images.
+                //There would be 3 channels for a color image (one for each of r, g, b)
+
+                //out[i] = (float)in.at<uchar>(p) / 255.0f;
+                in.at<float>(p) = (float)(out[i]*255.0f);
+                i++;
+            }
+        }
+    }
+
+    float * floatArrCreate(int size)
+    {
+        float * outFloatArr;
+        outFloatArr = (float *)malloc(size * sizeof(float));
+        return outFloatArr;
+    }
+
+    void floatArrRandomize(float * inArr, int size)
+    {
+        int i;
+        for(i=0; i<size; ++i)
+        {
+            inArr[i] = (float)rand() / (float)RAND_MAX;
+        }
+    }
+
 };

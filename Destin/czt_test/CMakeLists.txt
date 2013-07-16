@@ -25,6 +25,3 @@ INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include)
 
 ADD_EXECUTABLE(test1 src/test1.cpp )
 TARGET_LINK_LIBRARIES(test1 ${testlibs})
-
-ADD_EXECUTABLE(test2 src/test2.cpp )
-TARGET_LINK_LIBRARIES(test2 ${testlibs})
