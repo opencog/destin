@@ -7,7 +7,6 @@ include_directories(
 add_library( common SHARED
     DestinIterationFinishedCallback.h
     DestinNetworkAlt
-    GenerativeVisualizer
     INetwork.h
     Transporter.h
     VideoSource
@@ -17,7 +16,6 @@ add_library( common SHARED
     ImageSourceBase.h
     ImageSourceImpl.h
     DestinTreeManager
-
     czt_lib.h
     czt_lib2.h
 )
