@@ -20,7 +20,7 @@ add_library( common SHARED
     czt_lib2.h
 )
 
-add_executable( testCifarSource TestCifar.cc )
+add_executable( testCifarSource TestCifar.cpp )
 
 find_package( OpenCV REQUIRED) 
 

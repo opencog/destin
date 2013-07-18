@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "ISom.hpp"
+#include "ISom.h"
 extern "C" {
     // define these prototypes instead of including "cluster/src/cluster.h" because
     // there's a name conflic with max macro and Node
