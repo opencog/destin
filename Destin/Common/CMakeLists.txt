@@ -21,9 +21,10 @@ add_library( common SHARED
 )
 
 add_executable( testCifarSource TestCifar.cpp )
+add_executable( testDestinNetworkAlt TestDestinNetworkAlt.cpp )
 
 find_package( OpenCV REQUIRED) 
 
-target_link_libraries(testCifarSource ${OpenCV_LIBS} )
-
-target_link_libraries( common cm_ordered_treeminer_wrapper )
+target_link_libraries(testCifarSource ${OpenCV_LIBS})
+target_link_libraries(common cm_ordered_treeminer_wrapper)
+target_link_libraries(testDestinNetworkAlt common destinalt)
