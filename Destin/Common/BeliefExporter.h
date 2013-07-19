@@ -59,7 +59,7 @@ public:
     /** Get the pointer to the begining of the destin beliefs.
       * The begining of the belief vector depends on what
       * the bottom layer is set to via the constructor or by
-      * setBottomLayer methobottomLayerd. The end of the vector is
+      * setBottomLayer method. The end of the vector is
       * beliefs of the top layer node.
       * Do not delete or free this pointer.
       */
