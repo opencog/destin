@@ -1333,14 +1333,19 @@ void DestroyDestin( Destin * d )
             FREE(d->uf_avgDelta[i]);
             FREE(d->uf_winCounts[i]); //TODO: should be condionally alloced and delloc based of if using uniform destin
             FREE(d->uf_persistWinCounts[i]);
+            FREE(d->uf_persistWinCounts_detailed[i]);
             FREE(d->uf_sigma[i]);
             FREE(d->uf_starv[i]);
+            FREE(d->uf_absvar[i]);
+
         }
         FREE(d->uf_avgDelta);
         FREE(d->uf_winCounts);
         FREE(d->uf_persistWinCounts);
+        FREE(d->uf_persistWinCounts_detailed);
         FREE(d->uf_sigma);
         FREE(d->uf_starv);
+        FREE(d->uf_absvar);
     }
     
     for( i=0; i < d->nNodes; i++ )
@@ -1365,20 +1370,6 @@ void DestroyDestin( Destin * d )
     FREE(d->layerWidth);
     FREE(d->inputLabel);
     FREE(d);
-
-    // 2013.4.16
-    // CZT
-    //
-    d->temp = NULL;
-    d->nb = NULL;
-    d->nodes = NULL;
-    d->layerMask = NULL;
-    d->inputPipeline = NULL;
-    d->belief = NULL;
-    d->layerSize = NULL;
-    d->layerNodeOffsets = NULL;
-    d->layerWidth = NULL;
-    d->inputLabel = NULL;/**/
 }
 
 // set all nodes to have a uniform belief
