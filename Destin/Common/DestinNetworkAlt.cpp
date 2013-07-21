@@ -379,13 +379,8 @@ float ** DestinNetworkAlt::getAbsvar()
 float DestinNetworkAlt::getSep(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
-    float * sep;
-    MALLOC(sep, float, currNode->nb);  // TODO: memory leak...
+    std::vector<float> sep(currNode->nb, 1.0); //vector of length nb, each element initialized to 1.0
     int i,j,k;
-    for(i=0; i<currNode->nb; ++i)
-    {
-        sep[i] = 1.0;
-    }
     for(i=0; i<currNode->nb; ++i)
     {
         for(j=0; j<currNode->nb; ++j)
@@ -427,8 +422,7 @@ float DestinNetworkAlt::getSep(int layer)
 float DestinNetworkAlt::getVar(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
-    float * var;
-    MALLOC(var, float, currNode->nb);
+    std::vector<float> var(currNode->nb);
     int i,j;
     for(i=0; i<currNode->nb; ++i)
     {
