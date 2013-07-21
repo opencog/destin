@@ -12,7 +12,7 @@
 
 /* Destin Struct Definition */
 typedef struct Destin {
-    uint serializeVersion;
+    uint serializeVersion;              // Identifies the compaitibility version of this destin structure during saves and loads.s
     uint nInputPipeline;                // number of beliefs to copy to next nodes' input
     uint maxNb;                         // max number of beliefs for all nodes (important for kernels)
     uint maxNs;
@@ -23,7 +23,7 @@ typedef struct Destin {
     uint nLayers;                       // number of layers in network
     float muSumSqDiff;
     uint *nb;                           // number of beliefs in a node of a layer
-    
+
     struct Node * nodes;                // pointer to list of host nodes
 
     float       * belief;               // concatonated belief vector for all nodes
@@ -49,7 +49,8 @@ typedef struct Destin {
                                         // which means all nodes in a layer share their centroids
 
     //uniform destin shared centroid variables
-    uint        ** uf_winCounts;        //counts how many nodes in a layer pick the given centroid as winner in one call of ForumateBeliefs
+    uint        ** uf_winCounts;        // Counts how many nodes in a layer pick the given centroid as winner in one call of ForumateBeliefs
+                                        //
     float       ** uf_avgDelta;         //used to average node centroid movement vectors
     long        ** uf_persistWinCounts; //keeps track how many times the shared centroids win over the lifetime of the training the destin network.
     float       ** uf_sigma;            //shared centroids sigma, one array per layer of size nb x ns

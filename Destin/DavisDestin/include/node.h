@@ -12,7 +12,9 @@ typedef struct Node {
     uint    nIdx;           // node id. Can retrieve this node from a destin heirarchy like this: destin->nodes[nIdx]
     uint     nb;            // number of beliefs ( number of centroids )
     uint     ni;            // number of inputs ( dimensionality of input vector)
-    uint     ns;            // number of states ( dimensionality of centroids) = ni+nb+np+nc;
+    uint     ns;            // number of states ( dimensionality of centroids) = ni+nb+np+nc
+                            // Centroids cluster on input, its own previous belief, parent's belief and "class" vector ( not implemented)
+
     uint     np;            // number of beliefs (centroids) for parent
     uint     nc;            // number of classes
     float   starvCoeff;     // starvation coefficient
@@ -27,6 +29,8 @@ typedef struct Node {
     // node statistics
     //TODO: make a uf_mu for uniform shared centroids instead of treating it differently
     float * mu;             // centroid locations ( a table nb x ns  ) . In uniform destin, all nodes in a layer share this pointer)
+                            // See GetObservation for structure of centroids. Input -> own beliefs -> parent beliefs -> context ( unused )
+
     float * sigma;          // centroid variances
     float * starv;          // centroid starvation coefficients. ( points to destin->uf_starv if it's uniform destin)
 
