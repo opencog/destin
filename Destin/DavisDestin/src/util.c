@@ -1512,7 +1512,13 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&gamma,       sizeof(float),    1,   dFile);
     freadResult = fread(&starvCoeff,  sizeof(float),    1,   dFile);
     freadResult = fread(&extendRatio, sizeof(int),      1,   dFile);
+
     d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, extendRatio);
+
+    // temporary arrays were copied in InitDestin
+    FREE(nb); nb = NULL;
+    FREE(temp); temp = NULL;
+
 
     freadResult = fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
     SetLearningStrat(d, d->centLearnStrat);

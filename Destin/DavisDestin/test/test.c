@@ -492,6 +492,10 @@ int testSaveDestin1(){
     assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
     assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 0.0  );
 
+    DestroyDestin(d);
+    FREE(uf_avgDelta[0]);
+    FREE(uf_avgDelta[1]);
+    FREE(uf_avgDelta);
     return 0;
 }
 
