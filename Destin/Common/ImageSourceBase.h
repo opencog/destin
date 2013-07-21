@@ -29,6 +29,12 @@ public:
           nImages(0){
     }
 
+    /** Number of images added or available
+     */
+    int getImageCount(){
+        return nImages;
+    }
+
     /**
       * @return - integer of the "current image" id.
       */
