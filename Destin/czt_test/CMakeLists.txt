@@ -19,9 +19,9 @@ ADD_LIBRARY( stereovision SHARED
 
 TARGET_LINK_LIBRARIES(stereovision ${OpenCV_LIBS})
 
-SET(testlibs common destinalt avutil stereovision)
+SET(testlibs common destinalt avutil stereovision som)
     
-INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include)
+INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include ../SOM)
 
 ADD_EXECUTABLE(test1 src/test1.cpp )
 TARGET_LINK_LIBRARIES(test1 ${testlibs})

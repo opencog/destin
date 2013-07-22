@@ -111,9 +111,13 @@ def train_only(network, tempIn, maxCount=16000):
 #############################################################################
 def drawCurve(inFile, times):
     fCont = open(inFile).read().split("\n")[:times]
+    sepDict = {}
+    varDict = {}
     quality = {}
     for i in range(8):
         quality[str(i)] = []
+        sepDict[str(i)] = []
+        varDict[str(i)] = []
     for i in range(times):
         lCont = fCont[i].split("  ")[:8]
         for i in range(8):

@@ -253,6 +253,10 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
             // 2013.7.4
             // CZT: uf_absvar;
             MALLOC(d->uf_absvar[l], float, ns*nb[l]);
+            // 2013.7.18
+            // CZT:
+            MALLOC(d->uf_avgSquaredDelta[l], float, ns*nb[l]);
+            MALLOC(d->uf_avgAbsDelta[l], float, ns*nb[l]);
         }else{
             sharedCentroids = NULL;
         }
@@ -420,6 +424,9 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
         // 2013.7.4
         // CZT: uf_absvar, very similar to uf_sigma;
         MALLOC(d->uf_absvar, float *, d->nLayers);
+        // 2013.7.18
+        MALLOC(d->uf_avgSquaredDelta, float *, d->nLayers);
+        MALLOC(d->uf_avgAbsDelta, float *, d->nLayers);
 
         for(l = 0 ; l < d->nLayers ; l++){
             MALLOC( d->uf_winCounts[l], uint, d->nb[l]);

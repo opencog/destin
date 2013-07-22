@@ -13,6 +13,11 @@
 #include "czt_lib.h"
 #include "czt_lib2.h"
 
+#include "SomPresentor.hpp"
+#include "ClusterSom.hpp"
+#include <stdlib.h>
+#include <vector>
+
 using namespace cv;
 
 // Helper function prototypes
@@ -30,6 +35,7 @@ void test_CL2();
 void test_CL_and_CL2();
 void test_update();
 void test_RandomInput();
+void test_SOM();
 
 // main function
 int main(int argc, char ** argv){
@@ -39,8 +45,9 @@ int main(int argc, char ** argv){
     //testStep3();
     //test_CL2();
     //test_CL_and_CL2();
-    //test_update();
-    test_RandomInput();
+    test_update();
+    //test_RandomInput();
+    //test_SOM();
 }
 
 /** meaures time between calls and prints the fps.
@@ -188,7 +195,7 @@ void testOrg(){
     delete network;
 }
 
-void testStep2(){
+/*void testStep2(){
     // 2013.7.5
     // TODO: the following codes could be referred as how to use 2-webcam input;
     // could be removed sometime;
@@ -198,7 +205,7 @@ void testStep2(){
     vs1.enableDisplayWindow("left");
     vs2.enableDisplayWindow("right");
     vs1.grab();
-    vs2.grab();/**/
+    vs2.grab();
 
     int result;
     StereoVision * sv = new StereoVision(640, 480);
@@ -238,20 +245,20 @@ void testStep2(){
         //printf("%d * %d\n", img_l->width, img_l->height);
         //printf("%d * %d\n", sv->imageDepthNormalized->width, sv->imageDepthNormalized->height);
 
-        /*CvMat part;
-        cvGetCols( imageRectifiedPair, &part, 0, imageSize.width );
-        cvCvtColor( sv->imagesRectified[0], &part, CV_GRAY2BGR );
-        cvGetCols( imageRectifiedPair, &part, imageSize.width,imageSize.width*2 );
-        cvCvtColor( sv->imagesRectified[1], &part, CV_GRAY2BGR );
-        for(int j = 0; j < imageSize.height; j += 16 )
-            cvLine( imageRectifiedPair, cvPoint(0,j),cvPoint(imageSize.width*2,j),CV_RGB((j%3)?0:255,((j+1)%3)?0:255,((j+2)%3)?0:255));
-        cvShowImage( "rectified", imageRectifiedPair );*/
+        //CvMat part;
+        //cvGetCols( imageRectifiedPair, &part, 0, imageSize.width );
+        //cvCvtColor( sv->imagesRectified[0], &part, CV_GRAY2BGR );
+        //cvGetCols( imageRectifiedPair, &part, imageSize.width,imageSize.width*2 );
+        //cvCvtColor( sv->imagesRectified[1], &part, CV_GRAY2BGR );
+        //for(int j = 0; j < imageSize.height; j += 16 )
+        //    cvLine( imageRectifiedPair, cvPoint(0,j),cvPoint(imageSize.width*2,j),CV_RGB((j%3)?0:255,((j+1)%3)?0:255,((j+2)%3)?0:255));
+        //cvShowImage( "rectified", imageRectifiedPair );
 
         float_l = vs1.getOutput();
         float_r = vs2.getOutput();
         cv::Mat tempMat(sv->imageDepthNormalized_c1);
         convert(tempMat, float_depth);
-        combineWithDepth_2(float_l, float_depth, 512*512, float_combined);/**/
+        combineWithDepth_2(float_l, float_depth, 512*512, float_combined);
 
         network->doDestin(float_combined);
         //network->doDestin_c1(float_l);    // extRatio should be 1 for this!
@@ -292,12 +299,12 @@ void testStep2(){
             printf("belief graph layer: %i\n",l);
             network->printBeliefGraph(l,0,0);
         }
-    }/**/
+    }
 
     // Method 2
     // Should comment the 'VideoSourece' Part!!! Here we use 'StereoCamera' class instead!!!
     //
-    /*StereoCamera camera;
+    StereoCamera camera;
     if(camera.setup(imageSize) == 0)
     {
         while(true)
@@ -322,7 +329,7 @@ void testStep2(){
 
             cvWaitKey(10);
         }
-    }*/
+    }
 
     cvReleaseImage(&img_l);
     cvReleaseImage(&img_r);
@@ -333,7 +340,7 @@ void testStep2(){
     FREE(float_depth);
     FREE(float_combined);
     delete network;
-}
+}*/
 
 void testStep3(){
     // 2013.7.5
@@ -508,14 +515,14 @@ void test_update()
 //#define TEST_nb
 //#define TEST_uf_persistWinCounts
 //#define TEST_uf_persistWinCounts_detailed
-//#define TEST_uf_avgDelta //uf_sigma
+//#define TEST_uf_avgDelta  //uf_sigma
 //#define TEST_mu
 //#define TEST_observation
 //#define TEST_beliefMal
 
     ImageSouceImpl isi;
-    //isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
-    isi.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg");
+    isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
+    //isi.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg");
     czt_lib2 * cl2 = new czt_lib2();
     // currLayer: the layer, in which you want to add centroids or kill centroids;
     // tempLayer: for backup;
@@ -527,20 +534,24 @@ void test_update()
 
     SupportedImageWidths siw = W512;
     //uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
-    uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
+    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
                                                      // HumanFace_1500_case1
     //uint centroid_counts[]  = {8,16,16,32,32,16,8,4}; // HumanFace_1500_case2
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
     //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
+    uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
     bool isUniform = true;
     int size = 512*512;
     int extRatio = 2;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform, extRatio);
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
 
     float * tempIn;
     MALLOC(tempIn, float, size*extRatio);
     int frameCount;
     int maxCount = 1500;
+
+    int i, l, j;
+    Destin * d = network->getNetwork();
 
 #ifdef RUN_BEFORE
     frameCount = 1;
@@ -549,6 +560,22 @@ void test_update()
         if(frameCount % 10 == 0)
         {
             printf("Count %d;\n", frameCount);
+            for(l=0; l<d->nLayers; ++l)
+            {
+                printf("Layer %d\n", l);
+                for(i=0; i<d->nb[l]; ++i)
+                {
+                    for(j=0; j<network->getNode(l,0,0)->ns; ++j)
+                    {
+                        //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
+                        //printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
+                        printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
+                    }
+                    printf("\n");
+                }
+                printf("------\n");
+            }
+            printf("\n");/**/
         }
 
         isi.findNextImage();
@@ -566,7 +593,6 @@ void test_update()
     network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/2013.6.10_nm_before.jpg");
 #endif // SHOW_BEFORE
 
-    Destin * d = network->getNetwork();
     Node * node1 = network->getNode(currLayer, 0, 0);
 #ifndef TEST_layer0
     Node * node2 = network->getNode(currLayer-1, 0, 0);
@@ -574,7 +600,6 @@ void test_update()
 #ifndef TEST_layer7
     Node * node3 = network->getNode(currLayer+1, 0, 0);
 #endif
-    int i, l, j;
 
 #ifdef TEST_nb
     printf("------------TEST_nb\n");
@@ -628,9 +653,9 @@ void test_update()
         {
             for(j=0; j<network->getNode(l,0,0)->ns; ++j)
             {
-                //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
+                printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
                 //printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
-                printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
+                //printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
             }
             printf("\n");
         }
@@ -1030,9 +1055,175 @@ void test_RandomInput()
         for(int l = 0 ; l < 8 ; l++){
             printf("belief graph layer: %i\n",l);
             network->printBeliefGraph(l,0,0);
-        }
+        }/**/
     }
 
     free(inArr);
     delete network;
+}
+
+void test_SOM()
+{
+    ImageSouceImpl isi;
+    isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/3.jpg");
+    //isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/A.png");
+    //isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/B.png");
+    //isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/I.png");
+
+    /*int size = 512*512;
+    czt_lib2 * cl2 = new czt_lib2();
+    float * inArr = cl2->floatArrCreate(size);
+    cl2->floatArrRandomize(inArr, size);*/
+
+    SupportedImageWidths siw = W512;
+    uint nLayer = 8;
+    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4};
+    uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
+    bool isUniform = true;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
+
+    int frameCount = 1, maxCount = 1500;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+        }
+
+        isi.findNextImage();
+        network->doDestin(isi.getGrayImageFloat());
+
+        //network->doDestin(inArr);
+        //cl2->floatArrRandomize(inArr, size);
+    }
+
+    for(int i=0; i<nLayer; ++i)
+    {
+        network->setLayerIsTraining(i, false);
+    }
+
+    int numImgs = 4;
+    isi.findNextImage();
+    float * f = isi.getGrayImageFloat();
+    network->doDestin(f);
+
+    for(int currLayer=0; currLayer<nLayer; ++currLayer)
+    {
+        Node * currNode = network->getNode(currLayer, 0, 0);
+        uint nb = currNode->nb;
+        uint dim = currNode->ni;
+        printf("%d  %d\n", nb, dim);
+        uint som_rows = 200, som_cols = 200;
+
+        ClusterSom som(som_rows, som_cols, dim);
+
+        std::vector<std::vector<float> > obsData;
+        int currSize = network->getNetwork()->layerSize[currLayer];
+        if(currLayer == 0)
+        {
+            int currWidth = (int)sqrt(currSize);
+            for(int row=0; row<currWidth; ++row)
+            {
+                for(int col=0; col<currWidth; ++col)
+                {
+                    Node * tNode = network->getNode(currLayer, row, col);
+                    std::vector<float> d;
+                    for(int i=0; i<tNode->ni; ++i)
+                    {
+                        d.push_back(f[tNode->inputOffsets[i]]);
+                    }
+                    obsData.push_back(d);
+                    som.addTrainData(d.data());
+                }
+            }
+        }  // This part is for testing!!!
+        else
+        {
+            int currWidth = (int)sqrt(currSize);
+            for(int row=0; row<currWidth; ++row)
+            {
+                for(int col=0; col<currWidth; ++col)
+                {
+                    Node * tNode = network->getNode(currLayer, row, col);
+                    Node ** childNodes = tNode->children;
+                    std::vector<float> d;
+                    for(int i=0; i<4; ++i)
+                    {
+                        for(int j=0; j<childNodes[i]->nb; ++j)
+                        {
+                            d.push_back(childNodes[i]->beliefMal[j]);
+                        }
+                    }
+                    obsData.push_back(d);
+                    som.addTrainData(d.data());
+                }
+            }
+        }
+
+
+        std::vector<std::vector<float> > data;
+        for(int i=0; i<nb; ++i)
+        {
+            std::vector<float> d;
+            for(int j=0; j<dim; ++j)
+            {
+                d.push_back(currNode->mu[i*currNode->ns + j]);
+            }
+            data.push_back(d);
+            som.addTrainData(d.data());
+        }
+
+        som.train(20000);
+
+        SomPresentor sp(som);
+
+        for(int i=0; i<currSize; ++i)
+        {
+            std::vector<float> d = obsData.at(i);
+            CvPoint cp = som.findBestMatchingUnit(d.data());
+            sp.addSimMapMaker(cp.y, cp.x, 0.5, 5);
+        }
+
+        for(int i=0; i<nb; ++i)
+        {
+            std::vector<float> d = data.at(i);
+            CvPoint cp = som.findBestMatchingUnit(d.data());
+            sp.addSimMapMaker(cp.y, cp.x, 0.1, 15);
+        }
+
+        string filename = "/home/teaera/Pictures/";
+        switch(currLayer)
+        {
+        case 0:
+            filename += "layer0.jpg";
+            break;
+        case 1:
+            filename += "layer1.jpg";
+            break;
+        case 2:
+            filename += "layer2.jpg";
+            break;
+        case 3:
+            filename += "layer3.jpg";
+            break;
+        case 4:
+            filename += "layer4.jpg";
+            break;
+        case 5:
+            filename += "layer5.jpg";
+            break;
+        case 6:
+            filename += "layer6.jpg";
+            break;
+        case 7:
+            filename += "layer7.jpg";
+            break;
+        default:
+            break;
+        }
+
+        sp.showAndSaveSimularityMap(filename);
+        cv::waitKey(3000);
+    }
+
 }

@@ -128,4 +128,10 @@ public:
         }
     }
 
+    void floatArrRandomize_2(float *inArr, int size)
+    {
+        int i=4;
+        int width = (int)sqrt(size);
+    }
+
 };

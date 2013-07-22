@@ -365,6 +365,11 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
         uint s;
         for(s = 0; s < n->ns ; s++){
             n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
+
+            // 2013.7.18
+            // CZT:
+            n->d->uf_avgSquaredDelta[n->layer][n->winner * n->ns + s] += n->delta[s]*n->delta[s] / (float)(count*count);
+            n->d->uf_avgAbsDelta[n->layer][n->winner * n->ns + s] += fabs(n->delta[s]) / (float)count;
         }
     }
     return;
@@ -396,11 +401,13 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
 #endif
             n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
             //TODO: write unit test for layerSharedSigma
-            layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]);
+            //layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]);
+            layerSharedSigma[c * ns + s] += n->beta * (d->uf_avgSquaredDelta[layer][c * ns + s] - layerSharedSigma[c * ns + s]);
 
             // 2013.7.4
             // CZT: as Ben suggested, uf_absvar;
-            d->uf_absvar[layer][c*ns + s] += n->beta * (fabs(dt) - d->uf_absvar[layer][c*ns + s]);
+            //d->uf_absvar[layer][c*ns + s] += n->beta * (fabs(dt) - d->uf_absvar[layer][c*ns + s]);
+            d->uf_absvar[layer][c*ns + s] += n->beta * (d->uf_avgAbsDelta[layer][c * ns + s] - d->uf_absvar[layer][c*ns + s]);
         }
     }
     return;

@@ -170,7 +170,7 @@ public:
 
     {
         sim_map = cv::Mat(rows, cols, CV_32FC1);
-        printf("rrows: %i, cols: %i, som_rows: %i, som_cols: %i\n", rows, cols, som.cell_rows(), som.cell_cols());
+        printf("rows: %i, cols: %i, som_rows: %i, som_cols: %i\n", rows, cols, som.cell_rows(), som.cell_cols());
 
     }
 
@@ -242,6 +242,35 @@ public:
         cv::waitKey(5);
     }
 
+
+    void showAndSaveSimularityMap(string fileName = "SOM.jpg", string windowName = "SOM Simularity Map  ",
+                                  uint nh_width = 2, int window_width = 512, int window_height = 512){
+        calcSimularityMap(nh_width);
+
+        cv::Size size(window_width, window_height);
+
+        cv::resize(sim_map, resized_sim_map, size);
+
+        cv::Mat todraw;
+        if(map_markers.size() == 0){
+            todraw = resized_sim_map;
+        }else{
+            cv::Mat recolored(size, CV_8UC3);
+            resized_sim_map.convertTo(recolored, CV_8UC3, 255.0);
+            cv::Mat temp;
+            cvtColor(recolored, temp, CV_GRAY2RGB);
+
+            //resized_sim_map.convertTo(recolored, CV_8UC3);
+            for(int m  = 0 ; m < map_markers.size() ; m++){
+                drawMarker(temp, map_markers[m]);
+            }
+            todraw = temp;
+        }
+
+        cv::imshow(windowName, todraw);
+        cv::imwrite(fileName, todraw);
+        cv::waitKey(5);
+    }
 
 };
 

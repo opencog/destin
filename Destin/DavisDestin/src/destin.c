@@ -1041,6 +1041,10 @@ void Uniform_ResetStats(Destin * d){
             d->uf_winCounts[l][c] = 0;
             for(s = 0 ; s < ns ;s++){
                 d->uf_avgDelta[l][c*ns + s] = 0;
+
+                // 2013.7.18
+                d->uf_avgAbsDelta[l][c*ns + s] = 0;
+                d->uf_avgSquaredDelta[l][c*ns + s] = 0;
             }
         }
     }

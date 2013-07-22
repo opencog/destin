@@ -380,7 +380,7 @@ float DestinNetworkAlt::getSep(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
     float * sep;
-    MALLOC(sep, float, currNode->nb); // TODO: fix memory leak here
+    MALLOC(sep, float, currNode->nb);  // TODO: memory leak...
     int i,j,k;
     for(i=0; i<currNode->nb; ++i)
     {

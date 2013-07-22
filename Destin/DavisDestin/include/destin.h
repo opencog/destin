@@ -66,6 +66,8 @@ typedef struct Destin {
     long ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
                                            // I think one more counting array should be necessary;
     float ** uf_absvar;
+    float ** uf_avgSquaredDelta;
+    float ** uf_avgAbsDelta;
     /*END*/
 } Destin  ;
 /* Destin Struct Definition End */
