@@ -7,7 +7,7 @@ add_library(cm_ordered_treeminer_wrapper SHARED
 CMOrderedTreeMinerWrapper
 )
 add_executable(testTreeMiner
-TestTreeMiner.cc
+TestTreeMiner.cpp
 )
 
 target_link_libraries(cm_ordered_treeminer_wrapper cm_ordered_treeminer)

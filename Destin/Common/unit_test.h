@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <memory.h>
+#include <sys/time.h>
 
 int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests have failed
 
@@ -415,5 +416,88 @@ if(TEST_HAS_FAILURES){\
     return 1;\
 }\
 }\
+
+/**
+ * A simple random number generator for testing that should return the
+ * same sequence of numbers across platforms / compilers.
+ * Found from http://pubs.opengroup.org/onlinepubs/009695399/functions/rand.html
+ */
+static unsigned long dst_ut_rand_next = 1;
+#define DST_UT_RAND_MAX 32767
+int dst_ut_int_rand(){  /* RAND_MAX assumed to be 32767. */
+    dst_ut_rand_next = dst_ut_rand_next * 1103515245 + 12345;
+    return((unsigned)(dst_ut_rand_next/65536) % (DST_UT_RAND_MAX + 1));
+}
+// generate a float between 0.0 and 1.0
+float dst_ut_float_rand(){
+    return (float)dst_ut_int_rand() / (float)DST_UT_RAND_MAX;
+}
+// seed the random number generator
+void dst_ut_srand(unsigned long seed) {
+    dst_ut_rand_next = seed;
+}
+// seed the random number generator with milliseconds since epoch
+void dst_ut_srand_milliseconds() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    unsigned long long millisecondsSinceEpoch =
+        (unsigned long long)(tv.tv_sec) * 1000 +
+        (unsigned long long)(tv.tv_usec) / 1000;
+
+    dst_ut_rand_next = (unsigned long)millisecondsSinceEpoch;
+}
+
+/**
+ * Makes a double array of random floats between 0 and 1.
+ * Should be freed with freeRandomImages.
+ * Uses dst_ut_float_rand() to generate the values.
+ * @param image_size - total number of pixels per image
+ * @param nImages - number of images to create
+ * @param seed - seed for random number generator
+ * @return the generated images.
+ */
+float ** makeRandomImages(uint image_size, uint nImages){
+    //generate random images
+    uint i, j;
+    float ** images;
+    images = (float **)malloc(sizeof(float *) * nImages);
+    if(images == NULL){
+        ut_oops("makeRandomImages: could not malloc\n");
+    }
+
+    for(i = 0 ; i < nImages; i++){
+        images[i] = (float *)malloc(sizeof(float) * image_size);
+        if(images[i] == NULL){
+            ut_oops("makeRandomImages: could not malloc\n");
+        }
+    }
+
+    for(i = 0 ; i < image_size ; i++){
+        for(j = 0 ; j < nImages ; j++){
+            images[j][i] = dst_ut_float_rand();
+        }
+    }
+    return images;
+}
+
+/**
+ * Frees the images created from makeRandomImages function.
+ * @param images - pointer to the images to be freed.
+ * @param nImages - the number of images
+ */
+void freeRandomImages(float ** images, uint nImages){
+    uint i;
+    if(images == NULL){
+        ut_oops("Trying to free null pointer in freeRandomImages.\n");
+    }
+    for(i = 0 ; i < nImages ; i++){
+        if(images[i] == NULL){
+            ut_oops("Trying to free null pointer in freeRandomImages.\n")
+        }
+        free(images[i]);
+    }
+    free(images);
+    return;
+}
 
 #endif

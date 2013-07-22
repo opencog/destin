@@ -492,6 +492,10 @@ int testSaveDestin1(){
     assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
     assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 0.0  );
 
+    DestroyDestin(d);
+    FREE(uf_avgDelta[0]);
+    FREE(uf_avgDelta[1]);
+    FREE(uf_avgDelta);
     return 0;
 }
 
@@ -502,33 +506,6 @@ void turnOnMask(Destin * d){
     }
 }
 
-float ** makeRandomImages(uint image_size, uint nImages){
-
-    //generate random images
-    uint i, j;
-    float ** images;
-    MALLOC(images, float *, nImages);
-
-    for(i = 0 ; i < nImages; i++){
-        MALLOC(images[i], float, image_size);
-    }
-
-    for(i = 0 ; i < image_size ; i++){
-        for(j = 0 ; j < nImages ; j++){
-            images[j][i] = (float)rand()  / (float)RAND_MAX;
-        }
-    }
-    return images;
-}
-
-void freeRandomImages(float ** images, uint nImages){
-    uint i;
-    for(i = 0 ; i < nImages ; i++){
-        FREE(images[i]);
-    }
-    FREE(images);
-    return;
-}
 
 int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTransformEnum bt){
     //Test that SaveDestin and LoadDestin are working propertly.

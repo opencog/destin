@@ -1,8 +1,8 @@
 
 #include <stdlib.h>
 #include <vector>
-#include "SomPresentor.hpp"
-#include "ClusterSom.hpp"
+#include "SomPresentor.h"
+#include "ClusterSom.h"
 
 void test_org();
 void test_SOM();

@@ -100,7 +100,6 @@ public:
             );
 
 
-    //TODO: remove doDestin_org in python
 
     // 2013.6.3
     void updateDestin_add(SupportedImageWidths width, unsigned int layers,

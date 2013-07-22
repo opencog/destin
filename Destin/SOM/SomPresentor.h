@@ -8,7 +8,7 @@
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include "ISom.hpp"
+#include "ISom.h"
 
 /** This class displays the underlying SOM as an image to the user
   * Can show a simularity map and draw markers using opencv highgui

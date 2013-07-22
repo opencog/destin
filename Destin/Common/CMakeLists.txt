@@ -7,7 +7,6 @@ include_directories(
 add_library( common SHARED
     DestinIterationFinishedCallback.h
     DestinNetworkAlt
-    GenerativeVisualizer
     INetwork.h
     Transporter.h
     VideoSource
@@ -17,15 +16,15 @@ add_library( common SHARED
     ImageSourceBase.h
     ImageSourceImpl.h
     DestinTreeManager
-
     czt_lib.h
     czt_lib2.h
 )
 
-add_executable( testCifarSource TestCifar.cc )
+add_executable( testCifarSource TestCifar.cpp )
+add_executable( testDestinNetworkAlt TestDestinNetworkAlt.cpp )
 
 find_package( OpenCV REQUIRED) 
 
-target_link_libraries(testCifarSource ${OpenCV_LIBS} )
-
-target_link_libraries( common cm_ordered_treeminer_wrapper )
+target_link_libraries(testCifarSource ${OpenCV_LIBS})
+target_link_libraries(common cm_ordered_treeminer_wrapper)
+target_link_libraries(testDestinNetworkAlt common destinalt)
