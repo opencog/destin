@@ -20,7 +20,7 @@
 #include "DestinTreeManager.h"
 
 #include "czt_lib.h"
-#include "czt_lib2.h"
+#include "CztMod.h"
 %}
 
 
@@ -63,7 +63,7 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "DestinTreeManager.h"
 
 %include "czt_lib.h"/**/
-%include "czt_lib2.h"/**/
+%include "CztMod.h"/**/
 
 /* use c++ vector like a python list */
 %include "std_vector.i"

@@ -11,10 +11,10 @@
 //
 #include "ImageSourceImpl.h"
 #include "czt_lib.h"
-#include "czt_lib2.h"
+#include "CztMod.h"
 
-#include "SomPresentor.hpp"
-#include "ClusterSom.hpp"
+#include "SomPresentor.h"
+#include "ClusterSom.h"
 #include <stdlib.h>
 #include <vector>
 
@@ -33,9 +33,11 @@ void testStep2();
 void testStep3();
 void test_CL2();
 void test_CL_and_CL2();
-void test_update();
+void test_Update();
 void test_RandomInput();
 void test_SOM();
+void test_TempFunc();
+void test_Quality();
 
 // main function
 int main(int argc, char ** argv){
@@ -45,9 +47,11 @@ int main(int argc, char ** argv){
     //testStep3();
     //test_CL2();
     //test_CL_and_CL2();
-    test_update();
+    //test_Update();
     //test_RandomInput();
-    //test_SOM();
+    test_SOM();
+    //test_TempFunc();
+    //test_Quality();
 }
 
 /** meaures time between calls and prints the fps.
@@ -349,7 +353,7 @@ void testStep3(){
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
     vs.turnOnColor();
-    czt_lib2 * cl2 = new czt_lib2();
+    CztMod * cl2 = new CztMod();
 
     SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,3,5,3,3,2,3,4};
@@ -409,7 +413,7 @@ void test_CL2()
     // Add Random depth information
     // Test czt_lib2 (which is my own library of functions!)
 
-    czt_lib2 * cl2 = new czt_lib2();
+    CztMod * cl2 = new CztMod();
     ImageSouceImpl isi;
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
 
@@ -458,7 +462,7 @@ void test_CL_and_CL2()
     // This is to test the combined information and show the centroids for combined
     // information!
 
-    czt_lib2 * cl2 = new czt_lib2();
+    CztMod * cl2 = new CztMod();
     czt_lib * cl = new czt_lib();
 
     SupportedImageWidths siw = W512;
@@ -505,7 +509,7 @@ void test_CL_and_CL2()
     delete network;
 }
 
-void test_update()
+void test_Update()
 {
 //#define TEST_ADD
 #define RUN_BEFORE
@@ -523,7 +527,7 @@ void test_update()
     ImageSouceImpl isi;
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
     //isi.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg");
-    czt_lib2 * cl2 = new czt_lib2();
+    CztMod * cl2 = new CztMod();
     // currLayer: the layer, in which you want to add centroids or kill centroids;
     // tempLayer: for backup;
     uint tempLayer;
@@ -533,22 +537,26 @@ void test_update()
 #define TEST_layer7
 
     SupportedImageWidths siw = W512;
+    uint nLayer = 8;
     //uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
-    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
+    uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
                                                      // HumanFace_1500_case1
     //uint centroid_counts[]  = {8,16,16,32,32,16,8,4}; // HumanFace_1500_case2
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
     //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
-    uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
+    //uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
     bool isUniform = true;
-    int size = 512*512;
-    int extRatio = 2;
-    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
 
+    /*int size = 512*512;
+    int extRatio = 2;
     float * tempIn;
-    MALLOC(tempIn, float, size*extRatio);
+    MALLOC(tempIn, float, size*extRatio);*/
+
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
+
+
     int frameCount;
-    int maxCount = 1500;
+    int maxCount = 10;
 
     int i, l, j;
     Destin * d = network->getNetwork();
@@ -565,7 +573,8 @@ void test_update()
                 printf("Layer %d\n", l);
                 for(i=0; i<d->nb[l]; ++i)
                 {
-                    for(j=0; j<network->getNode(l,0,0)->ns; ++j)
+                    // Only display the 'ni' part!
+                    for(j=0; j<network->getNode(l,0,0)->ni; ++j)
                     {
                         //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
                         //printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
@@ -1009,7 +1018,7 @@ void test_RandomInput()
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
 
     int size = 512*512;
-    czt_lib2 * cl2 = new czt_lib2();
+    CztMod * cl2 = new CztMod();
     float * inArr = cl2->floatArrCreate(size);
     cl2->floatArrRandomize(inArr, size);
     cv::Mat inMat(512, 512, CV_8UC1);
@@ -1065,24 +1074,22 @@ void test_RandomInput()
 void test_SOM()
 {
     ImageSouceImpl isi;
-    isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/3.jpg");
-    //isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/A.png");
-    //isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/B.png");
-    //isi.addImage("/home/teaera/Work/RECORD/2013.7.8/test1/I.png");
+    string imgs = "ABCDEFGHIJKLMNYZ", img;
+    uint nImgs = imgs.length();
+    for(int i=0; i<nImgs; ++i)
+    {
+        img = "";
+        img.insert(img.begin(), imgs[i]);
+        isi.addImage("/home/teaera/Work/RECORD/2013.7.22/32/" + img + ".png");
+    }
 
-    /*int size = 512*512;
-    czt_lib2 * cl2 = new czt_lib2();
-    float * inArr = cl2->floatArrCreate(size);
-    cl2->floatArrRandomize(inArr, size);*/
-
-    SupportedImageWidths siw = W512;
-    uint nLayer = 8;
-    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4};
-    uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
+    SupportedImageWidths siw = W32;
+    uint nLayer = 4;
+    uint centroid_counts[]  = {96, 64, 32, 16};
     bool isUniform = true;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
 
-    int frameCount = 1, maxCount = 1500;
+    int frameCount = 1, maxCount = 1600;
     while(frameCount <= maxCount){
         frameCount++;
         if(frameCount % 10 == 0)
@@ -1092,9 +1099,6 @@ void test_SOM()
 
         isi.findNextImage();
         network->doDestin(isi.getGrayImageFloat());
-
-        //network->doDestin(inArr);
-        //cl2->floatArrRandomize(inArr, size);
     }
 
     for(int i=0; i<nLayer; ++i)
@@ -1102,66 +1106,19 @@ void test_SOM()
         network->setLayerIsTraining(i, false);
     }
 
-    int numImgs = 4;
-    isi.findNextImage();
-    float * f = isi.getGrayImageFloat();
-    network->doDestin(f);
-
     for(int currLayer=0; currLayer<nLayer; ++currLayer)
     {
         Node * currNode = network->getNode(currLayer, 0, 0);
         uint nb = currNode->nb;
         uint dim = currNode->ni;
-        printf("%d  %d\n", nb, dim);
+        printf("---Layer %d---\n", currLayer);
+        printf("Centroids: %d; Dimensions:  %d;\n", nb, dim);
         uint som_rows = 200, som_cols = 200;
 
         ClusterSom som(som_rows, som_cols, dim);
 
-        std::vector<std::vector<float> > obsData;
-        int currSize = network->getNetwork()->layerSize[currLayer];
-        if(currLayer == 0)
-        {
-            int currWidth = (int)sqrt(currSize);
-            for(int row=0; row<currWidth; ++row)
-            {
-                for(int col=0; col<currWidth; ++col)
-                {
-                    Node * tNode = network->getNode(currLayer, row, col);
-                    std::vector<float> d;
-                    for(int i=0; i<tNode->ni; ++i)
-                    {
-                        d.push_back(f[tNode->inputOffsets[i]]);
-                    }
-                    obsData.push_back(d);
-                    som.addTrainData(d.data());
-                }
-            }
-        }  // This part is for testing!!!
-        else
-        {
-            int currWidth = (int)sqrt(currSize);
-            for(int row=0; row<currWidth; ++row)
-            {
-                for(int col=0; col<currWidth; ++col)
-                {
-                    Node * tNode = network->getNode(currLayer, row, col);
-                    Node ** childNodes = tNode->children;
-                    std::vector<float> d;
-                    for(int i=0; i<4; ++i)
-                    {
-                        for(int j=0; j<childNodes[i]->nb; ++j)
-                        {
-                            d.push_back(childNodes[i]->beliefMal[j]);
-                        }
-                    }
-                    obsData.push_back(d);
-                    som.addTrainData(d.data());
-                }
-            }
-        }
-
-
-        std::vector<std::vector<float> > data;
+        // The centroids
+        /*std::vector<std::vector<float> > muData;
         for(int i=0; i<nb; ++i)
         {
             std::vector<float> d;
@@ -1169,26 +1126,79 @@ void test_SOM()
             {
                 d.push_back(currNode->mu[i*currNode->ns + j]);
             }
-            data.push_back(d);
+            muData.push_back(d);
             som.addTrainData(d.data());
         }
+        printf("muData: %ld;\n", muData.size());*/
 
-        som.train(20000);
+        // The observations
+        std::vector<std::vector<float> > obsData;
+        int currSize = network->getNetwork()->layerSize[currLayer];
+        for(int idxImg=0; idxImg<nImgs; ++idxImg)
+        {
+            isi.findNextImage();
+            float * f = isi.getGrayImageFloat();
+            network->doDestin(f);
+
+            if(currLayer == 0)
+            {
+                int currWidth = (int)sqrt(currSize);
+                for(int row=0; row<currWidth; ++row)
+                {
+                    for(int col=0; col<currWidth; ++col)
+                    {
+                        Node * tNode = network->getNode(currLayer, row, col);
+                        std::vector<float> d;
+                        for(int i=0; i<tNode->ni; ++i)
+                        {
+                            d.push_back(f[tNode->inputOffsets[i]]);
+                        }
+                        obsData.push_back(d);
+                        som.addTrainData(d.data());
+                    }
+                }
+            }
+            else
+            {
+                int currWidth = (int)sqrt(currSize);
+                for(int row=0; row<currWidth; ++row)
+                {
+                    for(int col=0; col<currWidth; ++col)
+                    {
+                        Node * tNode = network->getNode(currLayer, row, col);
+                        Node ** childNodes = tNode->children;
+                        std::vector<float> d;
+                        for(int i=0; i<4; ++i)
+                        {
+                            for(int j=0; j<childNodes[i]->nb; ++j)
+                            {
+                                d.push_back(childNodes[i]->beliefMal[j]);
+                            }
+                        }
+                        obsData.push_back(d);
+                        som.addTrainData(d.data());
+                    }
+                }
+            }
+        }
+        printf("obsData: %ld;\n", obsData.size());
+
+        som.train(10000);
 
         SomPresentor sp(som);
+
+        /*for(int i=0; i<nb; ++i)
+        {
+            std::vector<float> d = muData.at(i);
+            CvPoint cp = som.findBestMatchingUnit(d.data());
+            sp.addSimMapMaker(cp.y, cp.x, 0.1, 5);
+        }*/
 
         for(int i=0; i<currSize; ++i)
         {
             std::vector<float> d = obsData.at(i);
             CvPoint cp = som.findBestMatchingUnit(d.data());
-            sp.addSimMapMaker(cp.y, cp.x, 0.5, 5);
-        }
-
-        for(int i=0; i<nb; ++i)
-        {
-            std::vector<float> d = data.at(i);
-            CvPoint cp = som.findBestMatchingUnit(d.data());
-            sp.addSimMapMaker(cp.y, cp.x, 0.1, 15);
+            sp.addSimMapMaker(cp.y, cp.x, 0.5, 3);
         }
 
         string filename = "/home/teaera/Pictures/";
@@ -1223,7 +1233,80 @@ void test_SOM()
         }
 
         sp.showAndSaveSimularityMap(filename);
-        cv::waitKey(3000);
+        cv::waitKey(3000);/**/
     }
 
+    delete network;
+}
+
+void test_TempFunc()
+{
+    // Transform 512*512 images to 32*32 images
+    /*CztMod * cm = new CztMod();
+    string s = "ABCDEFGHIJKLMNYZ";
+    string t;
+    for(int i=0; i<s.length(); ++i)
+    {
+        t = "";
+        t.insert(t.begin(), s[i]);
+        cm->resizeImage("/home/teaera/Work/RECORD/2013.7.22/512/"+t+".png", "/home/teaera/Work/RECORD/2013.7.22/32/"+t+".png", cv::Size(32, 32));
+    }*/
+}
+
+void test_Quality()
+{
+    // To follow the habits from C, initialize i,j,k outside the loops first;
+    int i, j, l;
+
+    ImageSouceImpl isi;
+    string imgs = "ABCDEFGHIJKLMNYZ", img;
+    for(i=0; i<imgs.length(); ++i)
+    {
+        img = "";
+        img.insert(img.begin(), imgs[i]);
+        isi.addImage("/home/teaera/Work/RECORD/2013.7.22/32/" + img + ".png");
+    }
+
+    SupportedImageWidths siw = W32;
+    uint nLayer = 4;
+    uint centroid_counts[]  = {96, 64, 32, 16};
+    bool isUniform = true;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
+    Destin * d = network->getNetwork();
+
+    int frameCount = 1, maxCount = 1600;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+            for(l=0; l<d->nLayers; ++l)
+            {
+                printf("Layer %d\n", l);
+                for(i=0; i<d->nb[l]; ++i)
+                {
+                    // Only display the 'ni' part!
+                    for(j=0; j<network->getNode(l,0,0)->ni; ++j)
+                    {
+                        //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
+                        //printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
+                        printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
+                    }
+                    printf("\n");
+                }
+                printf("------\n");
+            }
+            printf("\n");/**/
+        }
+
+        isi.findNextImage();
+        network->doDestin(isi.getGrayImageFloat());
+    }
+
+    uint tempLayer = 3;
+    network->displayLayerCentroidImages(tempLayer, 1000);
+    cv::waitKey(3000);
+    network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/visualizer_layer7.jpg");
+
+    delete network;
 }

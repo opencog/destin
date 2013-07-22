@@ -10,7 +10,7 @@ import cv2.cv as cv
 import pydestin as pd
 
 cl = pd.czt_lib()
-cl2 = pd.czt_lib2()
+cm = pd.CztMod()
 
 #############################################################################
 """
@@ -50,18 +50,10 @@ def init_destin(siw=pd.W512, nLayer=8, centroids=[4,8,16,32,64,32,16,8],
     #temp_network.setBeliefTransform(pd.DST_BT_NONE)
     return temp_network
 
-'''
-Use czt_lib to format images in one folder to the size 512*512 and store
-into another folder!
-'''
-def processFld(inFld, outFld):
-    if not inFld.endswith("/"):
-        inFld += "/"
-    if not outFld.endswith("/"):
-        outFld += "/"
-    for each in os.listdir(inFld):
-        cl.isNeedResize(inFld + each)
-        cl.write_file(outFld + each)
+"""
+resizeImage from CztMod
+But cv::Size doesn't exist for Python OpenCV!
+"""
 
 '''
 Use the existing network and ims to train!
@@ -98,8 +90,8 @@ def train_ims_randomInfo(network, ims, size, extRatio, maxCount=16000):
             print "Iteration " + str(i)
         ims.findNextImage()
         f1 = ims.getGrayImageFloat()
-        f2 = cl2.getFloatArr(size*extRatio)
-        cl2.combineInfo_extRatio(f1, size, extRatio, f2)
+        f2 = cm.getFloatArr(size*extRatio)
+        cm.combineInfo_extRatio(f1, size, extRatio, f2)
         network.doDestin(f2)
 
 def train_only(network, tempIn, maxCount=16000):

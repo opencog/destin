@@ -256,6 +256,7 @@ while(vs1.grab()):
 #############################################################################
 # 2013.7.5, 2013.7.8
 # After I merged the changes in DeSTIN, the mod should be changed;
+'''
 nLayer = 8
 centroids = [4,8,16,32,32,16,8,4]
 #centroids = [8,16,32,64,64,32,12,4]
@@ -305,7 +306,6 @@ for i in range(1, maxCount+1):
     f = ims.getGrayImageFloat()
     dn.doDestin(f)
 
-'''
 cm.dcis(dn, 7)
 cm.saveCens(dn, 7, cm.homeFld + "/Pictures/2013.7.8_layer7.jpg")
 for i in range(nLayer):
@@ -356,3 +356,5 @@ for i in range(nLayer):
     plt.savefig(cm.homeFld + "/Pictures/2013.7.16_"+str(i)+".jpg")
 plt.show()
 '''
+
+#############################################################################

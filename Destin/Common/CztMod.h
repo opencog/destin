@@ -3,7 +3,7 @@
 
 using namespace std;
 
-class czt_lib2
+class CztMod
 {
 public:
 
@@ -132,6 +132,20 @@ public:
     {
         int i=4;
         int width = (int)sqrt(size);
+    }
+
+    //*************************************************************************
+    void resizeImage(string imgPath, string savePath, cv::Size size)
+    {
+        cv::Mat inputMat = cv::imread(imgPath, 0); // CV_LOAD_IMAGE_GRAYSCALE failed! But 0 worked!!! Type: 8UC1
+        cv::Mat tempMat;
+        cv::Mat resizeMat;
+
+        inputMat.convertTo(tempMat, CV_32FC1, 1.0/255.0);
+        cv::resize(tempMat, resizeMat, size, 1.0, 1.0);
+        resizeMat.convertTo(tempMat, CV_8UC1, 255);
+
+        cv::imwrite(savePath, tempMat);
     }
 
 };

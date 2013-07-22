@@ -394,32 +394,18 @@ float DestinNetworkAlt::getSep(int layer)
             {
                 float fSum = 0.0;
                 float fTemp;
-                if(layer == 0)
+                for(k=0; k<currNode->ni; ++k)
                 {
-                    for(k=0; k<currNode->ni; ++k)
-                    {
-                        fSum += fabs(currNode->mu[i*currNode->ns + k]
-                                     - currNode->mu[j*currNode->ns + k]);
-                    }
-                    for(k=currNode->ni + currNode->nb + currNode->np + currNode->nc;
-                        k < currNode->ns; ++k)
-                    {
-                        fSum += fabs(currNode->mu[i*currNode->ns + k]
-                                     - currNode->mu[j*currNode->ns + k]);
-                    }
-                    fTemp = fSum / (currNode->ni * destin->extRatio);
+                    fSum += fabs(currNode->mu[i*currNode->ns + k]
+                                 - currNode->mu[j*currNode->ns + k]);
                 }
-                else
+                for(k=currNode->ni + currNode->nb + currNode->np + currNode->nc;
+                    k < currNode->ns; ++k)
                 {
-                    for(k=0; k<currNode->ni; ++k)
-                    {
-                        fSum += fabs(currNode->mu[i*currNode->ns + k]
-                                     - currNode->mu[j*currNode->ns + k]);
-                    }
-                    fTemp = fSum / currNode->ni;
+                    fSum += fabs(currNode->mu[i*currNode->ns + k]
+                                 - currNode->mu[j*currNode->ns + k]);
                 }
-
-                //printf("%d  %d  %f\n", i, j, fTemp);
+                fTemp = fSum / (currNode->ni * (layer==0 ? destin->extRatio : 1));
 
                 if(fTemp < sep[i])
                 {
@@ -428,7 +414,6 @@ float DestinNetworkAlt::getSep(int layer)
             }
         }
     }
-    //
     float fSum = 0.0;
     for(i=0; i<currNode->nb; ++i)
     {
@@ -448,27 +433,17 @@ float DestinNetworkAlt::getVar(int layer)
     for(i=0; i<currNode->nb; ++i)
     {
         float fSum = 0.0;
-        if(layer==0)
+        for(j=0; j<currNode->ni; ++j)
         {
-            for(j=0; j<currNode->ni; ++j)
-            {
-                fSum += destin->uf_absvar[layer][i*currNode->ns + j];
-            }
-            for(j=currNode->ni+currNode->nb+currNode->np+currNode->nc;
-                j<currNode->ns; ++j)
-            {
-                fSum += destin->uf_absvar[layer][i*currNode->ns + j];
-            }
-            var[i] = fSum / (currNode->ni * destin->extRatio);
+            fSum += destin->uf_absvar[layer][i*currNode->ns + j];
         }
-        else
+        for(j=currNode->ni+currNode->nb+currNode->np+currNode->nc;
+            j<currNode->ns; ++j)
         {
-            for(j=0; j<currNode->ni; ++j)
-            {
-                fSum += destin->uf_absvar[layer][i*currNode->ns + j];
-            }
-            var[i] = fSum / currNode->ni;
+            fSum += destin->uf_absvar[layer][i*currNode->ns + j];
         }
+        var[i] = fSum / (currNode->ni * (layer == 0 ? destin->extRatio : 1));
+
     }
     float fSum = 0.0;
     for(i=0; i<currNode->nb; ++i)

@@ -17,7 +17,7 @@ add_library( common SHARED
     ImageSourceImpl.h
     DestinTreeManager
     czt_lib.h
-    czt_lib2.h
+    CztMod.h
 )
 
 add_executable( testCifarSource TestCifar.cpp )
