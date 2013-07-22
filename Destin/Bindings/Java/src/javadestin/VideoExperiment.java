@@ -46,7 +46,7 @@ public class VideoExperiment implements IExperiment {
     @Override
 	public void reset(){
 		synchronized (presentor.getNetworkLock()) {
-			network.free();
+			network.destroy();
 			network = networkFactory.create();
 			presentor.setNetwork(network);
 		}

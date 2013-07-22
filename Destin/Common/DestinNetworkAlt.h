@@ -130,7 +130,7 @@ public:
         return training;
     }
 
-    void free() {
+    void destroy() {
         DestroyDestin(destin);
         destin = NULL;
     }
