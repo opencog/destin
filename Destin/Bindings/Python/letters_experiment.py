@@ -14,7 +14,6 @@ ims = pd.ImageSouceImpl()
 
 #letters = "LO+"
 letters = "ABC"
-letters = "ABCDEFG"
 for l in letters:
     ims.addImage(czm.homeFld + "/Downloads/destin_toshare/train images/%s.png" % l)
     
@@ -25,6 +24,7 @@ top_layer = layers - 1
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 dn.setFixedLearnRate(.1)
 dn.setBeliefTransform(pd.DST_BT_NONE)
+pd.SetLearningStrat(dn.getNetwork(), pd.CLS_FIXED)
 #dn.setBeliefTransform(pd.DST_BT_P_NORM)
 #ut=1.5
 #dn.setTemperatures([ut,ut,ut,ut,ut,ut,ut,ut])
@@ -41,7 +41,7 @@ chart_thread = ChartingThread()
 #chart_thread.start()
 
 def train():
-    for i in xrange(2500):
+    for i in xrange(4000):
         if i % 10 == 0:
             print "Iteration " + str(i)
             var = dn.getVar(top_layer)
