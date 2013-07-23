@@ -3,6 +3,8 @@ import cv2.cv as cv
 import time
 import pydestin as pd
 import czt_mod as czm
+import charting as chart
+import threading
 
 experiment_root_dir="./experiment_runs"
 
@@ -11,6 +13,7 @@ ims = pd.ImageSouceImpl()
 
 
 #letters = "LO+"
+letters = "ABC"
 letters = "ABCDEFG"
 for l in letters:
     ims.addImage(czm.homeFld + "/Downloads/destin_toshare/train images/%s.png" % l)
@@ -30,10 +33,30 @@ weight_exponent = 4
 
 save_root="./saves/"
 
+class ChartingThread(threading.Thread):
+    def run(self):
+        chart.draw()
+        
+chart_thread = ChartingThread()
+#chart_thread.start()
+
 def train():
-    for i in range(3500):
+    for i in xrange(2500):
         if i % 10 == 0:
             print "Iteration " + str(i)
+            var = dn.getVar(top_layer)
+            print "Variance: " +str(var)
+            
+            sep =  dn.getSep(top_layer)
+            print "Sep: " + str(sep)
+            
+            qual = dn.getQuality(top_layer)
+            print "Quality: " + str(qual)
+            
+            chart.update([qual, var, sep])
+            chart.draw()
+            #code.interact(local=locals())
+            
             
         ims.findNextImage()
         #dn.clearBeliefs()
