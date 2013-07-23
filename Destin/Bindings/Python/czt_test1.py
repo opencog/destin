@@ -358,3 +358,41 @@ plt.show()
 '''
 
 #############################################################################
+siw = pd.W32
+nLayer = 4
+centroids = [64, 64, 32, 16]
+dn = cm.init_destin(siw=siw, nLayer=nLayer, centroids=centroids)
+
+ims = pd.ImageSouceImpl()
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.7.22/32")
+
+sepDict = {}
+varDict = {}
+quaDict = {}
+for i in range(nLayer):
+    sepDict[str(i)] = []
+    varDict[str(i)] = []
+    quaDict[str(i)] = []
+
+maxCount = 1600
+for i in range(1, maxCount+1):
+    if i % 10 == 0:
+        print "Iteration " + str(i)
+        for i in range(nLayer):
+            sep = dn.getSep(i)
+            var = dn.getVar(i)
+            qua = dn.getQuality(i)
+            sepDict[str(i)].append(sep)
+            varDict[str(i)].append(var)
+            quaDict[str(i)].append(qua)
+    ims.findNextImage()
+    f = ims.getGrayImageFloat()
+    dn.doDestin(f)
+
+cm.dcis(dn, 3)
+cm.saveCens(dn, 3, cm.homeFld + "/Pictures/2013.7.23_layer3.jpg")
+for i in range(nLayer):
+    plt.figure()
+    plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
+    plt.savefig(cm.homeFld + "/Pictures/2013.7.23_"+str(i)+".jpg")
+plt.show()

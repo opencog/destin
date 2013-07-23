@@ -134,7 +134,7 @@ public:
         int width = (int)sqrt(size);
     }
 
-    //*************************************************************************
+    // Resize image and save the result, according to the size;
     void resizeImage(string imgPath, string savePath, cv::Size size)
     {
         cv::Mat inputMat = cv::imread(imgPath, 0); // CV_LOAD_IMAGE_GRAYSCALE failed! But 0 worked!!! Type: 8UC1

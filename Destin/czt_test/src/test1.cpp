@@ -49,9 +49,9 @@ int main(int argc, char ** argv){
     //test_CL_and_CL2();
     //test_Update();
     //test_RandomInput();
-    test_SOM();
+    //test_SOM();
     //test_TempFunc();
-    //test_Quality();
+    test_Quality();
 }
 
 /** meaures time between calls and prints the fps.
@@ -1085,7 +1085,8 @@ void test_SOM()
 
     SupportedImageWidths siw = W32;
     uint nLayer = 4;
-    uint centroid_counts[]  = {96, 64, 32, 16};
+    //uint centroid_counts[]  = {96, 64, 32, 16};
+    uint centroid_counts[]  = {64, 64, 32, 16};
     bool isUniform = true;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
 
@@ -1106,6 +1107,7 @@ void test_SOM()
         network->setLayerIsTraining(i, false);
     }
 
+    // For testing
     for(int currLayer=0; currLayer<nLayer; ++currLayer)
     {
         Node * currNode = network->getNode(currLayer, 0, 0);
@@ -1114,11 +1116,13 @@ void test_SOM()
         printf("---Layer %d---\n", currLayer);
         printf("Centroids: %d; Dimensions:  %d;\n", nb, dim);
         uint som_rows = 200, som_cols = 200;
+        uint som_train_iterations = 5000;
 
         ClusterSom som(som_rows, som_cols, dim);
+        SomPresentor sp(som);
 
         // The centroids
-        /*std::vector<std::vector<float> > muData;
+        std::vector<std::vector<float> > muData;
         for(int i=0; i<nb; ++i)
         {
             std::vector<float> d;
@@ -1129,7 +1133,7 @@ void test_SOM()
             muData.push_back(d);
             som.addTrainData(d.data());
         }
-        printf("muData: %ld;\n", muData.size());*/
+        printf("muData: %ld;\n", muData.size());
 
         // The observations
         std::vector<std::vector<float> > obsData;
@@ -1138,7 +1142,11 @@ void test_SOM()
         {
             isi.findNextImage();
             float * f = isi.getGrayImageFloat();
-            network->doDestin(f);
+            // In case
+            for(int i=0; i<nLayer*10; ++i)
+            {
+                network->doDestin(f);
+            }
 
             if(currLayer == 0)
             {
@@ -1183,18 +1191,16 @@ void test_SOM()
         }
         printf("obsData: %ld;\n", obsData.size());
 
-        som.train(10000);
+        som.train(som_train_iterations);
 
-        SomPresentor sp(som);
-
-        /*for(int i=0; i<nb; ++i)
+        for(int i=0; i<muData.size(); ++i)
         {
             std::vector<float> d = muData.at(i);
             CvPoint cp = som.findBestMatchingUnit(d.data());
             sp.addSimMapMaker(cp.y, cp.x, 0.1, 5);
-        }*/
+        }
 
-        for(int i=0; i<currSize; ++i)
+        for(int i=0; i<obsData.size(); ++i)
         {
             std::vector<float> d = obsData.at(i);
             CvPoint cp = som.findBestMatchingUnit(d.data());
@@ -1233,7 +1239,7 @@ void test_SOM()
         }
 
         sp.showAndSaveSimularityMap(filename);
-        cv::waitKey(3000);/**/
+        cv::waitKey(3000);
     }
 
     delete network;
@@ -1242,8 +1248,8 @@ void test_SOM()
 void test_TempFunc()
 {
     // Transform 512*512 images to 32*32 images
-    /*CztMod * cm = new CztMod();
-    string s = "ABCDEFGHIJKLMNYZ";
+    CztMod * cm = new CztMod();
+    /*string s = "ABCDEFGHIJKLMNYZ";
     string t;
     for(int i=0; i<s.length(); ++i)
     {
@@ -1269,7 +1275,8 @@ void test_Quality()
 
     SupportedImageWidths siw = W32;
     uint nLayer = 4;
-    uint centroid_counts[]  = {96, 64, 32, 16};
+    //uint centroid_counts[]  = {96, 64, 32, 16};
+    uint centroid_counts[]  = {64, 64, 32, 16};
     bool isUniform = true;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
     Destin * d = network->getNetwork();
@@ -1280,7 +1287,7 @@ void test_Quality()
         if(frameCount % 10 == 0)
         {
             printf("Count %d;\n", frameCount);
-            for(l=0; l<d->nLayers; ++l)
+            /*for(l=0; l<d->nLayers; ++l)
             {
                 printf("Layer %d\n", l);
                 for(i=0; i<d->nb[l]; ++i)
@@ -1296,7 +1303,27 @@ void test_Quality()
                 }
                 printf("------\n");
             }
-            printf("\n");/**/
+            printf("\n");*/
+
+            /*l = nLayer-1;
+            Node * currNode = network->getNode(l, 0, 0);
+            uint currWinner = currNode->winner;
+            printf("Centroid:\n");
+            for(i=0; i<currNode->ni; ++i)
+            {
+                printf("%f  ", currNode->mu[currWinner*currNode->ns + i]);
+            }
+            printf("\n");
+            printf("Observation:\n");
+            Node ** nodes = currNode->children;
+            for(i=0; i<4; ++i)
+            {
+                for(j=0; j<nodes[i]->nb; ++j)
+                {
+                    printf("%f  ", nodes[i]->beliefMal[j]);
+                }
+            }
+            printf("\n");*/
         }
 
         isi.findNextImage();
