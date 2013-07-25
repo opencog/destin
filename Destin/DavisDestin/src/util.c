@@ -1344,6 +1344,8 @@ void DestroyDestin( Destin * d )
             FREE(d->uf_sigma[i]);
             FREE(d->uf_starv[i]);
             FREE(d->uf_absvar[i]);
+            FREE(d->uf_avgAbsDelta[i]);
+            FREE(d->uf_avgSquaredDelta[i]);
 
         }
         FREE(d->uf_avgDelta);
@@ -1353,6 +1355,8 @@ void DestroyDestin( Destin * d )
         FREE(d->uf_sigma);
         FREE(d->uf_starv);
         FREE(d->uf_absvar);
+        FREE(d->uf_avgAbsDelta);
+        FREE(d->uf_avgSquaredDelta);
     }
     
     for( i=0; i < d->nNodes; i++ )

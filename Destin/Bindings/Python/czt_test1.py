@@ -316,48 +316,8 @@ plt.show()
 '''
 
 #############################################################################
-# 2013.7.16
 '''
-#centroids = [4,4,4,4,4,4,4,4]
-centroids = [4,8,16,32,32,16,8,4]
-nLayer = 8
-dn = cm.init_destin(centroids=centroids)
-
-size = 512*512
-cl2 = pd.czt_lib2()
-faTemp = cl2.floatArrCreate(size)
-cl2.floatArrRandomize(faTemp, size)
-
-sepDict = {}
-varDict = {}
-quaDict = {}
-for i in range(nLayer):
-    sepDict[str(i)] = []
-    varDict[str(i)] = []
-    quaDict[str(i)] = []
-
-maxCount = 1500
-for i in range(1, maxCount+1):
-    if i % 10 == 0:
-        print "Iteration " + str(i)
-        for i in range(nLayer):
-            sep = dn.getSep(i)
-            var = dn.getVar(i)
-            qua = dn.getQuality(i)
-            sepDict[str(i)].append(sep)
-            varDict[str(i)].append(var)
-            quaDict[str(i)].append(qua)
-    dn.doDestin(faTemp)
-
-
-for i in range(nLayer):
-    plt.figure()
-    plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
-    plt.savefig(cm.homeFld + "/Pictures/2013.7.16_"+str(i)+".jpg")
-plt.show()
 '''
-
-#############################################################################
 siw = pd.W32
 nLayer = 4
 centroids = [64, 64, 32, 16]
@@ -375,9 +335,9 @@ for i in range(nLayer):
     quaDict[str(i)] = []
 
 maxCount = 1600
-for i in range(1, maxCount+1):
-    if i % 10 == 0:
-        print "Iteration " + str(i)
+for j in range(1, maxCount+1):
+    if j % 10 == 0:
+        print "Iteration " + str(j)
         for i in range(nLayer):
             sep = dn.getSep(i)
             var = dn.getVar(i)
@@ -390,9 +350,46 @@ for i in range(1, maxCount+1):
     dn.doDestin(f)
 
 cm.dcis(dn, 3)
-cm.saveCens(dn, 3, cm.homeFld + "/Pictures/2013.7.23_layer3.jpg")
+cm.saveCens(dn, 3, cm.homeFld + "/Pictures/2013.7.25_layer3.jpg")
 for i in range(nLayer):
     plt.figure()
     plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
-    plt.savefig(cm.homeFld + "/Pictures/2013.7.23_"+str(i)+".jpg")
+    plt.savefig(cm.homeFld + "/Pictures/2013.7.25_"+str(i)+".jpg")
 plt.show()
+
+#############################################################################
+'''
+import charting as chart
+import threading
+
+siw = pd.W32
+nLayer = 4
+centroids = [64, 64, 32, 16]
+dn = cm.init_destin(siw=siw, nLayer=nLayer, centroids=centroids)
+
+ims = pd.ImageSouceImpl()
+cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.7.22/32")
+
+class ChartingThread(threading.Thread):
+    def run(self):
+        chart.draw()
+        
+chart_thread = ChartingThread()
+
+maxCount = 1600
+for i in xrange(1, maxCount+1):
+    if i % 10 == 0:
+        print "Iteration " + str(i)
+        j = nLayer-3
+        var = dn.getVar(j)
+        print "Variance: " +str(var)
+        
+        sep = dn.getSep(j)
+        qua = dn.getQuality(j)
+        
+        chart.update([sep, var, qua])
+        chart.draw()
+    ims.findNextImage()
+    f = ims.getGrayImageFloat()
+    dn.doDestin(f)
+'''

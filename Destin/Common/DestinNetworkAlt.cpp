@@ -424,9 +424,10 @@ float DestinNetworkAlt::getVar(int layer)
     Node * currNode = getNode(layer, 0, 0);
     std::vector<float> var(currNode->nb);
     int i,j;
+    float fSum;
     for(i=0; i<currNode->nb; ++i)
     {
-        float fSum = 0.0;
+        fSum = 0.0;
         for(j=0; j<currNode->ni; ++j)
         {
             fSum += destin->uf_absvar[layer][i*currNode->ns + j];
@@ -437,9 +438,8 @@ float DestinNetworkAlt::getVar(int layer)
             fSum += destin->uf_absvar[layer][i*currNode->ns + j];
         }
         var[i] = fSum / (currNode->ni * (layer == 0 ? destin->extRatio : 1));
-
     }
-    float fSum = 0.0;
+    fSum = 0.0;
     for(i=0; i<currNode->nb; ++i)
     {
         fSum += var[i];

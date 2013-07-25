@@ -163,6 +163,10 @@ void CalculateDistances( Node *n, uint nIdx )
             delta = n->observation[j] - n->mu[bRow+j];
             // Start distance calculation
             delta *= delta;
+
+            // 2013.7.24
+            // CZT: allDelta
+            //n->allDelta[bRow + j] = fabs(delta);
 #ifdef CHECK_BELIEF_ZERO
             if(isnan(delta)){
                 oops("delta was nan\n");
@@ -360,18 +364,30 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
 //average the deltas and multiply them by the shared ncounts
 void Uniform_AverageDeltas(Node * n, uint nIdx){
     n = &n[nIdx];
-   int count = n->d->uf_winCounts[n->layer][n->winner];
-   if(count > 0){
+    int count = n->d->uf_winCounts[n->layer][n->winner];
+    if(count > 0){
         uint s;
         for(s = 0; s < n->ns ; s++){
             n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
 
             // 2013.7.18
             // CZT:
-            n->d->uf_avgSquaredDelta[n->layer][n->winner * n->ns + s] += n->delta[s]*n->delta[s] / (float)(count*count);
-            n->d->uf_avgAbsDelta[n->layer][n->winner * n->ns + s] += fabs(n->delta[s]) / (float)count;
+            n->d->uf_avgSquaredDelta[n->layer][n->winner * n->ns + s] += n->delta[s]*n->delta[s] / (float)(count);
+            //n->d->uf_avgAbsDelta[n->layer][n->winner * n->ns + s] += fabs(n->delta[s]) / (float)count;
         }
     }
+
+    // 2013.7.25
+    // CZT: Should calculate all nodes' delta for the same layer; for TEST;
+    uint i,j;
+    for(i=0; i<n->nb; ++i)
+    {
+        for(j=0; j<n->ns; ++j)
+        {
+            n->d->uf_avgAbsDelta[n->layer][i * n->ns + j] += fabs(n->delta[j]) / (float)n->d->layerSize[n->layer];
+        }
+    }
+
     return;
 }
 
@@ -407,7 +423,7 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
             // 2013.7.4
             // CZT: as Ben suggested, uf_absvar;
             //d->uf_absvar[layer][c*ns + s] += n->beta * (fabs(dt) - d->uf_absvar[layer][c*ns + s]);
-            d->uf_absvar[layer][c*ns + s] += n->beta * (d->uf_avgAbsDelta[layer][c * ns + s] - d->uf_absvar[layer][c*ns + s]);
+            d->uf_absvar[layer][c*ns + s] += n->beta * (d->uf_avgAbsDelta[layer][c * ns + s] - d->uf_absvar[layer][c*ns + s]);  // for TEST;
         }
     }
     return;

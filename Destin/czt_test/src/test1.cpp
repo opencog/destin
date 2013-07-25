@@ -1287,11 +1287,15 @@ void test_Quality()
         if(frameCount % 10 == 0)
         {
             printf("Count %d;\n", frameCount);
+
             /*for(l=0; l<d->nLayers; ++l)
             {
                 printf("Layer %d\n", l);
                 for(i=0; i<d->nb[l]; ++i)
                 {
+                    i = network->getNode(l,0,0)->winner;
+                    printf("winner: %d\n", i);
+
                     // Only display the 'ni' part!
                     for(j=0; j<network->getNode(l,0,0)->ni; ++j)
                     {
@@ -1300,6 +1304,8 @@ void test_Quality()
                         printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
                     }
                     printf("\n");
+
+                    break;
                 }
                 printf("------\n");
             }
