@@ -5,11 +5,11 @@
 #include "ClusterSom.h"
 
 void test_org();
-void test_SOM();
+void test_SOM_demo();
 
 int main(int argc, char ** argv){
     //test_org();
-    test_SOM();
+    test_SOM_demo();
 
     return 0;
 }
@@ -41,7 +41,7 @@ void test_org()
     cv::waitKey();
 }
 
-void test_SOM()
+void test_SOM_demo()
 {
     // 2013.7.19
     // This is a simple demo to show how to use SOM to train high-dim vectors,

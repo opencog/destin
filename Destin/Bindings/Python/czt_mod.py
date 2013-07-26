@@ -18,31 +18,31 @@ Save the current user's home folder.
 """
 homeFld = os.getenv("HOME")
 
-'''
+"""
 Display centroids images!
-'''
+"""
 def dcis(network, layer):
     network.displayLayerCentroidImages(layer,1000)
     cv.WaitKey(100)
 
-'''
+"""
 Save centroids images!
-'''
+"""
 def saveCens(network, layer, saveLoc):
     network.saveLayerCentroidImages(layer, saveLoc)
 
-'''
+"""
 Load images in one folder into an 'ims'!!!
-'''
+"""
 def load_ims_fld(ims, fld):
     if not fld.endswith("/"):
         fld += "/"
     for each in os.listdir(fld):
         ims.addImage(fld + each)
 
-'''
+"""
 Used to init DeSTIN, but compatible by setting 'extRatio'!
-'''
+"""
 def init_destin(siw=pd.W512, nLayer=8, centroids=[4,8,16,32,64,32,16,8],
                 isUniform=True, extRatio=1):
     
@@ -55,10 +55,10 @@ resizeImage from CztMod
 But cv::Size doesn't exist for Python OpenCV!
 """
 
-'''
+"""
 Use the existing network and ims to train!
 Default number is 16,000.
-'''
+"""
 def train_ims(network, ims, maxCount=16000):
     for i in range(maxCount):
         if i % 10 == 0:
@@ -67,9 +67,9 @@ def train_ims(network, ims, maxCount=16000):
         f = ims.getGrayImageFloat()    
         network.doDestin(f)
 
-'''
+"""
 Use one folder as input, and use another folder as additional info!
-'''
+"""
 def train_2flds(network, fld1, fld2, repeatCount=1600):
     if not fld1.endswith("/"):
         fld1 += "/"
@@ -82,45 +82,7 @@ def train_2flds(network, fld1, fld2, repeatCount=1600):
             f = cl.combineImgs(fld1+each, fld2+each)
             network.doDestin(f)
 
-#############################################################################
-# Testing functions:
-def train_ims_randomInfo(network, ims, size, extRatio, maxCount=16000):
-    for i in range(maxCount):
-        if i % 10 == 0:
-            print "Iteration " + str(i)
-        ims.findNextImage()
-        f1 = ims.getGrayImageFloat()
-        f2 = cm.getFloatArr(size*extRatio)
-        cm.combineInfo_extRatio(f1, size, extRatio, f2)
-        network.doDestin(f2)
-
-def train_only(network, tempIn, maxCount=16000):
-    for i in range(maxCount):
-        if i % 10 == 0:
-            print "Iteration " + str(i)
-        network.doDestin(tempIn)
-
-#############################################################################
-def drawCurve(inFile, times):
-    fCont = open(inFile).read().split("\n")[:times]
-    sepDict = {}
-    varDict = {}
-    quality = {}
-    for i in range(8):
-        quality[str(i)] = []
-        sepDict[str(i)] = []
-        varDict[str(i)] = []
-    for i in range(times):
-        lCont = fCont[i].split("  ")[:8]
-        for i in range(8):
-            quality[str(i)].append(float(lCont[i]))
-    import matplotlib.pyplot as plt
-    for i in range(8):
-        plt.figure()
-        plt.plot(quality[str(i)], "r*-")
-        plt.savefig(homeFld+"/Pictures/2013.7.5_"+str(i)+".jpg")
-    plt.show()
-
-
-#drawCurve(homeFld + '/destin_ted_temp/Destin/1', 150)
-
+import datetime
+def getTimeStamp():
+    now = datetime.datetime.now()
+    return str(now.year) + "." + str(now.month) + "." + str(now.day)

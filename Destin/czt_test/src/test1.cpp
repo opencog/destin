@@ -36,6 +36,7 @@ void test_CL_and_CL2();
 void test_Update();
 void test_RandomInput();
 void test_SOM();
+void test_SOM2();
 void test_TempFunc();
 void test_Quality();
 
@@ -50,8 +51,9 @@ int main(int argc, char ** argv){
     //test_Update();
     //test_RandomInput();
     //test_SOM();
+    test_SOM2();
     //test_TempFunc();
-    test_Quality();
+    //test_Quality();
 }
 
 /** meaures time between calls and prints the fps.
@@ -1340,6 +1342,181 @@ void test_Quality()
     network->displayLayerCentroidImages(tempLayer, 1000);
     cv::waitKey(3000);
     network->saveLayerCentroidImages(tempLayer, "/home/teaera/Pictures/visualizer_layer7.jpg");
+
+    delete network;
+}
+
+void test_SOM2()
+{
+    ImageSouceImpl isi;
+    string imgs = "ABCDEFGHIJKLMNYZ", img;
+    uint nImgs = imgs.length();
+    for(int i=0; i<nImgs; ++i)
+    {
+        img = "";
+        img.insert(img.begin(), imgs[i]);
+        isi.addImage("/home/teaera/Work/RECORD/2013.7.22/32/" + img + ".png");
+    }
+
+    SupportedImageWidths siw = W32;
+    uint nLayer = 4;
+    //uint centroid_counts[]  = {64, 64, 32, 16};
+    uint centroid_counts[]  = {4, 4, 4, 16};
+    bool isUniform = true;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
+
+    int frameCount = 1, maxCount = 16000;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+        }
+
+        isi.findNextImage();
+        network->doDestin(isi.getGrayImageFloat());
+    }
+
+    for(int i=0; i<nLayer; ++i)
+    {
+        network->setLayerIsTraining(i, false);
+    }
+
+    // For testing
+    for(int currLayer=0; currLayer<nLayer; ++currLayer)
+    {
+        Node * currNode = network->getNode(currLayer, 0, 0);
+        uint nb = currNode->nb;
+        uint dim = currNode->ni;
+        printf("---Layer %d---\n", currLayer);
+        printf("Centroids: %d; Dimensions:  %d;\n", nb, dim);
+        uint som_rows = 200, som_cols = 200;
+        uint som_train_iterations = 5000;
+
+        // Different colors
+        std::vector<float> hueVector;
+        for(int i=0; i<nb; ++i)
+        {
+            hueVector.push_back((float)i / (float)nb);
+        }
+
+        ClusterSom som(som_rows, som_cols, dim);
+        SomPresentor sp(som);
+
+        // The centroids
+        std::vector<std::vector<float> > muData;
+        for(int i=0; i<nb; ++i)
+        {
+            std::vector<float> d;
+            for(int j=0; j<dim; ++j)
+            {
+                d.push_back(currNode->mu[i*currNode->ns + j]);
+            }
+            muData.push_back(d);
+            som.addTrainData(d.data());
+        }
+        printf("muData: %ld;\n", muData.size());
+
+        // The observations
+        std::vector<std::vector<float> > obsData;
+        std::vector<int> obsWinner;
+        int currSize = network->getNetwork()->layerSize[currLayer];
+        for(int idxImg=0; idxImg<nImgs; ++idxImg)
+        {
+            isi.findNextImage();
+            float * f = isi.getGrayImageFloat();
+            // In case
+            for(int i=0; i<nLayer*10; ++i)
+            {
+                network->doDestin(f);
+            }
+
+            int currWidth = (int)sqrt(currSize);
+            for(int row=0; row<currWidth; ++row)
+            {
+                for(int col=0; col<currWidth; ++col)
+                {
+                    Node * tNode = network->getNode(currLayer, row, col);
+                    std::vector<float> d;
+                    if(currLayer == 0)
+                    {
+                        for(int i=0; i<tNode->ni; ++i)
+                        {
+                            d.push_back(f[tNode->inputOffsets[i]]);
+                        }
+                    }
+                    else
+                    {
+                        Node ** childNodes = tNode->children;
+                        for(int i=0; i<4; ++i)
+                        {
+                            for(int j=0; j<childNodes[i]->nb; ++j)
+                            {
+                                d.push_back(childNodes[i]->beliefMal[j]);
+                            }
+                        }
+                    }
+                    obsData.push_back(d);
+                    som.addTrainData(d.data());
+
+                    //
+                    obsWinner.push_back(tNode->winner);
+                }
+            }
+
+        }
+        printf("obsData: %ld;\n", obsData.size());
+
+        som.train(som_train_iterations);
+
+        for(int i=0; i<muData.size(); ++i)
+        {
+            std::vector<float> d = muData.at(i);
+            CvPoint cp = som.findBestMatchingUnit(d.data());
+            sp.addSimMapMaker(cp.y, cp.x, hueVector[i], 10);
+        }
+
+        for(int i=0; i<obsData.size(); ++i)
+        {
+            std::vector<float> d = obsData.at(i);
+            CvPoint cp = som.findBestMatchingUnit(d.data());
+            sp.addSimMapMaker(cp.y, cp.x, hueVector[obsWinner[i]], 3);
+        }
+
+        string filename = "/home/teaera/Pictures/";
+        switch(currLayer)
+        {
+        case 0:
+            filename += "layer0.jpg";
+            break;
+        case 1:
+            filename += "layer1.jpg";
+            break;
+        case 2:
+            filename += "layer2.jpg";
+            break;
+        case 3:
+            filename += "layer3.jpg";
+            break;
+        case 4:
+            filename += "layer4.jpg";
+            break;
+        case 5:
+            filename += "layer5.jpg";
+            break;
+        case 6:
+            filename += "layer6.jpg";
+            break;
+        case 7:
+            filename += "layer7.jpg";
+            break;
+        default:
+            break;
+        }
+
+        sp.showAndSaveSimularityMap(filename);
+        cv::waitKey(3000);
+    }
 
     delete network;
 }
