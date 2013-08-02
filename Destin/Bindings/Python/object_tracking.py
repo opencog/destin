@@ -8,7 +8,7 @@ Created on Sat May 18 20:45:29 2013
 import common as cm
 
 cm.init(centroids=[4,8,32,32,64,32,4],
-        video_file="moving_square.mov",
+        video_file="moving_square.avi",
         learn_rate=0.05)
                  
 cm.video_source.enableDisplayWindow()
@@ -59,3 +59,4 @@ print "mining..."
 found = tm.mine(support)
 print "Found", found
 
+doTracking()
