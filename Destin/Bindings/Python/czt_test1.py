@@ -317,7 +317,6 @@ plt.show()
 
 #############################################################################
 '''
-'''
 siw = pd.W32
 nLayer = 4
 centroids = [64, 64, 32, 16]
@@ -356,6 +355,7 @@ for i in range(nLayer):
     plt.plot(range(1, maxCount/10+1), quaDict[str(i)], "r*-", sepDict[str(i)], "g+-", varDict[str(i)], "b.-")
     plt.savefig(cm.homeFld + "/Pictures/2013.7.25_"+str(i)+".jpg")
 plt.show()
+'''
 
 #############################################################################
 '''

@@ -45,13 +45,13 @@ int main(int argc, char ** argv){
     // Run the tests
     //testOrg();
     //testStep2();
-    //testStep3();
+    testStep3();
     //test_CL2();
     //test_CL_and_CL2();
     //test_Update();
     //test_RandomInput();
     //test_SOM();
-    test_SOM2();
+    //test_SOM2();
     //test_TempFunc();
     //test_Quality();
 }
@@ -144,7 +144,7 @@ void convert(cv::Mat & in, float * out) {
 void testOrg(){
     // 2013.4.5
     // I want to test the original destin codes again and learn the CMake further!
-
+    //VideoSource vs(false, "Various.avi");
     VideoSource vs(true, "");
     vs.enableDisplayWindow();
 
@@ -1360,8 +1360,8 @@ void test_SOM2()
 
     SupportedImageWidths siw = W32;
     uint nLayer = 4;
-    //uint centroid_counts[]  = {64, 64, 32, 16};
-    uint centroid_counts[]  = {4, 4, 4, 16};
+    uint centroid_counts[]  = {64, 64, 32, 16};
+    //uint centroid_counts[]  = {4, 4, 4, 16};
     bool isUniform = true;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
 
@@ -1473,7 +1473,7 @@ void test_SOM2()
         {
             std::vector<float> d = muData.at(i);
             CvPoint cp = som.findBestMatchingUnit(d.data());
-            sp.addSimMapMaker(cp.y, cp.x, hueVector[i], 10);
+            sp.addSimMapMaker(cp.y, cp.x, hueVector[i], 6);
         }
 
         for(int i=0; i<obsData.size(); ++i)

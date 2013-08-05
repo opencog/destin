@@ -51,11 +51,6 @@ def init_destin(siw=pd.W512, nLayer=8, centroids=[4,8,16,32,64,32,16,8],
     return temp_network
 
 """
-resizeImage from CztMod
-But cv::Size doesn't exist for Python OpenCV!
-"""
-
-"""
 Use the existing network and ims to train!
 Default number is 16,000.
 """
@@ -82,6 +77,9 @@ def train_2flds(network, fld1, fld2, repeatCount=1600):
             f = cl.combineImgs(fld1+each, fld2+each)
             network.doDestin(f)
 
+"""
+Get the time stamp for today
+"""
 import datetime
 def getTimeStamp():
     now = datetime.datetime.now()
