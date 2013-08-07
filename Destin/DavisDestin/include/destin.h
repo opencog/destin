@@ -26,7 +26,7 @@ typedef struct Destin {
 
     struct Node * nodes;                // pointer to list of host nodes
 
-    float       * belief;               // concatonated belief vector for all nodes
+    float       * belief;               // concatenated belief vector for all nodes
     float       * temp;                 // temperatures for each layer
     float       * dataSet;              // pointer to dataset
     float       * inputPipeline;        // concatonated input for all internal layer nodes
@@ -94,7 +94,7 @@ Destin * InitDestin(    // initialize Destin.
 );
 
 // 2013.5.31
-void addCentroid2(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
+void addCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, float **sharedCen, float **starv, float **sigma, float **avgDelta,
                   uint ** winCounts, long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);

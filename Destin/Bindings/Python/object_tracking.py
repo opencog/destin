@@ -8,7 +8,7 @@ Created on Sat May 18 20:45:29 2013
 import common as cm
 
 cm.init(centroids=[4,8,32,32,64,32,4],
-        video_file="moving_square.avi",
+        video_file="color_4.avi", #moving_square.avi
         learn_rate=0.05)
                  
 cm.video_source.enableDisplayWindow()
@@ -54,7 +54,7 @@ for i in xrange(100):
     cm.go(1)
     tm.addTree()
 
-support = 30
+support = 101
 print "mining..."
 found = tm.mine(support)
 print "Found", found

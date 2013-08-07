@@ -446,10 +446,10 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
 
 /*****************************************************************************/
 // 2013.5.31, 2013.7.4
-// addCentroid2
+// addCentroid
 // Keep 'shareCentroids', 'uf_starv', 'uf_sigma', 'uf_avgDelta', 'uf_winCounts',
 // 'uf_persistWinCounts', 'uf_persistWinCounts_detailed', 'uf_absvar';
-void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
+void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
                   int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
                   uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
@@ -900,7 +900,6 @@ void addCentroid2(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
 
 /*****************************************************************************/
 // 2013.6.3
-// addCentroid2_node
 // Keep 'mu', 'uf_sigma';
 void updateCentroid_node
     (

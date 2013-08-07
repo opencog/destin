@@ -76,9 +76,11 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
 
     setBeliefTransform(DST_BT_NONE);
     ClearBeliefs(destin);
-    //SetLearningStrat(destin, CLS_FIXED);
-    //destin->fixedLearnRate = 0.1;
-    SetLearningStrat(destin, CLS_DECAY_c1);
+    SetLearningStrat(destin, CLS_FIXED);
+    destin->fixedLearnRate = 0.1;
+
+    //SetLearningStrat(destin, CLS_DECAY_c1);
+
     isTraining(true);
 }
 
@@ -119,7 +121,7 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
     if (layers != l) {
         throw std::logic_error("Image width does not match the given number of layers.");
     }
-    addCentroid2(
+    addCentroid(
             destin,
             input_dimensionality,
             layers,
