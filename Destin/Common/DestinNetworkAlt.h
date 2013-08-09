@@ -114,8 +114,6 @@ public:
     float ** getSharedCentroids();
     float ** getStarv();
     float ** getSigma();
-    float ** getAvgDelta();
-    uint ** getWinCounts();
     long ** getPersistWinCounts();
     long ** getPersistWinCounts_detailed();
     float ** getAbsvar();

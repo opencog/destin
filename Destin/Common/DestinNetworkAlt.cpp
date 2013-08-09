@@ -139,8 +139,6 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
             getSharedCentroids(),
             getStarv(),
             getSigma(),
-            getAvgDelta(),
-            getWinCounts(),
             getPersistWinCounts(),
             getPersistWinCounts_detailed(),
             getAbsvar()
@@ -208,8 +206,6 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
             getSharedCentroids(),
             getStarv(),
             getSigma(),
-            getAvgDelta(),
-            getWinCounts(),
             getPersistWinCounts(),
             getPersistWinCounts_detailed(),
             getAbsvar()
@@ -263,25 +259,6 @@ float ** DestinNetworkAlt::getStarv()
 
 // 2013.6.6
 // CZT
-// Get uf_winCounts; Only for uniform!
-uint ** DestinNetworkAlt::getWinCounts()
-{
-    uint ** winCounts;
-    MALLOC(winCounts, uint *, destin->nLayers);
-    int i;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        MALLOC(winCounts[i], uint, destin->nb[i]);
-        for(int j=0; j<destin->nb[i]; ++j)
-        {
-            winCounts[i][j] = destin->uf_winCounts[i][j];
-        }
-    }
-    return winCounts;
-}
-
-// 2013.6.6
-// CZT
 // Get uf_persistWinCounts; Only for uniform!
 long ** DestinNetworkAlt::getPersistWinCounts()
 {
@@ -317,26 +294,6 @@ float ** DestinNetworkAlt::getSigma()
         }
     }
     return sigma;
-}
-
-// 2013.6.5
-// CZT
-// Get uf_avgDelta; Only for uniform!
-float ** DestinNetworkAlt::getAvgDelta()
-{
-    float ** avgDelta;
-    MALLOC(avgDelta, float *, destin->nLayers);
-    int i;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        Node * currNode = getNode(i, 0, 0);
-        MALLOC(avgDelta[i], float, currNode->nb*currNode->ns);
-        for(int j=0; j<currNode->nb*currNode->ns; ++j)
-        {
-            avgDelta[i][j] = destin->uf_avgDelta[i][j];
-        }
-    }
-    return avgDelta;
 }
 
 // 2013.6.13
@@ -455,6 +412,7 @@ float DestinNetworkAlt::getQuality(int layer)
 {
     return getSep(layer)-getVar(layer);
 }
+
 /*****************************************************************************/
 
 DestinNetworkAlt::~DestinNetworkAlt() {

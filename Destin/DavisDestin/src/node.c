@@ -373,7 +373,6 @@ void Uniform_AverageDeltas(Node * n, uint nIdx){
             // 2013.7.18
             // CZT:
             n->d->uf_avgSquaredDelta[n->layer][n->winner * n->ns + s] += n->delta[s]*n->delta[s] / (float)(count);
-            //n->d->uf_avgAbsDelta[n->layer][n->winner * n->ns + s] += fabs(n->delta[s]) / (float)count;
         }
     }
 
@@ -422,7 +421,6 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
 
             // 2013.7.4
             // CZT: as Ben suggested, uf_absvar;
-            //d->uf_absvar[layer][c*ns + s] += n->beta * (fabs(dt) - d->uf_absvar[layer][c*ns + s]);
             d->uf_absvar[layer][c*ns + s] += n->beta * (d->uf_avgAbsDelta[layer][c * ns + s] - d->uf_absvar[layer][c*ns + s]);  // for TEST;
         }
     }

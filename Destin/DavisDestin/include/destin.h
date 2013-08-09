@@ -96,13 +96,13 @@ Destin * InitDestin(    // initialize Destin.
 // 2013.5.31
 void addCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
-                  int currLayer, float **sharedCen, float **starv, float **sigma, float **avgDelta,
-                  uint ** winCounts, long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
+                  int currLayer, float **sharedCen, float **starv, float **sigma,
+                  long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 // 2013.6.6
 void killCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
-                  float **avgDelta, uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
+                  long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 
 void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
                     Destin *            // initialized destin pointer

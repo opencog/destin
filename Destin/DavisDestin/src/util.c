@@ -429,12 +429,13 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
         MALLOC(d->uf_avgAbsDelta, float *, d->nLayers);
 
         for(l = 0 ; l < d->nLayers ; l++){
-            MALLOC( d->uf_winCounts[l], uint, d->nb[l]);
+            MALLOC( d->uf_winCounts[l], uint, d->nb[l] );
             MALLOC( d->uf_persistWinCounts[l], long, d->nb[l] );
-            MALLOC(d->uf_persistWinCounts_detailed[l], long, d->nb[l]);
-            MALLOC( d->uf_starv[l], float, d->nb[l]);
+            MALLOC( d->uf_persistWinCounts_detailed[l], long, d->nb[l] );
+            MALLOC( d->uf_starv[l], float, d->nb[l] );
 
             for(i = 0 ; i < d->nb[l]; i++){
+                d->uf_winCounts[l][i] = 0;
                 d->uf_persistWinCounts[l][i] = 0;
                 d->uf_persistWinCounts_detailed[l][i] = 0;
                 d->uf_starv[l][i] = 1;
@@ -447,11 +448,11 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
 /*****************************************************************************/
 // 2013.5.31, 2013.7.4
 // addCentroid
-// Keep 'shareCentroids', 'uf_starv', 'uf_sigma', 'uf_avgDelta', 'uf_winCounts',
+// Keep 'shareCentroids', 'uf_starv', 'uf_sigma', 'uf_avgDelta',
 // 'uf_persistWinCounts', 'uf_persistWinCounts_detailed', 'uf_absvar';
 void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
-                  int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
-                  uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
+                  int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma,
+                  long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
     uint i, l, maxNb, maxNs, j;
     size_t bOffset ;
@@ -462,7 +463,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
         /*********************************************************************/
         // uf_starv
         // uf_persistWinCounts
-        // uf_winCounts
         for(l=0; l<d->nLayers; ++l)
         {
             int tempEnd = d->nb[l];
@@ -472,14 +472,12 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 d->uf_starv[l][tempEnd] = 1;
                 d->uf_persistWinCounts[l][tempEnd] = 0;
                 d->uf_persistWinCounts_detailed[l][tempEnd] = 0;
-                d->uf_winCounts[l][tempEnd] = 0;
             }
             for(i=0; i<tempEnd; ++i)
             {
                 d->uf_starv[l][i] = starv[l][i];
                 d->uf_persistWinCounts[l][i] = persistWinCounts[l][i];
                 d->uf_persistWinCounts_detailed[l][i] = persistWinCounts_detailed[l][i];
-                d->uf_winCounts[l][i] = winCounts[l][i];
             }
         }
     }
@@ -527,17 +525,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
         }
     }
 
-    /*for(i=0; i<nsCurr-1; ++i)
-    {
-        printf("%f  ", newCentroid[i]);
-    }
-    printf("\n");
-    for(i=0; i<d->nb[currLayer]-1; ++i)
-    {
-        printf("%f  ", cenDis[i]);
-    }
-    printf("\n");*/
-
     for(i=0; i<d->nb[currLayer]-1-1; ++i)
     {
         for(j=i+1; j<d->nb[currLayer]-1; ++j)
@@ -562,11 +549,7 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
     }
     d->sizeInd = iCount;
 
-    /*for(i=0; i<d->sizeInd; ++i)
-    {
-        printf("%d  ", d->nearInd[i]);
-    }
-    printf("\n");*/
+
     /* ---END OF NEW METHOD--- */
 
     // initialize the rest of the network
@@ -606,7 +589,7 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
 
             /*********************************************************************/
             // 2013.6.4
-            // Keep the shareCentroids, uf_avgDelta, uf_sigma
+            // Keep the shareCentroids, uf_sigma
 //#define USE_METHOD1
             if(l == currLayer)
             {
@@ -618,7 +601,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-1)+tempJ];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-1)+tempJ];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns-1)+tempJ];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-1)+tempJ];
                     }
@@ -636,12 +618,10 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                         fSum += sigma[l][tempI*(ns-1)+ni+d->nearInd[tempJ]];
                     }
                     d->uf_sigma[l][tempI*ns+ns-np-1-tempRange] = fSum/(float)d->sizeInd;
-                    d->uf_avgDelta[l][tempI*ns+ns-np-1-tempRange] = 0.0;
 #endif
 #ifndef USE_METHOD1
                     sharedCentroids[tempI*ns+ns-np-1-tempRange] = 0.0;
                     d->uf_sigma[l][tempI*ns+ns-np-1-tempRange] = INIT_SIGMA;
-                    d->uf_avgDelta[l][tempI*ns+ns-np-1-tempRange] = 0.0;
                     //
                     d->uf_absvar[l][tempI*ns+ns-np-1-tempRange] = 0.0;
 #endif
@@ -649,7 +629,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-1)+tempJ-1];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-1)+tempJ-1];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns-1)+tempJ-1];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-1)+tempJ-1];
                     }
@@ -659,7 +638,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 {
                     sharedCentroids[i] = newCentroid[i-ns*(d->nb[l]-1)];
                     d->uf_sigma[l][i] = INIT_SIGMA;
-                    d->uf_avgDelta[l][i] = 0.0;
                 }
                 float fSum = 0.0;
                 for(tempI=0; tempI<d->sizeInd; ++tempI)
@@ -668,12 +646,10 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 }
                 sharedCentroids[ns*d->nb[l]-np-tempRange-1] = fSum/(float)d->sizeInd;
                 d->uf_sigma[l][ns*d->nb[l]-np-tempRange-1] = INIT_SIGMA;
-                d->uf_avgDelta[l][ns*d->nb[l]-np-tempRange-1] = 0.0;
                 for(i=ns*d->nb[l]-np-tempRange; i<ns*d->nb[l]; ++i)
                 {
                     sharedCentroids[i] = newCentroid[i-ns*(d->nb[l]-1)-1];
                     d->uf_sigma[l][i] = INIT_SIGMA;
-                    d->uf_avgDelta[l][i] = 0.0;
                 }
 #endif
 #ifndef USE_METHOD1
@@ -681,7 +657,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 {
                     sharedCentroids[i] = 1/(float)(ns-nb[l]-np-tempRange);
                     d->uf_sigma[l][i] = INIT_SIGMA;
-                    d->uf_avgDelta[l][i] = 0.0;
                     //
                     d->uf_absvar[l][i] = 0.0;
                 }
@@ -689,7 +664,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 {
                     sharedCentroids[i] = 1/(float)(nb[l]);
                     d->uf_sigma[l][i] = INIT_SIGMA;
-                    d->uf_avgDelta[l][i] = 0.0;
                     //
                     d->uf_absvar[l][i] = 0.0;
                 }
@@ -697,7 +671,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 {
                     sharedCentroids[i] = 1/(float)(np);
                     d->uf_sigma[l][i] = INIT_SIGMA;
-                    d->uf_avgDelta[l][i] = 0.0;
                     //
                     d->uf_absvar[l][i] = 0.0;
                 }
@@ -705,7 +678,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 {
                     sharedCentroids[i] = 1/(float)(tempRange);
                     d->uf_sigma[l][i] = INIT_SIGMA;
-                    d->uf_avgDelta[l][i] = 0.0;
                     //
                     d->uf_absvar[l][i] = 0.0;
                 }
@@ -722,7 +694,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-1)+tempJ];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-1)+tempJ];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns-1)+tempJ];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-1)+tempJ];
                     }
@@ -740,12 +711,10 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                         fSum += sigma[l][tempI*(ns-1)+ni+d->nb[l]+d->nearInd[tempJ]];
                     }
                     d->uf_sigma[l][tempI*ns+ns-1-tempRange] = fSum/(float)d->sizeInd;
-                    d->uf_avgDelta[l][tempI*ns+ns-1-tempRange] = 0.0;
 #endif
 #ifndef USE_METHOD1
                     sharedCentroids[tempI*ns+ns-1-tempRange] = 0.0;
                     d->uf_sigma[l][tempI*ns+ns-1-tempRange] = INIT_SIGMA;
-                    d->uf_avgDelta[l][tempI*ns+ns-1-tempRange] = 0.0;
                     //
                     d->uf_absvar[l][tempI*ns+ns-1-tempRange] = 0.0;
 #endif
@@ -753,7 +722,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-1)+tempJ-1];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-1)+tempJ-1];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns-1)+tempJ-1];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-1)+tempJ-1];
                     }
@@ -771,7 +739,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                         {
                             sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
                             d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
-                            d->uf_avgDelta[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = avgDelta[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
                             //
                             d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
                         }
@@ -789,12 +756,10 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                             fSum += sigma[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
                         }
                         d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = fSum/(float)d->sizeInd;
-                        d->uf_avgDelta[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = 0.0;
 #endif
 #ifndef USE_METHOD1
                         sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = 0.0;
                         d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = INIT_SIGMA;
-                        d->uf_avgDelta[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = 0.0;
                         //
                         d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = 0.0;
 #endif
@@ -803,7 +768,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-4)+tempJ-4];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-4)+tempJ-4];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns-4)+tempJ-4];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-4)+tempJ-4];
                     }
@@ -815,7 +779,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                 {
                     sharedCentroids[i] = sharedCen[l][i];
                     d->uf_sigma[l][i] = sigma[l][i];
-                    d->uf_avgDelta[l][i] = avgDelta[l][i];
                     //
                     d->uf_absvar[l][i] = absvar[l][i];
                 }
@@ -882,8 +845,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
         FREE(sharedCen[i]);
         FREE(starv[i]);
         FREE(sigma[i]);
-        FREE(avgDelta[i]);
-        FREE(winCounts[i]);
         FREE(persistWinCounts[i]);
         FREE(persistWinCounts_detailed[i]);
         FREE(absvar[i]);
@@ -891,8 +852,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
     FREE(sharedCen);
     FREE(starv);
     FREE(sigma);
-    FREE(avgDelta);
-    FREE(winCounts);
     FREE(persistWinCounts);
     FREE(persistWinCounts_detailed);
     FREE(absvar);
@@ -1020,8 +979,8 @@ void updateCentroid_node
 // CZT
 // killCentroid
 void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
-                  int extRatio, int currLayer, int kill_ind, float ** sharedCen, float ** starv, float ** sigma, float ** avgDelta,
-                  uint **winCounts, long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
+                  int extRatio, int currLayer, int kill_ind, float ** sharedCen, float ** starv, float ** sigma,
+                  long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
     uint i, l, maxNb, maxNs, j;
     size_t bOffset ;
@@ -1030,7 +989,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         /*********************************************************************/
         // uf_starv
         // uf_persistWinCounts
-        // uf_winCounts
     if(isUniform){
         for(l=0; l<d->nLayers; ++l)
         {
@@ -1041,14 +999,12 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     d->uf_starv[l][i] = starv[l][i];
                     d->uf_persistWinCounts[l][i] = persistWinCounts[l][i];
                     d->uf_persistWinCounts_detailed[l][i] = persistWinCounts_detailed[l][i];
-                    d->uf_winCounts[l][i] = winCounts[l][i];
                 }
                 for(i=kill_ind+1; i<d->nb[l]+1; ++i)
                 {
                     d->uf_starv[l][i-1] = starv[l][i];
                     d->uf_persistWinCounts[l][i-1] = persistWinCounts[l][i];
                     d->uf_persistWinCounts_detailed[l][i-1] = persistWinCounts_detailed[l][i];
-                    d->uf_winCounts[l][i-1] = winCounts[l][i];
                 }
             }
             else
@@ -1057,7 +1013,7 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                 {
                     d->uf_starv[l][i] = starv[l][i];
                     d->uf_persistWinCounts[l][i] = persistWinCounts[l][i];
-                    d->uf_winCounts[l][i] = winCounts[l][i];
+                    d->uf_persistWinCounts_detailed[l][i] = persistWinCounts_detailed[l][i];
                 }
             }
         }
@@ -1122,7 +1078,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+1)+tempJ];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+1)+tempJ];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns+1)+tempJ];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+1)+tempJ];
                     }
@@ -1130,7 +1085,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     {
                         sharedCentroids[tempI*ns+tempJ-1] = sharedCen[l][tempI*(ns+1)+tempJ];
                         d->uf_sigma[l][tempI*ns+tempJ-1] = sigma[l][tempI*(ns+1)+tempJ];
-                        d->uf_avgDelta[l][tempI*ns+tempJ-1] = avgDelta[l][tempI*(ns+1)+tempJ];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ-1] = absvar[l][tempI*(ns+1)+tempJ];
                     }
@@ -1141,7 +1095,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     {
                         sharedCentroids[(tempI-1)*ns+tempJ] = sharedCen[l][tempI*(ns+1)+tempJ];
                         d->uf_sigma[l][(tempI-1)*ns+tempJ] = sigma[l][tempI*(ns+1)+tempJ];
-                        d->uf_avgDelta[l][(tempI-1)*ns+tempJ] = avgDelta[l][tempI*(ns+1)+tempJ];
                         //
                         d->uf_absvar[l][(tempI-1)*ns+tempJ] = absvar[l][tempI*(ns+1)+tempJ];
                     }
@@ -1149,7 +1102,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     {
                         sharedCentroids[(tempI-1)*ns+tempJ-1] = sharedCen[l][tempI*(ns+1)+tempJ];
                         d->uf_sigma[l][(tempI-1)*ns+tempJ-1] = sigma[l][tempI*(ns+1)+tempJ];
-                        d->uf_avgDelta[l][(tempI-1)*ns+tempJ-1] = avgDelta[l][tempI*(ns+1)+tempJ];
                         //
                         d->uf_absvar[l][(tempI-1)*ns+tempJ-1] = absvar[l][tempI*(ns+1)+tempJ];
                     }
@@ -1167,7 +1119,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+1)+tempJ];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+1)+tempJ];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns+1)+tempJ];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+1)+tempJ];
                     }
@@ -1175,7 +1126,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     {
                         sharedCentroids[tempI*ns+tempJ-1] = sharedCen[l][tempI*(ns+1)+tempJ];
                         d->uf_sigma[l][tempI*ns+tempJ-1] = sigma[l][tempI*(ns+1)+tempJ];
-                        d->uf_avgDelta[l][tempI*ns+tempJ-1] = avgDelta[l][tempI*(ns+1)+tempJ];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ-1] = absvar[l][tempI*(ns+1)+tempJ];
                     }
@@ -1193,7 +1143,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                         {
                             sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
                             d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_avgDelta[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = avgDelta[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
                             //
                             d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
                         }
@@ -1201,7 +1150,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                         {
                             sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sharedCen[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
                             d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sigma[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_avgDelta[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = avgDelta[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
                             //
                             d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = absvar[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
                         }
@@ -1210,7 +1158,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                     {
                         sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+4)+tempJ+4];
                         d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+4)+tempJ+4];
-                        d->uf_avgDelta[l][tempI*ns+tempJ] = avgDelta[l][tempI*(ns+4)+tempJ+4];
                         //
                         d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+4)+tempJ+4];
                     }
@@ -1222,7 +1169,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                 {
                     sharedCentroids[i] = sharedCen[l][i];
                     d->uf_sigma[l][i] = sigma[l][i];
-                    d->uf_avgDelta[l][i] = avgDelta[l][i];
                     //
                     d->uf_absvar[l][i] = absvar[l][i];
                 }
@@ -1288,8 +1234,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         FREE(sharedCen[i]);
         FREE(starv[i]);
         FREE(sigma[i]);
-        FREE(avgDelta[i]);
-        FREE(winCounts[i]);
         FREE(persistWinCounts[i]);
         FREE(persistWinCounts_detailed[i]);
         FREE(absvar[i]);
@@ -1297,8 +1241,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
     FREE(sharedCen);
     FREE(starv);
     FREE(sigma);
-    FREE(avgDelta);
-    FREE(winCounts);
     FREE(persistWinCounts);
     FREE(persistWinCounts_detailed);
     FREE(absvar);
