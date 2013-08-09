@@ -52,6 +52,7 @@ void test_TempFunc();
 void test_Quality();
 
 /* Prototypes of unit tests */
+int CZT_UT();
 int test_extRatio();
 int test_add();
 int test_kill();
@@ -75,10 +76,19 @@ int main(int argc, char ** argv){
     //test_TempFunc();
 
     /* Unit tests */
-    //RUN(test_extRatio);
+    CZT_UT();
+
+    return 0;
+}
+
+int CZT_UT()
+{
+    RUN(test_extRatio);
     RUN(test_add);
-    //RUN(test_kill);
+    RUN(test_kill);
     UT_REPORT_RESULTS();
+
+    return 0;
 }
 
 /** meaures time between calls and prints the fps.
@@ -1796,6 +1806,166 @@ int test_kill()
     bool isUniform = true;
     int extRatio = 1;
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform, extRatio);
+    Destin * dn = network->getNetwork();
+
+    int killInd = 1;
+    int currLayer = 1;
+    int pLayer = currLayer+1;
+    int cLayer = currLayer-1;
+    Node * node = network->getNode(currLayer, 0, 0);
+    Node * pNode = network->getNode(pLayer, 0, 0);
+    Node * cNode = network->getNode(cLayer, 0, 0);
+
+    // Current layer, 4*(2*4 + 4 + 2) = 56 ------------------------------------
+    // mu
+    assignFloatArray(node->mu, node->nb*node->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .11, .12, .13, .14,
+                     .11, .11,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .21, .22, .23, .24,
+                     .22, .22,
+                     .21, .22, .23, .24, .25, .26, .27, .28,
+                     .31, .32, .33, .34,
+                     .33, .33,
+                     .31, .32, .33, .34, .35, .36, .37, .38,
+                     .41, .42, .43, .44,
+                     .44, .44);
+    // uf_sigma
+    assignFloatArray(dn->uf_sigma[currLayer], node->nb*node->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .11, .12, .13, .14,
+                     .11, .11,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .21, .22, .23, .24,
+                     .22, .22,
+                     .21, .22, .23, .24, .25, .26, .27, .28,
+                     .31, .32, .33, .34,
+                     .33, .33,
+                     .31, .32, .33, .34, .35, .36, .37, .38,
+                     .41, .42, .43, .44,
+                     .44, .44);
+    // uf_starv
+    assignFloatArray(dn->uf_starv[currLayer], node->nb,
+                     .11, .22, .33, .44);
+    // Parent layer, 2*(4*4 + 2 + 2) = 40 -------------------------------------
+    // mu
+    assignFloatArray(pNode->mu, pNode->nb*pNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .5, .5,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .5, .5,
+                     .5, .5);
+    // uf_sigma
+    assignFloatArray(dn->uf_sigma[pLayer], pNode->nb*pNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .5, .5,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .5, .5,
+                     .5, .5);
+    // Child layer is layer 0, so 16*extRatio, here extRatio = 1 --------------
+    // Child layer, 2*(16*extRatio + 2 + 4) = 44
+    // mu
+    assignFloatArray(cNode->mu, cNode->nb*cNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .05, .05, .06, .07,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .15, .95, .16, .17);
+    // uf_sigma
+    assignFloatArray(dn->uf_sigma[cLayer], cNode->nb*cNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .05, .05, .06, .07,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .15, .95, .16, .17);
+
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, nLayer, centroid_counts, isUniform, extRatio, currLayer, killInd);
+
+    // !!! Reload
+    node = network->getNode(currLayer, 0, 0);
+    pNode = network->getNode(pLayer, 0, 0);
+    cNode = network->getNode(cLayer, 0, 0);
+
+    // 3*(2*4 + 3 + 2) = 39
+    float exp_mu [] = {
+        .01, .02, .03, .04, .05, .06, .07, .08,
+        .11, .13, .14,
+        .11, .11,
+        .21, .22, .23, .24, .25, .26, .27, .28,
+        .31, .33, .34,
+        .33, .33,
+        .31, .32, .33, .34, .35, .36, .37, .38,
+        .41, .43, .44,
+        .44, .44
+    };
+    float exp_sigma [] = {
+        .01, .02, .03, .04, .05, .06, .07, .08,
+        .11, .13, .14,
+        .11, .11,
+        .21, .22, .23, .24, .25, .26, .27, .28,
+        .31, .33, .34,
+        .33, .33,
+        .31, .32, .33, .34, .35, .36, .37, .38,
+        .41, .43, .44,
+        .44, .44
+    };
+    float exp_starv [] = {.11, .33, .44};
+    // 2*(3*4 + 2 + 2) = 32
+    float exp_pMu [] = {
+        .01, .03, .04, .05, .07, .08,
+        .01, .03, .04, .05, .07, .08,
+        .5, .5,
+        .5, .5,
+        .11, .13, .14, .15, .17, .18,
+        .11, .13, .14, .15, .17, .18,
+        .5, .5,
+        .5, .5
+    };
+    float exp_pSigma [] = {
+        .01, .03, .04, .05, .07, .08,
+        .01, .03, .04, .05, .07, .08,
+        .5, .5,
+        .5, .5,
+        .11, .13, .14, .15, .17, .18,
+        .11, .13, .14, .15, .17, .18,
+        .5, .5,
+        .5, .5
+    };
+    // 2*(16 + 2 + 3) = 42
+    float exp_cMu [] = {
+        .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+        .5, .5,
+        .05, .06, .07,
+        .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+        .5, .5,
+        .15, .16, .17
+    };
+    float exp_cSigma [] = {
+        .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+        .5, .5,
+        .05, .06, .07,
+        .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+        .5, .5,
+        .15, .16, .17
+    };
+
+    assertFloatArrayEquals(exp_mu, node->mu, 39);
+    assertFloatArrayEquals(exp_pMu, pNode->mu, 32);
+    assertFloatArrayEquals(exp_cMu, cNode->mu, 42);
+    assertFloatArrayEquals(exp_sigma, dn->uf_sigma[currLayer], 39);
+    assertFloatArrayEquals(exp_pSigma, dn->uf_sigma[pLayer], 32);
+    assertFloatArrayEquals(exp_cSigma, dn->uf_sigma[cLayer], 42);
+    assertFloatArrayEquals(exp_starv, dn->uf_starv[currLayer], 3);
 
     return 0;
 }
@@ -1804,10 +1974,9 @@ int showUpdate(DestinNetworkAlt * network, int currLayer)
 {
     printf("------%d\n", currLayer);
 
-    // centroid, mu
+    // mu
     // uf_sigma, uf_absvar
-    // uf_starv
-    // uf_persistWinCounts, uf_persistWinCounts_detailed
+    // uf_starv, uf_persistWinCounts, uf_persistWinCounts_detailed
 
     Node * node = network->getNode(currLayer, 0, 0);
     int ns = node->ns;
