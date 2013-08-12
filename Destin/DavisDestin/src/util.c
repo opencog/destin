@@ -1176,7 +1176,7 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
             /*********************************************************************/
         }else{
             sharedCentroids = NULL;
-        }/**/
+        }
 
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )

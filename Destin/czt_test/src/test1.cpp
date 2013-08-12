@@ -1680,6 +1680,14 @@ int test_add()
     // uf_starv
     assignFloatArray(dn->uf_starv[currLayer], node->nb,
                      .11, .22);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[currLayer], node->nb*node->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .5, .5);
     // Parent layer, 2*(2*4 + 2 + 2) = 24 -------------------------------------
     // mu
     assignFloatArray(pNode->mu, pNode->nb*pNode->ns,
@@ -1691,6 +1699,17 @@ int test_add()
                      .5, .5);
     // uf_sigma
     assignFloatArray(dn->uf_sigma[pLayer], pNode->nb*pNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .5, .5);
+    // uf_starv
+    assignFloatArray(dn->uf_starv[pLayer], pNode->nb,
+                     .11, .22);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[pLayer], pNode->nb*pNode->ns,
                      .01, .02, .03, .04, .05, .06, .07, .08,
                      .5, .5,
                      .5, .5,
@@ -1709,6 +1728,17 @@ int test_add()
                      .5, .5);
     // uf_sigma
     assignFloatArray(dn->uf_sigma[cLayer], cNode->nb*cNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .5, .5);
+    // uf_starv
+    assignFloatArray(dn->uf_starv[cLayer], cNode->nb,
+                     .11, .22);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[cLayer], cNode->nb*cNode->ns,
                      .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
                      .5, .5,
                      .5, .5,
@@ -1755,6 +1785,16 @@ int test_add()
                           INIT_SIGMA, INIT_SIGMA};
     // uf_starv
     float exp_starv [] = {.11, .22, 1};
+    // uf_absvar
+    float exp_absvar [] = {.01, .02, .03, .04, .05, .06, .07, .08,
+                          .5, .5, 0,
+                          .5, .5,
+                          .01, .02, .03, .04, .05, .06, .07, .08,
+                          .5, .5, 0,
+                          .5, .5,
+                          0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0,
+                          0, 0};
     // Parent layer, 2*(3*4 + 2 + 2) = 32 -------------------------------------
     // mu
     float exp_pMu [] = {.01, .02, 0, .03, .04, 0, .05, .06, 0, .07, .08, 0,
@@ -1768,6 +1808,15 @@ int test_add()
                            .5, .5,
                            .5, .5,
                            .01, .02, INIT_SIGMA, .03, .04, INIT_SIGMA, .05, .06, INIT_SIGMA, .07, .08, INIT_SIGMA,
+                           .5, .5,
+                           .5, .5};
+    // uf_starv
+    float exp_pStarv [] = {.11, .22};
+    // uf_absvar
+    float exp_pAbsvar [] = {.01, .02, 0, .03, .04, 0, .05, .06, 0, .07, .08, 0,
+                           .5, .5,
+                           .5, .5,
+                           .01, .02, 0, .03, .04, 0, .05, .06, 0, .07, .08, 0,
                            .5, .5,
                            .5, .5};
     // Child layer is layer 0, so 16*extRatio, here extRatio = 1 --------------
@@ -1786,6 +1835,15 @@ int test_add()
                            .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
                            .5, .5,
                            .5, .5, INIT_SIGMA};
+    // uf_starv
+    float exp_cStarv [] = {.11, .22};
+    // uf_absvar
+    float exp_cAbsvar [] = {.01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                           .5, .5,
+                           .5, .5, 0,
+                           .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                           .5, .5,
+                           .5, .5, 0};
 
     assertFloatArrayEquals(exp_mu, node->mu, 39);
     assertFloatArrayEquals(exp_pMu, pNode->mu, 32);
@@ -1794,6 +1852,11 @@ int test_add()
     assertFloatArrayEquals(exp_pSigma, dn->uf_sigma[pLayer], 32);
     assertFloatArrayEquals(exp_cSigma, dn->uf_sigma[cLayer], 42);
     assertFloatArrayEquals(exp_starv, dn->uf_starv[currLayer], 3);
+    assertFloatArrayEquals(exp_pStarv, dn->uf_starv[pLayer], 2);
+    assertFloatArrayEquals(exp_cStarv, dn->uf_starv[cLayer], 2);
+    assertFloatArrayEquals(exp_absvar, dn->uf_absvar[currLayer], 39);
+    assertFloatArrayEquals(exp_pAbsvar, dn->uf_absvar[pLayer], 32);
+    assertFloatArrayEquals(exp_cAbsvar, dn->uf_absvar[cLayer], 42);
 
     return 0;
 }
@@ -1848,6 +1911,20 @@ int test_kill()
     // uf_starv
     assignFloatArray(dn->uf_starv[currLayer], node->nb,
                      .11, .22, .33, .44);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[currLayer], node->nb*node->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .11, .12, .13, .14,
+                     .11, .11,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .21, .22, .23, .24,
+                     .22, .22,
+                     .21, .22, .23, .24, .25, .26, .27, .28,
+                     .31, .32, .33, .34,
+                     .33, .33,
+                     .31, .32, .33, .34, .35, .36, .37, .38,
+                     .41, .42, .43, .44,
+                     .44, .44);
     // Parent layer, 2*(4*4 + 2 + 2) = 40 -------------------------------------
     // mu
     assignFloatArray(pNode->mu, pNode->nb*pNode->ns,
@@ -1869,6 +1946,19 @@ int test_kill()
                      .11, .12, .13, .14, .15, .16, .17, .18,
                      .5, .5,
                      .5, .5);
+    // uf_starv
+    assignFloatArray(dn->uf_starv[pLayer], pNode->nb,
+                     .11, .22);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[pLayer], pNode->nb*pNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .5, .5,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .11, .12, .13, .14, .15, .16, .17, .18,
+                     .5, .5,
+                     .5, .5);
     // Child layer is layer 0, so 16*extRatio, here extRatio = 1 --------------
     // Child layer, 2*(16*extRatio + 2 + 4) = 44
     // mu
@@ -1881,6 +1971,17 @@ int test_kill()
                      .15, .95, .16, .17);
     // uf_sigma
     assignFloatArray(dn->uf_sigma[cLayer], cNode->nb*cNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .05, .05, .06, .07,
+                     .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+                     .5, .5,
+                     .15, .95, .16, .17);
+    // uf_starv
+    assignFloatArray(dn->uf_starv[cLayer], cNode->nb,
+                     .11, .22);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[cLayer], cNode->nb*cNode->ns,
                      .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
                      .5, .5,
                      .05, .05, .06, .07,
@@ -1920,6 +2021,17 @@ int test_kill()
         .44, .44
     };
     float exp_starv [] = {.11, .33, .44};
+    float exp_absvar [] = {
+        .01, .02, .03, .04, .05, .06, .07, .08,
+        .11, .13, .14,
+        .11, .11,
+        .21, .22, .23, .24, .25, .26, .27, .28,
+        .31, .33, .34,
+        .33, .33,
+        .31, .32, .33, .34, .35, .36, .37, .38,
+        .41, .43, .44,
+        .44, .44
+    };
     // 2*(3*4 + 2 + 2) = 32
     float exp_pMu [] = {
         .01, .03, .04, .05, .07, .08,
@@ -1932,6 +2044,17 @@ int test_kill()
         .5, .5
     };
     float exp_pSigma [] = {
+        .01, .03, .04, .05, .07, .08,
+        .01, .03, .04, .05, .07, .08,
+        .5, .5,
+        .5, .5,
+        .11, .13, .14, .15, .17, .18,
+        .11, .13, .14, .15, .17, .18,
+        .5, .5,
+        .5, .5
+    };
+    float exp_pStarv [] = {.11, .22};
+    float exp_pAbsvar [] = {
         .01, .03, .04, .05, .07, .08,
         .01, .03, .04, .05, .07, .08,
         .5, .5,
@@ -1958,6 +2081,15 @@ int test_kill()
         .5, .5,
         .15, .16, .17
     };
+    float exp_cStarv [] = {.11, .22};
+    float exp_cAbsvar [] = {
+        .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+        .5, .5,
+        .05, .06, .07,
+        .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
+        .5, .5,
+        .15, .16, .17
+    };
 
     assertFloatArrayEquals(exp_mu, node->mu, 39);
     assertFloatArrayEquals(exp_pMu, pNode->mu, 32);
@@ -1966,6 +2098,11 @@ int test_kill()
     assertFloatArrayEquals(exp_pSigma, dn->uf_sigma[pLayer], 32);
     assertFloatArrayEquals(exp_cSigma, dn->uf_sigma[cLayer], 42);
     assertFloatArrayEquals(exp_starv, dn->uf_starv[currLayer], 3);
+    assertFloatArrayEquals(exp_pStarv, dn->uf_starv[pLayer], 2);
+    assertFloatArrayEquals(exp_cStarv, dn->uf_starv[cLayer], 2);
+    assertFloatArrayEquals(exp_absvar, dn->uf_absvar[currLayer], 39);
+    assertFloatArrayEquals(exp_pAbsvar, dn->uf_absvar[pLayer], 32);
+    assertFloatArrayEquals(exp_cAbsvar, dn->uf_absvar[cLayer], 42);
 
     return 0;
 }
