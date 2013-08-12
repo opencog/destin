@@ -587,6 +587,10 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
             // CZT: uf_absvar;
             MALLOC(d->uf_absvar[l], float, ns*nb[l]);
 
+            //
+            MALLOC(d->uf_avgSquaredDelta[l], float, ns*nb[l]);
+            MALLOC(d->uf_avgAbsDelta[l], float, ns*nb[l]);
+
             /*********************************************************************/
             // 2013.6.4
             // Keep the shareCentroids, uf_sigma
@@ -1064,6 +1068,9 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
             MALLOC(d->uf_sigma[l], float, ns*nb[l]);
             //
             MALLOC(d->uf_absvar[l], float, ns*nb[l]);
+            //
+            MALLOC(d->uf_avgSquaredDelta[l], float, ns*nb[l]);
+            MALLOC(d->uf_avgAbsDelta[l], float, ns*nb[l]);
 
             /*********************************************************************/
             // 2013.6.4

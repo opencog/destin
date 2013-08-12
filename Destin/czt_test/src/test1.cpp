@@ -66,7 +66,7 @@ int main(int argc, char ** argv){
     //testStep3();
     //test_CL2();
     //test_CL_and_CL2();
-    //test_Update();
+    test_Update();
     //test_RandomInput();
     //test_SOM();
     //test_SOM2();
@@ -76,7 +76,7 @@ int main(int argc, char ** argv){
     //test_TempFunc();
 
     /* Unit tests */
-    CZT_UT();
+    //CZT_UT();
 
     return 0;
 }
@@ -549,18 +549,13 @@ void test_CL_and_CL2()
 
 void test_Update()
 {
-//#define TEST_ADD
+#define TEST_ADD
 #define RUN_BEFORE
 #define RUN_NOW
 #define SHOW_BEFORE
 #define SHOW_NOW
-//#define TEST_nb
-//#define TEST_uf_persistWinCounts
-//#define TEST_uf_persistWinCounts_detailed
-//#define TEST_uf_avgDelta  //uf_sigma
-//#define TEST_mu
-//#define TEST_observation
-//#define TEST_beliefMal
+#define TEST_nb
+#define TEST_uf_persistWinCounts_detailed
 
     ImageSouceImpl isi;
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
@@ -576,8 +571,8 @@ void test_Update()
 
     SupportedImageWidths siw = W512;
     uint nLayer = 8;
-    //uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
-    uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
+    uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
+    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
                                                      // HumanFace_1500_case1
     //uint centroid_counts[]  = {8,16,16,32,32,16,8,4}; // HumanFace_1500_case2
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
@@ -585,6 +580,7 @@ void test_Update()
     //uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
     bool isUniform = true;
 
+    int extRatio = 1;
     /*int size = 512*512;
     int extRatio = 2;
     float * tempIn;
@@ -592,9 +588,8 @@ void test_Update()
 
     DestinNetworkAlt * network = new DestinNetworkAlt(siw, nLayer, centroid_counts, isUniform);
 
-
     int frameCount;
-    int maxCount = 10;
+    int maxCount = 1500;
 
     int i, l, j;
     Destin * d = network->getNetwork();
@@ -606,7 +601,7 @@ void test_Update()
         if(frameCount % 10 == 0)
         {
             printf("Count %d;\n", frameCount);
-            for(l=0; l<d->nLayers; ++l)
+            /*for(l=0; l<d->nLayers; ++l)
             {
                 printf("Layer %d\n", l);
                 for(i=0; i<d->nb[l]; ++i)
@@ -622,7 +617,7 @@ void test_Update()
                 }
                 printf("------\n");
             }
-            printf("\n");/**/
+            printf("\n");*/
         }
 
         isi.findNextImage();
@@ -660,23 +655,6 @@ void test_Update()
     printf("\n");
 #endif // TEST_nb
 
-#ifdef TEST_uf_persistWinCounts
-    printf("------------TEST_uf_persistWinCounts\n");
-    for(l=0; l<d->nLayers; ++l)
-    {
-        printf("Layer %d\n", l);
-        for(i=0; i<d->nb[l]; ++i)
-        {
-            printf("%ld  ", d->uf_persistWinCounts[l][i]);
-            // uf_persistWinCounts, long;
-            // uf_starv, float;
-            // uf_winCounts, uint;
-        }
-        printf("\n------\n");
-    }
-    printf("\n");
-#endif // TEST_uf_persistWinCounts
-
 #ifdef TEST_uf_persistWinCounts_detailed
     printf("------------TEST_uf_persistWinCounts_detailed\n");
     for(l=0; l<d->nLayers; ++l)
@@ -691,153 +669,26 @@ void test_Update()
     printf("\n");
 #endif // TEST_uf_persistWinCounts_detailed
 
-#ifdef TEST_uf_avgDelta
-    printf("------------TEST_uf_avgDelt\n");
-    for(l=0; l<d->nLayers; ++l)
-    {
-        printf("Layer %d\n", l);
-        for(i=0; i<d->nb[l]; ++i)
-        {
-            for(j=0; j<network->getNode(l,0,0)->ns; ++j)
-            {
-                printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
-                //printf("%f  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
-                //printf("%f  ", d->uf_absvar[l][i*network->getNode(l,0,0)->ns+j]);
-            }
-            printf("\n");
-        }
-        printf("------\n");
-    }
-    printf("\n");
-#endif // TEST_uf_avgDelta
-
-#ifdef TEST_mu
-    printf("------------TEST_mu\n");
-    printf("------Node: %d,0,0\n", currLayer);
-    for(i=0; i<node1->nb; ++i)
-    {
-        for(j=0; j<node1->ns; ++j)
-        {
-            printf("%f  ", node1->mu[i*node1->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#ifndef TEST_layer0
-    printf("------Node: %d,0,0\n", currLayer-1);
-    for(i=0; i<node2->nb; ++i)
-    {
-        for(j=0; j<node2->ns; ++j)
-        {
-            printf("%f  ", node2->mu[i*node2->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-#ifndef TEST_layer7
-    printf("------Node: %d,0,0\n", currLayer+1);
-    for(i=0; i<node3->nb; ++i)
-    {
-        for(j=0; j<node3->ns; ++j)
-        {
-            printf("%f  ", node3->mu[i*node3->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-    printf("\n");
-#endif // TEST_mu
-
-#ifdef TEST_observation
-    printf("------------TEST_observation\n");
-    printf("------Node: %d,0,0\n", currLayer);
-    for(i=0; i<node1->nb; ++i)
-    {
-        for(j=0; j<node1->ns; ++j)
-        {
-            printf("%f  ", node1->observation[i*node1->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#ifndef TEST_layer0
-    printf("------Node: %d,0,0\n", currLayer-1);
-    for(i=0; i<node2->nb; ++i)
-    {
-        for(j=0; j<node2->ns; ++j)
-        {
-            printf("%f  ", node2->observation[i*node2->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-#ifndef TEST_layer7
-    printf("------Node: %d,0,0\n", currLayer+1);
-    for(i=0; i<node3->nb; ++i)
-    {
-        for(j=0; j<node3->ns; ++j)
-        {
-            printf("%f  ", node3->observation[i*node3->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-    printf("\n");
-#endif // TEST_observation
-
-#ifdef TEST_beliefMal
-    printf("------------TEST_beliefMal\n");
-    printf("------Node: %d,0,0\n", currLayer);
-    for(i=0; i<node1->nb; ++i)
-    {
-        printf("%f  ", node1->beliefMal[i]);
-        // node1->beliefMal
-        // node1->beliefEuc
-    }
-    printf("\n");
-#ifndef TEST_layer0
-    printf("------Node: %d,0,0\n", currLayer-1);
-    for(i=0; i<node2->nb; ++i)
-    {
-        printf("%f  ", node2->beliefMal[i]);
-        // node1->beliefMal
-        // node1->beliefEuc
-    }
-    printf("\n");
-#endif
-#ifndef TEST_layer7
-    printf("------Node: %d,0,0\n", currLayer+1);
-
-    delete network;
-    for(i=0; i<node3->nb; ++i)
-    {
-        printf("%f  ", node3->beliefMal[i]);
-        // node1->beliefMal
-        // node1->beliefEuc
-    }
-    printf("\n");
-#endif
-    printf("\n");
-#endif // TEST_beliefMal
-
 //---------------------------------------------------------------------------//
     printf("--------------------------------------------------------------\n\n");
 //---------------------------------------------------------------------------//
 
 #ifdef TEST_ADD
     // Add
-    /*centroid_counts[currLayer]++;
-    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);
     centroid_counts[currLayer]++;
-    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
     centroid_counts[currLayer]++;
-    network->updateDestin_add(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer);*/
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
+    centroid_counts[currLayer]++;
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);/**/
 
     // Kill
+    /*centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
     centroid_counts[currLayer]--;
-    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
     centroid_counts[currLayer]--;
-    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);
-    centroid_counts[currLayer]--;
-    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, size, extRatio, currLayer, kill_ind);/**/
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);*/
 
 #ifdef RUN_NOW
     frameCount = 1;
@@ -849,9 +700,9 @@ void test_Update()
         }
 
         isi.findNextImage();
-        cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
-        network->doDestin(tempIn);
-        //network->doDestin(isi.getGrayImageFloat());
+        /*cl2->combineInfo_extRatio(isi.getGrayImageFloat(), size, extRatio, tempIn);
+        network->doDestin(tempIn);*/
+        network->doDestin(isi.getGrayImageFloat());
     }
 #endif // RUN_NOW
 
@@ -886,23 +737,6 @@ void test_Update()
     printf("\n");
 #endif // TEST_nb
 
-#ifdef TEST_uf_persistWinCounts
-    printf("------TEST_uf_persistWinCounts\n");
-    for(l=0; l<d->nLayers; ++l)
-    {
-        printf("Layer %d\n", l);
-        for(i=0; i<d->nb[l]; ++i)
-        {
-            printf("%ld  ", d->uf_persistWinCounts[l][i]);
-            // uf_persistWinCounts, long;
-            // uf_starv, float;
-            // uf_winCounts, uint;
-        }
-        printf("\n------\n");
-    }
-    printf("\n");
-#endif // TEST_uf_persistWinCounts
-
 #ifdef TEST_uf_persistWinCounts_detailed
     printf("------------TEST_uf_persistWinCounts_detailed\n");
     for(l=0; l<d->nLayers; ++l)
@@ -916,130 +750,6 @@ void test_Update()
     }
     printf("\n");
 #endif // TEST_uf_persistWinCounts_detailed
-
-#ifdef TEST_uf_avgDelta
-    printf("------------TEST_uf_avgDelt\n");
-    for(l=0; l<d->nLayers; ++l)
-    {
-        printf("Layer %d\n", l);
-        for(i=0; i<d->nb[l]; ++i)
-        {
-            for(j=0; j<network->getNode(l,0,0)->ns; ++j)
-            {
-                //printf("%f  ", d->uf_avgDelta[l][i*network->getNode(l,0,0)->ns+j]);
-                printf("%e  ", d->uf_sigma[l][i*network->getNode(l,0,0)->ns+j]);
-            }
-            printf("\n");
-        }
-        printf("------\n");
-    }
-    printf("\n");
-#endif // TEST_uf_avgDelta
-
-#ifdef TEST_mu
-    printf("------------TEST_mu\n");
-    printf("------Node: %d,0,0\n", currLayer);
-    for(i=0; i<node1->nb; ++i)
-    {
-        for(j=0; j<node1->ns; ++j)
-        {
-            printf("%f  ", node1->mu[i*node1->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#ifndef TEST_layer0
-    printf("------Node: %d,0,0\n", currLayer-1);
-    for(i=0; i<node2->nb; ++i)
-    {
-        for(j=0; j<node2->ns; ++j)
-        {
-            printf("%f  ", node2->mu[i*node2->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-#ifndef TEST_layer7
-    printf("------Node: %d,0,0\n", currLayer+1);
-    for(i=0; i<node3->nb; ++i)
-    {
-        for(j=0; j<node3->ns; ++j)
-        {
-            printf("%f  ", node3->mu[i*node3->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-    printf("\n");
-#endif // TEST_mu
-
-#ifdef TEST_observation
-    printf("------------TEST_observation\n");
-    printf("------Node: %d,0,0\n", currLayer);
-    for(i=0; i<node1->nb; ++i)
-    {
-        for(j=0; j<node1->ns; ++j)
-        {
-            printf("%f  ", node1->observation[i*node1->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#ifndef TEST_layer0
-    printf("------Node: %d,0,0\n", currLayer-1);
-    for(i=0; i<node2->nb; ++i)
-    {
-        for(j=0; j<node2->ns; ++j)
-        {
-            printf("%f  ", node2->observation[i*node2->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-#ifndef TEST_layer7
-    printf("------Node: %d,0,0\n", currLayer+1);
-    for(i=0; i<node3->nb; ++i)
-    {
-        for(j=0; j<node3->ns; ++j)
-        {
-            printf("%f  ", node3->observation[i*node3->ns+j]);
-        }
-        printf("\n---\n");
-    }
-#endif
-    printf("\n");
-#endif // TEST_observation
-
-#ifdef TEST_beliefMal
-    printf("------------TEST_beliefMal\n");
-    printf("------Node: %d,0,0\n", currLayer);
-    for(i=0; i<node1->nb; ++i)
-    {
-        printf("%f  ", node1->beliefMal[i]);
-        // node1->beliefMal
-        // node1->beliefEuc
-    }
-    printf("\n");
-#ifndef TEST_layer036392cc2f513670c3f9e28804199602fd8666218
-    printf("------Node: %d,0,0\n", currLayer-1);
-    for(i=0; i<node2->nb; ++i)
-    {
-        printf("%f  ", node2->beliefMal[i]);
-        // node1->beliefMal
-        // node1->beliefEuc
-    }
-    printf("\n");
-#endif
-#ifndef TEST_layer7
-    printf("------Node: %d,0,0\n", currLayer+1);
-    for(i=0; i<node3->nb; ++i)
-    {
-        printf("%f  ", node3->beliefMal[i]);
-        // node1->beliefMal
-        // node1->beliefEuc
-    }
-    printf("\n");
-#endif
-    printf("\n");
-#endif // TEST_beliefMal
 
 #endif // TEST_add
 

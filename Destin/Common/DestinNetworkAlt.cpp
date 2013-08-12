@@ -90,6 +90,12 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
 void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int layers,
         unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer)
 {
+    if(!isUniform)
+    {
+        printf("The adding action NOW is only for Uniform DeSTIN!\n");
+        return;
+    }
+
     training = true;
     beta = .01;
     lambda = .1; // 0.1
@@ -156,6 +162,12 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
 void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned int layers,
         unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer, int kill_ind)
 {
+    if(!isUniform)
+    {
+        printf("The adding action NOW is only for Uniform DeSTIN!\n");
+        return;
+    }
+
     training = true;
     beta = .01;
     lambda = .1; // 0.1
