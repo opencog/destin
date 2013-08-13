@@ -549,13 +549,16 @@ void test_CL_and_CL2()
 
 void test_Update()
 {
-#define TEST_ADD
+#define TEST_UPDATE
 #define RUN_BEFORE
 #define RUN_NOW
 #define SHOW_BEFORE
 #define SHOW_NOW
 #define TEST_nb
-#define TEST_uf_persistWinCounts_detailed
+//#define TEST_uf_persistWinCounts_detailed
+//#define TEST_add
+//#define TEST_kill
+#define TEST_addAndKill
 
     ImageSouceImpl isi;
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
@@ -571,13 +574,20 @@ void test_Update()
 
     SupportedImageWidths siw = W512;
     uint nLayer = 8;
+#ifdef TEST_add
     uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
-    //uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
+#endif
+#ifdef TEST_kill
+    uint centroid_counts[]  = {4,8,16,32,32,16,8,4}; // For killing
                                                      // HumanFace_1500_case1
+#endif
     //uint centroid_counts[]  = {8,16,16,32,32,16,8,4}; // HumanFace_1500_case2
     //uint centroid_counts[]  = {2,3,4,5,4,3,2,1};
     //uint centroid_counts[]  = {6,8,10,12,12,8,6,4};
-    //uint centroid_counts[]  = {4,4,4,4,4,4,4,4};
+#ifdef TEST_addAndKill
+    uint centroid_counts[]  = {4,8,16,32,32,16,8,4};
+#endif
+
     bool isUniform = true;
 
     int extRatio = 1;
@@ -673,22 +683,44 @@ void test_Update()
     printf("--------------------------------------------------------------\n\n");
 //---------------------------------------------------------------------------//
 
-#ifdef TEST_ADD
+#ifdef TEST_UPDATE
+
+#ifdef TEST_add
     // Add
     centroid_counts[currLayer]++;
     network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
     centroid_counts[currLayer]++;
     network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
     centroid_counts[currLayer]++;
-    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);/**/
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
+#endif
 
+#ifdef TEST_kill
     // Kill
-    /*centroid_counts[currLayer]--;
-    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
     centroid_counts[currLayer]--;
     network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
     centroid_counts[currLayer]--;
-    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);*/
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
+#endif
+
+#ifdef TEST_addAndKill
+    // Add
+    centroid_counts[currLayer]++;
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
+    centroid_counts[currLayer]++;
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
+    centroid_counts[currLayer]++;
+    network->updateDestin_add(siw, 8, centroid_counts, isUniform, extRatio, currLayer);
+    // Kill
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
+    centroid_counts[currLayer]--;
+    network->updateDestin_kill(siw, 8, centroid_counts, isUniform, extRatio, currLayer, kill_ind);
+#endif
 
 #ifdef RUN_NOW
     frameCount = 1;
@@ -751,7 +783,7 @@ void test_Update()
     printf("\n");
 #endif // TEST_uf_persistWinCounts_detailed
 
-#endif // TEST_add
+#endif // TEST_UPDATE
 
     delete network;
 }
@@ -1366,9 +1398,11 @@ int test_add()
     int currLayer = 1;
     int pLayer = currLayer+1;
     int cLayer = currLayer-1;
+    int otherLayer = 3;
     Node * node = network->getNode(currLayer, 0, 0);
     Node * pNode = network->getNode(pLayer, 0, 0);
     Node * cNode = network->getNode(cLayer, 0, 0);
+    Node * oNode = network->getNode(otherLayer, 0, 0);
 
     // Current layer, 2*(2*4 + 2 + 2) = 24 ------------------------------------
     // mu
@@ -1455,10 +1489,34 @@ int test_add()
                      .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
                      .5, .5,
                      .5, .5);
+    // The layer which is not affected ----------------------------------------
+    // layer 3, 2*(2*4+2+0) = 20, no Parent!!!
+    // mu
+    assignFloatArray(oNode->mu, oNode->nb*oNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5);
+    // uf_sigma
+    assignFloatArray(dn->uf_sigma[otherLayer], oNode->nb*oNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5);
+    // uf_starv
+    assignFloatArray(dn->uf_starv[otherLayer], oNode->nb,
+                     .11, .22);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[otherLayer], oNode->nb*oNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5);
 
     //showUpdate(network, currLayer);
     //showUpdate(network, pLayer);
     //showUpdate(network, cLayer);
+    //showUpdate(network, otherLayer);
 
     centroid_counts[currLayer]++;
     network->updateDestin_add(siw, nLayer, centroid_counts, isUniform, extRatio, currLayer);
@@ -1466,11 +1524,13 @@ int test_add()
     //showUpdate(network, currLayer);
     //showUpdate(network, pLayer);
     //showUpdate(network, cLayer);
+    //showUpdate(network, otherLayer);
 
     // !!! Reload
     node = network->getNode(currLayer, 0, 0);
     pNode = network->getNode(pLayer, 0, 0);
     cNode = network->getNode(cLayer, 0, 0);
+    oNode = network->getNode(otherLayer, 0, 0);
 
     // Current layer, 3*(2*4 + 3 + 2) = 39 ------------------------------------
     // mu
@@ -1554,6 +1614,24 @@ int test_add()
                            .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
                            .5, .5,
                            .5, .5, 0};
+    // The layer which is not affected ----------------------------------------
+    // mu
+    float exp_oMu [] = {.01, .02, .03, .04, .05, .06, .07, .08,
+                        .5, .5,
+                        .01, .02, .03, .04, .05, .06, .07, .08,
+                        .5, .5};
+    // uf_sigma
+    float exp_oSigma [] = {.01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5,
+                           .01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5};
+    // uf_starv
+    float exp_oStarv [] = {.11, .22};
+    // uf_absvar
+    float exp_oAbsvar [] = {.01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5,
+                           .01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5};
 
     assertFloatArrayEquals(exp_mu, node->mu, 39);
     assertFloatArrayEquals(exp_pMu, pNode->mu, 32);
@@ -1567,6 +1645,11 @@ int test_add()
     assertFloatArrayEquals(exp_absvar, dn->uf_absvar[currLayer], 39);
     assertFloatArrayEquals(exp_pAbsvar, dn->uf_absvar[pLayer], 32);
     assertFloatArrayEquals(exp_cAbsvar, dn->uf_absvar[cLayer], 42);
+
+    assertFloatArrayEquals(exp_oMu, oNode->mu, 20);
+    assertFloatArrayEquals(exp_oSigma, dn->uf_sigma[otherLayer], 20);
+    assertFloatArrayEquals(exp_oStarv, dn->uf_starv[otherLayer], 2);
+    assertFloatArrayEquals(exp_oAbsvar, dn->uf_absvar[otherLayer], 20);
 
     return 0;
 }
@@ -1585,9 +1668,11 @@ int test_kill()
     int currLayer = 1;
     int pLayer = currLayer+1;
     int cLayer = currLayer-1;
+    int otherLayer = 3;
     Node * node = network->getNode(currLayer, 0, 0);
     Node * pNode = network->getNode(pLayer, 0, 0);
     Node * cNode = network->getNode(cLayer, 0, 0);
+    Node * oNode = network->getNode(otherLayer, 0, 0);
 
     // Current layer, 4*(2*4 + 4 + 2) = 56 ------------------------------------
     // mu
@@ -1698,6 +1783,28 @@ int test_kill()
                      .01, .02, .03, .04, .05, .06, .07, .08, .09, .1, .11, .12, .13, .14, .15, .16,
                      .5, .5,
                      .15, .95, .16, .17);
+    // The layer 3 ------------------------------------------------------------
+    // mu
+    assignFloatArray(oNode->mu, oNode->nb*oNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5);
+    // uf_sigma
+    assignFloatArray(dn->uf_sigma[otherLayer], oNode->nb*oNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5);
+    // uf_starv
+    assignFloatArray(dn->uf_starv[otherLayer], oNode->nb,
+                     .11, .22);
+    // uf_absvar
+    assignFloatArray(dn->uf_absvar[otherLayer], oNode->nb*oNode->ns,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5,
+                     .01, .02, .03, .04, .05, .06, .07, .08,
+                     .5, .5);
 
     centroid_counts[currLayer]--;
     network->updateDestin_kill(siw, nLayer, centroid_counts, isUniform, extRatio, currLayer, killInd);
@@ -1706,6 +1813,7 @@ int test_kill()
     node = network->getNode(currLayer, 0, 0);
     pNode = network->getNode(pLayer, 0, 0);
     cNode = network->getNode(cLayer, 0, 0);
+    oNode = network->getNode(otherLayer, 0, 0);
 
     // 3*(2*4 + 3 + 2) = 39
     float exp_mu [] = {
@@ -1800,6 +1908,24 @@ int test_kill()
         .5, .5,
         .15, .16, .17
     };
+    // The layer which is not affected ----------------------------------------
+    // mu
+    float exp_oMu [] = {.01, .02, .03, .04, .05, .06, .07, .08,
+                        .5, .5,
+                        .01, .02, .03, .04, .05, .06, .07, .08,
+                        .5, .5};
+    // uf_sigma
+    float exp_oSigma [] = {.01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5,
+                           .01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5};
+    // uf_starv
+    float exp_oStarv [] = {.11, .22};
+    // uf_absvar
+    float exp_oAbsvar [] = {.01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5,
+                           .01, .02, .03, .04, .05, .06, .07, .08,
+                           .5, .5};
 
     assertFloatArrayEquals(exp_mu, node->mu, 39);
     assertFloatArrayEquals(exp_pMu, pNode->mu, 32);
@@ -1813,6 +1939,11 @@ int test_kill()
     assertFloatArrayEquals(exp_absvar, dn->uf_absvar[currLayer], 39);
     assertFloatArrayEquals(exp_pAbsvar, dn->uf_absvar[pLayer], 32);
     assertFloatArrayEquals(exp_cAbsvar, dn->uf_absvar[cLayer], 42);
+
+    assertFloatArrayEquals(exp_oMu, oNode->mu, 20);
+    assertFloatArrayEquals(exp_oSigma, dn->uf_sigma[otherLayer], 20);
+    assertFloatArrayEquals(exp_oStarv, dn->uf_starv[otherLayer], 2);
+    assertFloatArrayEquals(exp_oAbsvar, dn->uf_absvar[otherLayer], 20);
 
     return 0;
 }
