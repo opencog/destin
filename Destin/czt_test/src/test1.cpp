@@ -556,8 +556,13 @@ void test_Update()
 #define SHOW_NOW
 #define TEST_nb
 //#define TEST_uf_persistWinCounts_detailed
+
+// From {1,8,16,32,32,16,8,4} to {4,8,16,32,32,16,8,4}, each part will be processed 1500 iterations.
 //#define TEST_add
+// From {4,8,16,32,32,16,8,4} to {1,8,16,32,32,16,8,4}, each part will be processed 1500 iterations.
 //#define TEST_kill
+// {4,8,16,32,32,16,8,4}, add 3 centroids in the layer 0, then kill 3 centroids immediately. It means
+// using the same one for all 3000 iterations.
 #define TEST_addAndKill
 
     ImageSouceImpl isi;

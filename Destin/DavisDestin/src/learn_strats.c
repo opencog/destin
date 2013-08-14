@@ -24,6 +24,7 @@ float CLS_Decay_c1(Destin * d, Node * n, uint layer, uint centroid){
     float learnRate;
     if(d->isUniform){
         wincount = d->uf_persistWinCounts[layer][centroid];
+        //wincount = d->uf_persistWinCounts_detailed[layer][centroid];
         // 2013.5.15
         // CZT
         learnRate = (float)(0.1 + 0.9/(1.0 + ceil(sqrt(sqrt(wincount)))));
