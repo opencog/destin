@@ -19,7 +19,6 @@
 #include "BeliefExporter.h"
 #include "DestinTreeManager.h"
 
-#include "czt_lib.h"
 #include "CztMod.h"
 %}
 
@@ -62,7 +61,6 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "belief_transform.h"
 %include "DestinTreeManager.h"
 
-%include "czt_lib.h"/**/
 %include "CztMod.h"/**/
 
 /* use c++ vector like a python list */

@@ -16,7 +16,7 @@ add_library( common SHARED
     ImageSourceBase.h
     ImageSourceImpl.h
     DestinTreeManager
-    czt_lib.h
+
     CztMod.h
 )
 

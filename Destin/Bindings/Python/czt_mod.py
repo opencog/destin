@@ -9,7 +9,7 @@ import os
 import cv2.cv as cv
 import pydestin as pd
 
-cl = pd.czt_lib()
+#cl = pd.czt_lib()
 cm = pd.CztMod()
 
 #############################################################################

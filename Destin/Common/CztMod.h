@@ -32,7 +32,7 @@ public:
         }
     }
 
-    void combineInfo_depth(float * tempIn, float * depth, int size, float * tempOut)
+    void combineFloatArrays(float * tempIn, float * tempIn2, int size, float * tempOut)
     {
         int i;
         for(i=0; i<size; ++i)
@@ -41,11 +41,12 @@ public:
         }
         for(i=0; i<size; ++i)
         {
-            tempOut[size+i] = depth[i];
+            tempOut[size+i] = tempIn2[i];
         }
     }
 
     //*************************************************************************
+    // Combine 2 512*512 images into a float array with size 512*512*2
     void combineImgs(string file1, string file2, float * tempOut)
     {
         cv::Mat tempMat1 = cv::imread(file1, 0);
@@ -58,7 +59,7 @@ public:
 
 
         int i;
-        int size = 512*512;
+        int size = 512*512;  // Locked size here...
         for(i=0; i<size; ++i)
         {
             tempOut[i] = tempFloat1[i];
@@ -90,6 +91,7 @@ public:
     }
 
     //*************************************************************************
+    // Convert a grayscale image into a float array
     void convert(cv::Mat & in, float * out) {
         if(in.channels()!=1){
             throw runtime_error("Excepted a grayscale image with one channel.");
@@ -112,6 +114,7 @@ public:
         }
     }
 
+    // Create a float array with the given size
     float * floatArrCreate(int size)
     {
         float * outFloatArr;
@@ -119,6 +122,7 @@ public:
         return outFloatArr;
     }
 
+    // Randomize the float array with the given size
     void floatArrRandomize(float * inArr, int size)
     {
         int i;
@@ -126,12 +130,6 @@ public:
         {
             inArr[i] = (float)rand() / (float)RAND_MAX;
         }
-    }
-
-    void floatArrRandomize_2(float *inArr, int size)
-    {
-        int i=4;
-        int width = (int)sqrt(size);
     }
 
     // Resize image and save the result, according to the size;
@@ -145,7 +143,50 @@ public:
         cv::resize(tempMat, resizeMat, size, 1.0, 1.0);
         resizeMat.convertTo(tempMat, CV_8UC1, 255);
 
-        cv::imwrite(savePath, tempMat);
+        if(savePath != "")
+        {
+            cv::imwrite(savePath, tempMat);
+        }
     }
+
+    //*************************************************************************
+    bool isNeedResize(string imgPath)
+    {
+        cv::Mat inputIm = cv::imread(imgPath, 0); // CV_LOAD_IMAGE_GRAYSCALE failed! But 0 worked!!! Type: 8UC1
+        currMat = inputIm;
+
+        if(inputIm.cols == 512 && inputIm.rows == 512)
+        {
+            isResize = false;
+        }
+        else
+        {
+            isResize = true;
+        }
+        currMat.convertTo(floatMat, CV_32FC1, 1.0/255.0);
+        if(isResize)
+        {
+            cv::resize(floatMat, resizeMat, cv::Size(512,512), 1.0, 1.0);
+            mat512 = resizeMat;
+        }
+        else
+        {
+            mat512 = floatMat;
+        }
+        return isResize;
+    }
+
+    float * get_float512()
+    {
+        return (float *)mat512.data;
+    }
+
+private:
+    cv::Mat currMat;
+    cv::Mat floatMat;
+    cv::Mat resizeMat;
+    cv::Mat mat512;
+    cv::Mat mat512_out;
+    bool isResize;
 
 };
