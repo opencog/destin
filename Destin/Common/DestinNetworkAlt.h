@@ -122,6 +122,14 @@ public:
     float getVar(int layer);
     float getQuality(int layer);
 
+    /*************************************************************************/
+    void rescale_up(int srcLayer, int idx, int dstLayer);
+    void rescale_down(int srcLayer, int idx, int dstLayer);
+    void rescaleCentroid(int srcLayer, int idx, int dstLayer);
+    //
+    void displayFloatCentroids(int layer);
+    void displayFloatVector(std::string title, std::vector<float> vec);
+
     void isTraining(bool isTraining);
 
     bool isTraining() {

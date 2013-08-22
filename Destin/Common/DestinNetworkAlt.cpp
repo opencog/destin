@@ -164,7 +164,7 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
 {
     if(!isUniform)
     {
-        printf("The adding action NOW is only for Uniform DeSTIN!\n");
+        printf("The killing action NOW is only for Uniform DeSTIN!\n");
         return;
     }
 
@@ -423,6 +423,232 @@ float DestinNetworkAlt::getVar(int layer)
 float DestinNetworkAlt::getQuality(int layer)
 {
     return getSep(layer)-getVar(layer);
+}
+
+// CZT: to display all centroids
+void DestinNetworkAlt::displayFloatCentroids(int layer)
+{
+    Node * currNode = getNode(layer, 0, 0);
+
+    // Display all centroids on the selected layer
+    printf("---All centroids on layer %d:\n", layer);
+    for(int i=0; i<currNode->nb; ++i)
+    {
+        for(int j=0; j<currNode->ni; ++j)
+        {
+            printf("%f  ", currNode->mu[i*currNode->ns + j]);
+        }
+        printf("\n");
+        for(int j=0; j<currNode->nb; ++j)
+        {
+            printf("%f  ", currNode->mu[i*currNode->ns + j + currNode->ni]);
+        }
+        printf("\n");
+        for(int j=0; j<currNode->np; ++j)
+        {
+            printf("%f  ", currNode->mu[i*currNode->ns + j + currNode->ni + currNode->nb]);
+        }
+        printf("\n");
+        if(i != currNode->nb-1)
+        {
+            printf("---\n");
+        }
+    }
+    printf("\n\n");
+}
+
+// CZT: to display the vector with a given title
+void DestinNetworkAlt::displayFloatVector(std::string title, std::vector<float> vec)
+{
+    printf("%s", title.c_str());
+    for(int i=0; i<vec.size(); ++i)
+    {
+        printf("%f  ", vec[i]);
+    }
+    printf("\n\n");
+}
+
+void DestinNetworkAlt::rescale_up(int srcLayer, int idx, int dstLayer)
+{
+    if(!isUniform)
+    {
+        printf("The rescaling action NOW is only for Uniform DeSTIN!\n");
+        return;
+    }
+
+    std::vector<float> srcCen;
+    std::vector<float> srcSigma;
+    Node * currNode = getNode(srcLayer, 0, 0);
+
+    // Display all centroids on source layer
+    displayFloatCentroids(srcLayer);
+
+    // Extract the selected centroid; Extract the selected sigma;
+    for(int i=currNode->ns*idx; i<currNode->ns*(idx+1); ++i)
+    {
+        srcCen.push_back(currNode->mu[i]);
+        srcSigma.push_back(destin->uf_sigma[srcLayer][i]);
+    }
+
+    // Display the selected centroid
+    displayFloatVector("---The selected centroid is:\n", srcCen);
+
+    // Generate the index for every quarter, specific for layer 0
+    std::vector<std::vector<int> > vecIdx;
+    // 0,1,4.5
+    // 2,3,6,7
+    // 8,9,12,13
+    // 10,11,14,15
+    for(int i=0; i<2; ++i)
+    {
+        for(int j=0; j<=2; j+=2)
+        {
+            std::vector<int> vecTemp;
+            vecTemp.push_back(i*2*4 + j);
+            vecTemp.push_back(i*2*4 + j + 1);
+            vecTemp.push_back(i*2*4 + j + 4);
+            vecTemp.push_back(i*2*4 + j + 4 + 1);
+            vecIdx.push_back(vecTemp);
+        }
+    }
+
+    // Generate the 4 new observations
+    std::vector<std::vector<float> > extendCen;
+    std::vector<std::vector<float> > extendSigma;
+    for(int i=0; i<vecIdx.size(); ++i)
+    {
+        std::vector<float> quaCen;
+        std::vector<float> quaSigma;
+
+        for(int j=0; j<vecIdx[i].size(); ++j)
+        {
+            for(int k=0; k<4; ++k)
+            {
+                quaCen.push_back(srcCen[vecIdx[i][j]]);
+                quaSigma.push_back(srcSigma[vecIdx[i][j]]);
+            }
+        }
+        for(int j=0; j<currNode->nb; ++j)
+        {
+            quaCen.push_back(1/(float)currNode->nb);
+            quaSigma.push_back(srcSigma[currNode->ni + j]);
+        }
+        for(int j=0; j<currNode->np; ++j)
+        {
+            quaCen.push_back(1/(float)currNode->np);
+            quaSigma.push_back(srcSigma[currNode->ni + currNode->nb + j]);
+        }
+        extendCen.push_back(quaCen);
+        extendSigma.push_back(quaSigma);
+    }
+
+    // Display the 4 new observations
+    printf("---The generated 4 new observations:\n");
+    for(int i=0; i<extendCen.size(); ++i)
+    {
+        for(int j=0; j<currNode->ni; ++j)
+        {
+            printf("%f  ", extendCen[i][j]);
+        }
+        printf("\n");
+        for(int j=0; j<currNode->nb; ++j)
+        {
+            printf("%f  ", extendCen[i][j + currNode->ni]);
+        }
+        printf("\n");
+        for(int j=0; j<currNode->np; ++j)
+        {
+            printf("%f  ", extendCen[i][j + currNode->ni + currNode->nb]);
+        }
+        printf("\n");
+        if(i != extendCen.size()-1)
+        {
+            printf("---\n");
+        }
+    }
+    printf("\n\n");
+
+    // Use the 4 new observations to construct the belief vector for layer 1
+    std::vector<float> vecBelief;
+    for(int i=0; i<extendCen.size(); ++i)
+    {
+        float delta;
+        float sumMal = 0;
+        for(int j=0; j<currNode->nb; ++j)
+        {
+            for(int k=0; k<currNode->ns; ++k)
+            {
+                delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
+                delta *= delta;
+
+                // Assume starv is 1
+                delta *= 1;
+
+                sumMal += delta/extendSigma[i][k];
+            }
+
+            sumMal = sqrt(sumMal);
+
+#define EPSILON     1e-8
+#define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
+
+            vecBelief.push_back( ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal) );
+        }
+    }
+    Node * parentNode = getNode(srcLayer+1, 0, 0);
+    for(int i=0; i<parentNode->nb; ++i)
+    {
+        vecBelief.push_back( 1/(float)parentNode->nb );
+    }
+    for(int i=0; i<parentNode->np; ++i)
+    {
+        vecBelief.push_back( 1/(float)parentNode->np );
+    }
+
+    // Display the calculated belief vector
+    displayFloatVector("---The calculated belief vector is:\n", vecBelief);
+
+    // Display the parent layer's centroids
+    //displayFloatCentroids(srcLayer+1);
+}
+
+void DestinNetworkAlt::rescale_down(int srcLayer, int idx, int dstLayer)
+{
+    if(!isUniform)
+    {
+        printf("The rescaling action NOW is only for Uniform DeSTIN!\n");
+        return;
+    }
+
+    Node * currNode = getNode(srcLayer, 0, 0);
+    std::vector<float> srcCen;
+
+    // Display all centroids
+    displayFloatCentroids(srcLayer);
+
+    // Extract the selected centroid
+    for(int i=idx*currNode->ns; i<(idx+1)*currNode->ns; ++i)
+    {
+        srcCen.push_back(currNode->mu[i]);
+    }
+
+    // Display the selected centroid
+    displayFloatVector("---The selected centroid is:\n", srcCen);
+}
+
+void DestinNetworkAlt::rescaleCentroid(int srcLayer, int idx, int dstLayer)
+{
+    if(!isUniform)
+    {
+        printf("The rescaling action NOW is only for Uniform DeSTIN!\n");
+        return;
+    }
+
+    if(srcLayer == dstLayer)
+    {
+        printf("You are joking!\n");
+        return;
+    }
 }
 
 /*****************************************************************************/

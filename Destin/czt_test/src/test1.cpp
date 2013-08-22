@@ -49,6 +49,8 @@ void test_SOM2();
 void test_TempFunc();
 // Try displaying the quality, seperation and variance value;
 void test_Quality();
+// Test rescaling centroids
+void test_Rescale();
 
 /* Prototypes of unit tests */
 int CZT_UT();
@@ -70,6 +72,7 @@ int main(int argc, char ** argv){
     //test_SOM();
     //test_SOM2();
     //test_Quality();
+    test_Rescale();
 
     /* Test some impromptu codes here */
     //test_TempFunc();
@@ -2007,4 +2010,37 @@ int showUpdate(DestinNetworkAlt * network, int currLayer)
     printf("\n");*/
 
     return 0;
+}
+
+void test_Rescale()
+{
+    ImageSouceImpl isi;
+    isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
+
+    SupportedImageWidths siw = W512;
+    uint centroid_counts[]  = {4,8,16,32,32,16,8,4};
+    bool isUniform = true;
+    int size = 512*512;
+    DestinNetworkAlt * network = new DestinNetworkAlt(siw, 8, centroid_counts, isUniform);
+
+    int frameCount = 1;
+    int maxCount = 100;
+    while(frameCount <= maxCount){
+        frameCount++;
+        if(frameCount % 10 == 0)
+        {
+            printf("Count %d;\n", frameCount);
+        }
+
+        isi.findNextImage();
+        network->doDestin(isi.getGrayImageFloat());
+    }
+
+    /*network->displayLayerCentroidImages(7, 1000);
+    cv::waitKey(10000);*/
+
+    //network->rescale_up(0, 2, 1);
+    network->rescale_down(1, 2, 0);
+
+    delete network;
 }
