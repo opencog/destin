@@ -495,7 +495,7 @@ void DestinNetworkAlt::rescale_up(int srcLayer, int idx, int dstLayer)
 
     // Generate the index for every quarter, specific for layer 0
     std::vector<std::vector<int> > vecIdx;
-    // 0,1,4.5
+    // 0,1,4,5
     // 2,3,6,7
     // 8,9,12,13
     // 10,11,14,15
@@ -621,10 +621,15 @@ void DestinNetworkAlt::rescale_down(int srcLayer, int idx, int dstLayer)
     }
 
     Node * currNode = getNode(srcLayer, 0, 0);
+    // Use every quarter as a single lower level centroid, then downsample
+    int level0 = 0;
+    displayFloatCentroids(level0);
+    Node * childNode = getNode(level0, 0, 0);
     std::vector<float> srcCen;
+    std::vector<float> normSrcCen;
 
     // Display all centroids
-    displayFloatCentroids(srcLayer);
+    //displayFloatCentroids(srcLayer);
 
     // Extract the selected centroid
     for(int i=idx*currNode->ns; i<(idx+1)*currNode->ns; ++i)
@@ -632,8 +637,61 @@ void DestinNetworkAlt::rescale_down(int srcLayer, int idx, int dstLayer)
         srcCen.push_back(currNode->mu[i]);
     }
 
+    // Normalize for every quarter
+    // This is inspired by 'cent_image_gen.c';
+    for(int i=0; i<4; ++i)
+    {
+        float sum = 0.0;
+        for(int j=0; j<childNode->nb; ++j)
+        {
+            sum += srcCen[i*childNode->nb + j];
+        }
+        for(int j=0; j<childNode->nb; ++j)
+        {
+            normSrcCen.push_back(srcCen[i*childNode->nb + j] / sum);
+        }
+    }
+
     // Display the selected centroid
     displayFloatVector("---The selected centroid is:\n", srcCen);
+    displayFloatVector("---The normalized selected centroid is:\n", normSrcCen);
+
+    // Downsampling method: pickping left-up one
+    std::vector<int> vecIdx;
+    vecIdx.push_back(0);
+    vecIdx.push_back(2);
+    vecIdx.push_back(8);
+    vecIdx.push_back(10);
+
+
+    std::vector<float> newCen;
+    for(int i=0; i<4; ++i)
+    {
+        std::vector<float> tempCen(childNode->ni, 0);
+        for(int j=0; j<childNode->nb; ++j)
+        {
+            for(int k=j*childNode->ns; k<j*childNode->ns+childNode->ni; ++k)
+            {
+                //
+                tempCen[k-j*childNode->ns] += normSrcCen[i*childNode->nb+j] * childNode->mu[k];
+            }
+        }
+        displayFloatVector("\n", tempCen);
+        for(int j=0; j<vecIdx.size(); ++j)
+        {
+            newCen.push_back(tempCen[vecIdx[j]]);
+        }
+    }
+    for(int i=0; i<childNode->nb; ++i)
+    {
+        newCen.push_back(1 / (float)childNode->nb);
+    }
+    for(int i=0; i<childNode->np; ++i)
+    {
+        newCen.push_back(1 / (float)childNode->np);
+    }
+
+    displayFloatVector("---The downsampled result is:\n", newCen);
 }
 
 void DestinNetworkAlt::rescaleCentroid(int srcLayer, int idx, int dstLayer)
@@ -649,6 +707,8 @@ void DestinNetworkAlt::rescaleCentroid(int srcLayer, int idx, int dstLayer)
         printf("You are joking!\n");
         return;
     }
+
+    //
 }
 
 /*****************************************************************************/
