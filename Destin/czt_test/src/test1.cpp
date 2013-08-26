@@ -2040,7 +2040,9 @@ void test_Rescale()
     cv::waitKey(10000);*/
 
     //network->rescale_up(0, 2, 1);
-    network->rescale_down(1, 2, 0);
+    //network->rescale_down(1, 2, 0);
+    network->rescaleCentroid(0, 2, 7);
+    //network->rescaleCentroid(1, 2, 0);
 
     delete network;
 }

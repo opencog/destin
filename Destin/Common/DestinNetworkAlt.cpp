@@ -468,6 +468,52 @@ void DestinNetworkAlt::displayFloatVector(std::string title, std::vector<float> 
     printf("\n\n");
 }
 
+void DestinNetworkAlt::getSelectedCentroid(int layer, int idx, std::vector<float> & outCen)
+{
+    // Clear the vector
+    outCen.clear();
+
+    Node * currNode = getNode(layer, 0, 0);
+    for(int i=currNode->ns*idx; i<currNode->ns*(idx+1); ++i)
+    {
+        outCen.push_back(currNode->mu[i]);
+    }
+}
+
+void DestinNetworkAlt::getSelectedSigma(int layer, int idx, std::vector<float> & outSigma)
+{
+    // Clear the vector
+    outSigma.clear();
+
+    Node * currNode = getNode(layer, 0, 0);
+    for(int i=currNode->ns*idx; i<currNode->ns*(idx+1); ++i)
+    {
+        outSigma.push_back(destin->uf_sigma[layer][i]);
+    }
+}
+
+void DestinNetworkAlt::normalizeChildrenPart(std::vector<float> & inCen, int ni)
+{
+    for(int i=0; i<4; ++i)
+    {
+        float sum = 0;
+        for(int j=0; j<ni/4; ++j)
+        {
+            sum += inCen[i*(ni/4) + j];
+        }
+
+        for(int j=0; j<ni/4; ++j)
+        {
+            inCen[i*(ni/4) + j] = inCen[i*(ni/4) + j] / sum;
+        }
+    }
+}
+
+//
+#define EPSILON     1e-8
+#define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
+
+// CZT: up; from lower level to higher level;
 void DestinNetworkAlt::rescale_up(int srcLayer, int idx, int dstLayer)
 {
     if(!isUniform)
@@ -573,9 +619,10 @@ void DestinNetworkAlt::rescale_up(int srcLayer, int idx, int dstLayer)
     for(int i=0; i<extendCen.size(); ++i)
     {
         float delta;
-        float sumMal = 0;
+        float sumMal;
         for(int j=0; j<currNode->nb; ++j)
         {
+            sumMal = 0;
             for(int k=0; k<currNode->ns; ++k)
             {
                 delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
@@ -588,9 +635,6 @@ void DestinNetworkAlt::rescale_up(int srcLayer, int idx, int dstLayer)
             }
 
             sumMal = sqrt(sumMal);
-
-#define EPSILON     1e-8
-#define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
 
             vecBelief.push_back( ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal) );
         }
@@ -610,8 +654,10 @@ void DestinNetworkAlt::rescale_up(int srcLayer, int idx, int dstLayer)
 
     // Display the parent layer's centroids
     //displayFloatCentroids(srcLayer+1);
+
 }
 
+// CZT: down; from higher level to lower level;
 void DestinNetworkAlt::rescale_down(int srcLayer, int idx, int dstLayer)
 {
     if(!isUniform)
@@ -692,8 +738,11 @@ void DestinNetworkAlt::rescale_down(int srcLayer, int idx, int dstLayer)
     }
 
     displayFloatVector("---The downsampled result is:\n", newCen);
+
 }
 
+
+// CZT: rescaleCentroid
 void DestinNetworkAlt::rescaleCentroid(int srcLayer, int idx, int dstLayer)
 {
     if(!isUniform)
@@ -708,7 +757,325 @@ void DestinNetworkAlt::rescaleCentroid(int srcLayer, int idx, int dstLayer)
         return;
     }
 
-    //
+    if(srcLayer < dstLayer)
+    {
+        std::vector<float> selCen;
+        getSelectedCentroid(srcLayer, idx, selCen);
+        std::vector<float> selSigma;
+        getSelectedSigma(srcLayer, idx, selSigma);
+        //
+        rescaleRecursiveUp(srcLayer, selCen, selSigma, dstLayer);
+    }
+    else if(srcLayer > dstLayer)
+    {
+        std::vector<float> selCen;
+        getSelectedCentroid(srcLayer, idx, selCen);
+        rescaleRecursiveDown(srcLayer, selCen, dstLayer);
+    }
+}
+
+void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, std::vector<float> selSigma, int dstLayer)
+{
+    if(srcLayer == dstLayer)
+    {
+        displayFloatVector("---Result is:\n", selCen);
+        return;
+    }
+    else
+    {
+        Node * currNode = getNode(srcLayer, 0, 0);
+        Node * parentNode = getNode(srcLayer+1, 0, 0);
+        // Contain the final result
+        std::vector<float> newSelCen;
+        // Contain the new sigma vector
+        std::vector<float> newSelSigma;
+        // Contain the 4 new made children
+        std::vector<std::vector<float> > extendCen;
+        std::vector<std::vector<float> > extendSigma;
+
+        // Display all centroids on source layer
+        displayFloatCentroids(srcLayer);
+        // Display the selected centroid
+        displayFloatVector("---The selected centroid is:\n", selCen);
+
+        if(srcLayer == 0)
+        {
+            // Generate the index for every quarter, specific for layer 0
+            std::vector<std::vector<int> > vecIdx;
+            // 0,1,4,5
+            // 2,3,6,7
+            // 8,9,12,13
+            // 10,11,14,15
+            for(int i=0; i<2; ++i)
+            {
+                for(int j=0; j<=2; j+=2)
+                {
+                    std::vector<int> vecTemp;
+                    vecTemp.push_back(i*2*4 + j);
+                    vecTemp.push_back(i*2*4 + j + 1);
+                    vecTemp.push_back(i*2*4 + j + 4);
+                    vecTemp.push_back(i*2*4 + j + 4 + 1);
+                    vecIdx.push_back(vecTemp);
+                }
+            }
+
+            // Generate the 4 new observations
+            for(int i=0; i<vecIdx.size(); ++i)
+            {
+                std::vector<float> quaCen;
+                std::vector<float> quaSigma;
+
+                for(int j=0; j<vecIdx[i].size(); ++j)
+                {
+                    for(int k=0; k<4; ++k)
+                    {
+                        quaCen.push_back(selCen[vecIdx[i][j]]);
+                        quaSigma.push_back(selSigma[vecIdx[i][j]]);
+                    }
+                }
+                for(int j=0; j<currNode->nb; ++j)
+                {
+                    quaCen.push_back(1/(float)currNode->nb);
+                    quaSigma.push_back(selSigma[currNode->ni + j]);
+                }
+                for(int j=0; j<currNode->np; ++j)
+                {
+                    quaCen.push_back(1/(float)currNode->np);
+                    quaSigma.push_back(selSigma[currNode->ni + currNode->nb + j]);
+                }
+                extendCen.push_back(quaCen);
+                extendSigma.push_back(quaSigma);
+            }
+
+            // Display the 4 new observations
+            /*printf("---The generated 4 new observations:\n");
+            for(int i=0; i<extendCen.size(); ++i)
+            {
+                for(int j=0; j<currNode->ni; ++j)
+                {
+                    printf("%f  ", extendCen[i][j]);
+                }
+                printf("\n");
+                for(int j=0; j<currNode->nb; ++j)
+                {
+                    printf("%f  ", extendCen[i][j + currNode->ni]);
+                }
+                printf("\n");
+                for(int j=0; j<currNode->np; ++j)
+                {
+                    printf("%f  ", extendCen[i][j + currNode->ni + currNode->nb]);
+                }
+                printf("\n");
+                if(i != extendCen.size()-1)
+                {
+                    printf("---\n");
+                }
+            }
+            printf("\n\n");*/
+
+            // Use the 4 new observations to construct the belief vector for layer 1
+            // 4 children part
+            for(int i=0; i<extendCen.size(); ++i)
+            {
+                float delta;
+                float sumMal;
+                for(int j=0; j<currNode->nb; ++j)
+                {
+                    sumMal = 0;
+                    for(int k=0; k<currNode->ns; ++k)
+                    {
+                        delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
+                        delta *= delta;
+
+                        // Assume starv is 1
+                        delta *= 1;
+
+                        sumMal += delta/extendSigma[i][k];
+                    }
+
+                    sumMal = sqrt(sumMal);
+
+                    newSelCen.push_back( ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal) );
+                }
+            }
+            // current part
+            for(int i=0; i<parentNode->nb; ++i)
+            {
+                newSelCen.push_back( 1/(float)parentNode->nb );
+            }
+            // parent part
+            for(int i=0; i<parentNode->np; ++i)
+            {
+                newSelCen.push_back( 1/(float)parentNode->np );
+            }
+
+            //normalizeChildrenPart(newSelCen, extendCen.size()*currNode->nb);
+
+            // Init a sigma vector; But from now on, it's Eul instead of Mal!!!
+            for(int i=0; i<parentNode->ns; ++i)
+            {
+                // INIT_SIGMA
+                newSelSigma.push_back(.00001);
+            }
+        }
+        else
+        {
+            // Generate the 4 new observations
+            int numParts = 4;
+            Node * childNode = getNode(srcLayer-1, 0, 0);
+            for(int i=0; i<numParts; ++i)
+            {
+                std::vector<float> quaCen;
+                std::vector<float> quaSigma;
+                for(int j=0; j<numParts; ++j)
+                {
+                    for(int k=0; k<childNode->nb; ++k)
+                    {
+                        quaCen.push_back(selCen[i*childNode->nb + k]);
+                        quaSigma.push_back(selSigma[i*childNode->nb + k]);
+                    }
+                }
+                for(int j=0; j<currNode->nb; ++j)
+                {
+                    quaCen.push_back( 1/(float)currNode->nb );
+                    quaSigma.push_back( selSigma[currNode->ni + j] );
+                }
+                for(int j=0; j<currNode->np; ++j)
+                {
+                    quaCen.push_back( 1/(float)currNode->np );
+                    quaSigma.push_back( selSigma[currNode->ni + currNode->nb + j] );
+                }
+
+                extendCen.push_back(quaCen);
+                extendSigma.push_back(quaSigma);
+
+                // testing
+                displayFloatVector("\n", quaCen);
+            }
+
+            // Construct belief vector
+            // 4 children part
+            for(int i=0; i<extendCen.size(); ++i)
+            {
+                float delta;
+                float sumMal;  // not mal if using man-made sigma???
+                for(int j=0; j<currNode->nb; ++j)
+                {
+                    sumMal = 0;
+                    for(int k=0; k<currNode->ns; ++k)
+                    {
+                        delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
+                        delta *= delta;
+
+                        delta *= 1;
+
+                        sumMal += delta/extendSigma[i][k];
+                    }
+
+                    sumMal = sqrt(sumMal);
+
+                    newSelCen.push_back( ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal) );
+                }
+            }
+            // current part
+            for(int i=0; i<parentNode->nb; ++i)
+            {
+                newSelCen.push_back( 1/(float)parentNode->nb );
+            }
+            // parent part
+            for(int i=0; i<parentNode->np; ++i)
+            {
+                newSelCen.push_back( 1/(float)parentNode->np );
+            }
+
+            for(int i=0; i<parentNode->ns; ++i)
+            {
+                newSelSigma.push_back(.00001);
+            }
+        }
+
+        rescaleRecursiveUp(srcLayer+1, newSelCen, newSelSigma, dstLayer);
+    }
+}
+
+void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> selCen, int dstLayer)
+{
+    if(srcLayer == dstLayer)
+    {
+        displayFloatVector("---Result is:\n", selCen);
+    }
+    else
+    {
+        std::vector<float> newSelCen;
+        if(srcLayer == 1)
+        {
+
+            Node * currNode = getNode(srcLayer, 0, 0);
+            // Use every quarter as a single lower level centroid, then downsample
+            int level0 = 0;
+            displayFloatCentroids(level0);
+            Node * childNode = getNode(level0, 0, 0);
+
+            std::vector<float> normSelCen;
+
+            // Normalize for every quarter
+            // This is inspired by 'cent_image_gen.c';
+            for(int i=0; i<4; ++i)
+            {
+                float sum = 0.0;
+                for(int j=0; j<childNode->nb; ++j)
+                {
+                    sum += selCen[i*childNode->nb + j];
+                }
+                for(int j=0; j<childNode->nb; ++j)
+                {
+                    normSelCen.push_back(selCen[i*childNode->nb + j] / sum);
+                }
+            }
+
+            // Display the selected centroid
+            displayFloatVector("---The selected centroid is:\n", selCen);
+            displayFloatVector("---The normalized selected centroid is:\n", normSelCen);
+
+            // Downsampling method: pickping left-up one
+            std::vector<int> vecIdx;
+            vecIdx.push_back(0);
+            vecIdx.push_back(2);
+            vecIdx.push_back(8);
+            vecIdx.push_back(10);
+
+            for(int i=0; i<4; ++i)
+            {
+                std::vector<float> tempCen(childNode->ni, 0);
+                for(int j=0; j<childNode->nb; ++j)
+                {
+                    for(int k=j*childNode->ns; k<j*childNode->ns+childNode->ni; ++k)
+                    {
+                        //
+                        tempCen[k-j*childNode->ns] += normSelCen[i*childNode->nb+j] * childNode->mu[k];
+                    }
+                }
+                displayFloatVector("\n", tempCen);
+                for(int j=0; j<vecIdx.size(); ++j)
+                {
+                    newSelCen.push_back(tempCen[vecIdx[j]]);
+                }
+            }
+            for(int i=0; i<childNode->nb; ++i)
+            {
+                newSelCen.push_back(1 / (float)childNode->nb);
+            }
+            for(int i=0; i<childNode->np; ++i)
+            {
+                newSelCen.push_back(1 / (float)childNode->np);
+            }
+        }
+        else
+        {
+        }
+
+        rescaleRecursiveDown(srcLayer-1, newSelCen, dstLayer);
+    }
 }
 
 /*****************************************************************************/

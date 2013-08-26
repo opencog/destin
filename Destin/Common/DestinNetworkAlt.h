@@ -126,9 +126,14 @@ public:
     void rescale_up(int srcLayer, int idx, int dstLayer);
     void rescale_down(int srcLayer, int idx, int dstLayer);
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);
+    void rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, std::vector<float> selSigma, int dstLayer);
+    void rescaleRecursiveDown(int srcLayer, std::vector<float> selCen, int dstLayer);
     //
     void displayFloatCentroids(int layer);
     void displayFloatVector(std::string title, std::vector<float> vec);
+    void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
+    void getSelectedSigma(int layer, int idx, std::vector<float> & outSigma);
+    void normalizeChildrenPart(std::vector<float> & inCen, int ni);
 
     void isTraining(bool isTraining);
 
