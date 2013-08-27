@@ -1007,16 +1007,19 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
     else
     {
         std::vector<float> newSelCen;
+        std::vector<float> normSelCen;
+
+        // Display all centroids on source layer
+        //displayFloatCentroids(srcLayer);
+        // Display the selected centroid
+        //displayFloatVector("---The selected centroid is:\n", selCen);
+
         if(srcLayer == 1)
         {
-
-            Node * currNode = getNode(srcLayer, 0, 0);
             // Use every quarter as a single lower level centroid, then downsample
             int level0 = 0;
-            displayFloatCentroids(level0);
             Node * childNode = getNode(level0, 0, 0);
-
-            std::vector<float> normSelCen;
+            //displayFloatCentroids(level0);
 
             // Normalize for every quarter
             // This is inspired by 'cent_image_gen.c';
@@ -1034,8 +1037,8 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
             }
 
             // Display the selected centroid
-            displayFloatVector("---The selected centroid is:\n", selCen);
-            displayFloatVector("---The normalized selected centroid is:\n", normSelCen);
+            //displayFloatVector("---The selected centroid is:\n", selCen);
+            //displayFloatVector("---The normalized selected centroid is:\n", normSelCen);
 
             // Downsampling method: pickping left-up one
             std::vector<int> vecIdx;
@@ -1055,7 +1058,7 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                         tempCen[k-j*childNode->ns] += normSelCen[i*childNode->nb+j] * childNode->mu[k];
                     }
                 }
-                displayFloatVector("\n", tempCen);
+                //displayFloatVector("\n", tempCen);
                 for(int j=0; j<vecIdx.size(); ++j)
                 {
                     newSelCen.push_back(tempCen[vecIdx[j]]);
@@ -1072,6 +1075,47 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
         }
         else
         {
+            Node * childNode = getNode(srcLayer-1, 0, 0);
+
+            // Normalize for every quarter
+            for(int i=0; i<4; ++i)
+            {
+                float sum = 0.0;
+                for(int j=0; j<childNode->nb; ++j)
+                {
+                    sum += selCen[i*childNode->nb + j];
+                }
+                for(int j=0; j<childNode->nb; ++j)
+                {
+                    normSelCen.push_back(selCen[i*childNode->nb + j] / sum);
+                }
+            }
+
+            for(int i=0; i<4; ++i)
+            {
+                std::vector<float> tempCen(childNode->ni, 0);
+                for(int j=0; j<childNode->nb; ++j)
+                {
+                    for(int k=j*childNode->ns; k<j*childNode->ns+childNode->ni; ++k)
+                    {
+                        //
+                        tempCen[k - j*childNode->ns] += normSelCen[i*childNode->nb + j] * childNode->mu[k];
+                    }
+                }
+
+                for(int j=0; j<childNode->ni/4; ++j)
+                {
+                    newSelCen.push_back(tempCen[j]);
+                }
+            }
+            for(int i=0; i<childNode->nb; ++i)
+            {
+                newSelCen.push_back( 1/(float)childNode->nb );
+            }
+            for(int j=0; j<childNode->np; ++j)
+            {
+                newSelCen.push_back( 1/(float)childNode->np );
+            }
         }
 
         rescaleRecursiveDown(srcLayer-1, newSelCen, dstLayer);
