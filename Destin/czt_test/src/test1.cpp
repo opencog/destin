@@ -2039,8 +2039,8 @@ void test_Rescale()
     /*network->displayLayerCentroidImages(7, 1000);
     cv::waitKey(10000);*/
 
-    network->rescaleCentroid(0, 2, 1);
-    //network->rescaleCentroid(2, 2, 0);
+    //network->rescaleCentroid(0, 2, 2);
+    network->rescaleCentroid(2, 2, 0);
 
     delete network;
 }

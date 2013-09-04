@@ -638,54 +638,7 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
             }
             printf("\n\n");/**/
 
-            // Use the 4 new observations to construct the belief vector for layer 1
-            // 4 children part
-            for(int i=0; i<extendCen.size(); ++i)
-            {
-                float delta;
-                float sumMal;
-                for(int j=0; j<currNode->nb; ++j)
-                {
-                    sumMal = 0;
-
-                    // TODO: decrease from 'ns' to 'ni';
-                    for(int k=0; k<currNode->ns; ++k)
-                    {
-                        delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
-
-                        delta *= delta;
-
-                        // Assume starv is 1
-                        delta *= 1;
-
-                        sumMal += delta/destin->uf_sigma[srcLayer][j*currNode->ns + k];
-                    }
-
-                    printf("%f\n", sumMal);
-                    // Because the faked observations are too close to the centroids, the sumMal is
-                    // less than 1. Then the belief will be larger than 1 according to 1.0/sumMal.
-                    // In the original DeSTIN, the belief vector will make centroids 'move' even the
-                    // belief is larger than 1. But what we get directly is not centroid, but belief.
-                    // So what should we do?
-
-                    sumMal = sqrt(sumMal);
-
-                    newSelCen.push_back( ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal) );
-                }
-            }
-            // current part
-            for(int i=0; i<parentNode->nb; ++i)
-            {
-                newSelCen.push_back( 1/(float)parentNode->nb );
-            }
-            // parent part
-            for(int i=0; i<parentNode->np; ++i)
-            {
-                newSelCen.push_back( 1/(float)parentNode->np );
-            }
-
             //normalizeChildrenPart(newSelCen, extendCen.size()*currNode->nb);
-
         }
         else
         {
@@ -716,41 +669,53 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
                 // testing
                 //displayFloatVector("\n", quaCen);
             }
+        }
 
-            // Construct belief vector
-            // 4 children part
-            for(int i=0; i<extendCen.size(); ++i)
+
+        // Use the 4 new observations to construct the belief vector for layer 1
+        // 4 children part
+        for(int i=0; i<extendCen.size(); ++i)
+        {
+            float delta;
+            float sumMal;
+            for(int j=0; j<currNode->nb; ++j)
             {
-                float delta;
-                float sumMal;
-                for(int j=0; j<currNode->nb; ++j)
+                sumMal = 0;
+
+                // TODO: decrease from 'ns' to 'ni';
+                for(int k=0; k<currNode->ni; ++k)
+                //for(int k=0; k<currNode->ns; ++k)
                 {
-                    sumMal = 0;
-                    for(int k=0; k<currNode->ns; ++k)
-                    {
-                        delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
-                        delta *= delta;
+                    delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
 
-                        delta *= 1;
+                    delta *= delta;
 
-                        sumMal += delta/destin->uf_sigma[srcLayer][j*currNode->ns + k];
-                    }
+                    // Assume starv is 1
+                    delta *= 1;
 
-                    sumMal = sqrt(sumMal);
-
-                    newSelCen.push_back( ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal) );
+                    sumMal += delta/destin->uf_sigma[srcLayer][j*currNode->ns + k];
                 }
+
+                sumMal = sqrt(sumMal);
+
+                //newSelCen.push_back( ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal) );
+                newSelCen.push_back( 1 / (1+sumMal) );
+
+                // Because the faked observations are too close to the centroids, the sumMal is
+                // less than 1. Then the belief will be larger than 1 according to 1.0/sumMal.
+                // In the original DeSTIN, the belief vector will make centroids 'move' even the
+                // belief is larger than 1. But what we get directly is not centroid, but belief.
             }
-            // current part
-            for(int i=0; i<parentNode->nb; ++i)
-            {
-                newSelCen.push_back( 1/(float)parentNode->nb );
-            }
-            // parent part
-            for(int i=0; i<parentNode->np; ++i)
-            {
-                newSelCen.push_back( 1/(float)parentNode->np );
-            }
+        }
+        // current part
+        for(int i=0; i<parentNode->nb; ++i)
+        {
+            newSelCen.push_back( 1/(float)parentNode->nb );
+        }
+        // parent part
+        for(int i=0; i<parentNode->np; ++i)
+        {
+            newSelCen.push_back( 1/(float)parentNode->np );
         }
 
         rescaleRecursiveUp(srcLayer+1, newSelCen, dstLayer);
@@ -767,19 +732,21 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
     }
     else
     {
+        Node * childNode = getNode(srcLayer-1, 0, 0);
+
         std::vector<float> newSelCen;
         std::vector<float> normSelCen;
 
         // Display all centroids on source layer
-        //displayFloatCentroids(srcLayer);
+        displayFloatCentroids(srcLayer);
         // Display the selected centroid
-        //displayFloatVector("---The selected centroid is:\n", selCen);
+        displayFloatVector("---The selected centroid is:\n", selCen);
 
         if(srcLayer == 1)
         {
             // Use every quarter as a single lower level centroid, then downsample
-            int level0 = 0;
-            Node * childNode = getNode(level0, 0, 0);
+            //int level0 = 0;
+            //Node * childNode = getNode(level0, 0, 0);
             //displayFloatCentroids(level0);
 
             // Normalize for every quarter
@@ -825,19 +792,9 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                     newSelCen.push_back(tempCen[vecIdx[j]]);
                 }
             }
-            for(int i=0; i<childNode->nb; ++i)
-            {
-                newSelCen.push_back(1 / (float)childNode->nb);
-            }
-            for(int i=0; i<childNode->np; ++i)
-            {
-                newSelCen.push_back(1 / (float)childNode->np);
-            }
         }
         else
         {
-            Node * childNode = getNode(srcLayer-1, 0, 0);
-
             // Normalize for every quarter
             for(int i=0; i<4; ++i)
             {
@@ -869,14 +826,15 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                     newSelCen.push_back(tempCen[j]);
                 }
             }
-            for(int i=0; i<childNode->nb; ++i)
-            {
-                newSelCen.push_back( 1/(float)childNode->nb );
-            }
-            for(int j=0; j<childNode->np; ++j)
-            {
-                newSelCen.push_back( 1/(float)childNode->np );
-            }
+        }
+
+        for(int i=0; i<childNode->nb; ++i)
+        {
+            newSelCen.push_back(1 / (float)childNode->nb);
+        }
+        for(int i=0; i<childNode->np; ++i)
+        {
+            newSelCen.push_back(1 / (float)childNode->np);
         }
 
         rescaleRecursiveDown(srcLayer-1, newSelCen, dstLayer);

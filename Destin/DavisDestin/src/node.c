@@ -193,8 +193,13 @@ void CalculateDistances( Node *n, uint nIdx )
         sumMal = sqrt(sumMal);
 
         // Calculate intermediate belief in the current centroid based on the distance between the centroid and the input vector data
-        n->beliefEuc[i] = ( sumEuc < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumEuc);
-        n->beliefMal[i] = ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal);
+        /*n->beliefEuc[i] = ( sumEuc < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumEuc);
+        n->beliefMal[i] = ( sumMal < EPSILON ) ? MAX_INTERMEDIATE_BELIEF : (1.0 / sumMal);*/
+
+        // 2013.9.4
+        // CZT: a new method for distance-to-probability
+        n->beliefEuc[i] = 1 / (1+sumEuc);
+        n->beliefMal[i] = 1 / (1+sumMal);
 
 #ifdef CHECK_BELIEF_ZERO
         if(n->beliefEuc[i] < EPSILON){
