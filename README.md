@@ -52,8 +52,8 @@ Some examples:
 
 Building:
 
-    $ git clone https://github.com/tpsjr7/destin_ted_temp.git
-    $ cd destin_ted_temp
+    $ git clone https://github.com/opencog/destin
+    $ cd destin
     $ git submodule init
     $ git submodule update
     $ cd Destin
