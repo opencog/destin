@@ -1,7 +1,5 @@
 CMakeFiles/
-data
 *.o
-mnist_data/
 *.swp
 .cproject
 .project

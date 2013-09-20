@@ -32,5 +32,5 @@ fi
 if [ ! -e $dir/destin_train_32.bin ]
 then
     echo "Generating 32x32 data ..."
-    octave -q generate_mnist_set_16.m
+    octave -q generate_mnist_set_32.m
 fi
