@@ -233,17 +233,17 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
         ni = (l == 0 ? ni : 4*nb[l-1]);
 
-        if( ni + nb[l] + np > maxNs )
-        {
-            maxNs = ni + nb[l] + np;
-        }
-
         float * sharedCentroids;
 
         // calculate the state dimensionality (number of inputs + number of beliefs)
         // 2013.4.17
         // CZT
         uint ns = nb[l] + np + nc + (( l == 0) ? ni*extRatio : ni);
+
+        if (ns > maxNs)
+        {
+            maxNs = ns;
+        }
 
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
@@ -566,17 +566,17 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
 
         ni = (l == 0 ? ni : 4*nb[l-1]);
 
-        if( ni + nb[l] + np > maxNs )
-        {
-            maxNs = ni + nb[l] + np;
-        }
-
         float * sharedCentroids;
 
         // calculate the state dimensionality (number of inputs + number of beliefs)
         // 2013.4.17
         // CZT
         uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
+
+        if (ns > maxNs)
+        {
+            maxNs = ns;
+        }
 
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
@@ -1049,11 +1049,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
 
         ni = (l == 0 ? ni : 4*nb[l-1]);
 
-        if( ni + nb[l] + np > maxNs )
-        {
-            maxNs = ni + nb[l] + np;
-        }
-
         float * sharedCentroids;
 
         // calculate the state dimensionality (number of inputs + number of beliefs)
@@ -1062,6 +1057,12 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         // CZT
         //
         uint ns = (l == 0 ? ni*extRatio+nb[l]+np+nc : ni+nb[l]+np+nc);
+
+        if (ns > maxNs)
+        {
+            maxNs = ns;
+        }
+
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
