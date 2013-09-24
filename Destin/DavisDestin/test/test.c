@@ -112,7 +112,7 @@ int testForumateStages(){
     float beta = 0.001;
     float lambda = 1;
     float gamma = 1;
-    float temperature [] = {1};
+    float temperature [] = {5};
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
@@ -154,17 +154,27 @@ int testForumateStages(){
 
     assertFloatArrayEqualsEV(n->starv, 1e-12, 2, 1.0,1.0);//starv is initalized to 1.0
 
-    assertFloatArrayEqualsEV(n->beliefEuc, 1e-12, 2, 0.5, 0.5);
-    CalculateDistances( d->nodes, nid );
-
-    assertFloatArrayEqualsEV( n->beliefEuc, 1e-5, 2, 20.0, 1.345345588);
-
-    NormalizeBeliefGetWinner( d->nodes, nid );
-    assertFloatArrayEqualsEV( n->beliefEuc, 1e-7, 2, 0.7055658715, 0.29443412);
-    assertFloatArrayEqualsEV( n->pBelief, 1e-7, 2, 0.7055658715, 0.29443412);
-
     assertTrue(INIT_SIGMA == 0.00001);
     assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
+
+    assertFloatArrayEqualsEV(n->beliefEuc, 1e-12, 2, 0.5, 0.5);
+    assertFloatArrayEqualsEV(n->beliefMal, 1e-12, 2, 0.5, 0.5);
+    CalculateDistances( d->nodes, nid );
+
+    assertFloatArrayEqualsEV(n->beliefEuc, 1e-5, 2, 0.9523809524, 0.5736236037);
+    assertFloatArrayEqualsEV(n->beliefMal, 1e-5, 2, 0.0594834872, 0.0042363334);
+
+    NormalizeBeliefGetWinner( d->nodes, nid );
+    assertFloatArrayEqualsEV( n->beliefEuc, 1e-7, 2, 0.775739751, 0.224260249);
+    assertFloatArrayEqualsEV( n->beliefMal, 1e-7, 2, 0.9870696376, 0.0129303624);
+
+#ifdef USE_EUC
+    assertFloatArrayEqualsEV( n->beliefEuc, 1e-7, 2, 0.775739751, 0.224260249);
+#endif
+#ifdef USE_MAL
+    assertFloatArrayEqualsEV( n->beliefMal, 1e-7, 2, 0.9870696376, 0.0129303624);
+#endif
+
     CalcCentroidMovement( d->nodes, d->inputLabel, nid );
     MoveCentroids(d->nodes, nid);
     assertTrue( n->winner == 0 );
@@ -275,24 +285,24 @@ int testUniform(){
     float c1 = 0.05;
     float c2 = 0.11;
     float dist = sqrt( (c2  - c1) * (c2 - c1) );
-    assertFloatEquals( 1.0 / dist, d->nodes[0].beliefEuc[0], 9e-7);
+    assertFloatEquals( 1.0 / (1 + dist), d->nodes[0].beliefEuc[0], 9e-7);
     
     //manually calculate distance for node 0, centroid 3
     c1 = 0.95;
     dist = sqrt( (c2  - c1) * (c2 - c1) );
-    assertFloatEquals( 1.0 / dist, d->nodes[0].beliefEuc[3], 6e-8);
+    assertFloatEquals( 1.0 / (1 + dist), d->nodes[0].beliefEuc[3], 6e-8);
     
     //manually calculate distance for node 3, centroid 0
     c1 = 0.05;
     c2 = 0.99;
     dist = sqrt( (c2  - c1) * (c2 - c1));
-    assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[0], 2e-8);
+    assertFloatEquals( 1.0 / (1 + dist), d->nodes[3].beliefEuc[0], 2e-8);
     
     //manually calculate distance for node 3, centroid 3
     c1 = 0.95;
     c2 = 0.99;
     dist = sqrt( (c2  - c1) * (c2 - c1));
-    assertFloatEquals( 1.0 / dist, d->nodes[3].beliefEuc[3], 6e-8);
+    assertFloatEquals( 1.0 / (1 + dist), d->nodes[3].beliefEuc[3], 6e-8);
 
     Uniform_ResetStats(d);
     assertLongArrayEqualsV( d->uf_persistWinCounts[0], 4, 0L, 0L, 0L, 0L );
@@ -920,7 +930,6 @@ int testCentroidImageGeneration(){
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
-
     RUN(testVarArgs);
 
     RUN(testInit);
