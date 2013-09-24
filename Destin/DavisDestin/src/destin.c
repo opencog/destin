@@ -202,7 +202,10 @@ void TrainDestin( Destin *d, char *dataFileName, char *labelsFileName )
 void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool generative )
 {
     FILE *beliefsFile;
-    beliefsFile = fopen("beliefs.dat", "w");
+    if (!generative)
+    {
+        beliefsFile = fopen("beliefs.dat", "w");
+    }
     size_t freadResult; // Not used, added to remove compiler warnings.
     
     FILE *dataFile;
@@ -233,44 +236,12 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
     uint batch;
 
     float muSumSqDiff = 0;
-    
-    FILE *matlabFile;
-    matlabFile = fopen("destin_final.m", "w");
     uint n;
-
-    Node * nTmp;
-    nTmp = &d->nodes[d->nNodes-1];
-
     uint i;
-    fprintf(matlabFile, "nd = %d;\n", nTmp->ns);
-    fprintf(matlabFile, "nb = %d;\n", nTmp->nb);
-    fprintf(matlabFile, "T = %f;\n", nTmp->temp);
-    fprintf(matlabFile, "mu = [", n);
-    for( i=0; i < nTmp->nb; i++ )
-    {
-        for( j=0; j < nTmp->ns; j++ )
-        {
-            fprintf(matlabFile, "%0.5f ", nTmp->mu[i*nTmp->ns+j]);
-        }
-        fprintf(matlabFile, ";\n");
-    }
-    fprintf(matlabFile, "];\n");
-    
-    fprintf(matlabFile, "sigma = [", n);
-    for( i=0; i < nTmp->nb; i++ )
-    {
-        for( j=0; j < nTmp->ns; j++ )
-        {
-            fprintf(matlabFile, "%0.5f ", nTmp->sigma[i*nTmp->ns+j]);
-        }
-        fprintf(matlabFile, ";\n");
-    }
-
-    fclose(matlabFile);
 
     // set up stuff for generative display
     float *outFrame;
-    MALLOC( outFrame, float, 16*16 );
+    MALLOC( outFrame, float, d->layerSize[0] * d->nodes[0].ni);
 
     CvSize size;
     size.height = 16;
@@ -345,8 +316,12 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
         i++;
     }
 
-    fclose( beliefsFile );
     fclose( dataFile );
+    fclose( labelFile );
+    if (! generative)
+    {
+        fclose( beliefsFile );
+    }
 
     cvReleaseImage(&destinIn);
     cvReleaseImage(&destinOut);

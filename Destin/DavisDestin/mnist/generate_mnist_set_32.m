@@ -31,7 +31,7 @@ points = [0  0
 
 points = points + 1;
 
-mnistFiles = {'mnist_data/train-images-idx3-ubyte', 'mnist_data/train-images-idx3-ubyte', 'mnist_data/test-images-idx3-ubyte'};
+mnistFiles = {'data/train-images-idx3-ubyte', 'data/train-images-idx3-ubyte', 'data/t10k-images-idx3-ubyte'};
 outFiles = {'data/destin_train_32.bin', 'data/destin_train_nn_32.bin', 'data/destin_test_nn_32.bin'};
 nSamples = [20000 60000 10000];
 

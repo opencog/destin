@@ -25,8 +25,8 @@ points = [0  0
 
 points = points + 1;
 
-mnistDataFiles = {'mnist_data/train-images-idx3-ubyte', 'mnist_data/train-images-idx3-ubyte', 'mnist_data/t10k-images-idx3-ubyte'};
-mnistLabelFiles = {'mnist_data/train-labels-idx1-ubyte', 'mnist_data/train-labels-idx1-ubyte', 'mnist_data/t10k-labels-idx1-ubyte'};
+mnistDataFiles = {'data/train-images-idx3-ubyte', 'data/train-images-idx3-ubyte', 'data/t10k-images-idx3-ubyte'};
+mnistLabelFiles = {'data/train-labels-idx1-ubyte', 'data/train-labels-idx1-ubyte', 'data/t10k-labels-idx1-ubyte'};
 outDataFiles = {'data/train.bin', 'data/destin_train_nn_16.bin', 'data/destin_test_nn_16.bin'};
 outLabelFiles = {'data/labels.bin', 'data/labels_train_nn_16.bin', 'data/labels_test_nn_16.bin'};
 nSamples = [60000 60000 10000];
