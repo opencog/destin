@@ -8,23 +8,6 @@
 #include "node.h"
 #include "macros.h"
 
-#define EPSILON     1e-8
-#define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
-
-// Use at 2013.6.5
-//#define RECURRENCE_ON // if defined then it clusters on its previous and parent's previous belief.
-
-#define USE_MAL     // use mahalanobis distance to calulate beliefs ( gives better results )
-//#define USE_EUC   // use euclidian distance to calculate beliefs
-
-#if defined(USE_MAL) && defined(USE_EUC)
-#error "both USE_MAL and USE_EUC can't be set"
-#endif
-
-//#define STARV_QUICK_RESET  // if a centroid wins its starvation is immedialy reset to 1.0
-#define STARV_SLOW_RESET     // if a centroid wins its starvation get increasead by a constant ( gives better results )
-
-
 //checks various things if this is compiled for the unit test
 #ifdef UNIT_TEST
     #define CHECK_NORM_LESS_THAN_EPSILON
