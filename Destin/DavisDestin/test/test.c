@@ -103,7 +103,7 @@ int testFormulateNotCrash(){
     return 0;
 }
 
-int testForumateStages(){
+int testFormulateStages(){
     uint ni, nl;
     ni = 1; //one dimensional centroid
     nl = 1;
@@ -756,7 +756,7 @@ int testGetNode(){
         int cr = matches[m*rs+2];//child row
         int cc = matches[m*rs+3];//child col
         int pr = matches[m*rs+4];//parent row
-        int pc = matches[m*rs+5];//parent layer
+        int pc = matches[m*rs+5];//parent column
         int pl = matches[m*rs+6];//parent layer
         Node * parent_node = GetNodeFromDestin(d, pl, pr, pc);
         assertFloatEquals(parent_node->input[pi], GetNodeFromDestin(d, pl - 1,cr, cc)->pBelief[co], 1e-12);
@@ -782,7 +782,6 @@ int test8Layers(){
     Destin * d = makeDestin(8);
 
     assertIntEquals(43690, d->nBeliefs);
-    assertIntEquals(43688, d->nInputPipeline);
     assertIntEquals(16384, d->layerSize[0]);
 
     assertIntEquals(0, d->layerNodeOffsets[0]);
@@ -802,28 +801,24 @@ int test8Layers(){
 
 
 int testInputOffsets(){
-    //check some parent nodes that they have the right input offsets to their child nodes' output belief vectors
-
-    Destin * d = makeDestin(4);
+    //check some nodes from layer 0 that they have the right input offsets to their input data
+    
+    Destin * d = makeDestin(3);
     assertIntEquals(2, GetNodeFromDestin(d, 0, 0, 2)->nIdx);
-    assertIntEquals(44, GetNodeFromDestin(d, 0, 5, 4)->nIdx);
-    assertIntEquals(64, GetNodeFromDestin(d, 1, 0, 0)->nIdx);
-    assertIntEquals(80, GetNodeFromDestin(d, 2, 0, 0)->nIdx);
+    assertIntEquals(11, GetNodeFromDestin(d, 0, 2, 3)->nIdx);
+    assertIntEquals(19, GetNodeFromDestin(d, 1, 1, 1)->nIdx);
+    assertIntEquals(20, GetNodeFromDestin(d, 2, 0, 0)->nIdx);
+       
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 0, 0, 0)->inputOffsets,
+                          16, 0, 1, 2, 3, 16, 17, 18, 19, 32, 33, 34, 35, 48, 49, 50, 51);
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 0, 3, 2)->inputOffsets,
+                          16, 200, 201, 202, 203, 216, 217, 218, 219, 232, 233, 234, 235, 248, 249, 250, 251);
+    assertIntArrayEqualsV(GetNodeFromDestin(d, 0, 2, 1)->inputOffsets,
+                          16, 132, 133, 134, 135, 148, 149, 150, 151, 164, 165, 166, 167, 180, 181, 182, 183);
 
-    //spot check some parent nodes in layer 1 that they have the right input offsets to their child nodes' output belief vectors
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 0)->inputOffsets, 8, 0, 1, 2, 3, 16, 17, 18, 19);
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 0, 2)->inputOffsets, 8, 8, 9, 10, 11, 24, 25, 26, 27);
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 3, 1)->inputOffsets, 8, 100, 101, 102, 103, 116, 117, 118, 119);
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 1, 3, 2)->inputOffsets, 8, 104, 105, 106, 107, 120, 121, 122, 123);
-
-    //same but for layer 2
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 0, 0)->inputOffsets, 8, 128, 129, 130, 131, 136, 137, 138, 139);
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 0, 1)->inputOffsets, 8, 132, 133, 134, 135, 140, 141, 142, 143);
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 1, 0)->inputOffsets, 8, 144, 145, 146, 147, 152, 153, 154, 155);
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 2, 1, 1)->inputOffsets, 8, 148, 149, 150, 151, 156, 157, 158, 159);
-
-    //same but for the top layerr
-    assertIntArrayEqualsV(GetNodeFromDestin(d, 3, 0, 0)->inputOffsets, 8, 160, 161, 162, 163, 164, 165, 166, 167);
+    // check that input offsets for nodes from layers above 0 are set to NULL
+    assertTrue(GetNodeFromDestin(d, 1, 0, 0)->inputOffsets == NULL);
+    assertTrue(GetNodeFromDestin(d, 2, 0, 0)->inputOffsets == NULL);
 
     DestroyDestin(d);
 
@@ -935,7 +930,7 @@ int main(int argc, char ** argv ){
     RUN(testInit);
     RUN(testInputOffsets);
     RUN(testFormulateNotCrash);
-    RUN(testForumateStages);
+    RUN(testFormulateStages);
     RUN(testUniform);
     RUN(testUniformFormulate);
     RUN(testSaveDestin1);
@@ -944,7 +939,6 @@ int main(int argc, char ** argv ){
     RUN(testGenerateInputFromBelief);
 
     RUN(test8Layers);
-
     RUN(testLinkParentBeliefToChildren);
 
     //RUN(testGetNode); //TODO: fix and renable this test

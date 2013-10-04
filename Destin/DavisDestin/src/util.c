@@ -1379,11 +1379,15 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->beliefTransform,     sizeof(BeliefTransformEnum),1,           dFile);
     fwrite(&d->fixedLearnRate,      sizeof(float),              1,           dFile);
 
-    //write belief states
-    fwrite(d->belief,        sizeof(float), d->nBeliefs,       dFile);
+    // write node belief states
+    for( i=0; i < d->nNodes; i++ )
+    {
+        nTmp = &d->nodes[i];
+        fwrite(nTmp->pBelief,           sizeof(float), nTmp->nb, dFile);
+        fwrite(nTmp->outputBelief,      sizeof(float), nTmp->nb, dFile);
+    }
 
     // write node statistics to disk
-
     if(d->isUniform){
         for(l = 0 ; l < d->nLayers; l++){
             nTmp = GetNodeFromDestin(d, l, 0, 0); //get the 0th node of the layer
@@ -1399,10 +1403,6 @@ void SaveDestin( Destin *d, char *filename )
         for( i=0; i < d->nNodes; i++ )
         {
             nTmp = &d->nodes[i];
-
-            // write beliefs
-            fwrite(nTmp->outputBelief,   sizeof(float),  nTmp->nb,       dFile);
-
             // write statistics
             fwrite(nTmp->mu,        sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
             fwrite(nTmp->sigma,     sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
@@ -1485,7 +1485,13 @@ Destin * LoadDestin( Destin *d, const char *filename )
 
     freadResult = fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
 
-    freadResult = fread(d->belief,        sizeof(float),         d->nBeliefs,       dFile);
+    // load node belief states
+    for( i=0; i < d->nNodes; i++ )
+    {
+        nTmp = &d->nodes[i];
+        freadResult = fread(nTmp->pBelief,      sizeof(float), nTmp->nb, dFile);
+        freadResult = fread(nTmp->outputBelief, sizeof(float), nTmp->nb, dFile);
+    }
 
     if(isUniform){
         for(l = 0 ; l < d->nLayers; l++){
@@ -1502,9 +1508,6 @@ Destin * LoadDestin( Destin *d, const char *filename )
         for( i=0; i < d->nNodes; i++ )
         {
             nTmp = &d->nodes[i];
-
-            // load beliefs
-            freadResult = fread(nTmp->outputBelief, sizeof(float), nTmp->nb, dFile);
 
             // load statistics
             freadResult = fread(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
