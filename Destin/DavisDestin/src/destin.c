@@ -412,9 +412,7 @@ void FormulateBelief( Destin *d, float *image )
     }
 
     // copy node's belief to parent node's input
-    memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
-
-    CopyOutputBeliefs( d ); // new method
+    CopyOutputBeliefs( d );
 }
 
 uint GenFromPMF( float *pmf, uint len )

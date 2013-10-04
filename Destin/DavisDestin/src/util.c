@@ -286,8 +286,7 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                         lambda,
                         temp[l],
                         &d->nodes[n],
-                        inputOffsets,
-                        (l == 0 ? NULL : d->inputPipeline),
+                        (l > 0 ? NULL : inputOffsets),
                         &d->belief[bOffset],
                         sharedCentroids
                     );
@@ -386,20 +385,8 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
 
     d->nNodes = nNodes;
 
-    // input pipeline -- all beliefs are copied from the output of each
-    // node to the input of the next node on each timestep. we want
-    // the belief of each node except for the top node (its output goes
-    // to no input to another node) to be easily copied to the input
-    // of the next node, so we allocate a static buffer for it.
-    uint nInputPipeline = nBeliefs - nb[nl-1];
-
-    d->nInputPipeline = nInputPipeline;
-
     // allocate node pointers on host
     MALLOC(d->nodes, Node, nNodes);
-
-    // allocate space for inputs to nodes
-    MALLOC(d->inputPipeline, float, nInputPipeline);
 
     // allocate space for beliefs for nodes on host
     MALLOC(d->belief, float, nBeliefs);
@@ -817,8 +804,7 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                         lambda,
                         temp[l],
                         &d->nodes[n],
-                        inputOffsets,
-                        (l == 0 ? NULL : d->inputPipeline),
+                        (l > 0 ? NULL : inputOffsets),
                         &d->belief[bOffset],
                         sharedCentroids
                     );
@@ -881,7 +867,6 @@ void updateCentroid_node
     float       temp,
     Node        *node,
     uint        *inputOffsets,
-    float       *input_host,
     float       *belief_host,
     float       *sharedCentroids
     )
@@ -931,21 +916,16 @@ void updateCentroid_node
     node->children = NULL;
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
-    MALLOC(node->inputOffsets, uint, ni);
-    memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
-
-    // point to the block-allocated space
-    node->input = input_host;
-    uint i,j;
-    if(input_host != NULL){
-        for(i = 0 ; i < ni ; i++){
-            node->input[node->inputOffsets[i]] = 0.5; //prevent nans caused by uninitialized memory
-        }
+    if(inputOffsets == NULL){
+        node->inputOffsets = NULL;
+    }else{
+        MALLOC(node->inputOffsets, uint, ni);
+        memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
     }
 
     node->pBelief = belief_host;
 
-
+    uint i,j;
     for( i=0; i < nb; i++ )
     {
         // init belief (node output)
@@ -1212,8 +1192,7 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                         lambda,
                         temp[l],
                         &d->nodes[n],
-                        inputOffsets,
-                        (l == 0 ? NULL : d->inputPipeline),
+                        (l > 0 ? NULL : inputOffsets),
                         &d->belief[bOffset],
                         sharedCentroids
                     );
@@ -1325,7 +1304,6 @@ void DestroyDestin( Destin * d )
     FREE(d->nb);
     FREE(d->nodes);
     FREE(d->layerMask);
-    FREE(d->inputPipeline);
     FREE(d->belief);
     FREE(d->layerSize);
     FREE(d->layerNodeOffsets);
@@ -1363,7 +1341,6 @@ void ClearBeliefs( Destin *d )
     }
 
     CopyOutputBeliefs( d );
-    memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
 }
 
 void SaveDestin( Destin *d, char *filename )
@@ -1403,7 +1380,6 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->fixedLearnRate,      sizeof(float),              1,           dFile);
 
     //write belief states
-    fwrite(d->inputPipeline, sizeof(float), d->nInputPipeline, dFile);
     fwrite(d->belief,        sizeof(float), d->nBeliefs,       dFile);
 
     // write node statistics to disk
@@ -1509,7 +1485,6 @@ Destin * LoadDestin( Destin *d, const char *filename )
 
     freadResult = fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
 
-    freadResult = fread(d->inputPipeline, sizeof(float),         d->nInputPipeline, dFile);
     freadResult = fread(d->belief,        sizeof(float),         d->nBeliefs,       dFile);
 
     if(isUniform){
@@ -1560,7 +1535,6 @@ void InitNode
     float       temp,
     Node        *node,
     uint        *inputOffsets,
-    float       *input_host,
     float       *belief_host,
     float       *sharedCentroids
     )
@@ -1576,7 +1550,7 @@ void InitNode
     node->nc            = nc;
     node->starvCoeff    = starvCoeff;
     node->beta          = beta;
-    node->nLambda        = lambda;
+    node->nLambda       = lambda;
     node->gamma         = gamma;
     node->temp          = temp;
     node->winner        = 0;
@@ -1614,21 +1588,16 @@ void InitNode
     node->children = NULL;
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
-    MALLOC(node->inputOffsets, uint, ni);
-    memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
-
-    // point to the block-allocated space
-    node->input = input_host;
-    uint i,j;
-    if(input_host != NULL){
-        for(i = 0 ; i < ni ; i++){
-            node->input[node->inputOffsets[i]] = 0.5; //prevent nans caused by uninitialized memory
-        }
+    if(inputOffsets == NULL){
+        node->inputOffsets = NULL;
+    }else{
+        MALLOC(node->inputOffsets, uint, ni);
+        memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
     }
 
     node->pBelief = belief_host;
 
-
+    uint i,j;
     for( i=0; i < nb; i++ )
     {
         // init belief (node output)

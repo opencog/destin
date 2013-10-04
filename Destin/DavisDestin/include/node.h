@@ -95,7 +95,6 @@ void  InitNode(                         // initialize a node.
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to input on host
                  float *,               // pointer to belief on host
                  float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                 );
@@ -122,7 +121,6 @@ void updateCentroid_node(
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to input on host
                  float *,               // pointer to belief on host
                  float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                 );
