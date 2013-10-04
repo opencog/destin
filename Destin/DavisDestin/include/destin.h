@@ -163,6 +163,10 @@ void DisplayLayerFeatures(
                     int nodes           // number of nodes in the layer to show, if 0 then show them all
         );
 
+void CopyOutputBeliefs(                 // copy previous beliefs into nodes output
+                  Destin *              // pointer to destin object
+                 );
+
 void ClearBeliefs(                      // cleanse the pallette
                   Destin *              // pointer to destin object
                  );

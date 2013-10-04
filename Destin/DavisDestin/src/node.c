@@ -25,7 +25,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
 {
     n = &n[nIdx];
 
-    uint i, j;
+    uint i, j, k;
     uint ni, nb, np, ns, nc;
 
     // Length of input vector
@@ -47,9 +47,13 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     if( n->layer > 0 )
     {
         // If not, use input from the child nodes
-        for( i=0; i < ni; i++ )
+        i = 0;
+        for (j = 0; j < 4; j++)
         {
-            n->observation[i] = n->input[n->inputOffsets[i]];
+            for (k = 0; k < n->children[j]->nb; k++, i++)
+            {
+                n->observation[i] = n->children[j]->outputBelief[k];
+            }
         }
     } else {
         // If so, use input from the input image

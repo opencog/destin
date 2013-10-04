@@ -15,7 +15,7 @@
 // and causing an unknown crash.
 // This value should be incremented by the developer when the order of the destin struc
 // fields are moved around or if fields are added, removed, ect.
-#define SERIALIZE_VERSION 3
+#define SERIALIZE_VERSION 4
 
 void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp);
 
@@ -912,6 +912,7 @@ void updateCentroid_node
 
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
+    MALLOC( node->outputBelief, float, nb );
     MALLOC( node->observation, float, ns );
     MALLOC( node->genObservation, float, ns );
 
@@ -951,6 +952,7 @@ void updateCentroid_node
         node->pBelief[i] = 1 / (float)nb;
         node->beliefEuc[i] = 1 / (float)nb;
         node->beliefMal[i] = 1 / (float)nb;
+        node->outputBelief[i] = node->pBelief[i];
 
         if(!d->isUniform){
             node->nCounts[i] = 0;
@@ -1332,6 +1334,20 @@ void DestroyDestin( Destin * d )
     FREE(d);
 }
 
+// copy previous beliefs into nodes output
+void CopyOutputBeliefs( Destin *d )
+{
+    uint i, n;
+
+    for( n=0; n < d->nNodes; n++ )
+    {
+        for( i=0; i < d->nodes[n].nb; i++)
+        {
+            d->nodes[n].outputBelief[i] = d->nodes[n].pBelief[i];
+        }
+    }
+}
+
 // set all nodes to have a uniform belief
 void ClearBeliefs( Destin *d )
 {
@@ -1342,9 +1358,11 @@ void ClearBeliefs( Destin *d )
         for( i=0; i < d->nodes[n].nb; i++)
         {
             d->nodes[n].pBelief[i] = 1 / (float) d->nodes[n].nb;
+            d->nodes[n].outputBelief[i] = d->nodes[n].pBelief[i];
         }
     }
 
+    CopyOutputBeliefs( d );
     memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
 }
 
@@ -1405,6 +1423,9 @@ void SaveDestin( Destin *d, char *filename )
         for( i=0; i < d->nNodes; i++ )
         {
             nTmp = &d->nodes[i];
+
+            // write beliefs
+            fwrite(nTmp->outputBelief,   sizeof(float),  nTmp->nb,       dFile);
 
             // write statistics
             fwrite(nTmp->mu,        sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
@@ -1507,6 +1528,9 @@ Destin * LoadDestin( Destin *d, const char *filename )
         {
             nTmp = &d->nodes[i];
 
+            // load beliefs
+            freadResult = fread(nTmp->outputBelief, sizeof(float), nTmp->nb, dFile);
+
             // load statistics
             freadResult = fread(nTmp->mu, sizeof(float), nTmp->nb*nTmp->ns, dFile);
             freadResult = fread(nTmp->sigma, sizeof(float), nTmp->nb*nTmp->ns, dFile);
@@ -1571,6 +1595,7 @@ void InitNode
 
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
+    MALLOC( node->outputBelief, float, nb);
     MALLOC( node->observation, float, ns );
     MALLOC( node->genObservation, float, ns );
 
@@ -1610,6 +1635,7 @@ void InitNode
         node->pBelief[i] = 1 / (float)nb;
         node->beliefEuc[i] = 1 / (float)nb;
         node->beliefMal[i] = 1 / (float)nb;
+        node->outputBelief[i] = node->pBelief[i];
 
         if(!d->isUniform){
             node->nCounts[i] = 0;
@@ -1672,6 +1698,7 @@ void DestroyNode( Node *n)
 
     FREE( n->beliefEuc );
     FREE( n->beliefMal );
+    FREE( n->outputBelief );
     FREE( n->observation );
     FREE( n->genObservation );
 

@@ -65,6 +65,7 @@ typedef struct Node {
     float * beliefMal;      // belief (malhanobis distance)
     float * pBelief;        // previous belief (euclidean or mal)
     float * parent_pBelief; // parent previous belief
+    float * outputBelief;   // output belief is a part of parent node observation (input from child)
 
     struct Node ** children;// array of 4 child node pointers
 
