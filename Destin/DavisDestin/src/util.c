@@ -121,78 +121,36 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
-
-/** Calculates input offsets for a node.
- * The input offsets allow the node to recieve the correct input in the correct geometry.
- * This creates a heirarchy of 2x2 children to 1 parent node.
- * This calculates input offsets for both the input nodes ( for pixel inputs ) and upper layer nodes ( for childrens' beliefs )
- *
- * @param d - Destin struct
- * @param layer - the layer of the node to calculate input offsets
- * @param layer_node_id - linear position of the node in the given layer from 0 to d->layerSize[layer] - 1
- * @param child_layer_belief_offset - offset in the belief pipeline where the child layer's concatonated belief output vector begins
- * this this should be zero for the 0th and 1st layer.
- * @param child_input_region_width - If its an input node this is 4 ( 4x4 pixel input), otherwise 2 for 2x2 child node input
- * @param inputOffsets_out - pointer to preallocated uint array which will hold the calculated offsets.
+/** Calculates input offsets for square shape nodes from layer 0
+ * @param layerWidth   - width of layer 0
+ * @param nIdx - node index in the layer 0
+ * @param ni   - dimensionality of input, should be square number
+ * @param inputOffsets - pointer to preallocated uint array which will hold calculated offsets.
  */
-void CalcNodeInputOffsets(
+void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inputOffsets)
+{
+    uint zr, zc;                 // zero layer row, col coordinates
+    uint ir, ic;                 // input layer row, col coordinates
+    uint inputWidth = (uint) sqrt(ni);
+    uint inputLayerWidth = layerWidth * inputWidth;   // input layer width
 
-    Destin * d,
-    uint layer,
-    uint layer_node_id,
-    uint child_layer_belief_offset,
-    uint child_input_region_width, //width of the input region in pixels (when layer = 0) or nodes ( for upper layers)
-    uint * inputOffsets_out){
+    zr = nIdx / layerWidth;      // Convert node index into row, col coordinates
+    zc = nIdx % layerWidth;
 
-    uint    pr, //parent row
-            pc, //parent col
-            cr, //child row in the entire child layer ( or pixel row if input image)
-            cc, //child col in the entire child layer ( or pixel col if input image)
-            clnw,//child layer node width
-            cirw = child_input_region_width,
-            clnb,//child layer nb ( size of output belief vector for each child node)
-            plw = d->layerWidth[layer], //parent layer width
-            i, j, k;//parent layer width
+    ir = zr * inputWidth;        // Convert coordinates into input layer row, col coordinates
+    ic = zc * inputWidth;
 
-    if(layer == 0){
-        // If its the input layer then pretend each pixel of the 4x4 input image( assuming ni = 16)
-        // is a node (in layer below layer 0) with nb = 1, then the nodes in
-        // layer 0 take in 4x4 prentend child nodes instead of just 2x2 nodes like in the upper layers
-        clnb = 1;
-        clnw = plw * cirw ; // Each layer 0 node takes in a square region of width 4 pretend nodes (i.e pixels)
-                            // so this is equal to the image width.
-    }else{
-        clnb = d->nb[layer - 1],//child layer nb
-        clnw = plw * cirw; //the width of the entire child layer in nodes
-    }
-
-    pr = layer_node_id / plw; // Convert nodeid into row, col coordinates
-    pc = layer_node_id % plw;
-
-    cr = pr * cirw;
-    cc = pc * cirw;
-    uint cos[cirw * cirw]; // Child output start ( start of child node belief output vector)
-    uint child_region_row, // The row in the 4x4 or 2x2 input region
-         child_region_col; // The col in the 4x4 or 2x2 input region
-
-    i = 0;
-    for(child_region_row = 0 ;child_region_row < cirw; child_region_row++){
-        for(child_region_col = 0 ; child_region_col < cirw; child_region_col++){
-            //store where this child's output belief vector starts
-            cos[i] = child_layer_belief_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
+    uint row, col;
+    uint i = 0;
+    for (row = 0; row < inputWidth; row++)
+    {
+        for (col = 0; col < inputWidth; col++)
+        {
+            inputOffsets[i] = (ir + row) * inputLayerWidth + (ic + col);
             i++;
         }
     }
-
-
-    k=0;
-    for(i = 0 ; i < cirw * cirw ; i++){
-        for(j = 0 ; j < clnb ; j++){
-            inputOffsets_out[k++] = cos[i] + j;
-        }
-    }
-
-}
+};
 
 Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
 {
@@ -265,12 +223,11 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            CalcNodeInputOffsets(d,
-                                 l, // layer
-                                 i, // linear node position in the current layer
-                                 child_layer_offset,
-                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
-                                 inputOffsets);
+            if (l == 0)
+            {
+                CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
+            }
+
             InitNode(
                         n,
                         d,
@@ -783,12 +740,11 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            CalcNodeInputOffsets(d,
-                                 l, // layer
-                                 i, // linear node position in the current layer
-                                 child_layer_offset,
-                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
-                                 inputOffsets);
+            if (l == 0)
+            {
+                CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
+            }
+
             updateCentroid_node(
                         n,
                         d,
@@ -1171,12 +1127,11 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            CalcNodeInputOffsets(d,
-                                 l, // layer
-                                 i, // linear node position in the current layer
-                                 child_layer_offset,
-                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
-                                 inputOffsets);
+            if (l == 0)
+            {
+                CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
+            }
+
             updateCentroid_node(
                         n,
                         d,

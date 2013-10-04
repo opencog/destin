@@ -13,7 +13,6 @@
 /* Destin Struct Definition */
 typedef struct Destin {
     uint serializeVersion;              // Identifies the compaitibility version of this destin structure during saves and loads.s
-    uint nInputPipeline;                // number of beliefs to copy to next nodes' input
     uint maxNb;                         // max number of beliefs for all nodes (important for kernels)
     uint maxNs;
     uint nc;                            // number of classes to discriminate
@@ -29,7 +28,6 @@ typedef struct Destin {
     float       * belief;               // concatenated belief vector for all nodes
     float       * temp;                 // temperatures for each layer
     float       * dataSet;              // pointer to dataset
-    float       * inputPipeline;        // concatonated input for all internal layer nodes
 
     uint        * inputLabel;           // input label (used during supervised training)
     uint        * layerSize;            // size for each layer ( nodes per layer )

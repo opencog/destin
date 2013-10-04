@@ -683,14 +683,6 @@ int testGetNode(){
     Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, false, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
-    //set node outputs
-    int i;
-    for(i = 0; i < d->nInputPipeline; i++){
-        d->belief[i] = i;
-    }
-
-    // copy node's belief to parent node's input
-    memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
     float image[] = {
         0.1, 0.2, 0.3, 0.4,
         0.11, 0.21, 0.31, 0.41,
