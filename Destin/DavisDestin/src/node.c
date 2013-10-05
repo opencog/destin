@@ -68,7 +68,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < nb; i++ )
     {
 #ifdef RECURRENCE_ON
-        n->observation[i+ni] = n->pBelief[i] * n->gamma;
+        n->observation[i+ni] = n->belief[i] * n->gamma;
 #else
         n->observation[i+ni] = 1 / (float) nb;
 #endif
@@ -77,7 +77,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < np; i++ )
     {
 #ifdef RECURRENCE_ON
-        n->observation[i+ni+nb] = n->parent->pBelief[i] * n->nLambda;
+        n->observation[i+ni+nb] = n->parent->belief[i] * n->nLambda;
 #else
         n->observation[i+ni+nb] = 1 / (float) np;
 #endif
@@ -272,10 +272,10 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 
     for( i=0; i < n->nb; i++ ){
 #ifdef USE_MAL
-        n->pBelief[i] = n->beliefMal[i];
+        n->belief[i] = n->beliefMal[i];
 #endif
 #ifdef USE_EUC
-        n->pBelief[i] = n->beliefEuc[i];
+        n->belief[i] = n->beliefEuc[i];
 #endif
     }
 

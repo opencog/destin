@@ -34,8 +34,8 @@ typedef struct Node {
     uint     nc;            // number of classes
     float   starvCoeff;     // starvation coefficient
     float   beta;           // sigma update weight (centroid variance)
-    float   nLambda;        // pBelief weighting
-    float   gamma;          // parent pBelief weighting
+    float   nLambda;        // parent previous belief weighting
+    float   gamma;          // previous belief weighting
     float   temp;           // temperature for boltzmann normalization
 
     uint     winner;        // winning centroid index
@@ -61,7 +61,7 @@ typedef struct Node {
     // node beliefs
     float * beliefEuc;      // belief (euclidean distance), length nb
     float * beliefMal;      // belief (malhanobis distance)
-    float * pBelief;        // previous belief (euclidean or mal)
+    float * belief;        // previous belief (euclidean or mal)
     float * outputBelief;   // output belief is used as parent node observation (input from child)
 
     struct Node * parent;   // pointer to parent node (null for to//p layer node)

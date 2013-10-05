@@ -812,7 +812,7 @@ void updateCentroid_node
         node->mu = sharedCentroids;
     }
 
-    MALLOC( node->pBelief, float, nb);
+    MALLOC( node->belief, float, nb);
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
     MALLOC( node->outputBelief, float, nb );
@@ -846,10 +846,10 @@ void updateCentroid_node
     for( i=0; i < nb; i++ )
     {
         // init belief (node output)
-        node->pBelief[i] = 1 / (float)nb;
+        node->belief[i] = 1 / (float)nb;
         node->beliefEuc[i] = 1 / (float)nb;
         node->beliefMal[i] = 1 / (float)nb;
-        node->outputBelief[i] = node->pBelief[i];
+        node->outputBelief[i] = node->belief[i];
 
         if(!d->isUniform){
             node->nCounts[i] = 0;
@@ -1220,7 +1220,7 @@ void CopyOutputBeliefs( Destin *d )
     {
         for( i=0; i < d->nodes[n].nb; i++)
         {
-            d->nodes[n].outputBelief[i] = d->nodes[n].pBelief[i];
+            d->nodes[n].outputBelief[i] = d->nodes[n].belief[i];
         }
     }
 }
@@ -1234,8 +1234,8 @@ void ClearBeliefs( Destin *d )
     {
         for( i=0; i < d->nodes[n].nb; i++)
         {
-            d->nodes[n].pBelief[i] = 1 / (float) d->nodes[n].nb;
-            d->nodes[n].outputBelief[i] = d->nodes[n].pBelief[i];
+            d->nodes[n].belief[i] = 1 / (float) d->nodes[n].nb;
+            d->nodes[n].outputBelief[i] = d->nodes[n].belief[i];
         }
     }
 
@@ -1282,7 +1282,7 @@ void SaveDestin( Destin *d, char *filename )
     for( i=0; i < d->nNodes; i++ )
     {
         nTmp = &d->nodes[i];
-        fwrite(nTmp->pBelief,           sizeof(float), nTmp->nb, dFile);
+        fwrite(nTmp->belief,           sizeof(float), nTmp->nb, dFile);
         fwrite(nTmp->outputBelief,      sizeof(float), nTmp->nb, dFile);
     }
 
@@ -1388,7 +1388,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     for( i=0; i < d->nNodes; i++ )
     {
         nTmp = &d->nodes[i];
-        freadResult = fread(nTmp->pBelief,      sizeof(float), nTmp->nb, dFile);
+        freadResult = fread(nTmp->belief,      sizeof(float), nTmp->nb, dFile);
         freadResult = fread(nTmp->outputBelief, sizeof(float), nTmp->nb, dFile);
     }
 
@@ -1468,7 +1468,7 @@ void InitNode
         node->mu = sharedCentroids;
     }
 
-    MALLOC( node->pBelief, float, nb );
+    MALLOC( node->belief, float, nb );
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
     MALLOC( node->outputBelief, float, nb);
@@ -1502,10 +1502,10 @@ void InitNode
     for( i=0; i < nb; i++ )
     {
         // init belief (node output)
-        node->pBelief[i] = 1 / (float)nb;
+        node->belief[i] = 1 / (float)nb;
         node->beliefEuc[i] = 1 / (float)nb;
         node->beliefMal[i] = 1 / (float)nb;
-        node->outputBelief[i] = node->pBelief[i];
+        node->outputBelief[i] = node->belief[i];
 
         if(!d->isUniform){
             node->nCounts[i] = 0;
@@ -1566,7 +1566,7 @@ void DestroyNode( Node *n)
         FREE( n->starv );
     }
 
-    FREE( n->pBelief );
+    FREE( n->belief );
     FREE( n->beliefEuc );
     FREE( n->beliefMal );
     FREE( n->outputBelief );
@@ -1592,7 +1592,7 @@ void DestroyNode( Node *n)
     // 2013.4.16
     // CZT
     //
-    n->pBelief = NULL;
+    n->belief = NULL;
     n->beliefEuc = NULL;
     n->beliefMal = NULL;
     n->outputBelief = NULL;

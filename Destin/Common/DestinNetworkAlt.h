@@ -166,7 +166,7 @@ public:
     }
 
     float * getNodeBeliefs(int layer, int row, int col){
-        return getNode(layer, row, col)->pBelief;
+        return getNode(layer, row, col)->belief;
     }
 
     /**

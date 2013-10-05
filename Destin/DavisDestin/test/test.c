@@ -453,7 +453,6 @@ int testSaveDestin1(){
     assertTrue(ns1 == d->nodes[4].ns);
 
     uint maxNs = d->maxNs;
-    uint nBeliefs = d->nBeliefs;
 
     //random image to apply to mix up the destin states to test serialization
     float image[] = {
@@ -497,7 +496,6 @@ int testSaveDestin1(){
     assertTrue(d->maxNb == 4);
     assertTrue(d->maxNs == maxNs);
     assertFloatEquals(0.0, d->muSumSqDiff, 0); //it currently resets to 0
-    assertTrue(d->nBeliefs == nBeliefs);
 
     assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
     assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 0.0  );
@@ -553,20 +551,26 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTra
     //save it
     SaveDestin(d, "testSaveDestin2.save");
 
+    //get beliefs for layers
+    float beliefsLayer0[64 * 3];
+    float beliefsLayer1[16 * 4];
+    float beliefsLayer2[4 * 2];
+
     //mix it up some more
     uint iterations = 50;
     for(i = 0 ; i < iterations; i++){
         for(j = 0 ; j < nImages ; j++){
-            assertNoNans(d->belief, d->nBeliefs); //test that non nans (float "not a number") are occuring
             FormulateBelief(d, images[j]);
+
+            GetLayerBeliefs(d, 0, beliefsLayer0);
+            GetLayerBeliefs(d, 1, beliefsLayer1);
+            GetLayerBeliefs(d, 2, beliefsLayer2);
+
+            assertNoNans(beliefsLayer0, 64 * 3); //test that non nans (float "not a number") are occuring
+            assertNoNans(beliefsLayer1, 16 * 4);
+            assertNoNans(beliefsLayer2, 4 * 2);
         }
     }
-
-    //back up its output state so it can be compared later
-    float * beliefState1;
-    uint nBeliefs = d->nBeliefs;
-    MALLOC(beliefState1, float, d->nBeliefs);
-    memcpy(beliefState1, d->belief, sizeof(float) * d->nBeliefs);
 
     DestroyDestin(d);
     d = NULL;
@@ -583,13 +587,19 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTra
         }
     }
 
-    assertTrue(d->nBeliefs == nBeliefs);
-    //check that the same observations lead to the same belief outputs
-    assertFloatArrayEquals(beliefState1, d->belief, nBeliefs);
+    float newBeliefsLayer0[64 * 3];
+    float newBeliefsLayer1[16 * 4];
+    float newBeliefsLayer2[4 * 2];
+    GetLayerBeliefs(d, 0, newBeliefsLayer0);
+    GetLayerBeliefs(d, 1, newBeliefsLayer1);
+    GetLayerBeliefs(d, 2, newBeliefsLayer2);
+
+    assertFloatArrayEquals(beliefsLayer0, newBeliefsLayer0, 64 * 3);
+    assertFloatArrayEquals(beliefsLayer1, newBeliefsLayer1, 16 * 4);
+    assertFloatArrayEquals(beliefsLayer2, newBeliefsLayer2, 4 * 2);
 
     DestroyDestin(d);
 
-    FREE(beliefState1);
     freeRandomImages(images, nImages);
     return 0;
 }
@@ -751,7 +761,7 @@ int testGetNode(){
         int pc = matches[m*rs+5];//parent column
         int pl = matches[m*rs+6];//parent layer
         Node * parent_node = GetNodeFromDestin(d, pl, pr, pc);
-        //assertFloatEquals(parent_node->input[pi], GetNodeFromDestin(d, pl - 1,cr, cc)->pBelief[co], 1e-12);
+        //assertFloatEquals(parent_node->input[pi], GetNodeFromDestin(d, pl - 1,cr, cc)->belief[co], 1e-12);
     }
 
 
@@ -773,7 +783,6 @@ int testGetNode(){
 int test8Layers(){
     Destin * d = makeDestin(8);
 
-    assertIntEquals(43690, d->nBeliefs);
     assertIntEquals(16384, d->layerSize[0]);
 
     assertIntEquals(0, d->layerNodeOffsets[0]);
@@ -818,7 +827,7 @@ int testInputOffsets(){
 }
 
 
-int  testLinkParentBeliefToChildren(){
+int  testLinkParentsToChildren(){
     // Test that parent nodes have the right children in their children pointers
     Destin * d = makeDestin(4);
 
@@ -830,18 +839,20 @@ int  testLinkParentBeliefToChildren(){
     assertIntEquals(12, parent->children[2]->nIdx);
     assertIntEquals(13, parent->children[3]->nIdx);
 
-    //check some child nodes point to the correct parent
-    /* TODO: write new tests
-    assertTrue(GetNodeFromDestin(d, 0, 4, 7)->parent_pBelief == GetNodeFromDestin(d, 1, 2, 3)->pBelief);
-    assertTrue(GetNodeFromDestin(d, 0, 6, 4)->parent_pBelief == GetNodeFromDestin(d, 1, 3, 2)->pBelief);
-    assertTrue(GetNodeFromDestin(d, 0, 4, 3)->parent_pBelief == GetNodeFromDestin(d, 1, 2, 1)->pBelief);
+    // Children have parent as their parent
+    assertTrue(parent->children[0]->parent == parent);
+    assertTrue(parent->children[1]->parent == parent);
+    assertTrue(parent->children[2]->parent == parent);
+    assertTrue(parent->children[3]->parent == parent);
 
+    // Parent of top layer node is null
+    Node * root = GetNodeFromDestin(d, 3, 0, 0);
+    assertTrue(root->parent == NULL);
 
-    parent = GetNodeFromDestin(d, 1, 2, 2);
-    assertTrue(parent->children[3]->parent_pBelief == parent->pBelief);
-
-    */
-
+    Node * child = GetNodeFromDestin(d, 1, 2, 1);
+    parent = GetNodeFromDestin(d, 2, 1, 0);
+    assertTrue (child->parent == parent);
+    assertTrue (parent->parent == root);
 
     DestroyDestin(d);
     return 0;
@@ -926,15 +937,14 @@ int main(int argc, char ** argv ){
     RUN(testInputOffsets);
     RUN(testFormulateNotCrash);
     RUN(testFormulateStages);
+    RUN(testLinkParentsToChildren);
     RUN(testUniform);
     RUN(testUniformFormulate);
     RUN(testSaveDestin1);
     RUN(testSaveDestin2);
     RUN(testLoadFromConfig);
     RUN(testGenerateInputFromBelief);
-
     RUN(test8Layers);
-    RUN(testLinkParentBeliefToChildren);
 
     //RUN(testGetNode); //TODO: fix and renable this test
     RUN(testCentroidImageGeneration);

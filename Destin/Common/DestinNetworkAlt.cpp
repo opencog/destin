@@ -968,7 +968,7 @@ void DestinNetworkAlt::printNodeBeliefs(int layer, int row, int col){
     Node * n = getNode(layer, row, col);
     printf("Node beliefs: layer%i, row %i, col: %i\n", layer, row, col);
     for(int i = 0; i < n->nb ; i++){
-        printf("%f ", n->pBelief[i]);
+        printf("%f ", n->belief[i]);
     }
     printf("\n");
 

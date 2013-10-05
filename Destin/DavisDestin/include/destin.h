@@ -16,7 +16,6 @@ typedef struct Destin {
     uint maxNb;                         // max number of beliefs for all nodes (important for kernels)
     uint maxNs;
     uint nc;                            // number of classes to discriminate
-    uint nBeliefs;                      // number of beliefs ( sum over all layers of centroids per node * number of nodes per layer )
     uint nNodes;                        // number of nodes in the entire destin network
     uint nMovements;                    // number of movements per digit presentation
     uint nLayers;                       // number of layers in network
@@ -25,7 +24,6 @@ typedef struct Destin {
 
     struct Node * nodes;                // pointer to list of host nodes
 
-    float       * belief;               // concatenated belief vector for all nodes
     float       * temp;                 // temperatures for each layer
     float       * dataSet;              // pointer to dataset
 
