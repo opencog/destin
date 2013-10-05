@@ -1025,3 +1025,20 @@ void Uniform_ResetStats(Destin * d){
     }
     return;
 }
+
+void GetLayerBeliefs( Destin * d, uint layer, float * beliefs )
+{
+    uint n, offset, i;
+    uint nodeOffset = d->layerNodeOffsets[layer];
+
+    offset = 0;
+    for( n=0; n < d->layerSize[layer]; ++n )
+    {
+        float * belief = d->nodes[nodeOffset + n].outputBelief;
+        for ( i=0; i < d->nb[layer]; ++i, ++offset)
+        {
+            beliefs[offset] = belief[i];
+        }
+    }
+
+}

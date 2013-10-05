@@ -102,7 +102,7 @@ void killCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                   int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 
-void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
+void LinkParentsToChildren(             // link parents to their children
                     Destin *            // initialized destin pointer
                 );
 
@@ -184,6 +184,13 @@ struct Node * GetNodeFromDestinI(
                         uint l,         // layer
                         uint nIdx       // index of node in the layer. The first node each layer has index 0.
                         );
+
+// Fills beliefs array in output beliefs for all nodes from given layer.
+void GetLayerBeliefs(
+                    Destin *d,          // pointer to destin object
+                    uint layer,         // layer
+                    float * beliefs     // output beliefs array. The caller should allocate the array.
+                    );
 
 //resets sharedCentroidsDidWin vector for each layer
 void Uniform_ResetStats(

@@ -51,9 +51,7 @@ typedef struct Node {
 
     float   muSqDiff;
     long  * nCounts;        // number of observation counts. How many times each centroid is picked as winner over all iterations.
-    
-    // node input
-    float * input;          // input pointer (null for input layer nodes)
+
     uint  * inputOffsets;   // offsets for each pixel taken from framePtr for this node. vector of length ni.
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
@@ -64,9 +62,9 @@ typedef struct Node {
     float * beliefEuc;      // belief (euclidean distance), length nb
     float * beliefMal;      // belief (malhanobis distance)
     float * pBelief;        // previous belief (euclidean or mal)
-    float * parent_pBelief; // parent previous belief
-    float * outputBelief;   // output belief is a part of parent node observation (input from child)
+    float * outputBelief;   // output belief is used as parent node observation (input from child)
 
+    struct Node * parent;   // pointer to parent node (null for to//p layer node)
     struct Node ** children;// array of 4 child node pointers
 
     float * delta;          // vector that stores difference between observation and mu shared centroid vector
@@ -95,7 +93,6 @@ void  InitNode(                         // initialize a node.
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to belief on host
                  float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                 );
 
@@ -121,7 +118,6 @@ void updateCentroid_node(
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to belief on host
                  float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                 );
 

@@ -77,7 +77,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < np; i++ )
     {
 #ifdef RECURRENCE_ON
-        n->observation[i+ni+nb] = n->parent_pBelief[i] * n->nLambda;
+        n->observation[i+ni+nb] = n->parent->pBelief[i] * n->nLambda;
 #else
         n->observation[i+ni+nb] = 1 / (float) np;
 #endif

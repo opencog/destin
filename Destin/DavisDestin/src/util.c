@@ -155,8 +155,6 @@ void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inpu
 Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
 {
     uint i, l, maxNb, maxNs;
-    size_t bOffset ;
-
 
     Destin *d;
 
@@ -165,17 +163,12 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
     initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
 
-    // init belief and input offsets (pointers to big belief and input chunks we
-    // allocated above)
-    bOffset = 0;
-
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
     maxNb = 0;
     maxNs = 0;
 
     uint n = 0;
-    uint child_layer_offset = 0;
 
     // initialize the rest of the network
 
@@ -244,7 +237,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                         temp[l],
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
-                        &d->belief[bOffset],
                         sharedCentroids
                     );
 
@@ -252,18 +244,11 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                 MALLOC( d->nodes[n].children, Node *, 4 );
             }
 
-            // increment belief offset (so beliefs are mapped contiguously in memory)
-            bOffset += nb[l];
         }//next node
-
-        if(l > 0){
-            // where the beliefs of the next layer begin
-            child_layer_offset += ni * d->layerSize[l];
-        }
 
     }//next layer
 
-    LinkParentBeliefToChildren( d );
+    LinkParentsToChildren( d );
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
@@ -324,7 +309,6 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
     }
 
     uint nNodes = 0;
-    uint nBeliefs = 0;
     for( i=0, l=nl ; l != 0; l--, i++ )
     {
         d->layerSize[i] = 1 << 2*(l-1);
@@ -332,8 +316,6 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
         d->layerNodeOffsets[i] = nNodes;
 
         nNodes += d->layerSize[i];
-
-        nBeliefs += d->layerSize[i] * nb[i];
     }
 
 
@@ -344,11 +326,6 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
 
     // allocate node pointers on host
     MALLOC(d->nodes, Node, nNodes);
-
-    // allocate space for beliefs for nodes on host
-    MALLOC(d->belief, float, nBeliefs);
-
-    d->nBeliefs = nBeliefs;
 
     if(isUniform){
         // Allocate for each layer an array of size number = n centroids for that layer
@@ -399,7 +376,6 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
     uint i, l, maxNb, maxNs, j;
-    size_t bOffset ;
 
     initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
 
@@ -426,17 +402,12 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
         }
     }
 
-    // init belief and input offsets (pointers to big belief and input chunks we
-    // allocated above)
-    bOffset = 0;
-
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
     maxNb = 0;
     maxNs = 0;
 
     uint n = 0;
-    uint child_layer_offset = 0;
 
     /* New method */
     // My thought: initialize the new centroid and get the related information
@@ -761,26 +732,17 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                         temp[l],
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
-                        &d->belief[bOffset],
                         sharedCentroids
                     );
 
             if(l > 0){
                 MALLOC( d->nodes[n].children, Node *, 4 );
             }
-
-            // increment belief offset (so beliefs are mapped contiguously in memory)
-            bOffset += nb[l];
         }//next node
-
-        if(l > 0){
-            // where the beliefs of the next layer begin
-            child_layer_offset += ni * d->layerSize[l];
-        }
 
     }//next layer
 
-    LinkParentBeliefToChildren( d );
+    LinkParentsToChildren( d );
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
@@ -823,7 +785,6 @@ void updateCentroid_node
     float       temp,
     Node        *node,
     uint        *inputOffsets,
-    float       *belief_host,
     float       *sharedCentroids
     )
 {
@@ -851,6 +812,7 @@ void updateCentroid_node
         node->mu = sharedCentroids;
     }
 
+    MALLOC( node->pBelief, float, nb);
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
     MALLOC( node->outputBelief, float, nb );
@@ -869,6 +831,7 @@ void updateCentroid_node
     }
 
     MALLOC( node->delta, float, ns);
+    node->parent = NULL;
     node->children = NULL;
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
@@ -878,8 +841,6 @@ void updateCentroid_node
         MALLOC(node->inputOffsets, uint, ni);
         memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
     }
-
-    node->pBelief = belief_host;
 
     uint i,j;
     for( i=0; i < nb; i++ )
@@ -925,7 +886,6 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
     uint i, l, maxNb, maxNs, j;
-    size_t bOffset ;
 
     initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
         /*********************************************************************/
@@ -961,17 +921,12 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         }
     }
 
-    // init belief and input offsets (pointers to big belief and input chunks we
-    // allocated above)
-    bOffset = 0;
-
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
     maxNb = 0;
     maxNs = 0;
 
     uint n = 0;
-    uint child_layer_offset = 0;
 
     // initialize the rest of the network
 
@@ -1148,26 +1103,16 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                         temp[l],
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
-                        &d->belief[bOffset],
                         sharedCentroids
                     );
 
             if(l > 0){
                 MALLOC( d->nodes[n].children, Node *, 4 );
             }
-
-            // increment belief offset (so beliefs are mapped contiguously in memory)
-            bOffset += nb[l];
         }//next node
-
-        if(l > 0){
-            // where the beliefs of the next layer begin
-            child_layer_offset += ni * d->layerSize[l];
-        }
-
     }//next layer
 
-    LinkParentBeliefToChildren( d );
+    LinkParentsToChildren( d );
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
@@ -1190,7 +1135,7 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
     FREE(absvar);
 }
 
-void LinkParentBeliefToChildren( Destin *d )
+void LinkParentsToChildren( Destin *d )
 {
     uint l, cr, cc, pr, pc, child_layer_width;
     Node * child_node;
@@ -1204,8 +1149,8 @@ void LinkParentBeliefToChildren( Destin *d )
                 pc = cc / 2;
                 child_node = GetNodeFromDestin(d, l, cr, cc);
                 parent_node = GetNodeFromDestin(d, l+1, pr, pc);
-                child_node->parent_pBelief = parent_node->pBelief;
                 parent_node->children[(cr % 2) * 2 + cc % 2] = child_node;
+                child_node->parent = parent_node;
             }
         }
     }
@@ -1259,7 +1204,6 @@ void DestroyDestin( Destin * d )
     FREE(d->nb);
     FREE(d->nodes);
     FREE(d->layerMask);
-    FREE(d->belief);
     FREE(d->layerSize);
     FREE(d->layerNodeOffsets);
     FREE(d->layerWidth);
@@ -1493,7 +1437,6 @@ void InitNode
     float       temp,
     Node        *node,
     uint        *inputOffsets,
-    float       *belief_host,
     float       *sharedCentroids
     )
 {
@@ -1525,6 +1468,7 @@ void InitNode
         node->mu = sharedCentroids;
     }
 
+    MALLOC( node->pBelief, float, nb );
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
     MALLOC( node->outputBelief, float, nb);
@@ -1543,6 +1487,7 @@ void InitNode
     }
 
     MALLOC( node->delta, float, ns);
+    node->parent = NULL;
     node->children = NULL;
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
@@ -1552,8 +1497,6 @@ void InitNode
         MALLOC(node->inputOffsets, uint, ni);
         memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
     }
-
-    node->pBelief = belief_host;
 
     uint i,j;
     for( i=0; i < nb; i++ )
@@ -1623,6 +1566,7 @@ void DestroyNode( Node *n)
         FREE( n->starv );
     }
 
+    FREE( n->pBelief );
     FREE( n->beliefEuc );
     FREE( n->beliefMal );
     FREE( n->outputBelief );
@@ -1637,6 +1581,7 @@ void DestroyNode( Node *n)
     }
 
     n->children = NULL;
+    n->parent = NULL;
 
     // if it is a zero-layer node, free the input offset array on the host
     if( n->inputOffsets != NULL)
@@ -1647,8 +1592,10 @@ void DestroyNode( Node *n)
     // 2013.4.16
     // CZT
     //
+    n->pBelief = NULL;
     n->beliefEuc = NULL;
     n->beliefMal = NULL;
+    n->outputBelief = NULL;
     n->observation = NULL;
     n->genObservation = NULL;
     n->delta = NULL;
