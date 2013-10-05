@@ -56,16 +56,17 @@ typedef struct Node {
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
                             // belief, and parent's previous belief ( length ni+nb+np )
-    float *genObservation;
+    float * genObservation;
     
     // node beliefs
     float * beliefEuc;      // belief (euclidean distance), length nb
     float * beliefMal;      // belief (malhanobis distance)
-    float * belief;        // previous belief (euclidean or mal)
+    float * belief;         // previous belief (euclidean or mal)
     float * outputBelief;   // output belief is used as parent node observation (input from child)
 
+    uint childNumber;       // number of children
     struct Node * parent;   // pointer to parent node (null for to//p layer node)
-    struct Node ** children;// array of 4 child node pointers
+    struct Node ** children;// array of childsNumber child node pointers (only for layers above 0)
 
     float * delta;          // vector that stores difference between observation and mu shared centroid vector
     uint    layer;          // layer this node belongs in
@@ -93,7 +94,8 @@ void  InitNode(                         // initialize a node.
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 float *,               // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 uint                   // number of children
                 );
 
 // 2013.6.21
@@ -118,7 +120,8 @@ void updateCentroid_node(
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 float *,               // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 uint                   // number of children
                 );
 
 void DestroyNode(

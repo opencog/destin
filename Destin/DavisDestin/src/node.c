@@ -47,12 +47,27 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     if( n->layer > 0 )
     {
         // If not, use input from the child nodes
+
+        // Number of beliefs for child nodes
+        uint childBeliefs = n->d->nb[n->layer - 1];
+
         i = 0;
-        for (j = 0; j < 4; j++)
+        for ( j = 0; j < n->childNumber; j++ )
         {
-            for (k = 0; k < n->children[j]->nb; k++, i++)
+            // children may be NULL i.e. if childsNumber is not square for DeSTIN square geometry
+            if ( n->children[j] != NULL )
             {
-                n->observation[i] = n->children[j]->outputBelief[k];
+                // copy child's output
+                for ( k = 0; k < n->children[j]->nb; k++, i++ )
+                {
+                    n->observation[i] = n->children[j]->outputBelief[k];
+                }
+            } else {
+                // child not exists, fill in zeros
+                for ( k = 0; k < childBeliefs; k++, i++ )
+                {
+                    n->observation[i] = 0;
+                }
             }
         }
     } else {
@@ -77,7 +92,12 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < np; i++ )
     {
 #ifdef RECURRENCE_ON
-        n->observation[i+ni+nb] = n->parent->belief[i] * n->nLambda;
+        if (n->parent != NULL)
+        {
+            n->observation[i+ni+nb] = n->parent->belief[i] * n->nLambda;
+        } else {
+            n->observation[i+ni+nb] = 0;
+        }
 #else
         n->observation[i+ni+nb] = 1 / (float) np;
 #endif

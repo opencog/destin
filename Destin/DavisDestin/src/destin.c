@@ -241,7 +241,7 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
 
     // set up stuff for generative display
     float *outFrame;
-    MALLOC( outFrame, float, d->layerSize[0] * d->nodes[0].ni);
+    MALLOC( outFrame, float, d->layerSize[0] * d->nci[0]);
 
     CvSize size;
     size.height = 16;
@@ -763,7 +763,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
     Node *nTmp;
 
     // initialize the frame
-    for( i=0; i < d->layerSize[0] * d->nodes[0].ni; i++ )
+    for( i=0; i < d->layerSize[0] * d->nci[0]; i++ )
     {
         frame[i] = 0;
     }
@@ -778,8 +778,13 @@ void GenerateInputFromBelief( Destin *d, float *frame )
             SampleInputFromBelief( nTmp, sampledInput );
 
             // pass sampled input to children's previous belief
-            for( i=0; i < 4; i++ )
+            for( i=0; i < nTmp->childNumber; i++ )
             {
+                if (nTmp->children[i] == NULL)
+                {
+                    continue;
+                }
+
                 uint muCol = i*nTmp->children[i]->nb;
                 float maxBelief = 0;
                 uint genWinner = 0;
@@ -816,7 +821,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
     float frameMax = 0;
     float frameMin = 1;
 
-    for( i=0; i < d->layerSize[0] * d->nodes[0].ni; i++ )
+    for( i=0; i < d->layerSize[0] * d->nci[0]; i++ )
     {
         frame[i] = exp(frame[i] / NMEANS);
 
@@ -833,7 +838,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
 
     frameMax -= frameMin;
 
-    for( i=0; i < d->layerSize[0] * d->nodes[0].ni; i++ )
+    for( i=0; i < d->layerSize[0] * d->nci[0]; i++ )
     {
         frame[i] -= frameMin;
         frame[i] /= frameMax;
@@ -910,10 +915,10 @@ void DisplayFeatures( Destin *d )
 
     uint width, height;
 
-    sqrtPatch = (uint) sqrt(d->nodes[0].ni);
+    sqrtPatch = (uint) sqrt(d->nci[0]);
 
     height = d->layerSize[0] * sqrtPatch;
-    width = d->nodes[0].nb * sqrtPatch;
+    width = d->nb[0] * sqrtPatch;
 
     float *frame;
 

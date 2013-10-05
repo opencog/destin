@@ -21,6 +21,7 @@ typedef struct Destin {
     uint nLayers;                       // number of layers in network
     float muSumSqDiff;
     uint *nb;                           // number of beliefs in a node of a layer
+    uint *nci;                          // input dimensionality for layer 0 and number of children for layers above zero
 
     struct Node * nodes;                // pointer to list of host nodes
 
@@ -75,7 +76,8 @@ Destin * CreateDestin(                  // create destin from a config file
         );
 
 Destin * InitDestin(    // initialize Destin.
-    uint,               // input dimensionality for first layer, input must be square
+    uint *,             // array with input dimensionality for layer 0 and numbers of children for layers above zero
+                        // numbers of children should be square
     uint,               // number of layers
     uint *,             // belief dimensionality for each layer
     uint,               // number of classes
@@ -90,12 +92,12 @@ Destin * InitDestin(    // initialize Destin.
 );
 
 // 2013.5.31
-void addCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
+void addCentroid(Destin *d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, float **sharedCen, float **starv, float **sigma,
                   long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 // 2013.6.6
-void killCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
+void killCentroid(Destin *d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
