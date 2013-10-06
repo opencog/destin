@@ -275,7 +275,11 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRati
     memcpy(d->nb, nb, sizeof(uint)*nl);
 
     MALLOC(d->nci, uint, nl);
-    memcpy(d->nci, nci, sizeof(uint)*nl);
+    for ( l = 0; l < nl; l++)
+    {
+        // make sure layer sizes are square
+        d->nci[l] = (uint)sqrt(nci[l])*(uint)sqrt(nci[l]);
+    }
 
     // get number of nodes to allocate
     // starting from the top layer with one node,
@@ -300,20 +304,20 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRati
     }
 
     d->layerSize[d->nLayers-1] = 1;
+    d->layerWidth[d->nLayers-1] = 1;
     for ( i=d->nLayers-2; i >= 0; i-- )
     {
-        d->layerSize[i] = d->layerSize[i+1]*nci[i+1];
+        d->layerSize[i] = d->layerSize[i+1]*d->nci[i+1];
+        d->layerWidth[i] = d->layerWidth[i+1]*(uint)sqrt(d->nci[i+1]);
     }
 
     uint nNodes = 0;
     for( i=0; i < d->nLayers; i++ )
     {
-        d->layerWidth[i] = (uint)sqrt(d->layerSize[i]);
         d->layerNodeOffsets[i] = nNodes;
-
         nNodes += d->layerSize[i];
     }
-    d->inputImageSize = d->layerSize[0] * nci[0];
+    d->inputImageSize = d->layerSize[0] * d->nci[0];
     d->extRatio = extRatio;
 
     d->nNodes = nNodes;
@@ -406,7 +410,7 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
     /* New method */
     // My thought: initialize the new centroid and get the related information
     // just before running!
-    int niCurr = currLayer==0 ? nci[0] : nci[currLayer] * d->nb[currLayer-1];
+    int niCurr = currLayer==0 ? d->nci[0] : d->nci[currLayer] * d->nb[currLayer-1];
     int npCurr = currLayer==nl-1 ? 0 : d->nb[currLayer+1];
     int nsCurr = currLayer==0 ? niCurr*extRatio+d->nb[currLayer]+npCurr : niCurr+d->nb[currLayer]+npCurr;
     float * newCentroid;
@@ -474,7 +478,7 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
         float * sharedCentroids;
 
         uint np = ((l + 1 == nl) ? 0 : nb[l+1]);
-        uint ni = (l == 0 ? nci[0] : nci[l] * nb[l-1]);
+        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
         uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
 
         if (ns > maxNs)
@@ -722,7 +726,7 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
                         sharedCentroids,
-                        (l > 0 ? nci[l] : 0)
+                        (l > 0 ? d->nci[l] : 0)
                     );
         }//next node
     }//next layer
@@ -939,7 +943,7 @@ void killCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta,
         float * sharedCentroids;
 
         uint np = ((l + 1 == nl) ? 0 : nb[l+1]);
-        uint ni = (l == 0 ? nci[0] : nci[l] * nb[l-1]);
+        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
         uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
 
         if (ns > maxNs)
@@ -1095,7 +1099,7 @@ void killCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta,
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
                         sharedCentroids,
-                        (l > 0 ? nci[l] : 0)
+                        (l > 0 ? d->nci[l] : 0)
                     );
         }//next node
     }//next layer

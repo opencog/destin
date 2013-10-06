@@ -83,7 +83,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < nb; i++ )
     {
 #ifdef RECURRENCE_ON
-        n->observation[i+ni] = n->belief[i] * n->gamma;
+        n->observation[i+ni] = n->outputBelief[i] * n->gamma;
 #else
         n->observation[i+ni] = 1 / (float) nb;
 #endif
@@ -94,7 +94,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
 #ifdef RECURRENCE_ON
         if (n->parent != NULL)
         {
-            n->observation[i+ni+nb] = n->parent->belief[i] * n->nLambda;
+            n->observation[i+ni+nb] = n->parent->outputBelief[i] * n->nLambda;
         } else {
             n->observation[i+ni+nb] = 0;
         }

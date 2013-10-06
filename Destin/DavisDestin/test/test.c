@@ -7,14 +7,13 @@
 #include "unit_test.h"
 #include "cent_image_gen.h"
 
-Destin * makeDestin(const int layers){
+Destin * makeDestinFromLayerCfg(uint layers, uint *nci, uint *nb)
+{
     if(layers > 8){
         printf("can't make more than 8 layers!\n");
     }
     uint nl = layers;
 
-    uint nci [] = {16,4,4,4,4,4,4,4}; // inputs per layer
-    uint nb [] = {2,2,2,2,2,2,2,2}; //centroids per layer
     uint nc = 0;
     float beta = 0.001;
     float lambda = 0.10;
@@ -28,6 +27,15 @@ Destin * makeDestin(const int layers){
     Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     return d;
+}
+
+Destin * makeDestin(uint layers){
+    if(layers > 8){
+        printf("can't make more than 8 layers!\n");
+    }
+    uint nci [] = {16,4,4,4,4,4,4,4}; // inputs per layer
+    uint nb [] = {2,2,2,2,2,2,2,2}; //centroids per layer
+    return makeDestinFromLayerCfg(layers, nci, nb);
 }
 
 int testInit(){
@@ -419,6 +427,14 @@ int testUniformFormulate(){
         1.0 - starvCoef, 1.0, 1.0, 1.0);
 
     assertFloatEquals(d->muSumSqDiff, n[0].muSqDiff + n[4].muSqDiff, 1e-12 );
+
+    // check that outputBeliefs are copied
+    uint i;
+    for (i = 0; i < d->nNodes; i++)
+    {
+        n = &(d->nodes[i]);
+        assertFloatArrayEquals(n->belief, n->outputBelief, n->nb);
+    }
 
     DestroyDestin(d);
     return 0;
@@ -825,7 +841,7 @@ int testInputOffsets(){
 }
 
 
-int  testLinkParentsToChildren(){
+int testLinkParentsToChildren(){
     // Test that parent nodes have the right children in their children pointers
     Destin * d = makeDestin(4);
 
@@ -853,6 +869,43 @@ int  testLinkParentsToChildren(){
     assertTrue (parent->parent == root);
 
     DestroyDestin(d);
+
+    // Check parameters that are not square
+    uint nci [] = { 11, 7, 4 };
+    uint nb [] = { 4, 4, 4 };
+    d = makeDestinFromLayerCfg(3, nci, nb);
+
+    root = GetNodeFromDestin(d, 2, 0, 0);
+    assertIntEquals(20, root->nIdx);
+    parent = GetNodeFromDestin(d, 1, 1, 1);
+    assertIntEquals(19, parent->nIdx);
+    assertIntEquals(10, parent->children[0]->nIdx);
+    assertIntEquals(14, parent->children[2]->nIdx);
+    assertTrue (parent->parent == root);
+
+    Node * node = GetNodeFromDestin(d, 0, 2, 1);
+    assertIntArrayEqualsV(node->inputOffsets, 9, 75, 76, 77, 87, 88, 89, 99, 100, 101);
+
+    DestroyDestin(d);
+
+    // Check another geometry
+    uint nci2 [] = { 1, 16, 9, 1 };
+    uint nb2 [] = { 5, 5, 5, 5 };
+    d = makeDestinFromLayerCfg(4, nci2, nb2);
+
+    root = GetNodeFromDestin(d, 3, 0, 0);
+    assertIntEquals(154, root->nIdx);
+    node = GetNodeFromDestin(d, 2, 0, 0);
+    assertIntEquals(153, node->nIdx);
+    parent = GetNodeFromDestin(d, 1, 1, 2);
+    assertIntEquals(149, parent->nIdx);
+    assertIntEquals(56, parent->children[0]->nIdx);
+    assertIntEquals(69, parent->children[5]->nIdx);
+    assertTrue(parent->children[0]->parent == parent);
+    assertTrue(parent->children[5]->parent == parent);
+
+    DestroyDestin(d);
+
     return 0;
 }
 
