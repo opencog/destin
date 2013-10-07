@@ -188,18 +188,24 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float la
             maxNs = ns;
         }
 
+        // TODO: move to new method InitCentroid
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
             MALLOC(d->uf_sigma[l], float, ns*nb[l]);
-
-            // 2013.7.4
-            // CZT: uf_absvar;
             MALLOC(d->uf_absvar[l], float, ns*nb[l]);
-            // 2013.7.18
-            // CZT:
             MALLOC(d->uf_avgSquaredDelta[l], float, ns*nb[l]);
             MALLOC(d->uf_avgAbsDelta[l], float, ns*nb[l]);
+
+            for ( i=0; i < nb[l]; i++)
+            {
+                for ( j=0; j < ns; j++)
+                {
+                    sharedCentroids[i*ns + j] = (float) rand() / (float) RAND_MAX;
+                    d->uf_sigma[l][i*ns + j] = INIT_SIGMA;
+                    d->uf_absvar[l][i*ns + j] = 0.0;
+                }
+            }
         }else{
             sharedCentroids = NULL;
         }
@@ -709,7 +715,7 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
                 CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
             }
 
-            updateCentroid_node(
+            InitNode(
                         n,
                         d,
                         l,
@@ -752,131 +758,6 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
     FREE(persistWinCounts);
     FREE(persistWinCounts_detailed);
     FREE(absvar);
-}
-
-/*****************************************************************************/
-// 2013.6.3
-// Keep 'mu', 'uf_sigma';
-void updateCentroid_node
-    (
-    uint         nodeIdx,
-    Destin *     d,
-    uint         layer,
-    uint         ni,
-    uint         nb,
-    uint         np,
-    uint         nc,
-    uint         ns,
-    float       starvCoeff,
-    float       beta,
-    float       gamma,
-    float       lambda,
-    float       temp,
-    Node        *node,
-    uint        *inputOffsets,
-    float       *sharedCentroids,
-    uint        childNumber
-    )
-{
-
-    // Initialize node parameters
-    node->d             = d;
-    node->nIdx          = nodeIdx;
-    node->nb            = nb;
-    node->ni            = ni;
-    node->np            = np;
-    node->ns            = ns;
-    node->nc            = nc;
-    node->starvCoeff    = starvCoeff;
-    node->beta          = beta;
-    node->nLambda       = lambda;
-    node->gamma         = gamma;
-    node->temp          = temp;
-    node->winner        = 0;
-    node->layer         = layer;
-    node->childNumber   = childNumber;
-
-    if(sharedCentroids == NULL){
-        //not uniform so each node gets own centroids
-        MALLOC( node->mu, float, nb*ns );
-    }else{
-        node->mu = sharedCentroids;
-    }
-
-    MALLOC( node->belief, float, nb);
-    MALLOC( node->beliefEuc, float, nb );
-    MALLOC( node->beliefMal, float, nb );
-    MALLOC( node->outputBelief, float, nb );
-    MALLOC( node->observation, float, ns );
-    MALLOC( node->genObservation, float, ns );
-
-    if(d->isUniform){
-        //uniform destin uses shared counts
-        node->starv = d->uf_starv[layer];
-        node->nCounts = NULL;
-        node->sigma = NULL;
-    }else{
-        MALLOC( node->starv, float, nb );
-        MALLOC( node->nCounts, long, nb );
-        MALLOC( node->sigma, float, nb*ns );
-    }
-
-    MALLOC( node->delta, float, ns);
-
-    uint i,j;
-
-    node->parent = NULL;
-    if (layer == 0)
-    {
-        node->children = NULL;
-    } else {
-        MALLOC( node->children, Node *, childNumber );
-        for ( i = 0; i < childNumber; i++ )
-        {
-            node->children[i] = NULL;
-        }
-    }
-
-    // copy the input offset for the inputs (should be NULL for non-input nodes)
-    if( inputOffsets == NULL ){
-        node->inputOffsets = NULL;
-    }else{
-        MALLOC(node->inputOffsets, uint, ni);
-        memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
-    }
-
-    for( i=0; i < nb; i++ )
-    {
-        // init belief (node output)
-        node->belief[i] = 1 / (float)nb;
-        node->beliefEuc[i] = 1 / (float)nb;
-        node->beliefMal[i] = 1 / (float)nb;
-        node->outputBelief[i] = node->belief[i];
-
-        if(!d->isUniform){
-            node->nCounts[i] = 0;
-            // init starv trace to one
-            node->starv[i] = 1.0f;
-        }
-
-        // init mu and sigma
-        for(j=0; j < ns; j++)
-        {
-            //node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
-            if(d->isUniform){
-                // TODO: all the nodes in the layer are initing the same shared sigma vectors redundantly, may
-                // want to initialize this outside of the node
-                //node->d->uf_sigma[layer][i * ns + j] = INIT_SIGMA;
-            }else{
-                node->sigma[i*ns+j] = INIT_SIGMA;
-            }
-        }
-    }
-
-    for( i=0; i < ns; i++ )
-    {
-        node->observation[i] = (float) rand() / (float) RAND_MAX;
-    }
 }
 
 /*****************************************************************************/
@@ -1082,7 +963,7 @@ void killCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta,
                 CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
             }
 
-            updateCentroid_node(
+            InitNode(
                         n,
                         d,
                         l,
@@ -1519,21 +1400,11 @@ void InitNode
             node->nCounts[i] = 0;
             // init starv trace to one
             node->starv[i] = 1.0f;
-        }
 
-        // init mu and sigma
-        for(j=0; j < ns; j++)
-        {
-            node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
-            if(d->isUniform){
-                //TODO: all the nodes in the layer are initing the same shared sigma vectors redundantly, may
-                //want to initialize this outside of the node
-                node->d->uf_sigma[layer][i * ns + j] = INIT_SIGMA;
-
-                // 2013.7.5
-                // CZT: uf_absvar
-                node->d->uf_absvar[layer][i*ns + j] = 0.0; // ???
-            }else{
+            // init mu and sigma
+            for(j=0; j < ns; j++)
+            {
+                node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
                 node->sigma[i*ns+j] = INIT_SIGMA;
             }
         }
