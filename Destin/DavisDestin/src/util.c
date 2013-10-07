@@ -287,17 +287,6 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRati
         d->nci[l] = (uint)sqrt(nci[l])*(uint)sqrt(nci[l]);
     }
 
-    // get number of nodes to allocate
-    // starting from the top layer with one node,
-    // each subsequent layer has 4x the nodes.
-    //
-    // eg., 2-layer: 05 nodes
-    //      3-layer: 21 nodes
-    //      4-layer: 85 nodes
-    //
-    // also keep track of the number of beliefs
-    // to allocate
-
     MALLOC(d->layerSize, uint, nl);
     MALLOC(d->layerNodeOffsets, uint, nl);
     MALLOC(d->layerWidth, uint, nl);
@@ -649,29 +638,30 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
             else if(l==currLayer+1)
             {
                 int tempI, tempJ, tempK;
+                uint childs = d->nci[l];
                 for(tempI=0; tempI<d->nb[l]; ++tempI)
                 {
-                    for(tempJ=0; tempJ<4; ++tempJ)
+                    for(tempJ=0; tempJ<childs; ++tempJ)
                     {
                         for(tempK=0; tempK<d->nb[l-1]-1; ++tempK)
                         {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
+                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+tempK];
+                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+tempK];
                             //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
+                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+tempK];
                         }
 #ifdef USE_METHOD1
                         // New method
                         float fSum = 0.0;
                         for(tempK=0; tempK<d->sizeInd; ++tempK)
                         {
-                            fSum += sharedCen[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
+                            fSum += sharedCen[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
                         }
                         sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = fSum/(float)d->sizeInd;
                         fSum = 0.0;
                         for(tempK=0; tempK<d->sizeInd; ++tempK)
                         {
-                            fSum += sigma[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
+                            fSum += sigma[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
                         }
                         d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = fSum/(float)d->sizeInd;
 #endif
@@ -682,12 +672,12 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
                         d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = 0.0;
 #endif
                     }
-                    for(tempJ=4*d->nb[l-1]; tempJ<ns; ++tempJ)
+                    for(tempJ=childs*d->nb[l-1]; tempJ<ns; ++tempJ)
                     {
-                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-4)+tempJ-4];
-                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-4)+tempJ-4];
+                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-childs)+tempJ-childs];
+                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-childs)+tempJ-childs];
                         //
-                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-4)+tempJ-4];
+                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-childs)+tempJ-childs];
                     }
                 }
             }
@@ -912,31 +902,32 @@ void killCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta,
             else if(l==currLayer+1)
             {
                 int tempI, tempJ, tempK;
+                uint childs = d->nci[l];
                 for(tempI=0; tempI<d->nb[l]; ++tempI)
                 {
-                    for(tempJ=0; tempJ<4; ++tempJ)
+                    for(tempJ=0; tempJ<childs; ++tempJ)
                     {
                         for(tempK=0; tempK<kill_ind; ++tempK)
                         {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                             //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                         }
                         for(tempK=kill_ind+1; tempK<nb[l-1]+1; ++tempK)
                         {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sharedCen[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sigma[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sharedCen[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sigma[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                             //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = absvar[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = absvar[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                         }
                     }
-                    for(tempJ=4*d->nb[l-1]; tempJ<ns; ++tempJ)
+                    for(tempJ=childs*d->nb[l-1]; tempJ<ns; ++tempJ)
                     {
-                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+4)+tempJ+4];
-                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+4)+tempJ+4];
+                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+childs)+tempJ+childs];
+                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+childs)+tempJ+childs];
                         //
-                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+4)+tempJ+4];
+                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+childs)+tempJ+childs];
                     }
                 }
             }
