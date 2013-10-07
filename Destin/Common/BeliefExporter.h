@@ -12,9 +12,9 @@ class BeliefExporter {
 
     DestinNetworkAlt & destin;
     uint outputSize;
-    uint skipSize;
     const int nLayers;
     int bottomLayer;
+    float * beliefs;
 
 public:
 
@@ -29,6 +29,10 @@ public:
         setBottomLayer(bottom);
     }
 
+    ~BeliefExporter(){
+        deleteBeliefs();
+    }
+
     void setBottomLayer(unsigned int bottom){
         if(bottom >= destin.getNetwork()->nLayers){
             throw std::domain_error("setBottomLayer: cannot be set to above the top layer\n");
@@ -37,13 +41,13 @@ public:
         bottomLayer = bottom;
         Destin * d = destin.getNetwork();
 
-        uint to_substract = 0;
-        for(int i = 0 ; i < bottom ; i++){
-            to_substract += d->layerSize[i] * d->nb[i];
+        outputSize = 0;
+        for(int layer = bottom ; layer < d->nLayers ; layer++){
+            outputSize += d->layerSize[layer] * d->nb[layer];
         }
 
-        outputSize = d->nBeliefs - to_substract;
-        skipSize = to_substract;
+        deleteBeliefs();
+        beliefs = new float[outputSize];
     }
 
     /** Calulate how large the belief vector should be.
@@ -61,13 +65,28 @@ public:
       * the bottom layer is set to via the constructor or by
       * setBottomLayer method. The end of the vector is
       * beliefs of the top layer node.
-      * Do not delete or free this pointer.
       */
     float * getBeliefs(){
-        return &(destin.getNetwork()->belief[skipSize]);
+        uint beliefsOffset = 0;
+
+        Destin * d = destin.getNetwork();
+
+        for (uint layer = bottomLayer; layer < nLayers ; ++layer){
+            destin.getLayerBeliefs(layer, beliefs + beliefsOffset);
+            beliefsOffset += d->layerSize[layer] * d->nb[layer];
+        }
+
+        return beliefs;
     }
 
+protected:
 
+    void deleteBeliefs(){
+        if (beliefs != NULL){
+            delete[] beliefs;
+            beliefs = NULL;
+        }
+    }
 
 };
 

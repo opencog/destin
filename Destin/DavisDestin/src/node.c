@@ -25,7 +25,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
 {
     n = &n[nIdx];
 
-    uint i, j;
+    uint i, j, k;
     uint ni, nb, np, ns, nc;
 
     // Length of input vector
@@ -47,9 +47,28 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     if( n->layer > 0 )
     {
         // If not, use input from the child nodes
-        for( i=0; i < ni; i++ )
+
+        // Number of beliefs for child nodes
+        uint childBeliefs = n->d->nb[n->layer - 1];
+
+        i = 0;
+        for ( j = 0; j < n->childNumber; j++ )
         {
-            n->observation[i] = n->input[n->inputOffsets[i]];
+            // children may be NULL i.e. if childsNumber is not square for DeSTIN square geometry
+            if ( n->children[j] != NULL )
+            {
+                // copy child's output
+                for ( k = 0; k < n->children[j]->nb; k++, i++ )
+                {
+                    n->observation[i] = n->children[j]->outputBelief[k];
+                }
+            } else {
+                // child not exists, fill in zeros
+                for ( k = 0; k < childBeliefs; k++, i++ )
+                {
+                    n->observation[i] = 0;
+                }
+            }
         }
     } else {
         // If so, use input from the input image
@@ -64,7 +83,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < nb; i++ )
     {
 #ifdef RECURRENCE_ON
-        n->observation[i+ni] = n->pBelief[i] * n->gamma;
+        n->observation[i+ni] = n->outputBelief[i] * n->gamma;
 #else
         n->observation[i+ni] = 1 / (float) nb;
 #endif
@@ -73,7 +92,12 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     for( i=0; i < np; i++ )
     {
 #ifdef RECURRENCE_ON
-        n->observation[i+ni+nb] = n->parent_pBelief[i] * n->nLambda;
+        if (n->parent != NULL)
+        {
+            n->observation[i+ni+nb] = n->parent->outputBelief[i] * n->nLambda;
+        } else {
+            n->observation[i+ni+nb] = 0;
+        }
 #else
         n->observation[i+ni+nb] = 1 / (float) np;
 #endif
@@ -268,10 +292,10 @@ void NormalizeBeliefGetWinner( Node *n, uint nIdx )
 
     for( i=0; i < n->nb; i++ ){
 #ifdef USE_MAL
-        n->pBelief[i] = n->beliefMal[i];
+        n->belief[i] = n->beliefMal[i];
 #endif
 #ifdef USE_EUC
-        n->pBelief[i] = n->beliefEuc[i];
+        n->belief[i] = n->beliefEuc[i];
 #endif
     }
 

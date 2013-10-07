@@ -13,23 +13,20 @@
 /* Destin Struct Definition */
 typedef struct Destin {
     uint serializeVersion;              // Identifies the compaitibility version of this destin structure during saves and loads.s
-    uint nInputPipeline;                // number of beliefs to copy to next nodes' input
     uint maxNb;                         // max number of beliefs for all nodes (important for kernels)
     uint maxNs;
     uint nc;                            // number of classes to discriminate
-    uint nBeliefs;                      // number of beliefs ( sum over all layers of centroids per node * number of nodes per layer )
     uint nNodes;                        // number of nodes in the entire destin network
     uint nMovements;                    // number of movements per digit presentation
     uint nLayers;                       // number of layers in network
     float muSumSqDiff;
     uint *nb;                           // number of beliefs in a node of a layer
+    uint *nci;                          // input dimensionality for layer 0 and number of children for layers above zero
 
     struct Node * nodes;                // pointer to list of host nodes
 
-    float       * belief;               // concatenated belief vector for all nodes
     float       * temp;                 // temperatures for each layer
     float       * dataSet;              // pointer to dataset
-    float       * inputPipeline;        // concatonated input for all internal layer nodes
 
     uint        * inputLabel;           // input label (used during supervised training)
     uint        * layerSize;            // size for each layer ( nodes per layer )
@@ -79,7 +76,8 @@ Destin * CreateDestin(                  // create destin from a config file
         );
 
 Destin * InitDestin(    // initialize Destin.
-    uint,               // input dimensionality for first layer, input must be square
+    uint *,             // array with input dimensionality for layer 0 and numbers of children for layers above zero
+                        // numbers of children should be square
     uint,               // number of layers
     uint *,             // belief dimensionality for each layer
     uint,               // number of classes
@@ -94,17 +92,17 @@ Destin * InitDestin(    // initialize Destin.
 );
 
 // 2013.5.31
-void addCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
+void addCentroid(Destin *d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, float **sharedCen, float **starv, float **sigma,
                   long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 // 2013.6.6
-void killCentroid(Destin *d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
+void killCentroid(Destin *d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
                   float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
                   int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 
-void LinkParentBeliefToChildren(        // link the belief from a parent to the child for advice
+void LinkParentsToChildren(             // link parents to their children
                     Destin *            // initialized destin pointer
                 );
 
@@ -163,6 +161,10 @@ void DisplayLayerFeatures(
                     int nodes           // number of nodes in the layer to show, if 0 then show them all
         );
 
+void CopyOutputBeliefs(                 // copy previous beliefs into nodes output
+                  Destin *              // pointer to destin object
+                 );
+
 void ClearBeliefs(                      // cleanse the pallette
                   Destin *              // pointer to destin object
                  );
@@ -182,6 +184,13 @@ struct Node * GetNodeFromDestinI(
                         uint l,         // layer
                         uint nIdx       // index of node in the layer. The first node each layer has index 0.
                         );
+
+// Fills beliefs array in output beliefs for all nodes from given layer.
+void GetLayerBeliefs(
+                    Destin *d,          // pointer to destin object
+                    uint layer,         // layer
+                    float * beliefs     // output beliefs array. The caller should allocate the array.
+                    );
 
 //resets sharedCentroidsDidWin vector for each layer
 void Uniform_ResetStats(

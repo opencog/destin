@@ -16,6 +16,15 @@ void DestinNetworkAlt::initTemperatures(int layers, uint * centroids){
     }
 }
 
+// Initialize default DeSTIN network topology
+void DestinNetworkAlt::initDefaultTopology(int layers, uint * inputs){
+
+    inputs[0] = 16;
+    for (int l = 1 ; l < layers ; l++){
+        inputs[l] = 4;
+    }
+}
+
 float *** DestinNetworkAlt::getCentroidImages(){
     if(centroidImages==NULL){
         centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
@@ -36,13 +45,15 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
         inputImageWidth(width)
         {
 
-    uint input_dimensionality = 16;
     uint c, l;
     callback = NULL;
     initTemperatures(layers, centroid_counts);
     float starv_coef = 0.05;
     uint n_classes = 0;//doesn't look like its used
     uint num_movements = 0; //this class does not use movements
+
+    uint layer_inputs[layers];
+    initDefaultTopology(layers, layer_inputs);
 
     //figure out how many layers are needed to support the given
     //image width.
@@ -60,7 +71,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
         throw std::logic_error("Image width does not match the given number of layers.");
     }
     destin = InitDestin(
-            input_dimensionality,
+            layer_inputs,
             layers,
             centroid_counts,
             n_classes,
@@ -104,13 +115,15 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
     centroidImages = NULL;
     centroidImageWeightParameter = 1.0;
 
-    uint input_dimensionality = 16;
     uint c, l;
     callback = NULL;
     initTemperatures(layers, centroid_counts);
     float starv_coef = 0.05;
     uint n_classes = 0;//doesn't look like its used
     uint num_movements = 0; //this class does not use movements
+
+    uint layer_inputs[layers];
+    initDefaultTopology(layers, layer_inputs);
 
     //figure out how many layers are needed to support the given
     //image width.
@@ -129,7 +142,7 @@ void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int
     }
     addCentroid(
             destin,
-            input_dimensionality,
+            layer_inputs,
             layers,
             centroid_counts,
             n_classes,
@@ -176,13 +189,15 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
     centroidImages = NULL;
     centroidImageWeightParameter = 1.0;
 
-    uint input_dimensionality = 16;
     uint c, l;
     callback = NULL;
     initTemperatures(layers, centroid_counts);
     float starv_coef = 0.05;
     uint n_classes = 0;//doesn't look like its used
     uint num_movements = 0; //this class does not use movements
+
+    uint layer_inputs[layers];
+    initDefaultTopology(layers, layer_inputs);
 
     //figure out how many layers are needed to support the given
     //image width.
@@ -201,7 +216,7 @@ void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned in
     }
     killCentroid(
             destin,
-            input_dimensionality,
+            layer_inputs,
             layers,
             centroid_counts,
             n_classes,
@@ -968,7 +983,7 @@ void DestinNetworkAlt::printNodeBeliefs(int layer, int row, int col){
     Node * n = getNode(layer, row, col);
     printf("Node beliefs: layer%i, row %i, col: %i\n", layer, row, col);
     for(int i = 0; i < n->nb ; i++){
-        printf("%f ", n->pBelief[i]);
+        printf("%f ", n->belief[i]);
     }
     printf("\n");
 

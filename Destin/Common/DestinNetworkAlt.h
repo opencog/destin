@@ -74,6 +74,11 @@ private:
      */
     void initTemperatures(int layers, uint * centroids);
 
+    /**
+     * Initialize default topology. Each node above layer 0 has 4 children. Each node from layer 0 has 16 inputs.
+     */
+    void initDefaultTopology(int layers, uint * inputs);
+
     const int inputImageWidth;
 
 public:
@@ -166,8 +171,17 @@ public:
     }
 
     float * getNodeBeliefs(int layer, int row, int col){
-        return getNode(layer, row, col)->pBelief;
+        return getNode(layer, row, col)->belief;
     }
+
+    /**
+     * Fills beliefs array in belief values for all nodes from given layer.
+     * The caller should allocate the array.
+     */
+    void getLayerBeliefs(int layer, float * beliefs){
+        GetLayerBeliefs(destin, layer, beliefs);
+    }
+
     Node * getNode(int layer, int row, int col){
         Node * n = GetNodeFromDestin(destin, layer, row, col);
         if(n == NULL){

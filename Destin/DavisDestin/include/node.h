@@ -34,8 +34,8 @@ typedef struct Node {
     uint     nc;            // number of classes
     float   starvCoeff;     // starvation coefficient
     float   beta;           // sigma update weight (centroid variance)
-    float   nLambda;        // pBelief weighting
-    float   gamma;          // parent pBelief weighting
+    float   nLambda;        // parent previous belief weighting
+    float   gamma;          // previous belief weighting
     float   temp;           // temperature for boltzmann normalization
 
     uint     winner;        // winning centroid index
@@ -51,22 +51,22 @@ typedef struct Node {
 
     float   muSqDiff;
     long  * nCounts;        // number of observation counts. How many times each centroid is picked as winner over all iterations.
-    
-    // node input
-    float * input;          // input pointer (null for input layer nodes)
+
     uint  * inputOffsets;   // offsets for each pixel taken from framePtr for this node. vector of length ni.
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
                             // belief, and parent's previous belief ( length ni+nb+np )
-    float *genObservation;
+    float * genObservation;
     
     // node beliefs
     float * beliefEuc;      // belief (euclidean distance), length nb
     float * beliefMal;      // belief (malhanobis distance)
-    float * pBelief;        // previous belief (euclidean or mal)
-    float * parent_pBelief; // parent previous belief
+    float * belief;         // previous belief (euclidean or mal)
+    float * outputBelief;   // output belief is used as parent node observation (input from child)
 
-    struct Node ** children;// array of 4 child node pointers
+    uint childNumber;       // number of children
+    struct Node * parent;   // pointer to parent node (null for to//p layer node)
+    struct Node ** children;// array of childsNumber child node pointers (only for layers above 0)
 
     float * delta;          // vector that stores difference between observation and mu shared centroid vector
     uint    layer;          // layer this node belongs in
@@ -94,37 +94,12 @@ void  InitNode(                         // initialize a node.
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to input on host
-                 float *,               // pointer to belief on host
-                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 float *,               // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
+                 uint                   // number of children
                 );
 
 // 2013.6.21
 void evenInitForMu(float * tempMu, int tempNb, int tempNs);
-
-// 2013.6.3, 2013.7.3
-// CZT: updateCentroid_node for adding or killing;
-void updateCentroid_node(
-                 uint,                  // node index
-                 struct Destin *,       // reference to parent destin network
-                 uint,                  // layer this node belongs to
-                 uint,                  // belief dimensionality (# centroids)
-                 uint,                  // input dimensionality (# input values)
-                 uint,                  // parent belief dimensionality
-                 uint,                  // number of classes
-                 uint,                  // ns = state dimensionality (number of inputs + number of previous beliefs + number of parent's previous beliefs)
-                                        // = ni + nb + np + nc
-                 float,                 // starvation coefficient
-                 float,                 // beta (sigma step size)
-                 float,                 // lambda
-                 float,                 // gamma
-                 float,                 // temperature
-                 Node *,                // pointer node on host
-                 uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to input on host
-                 float *,               // pointer to belief on host
-                 float *                // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
-                );
 
 void DestroyNode(
                  Node *
