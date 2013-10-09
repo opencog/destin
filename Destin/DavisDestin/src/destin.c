@@ -38,7 +38,7 @@ void PrintIt( Destin *d )
                 for( k=0; k < NCOLS && n-nIdx+k < d->layerSize[l]; k++ )
                 {
                     nPtr = &d->nodes[n+k];
-                    uint nAstk = (uint) (nPtr->pBelief[i] * ASTK);
+                    uint nAstk = (uint) (nPtr->belief[i] * ASTK);
 
                     for( j=0; j < nAstk; j++ )
                     {
@@ -75,7 +75,7 @@ void PrintIt( Destin *d )
         nPtr = &d->nodes[n];
         for( i=0; i < nPtr->nb; i++ )
         {
-            printf("%0.3f ", nPtr->pBelief[i]);
+            printf("%0.3f ", nPtr->belief[i]);
         }
         printf("\n");
     }
@@ -174,7 +174,7 @@ void TrainDestin( Destin *d, char *dataFileName, char *labelsFileName )
                 uint nIdx;
                 for( nIdx=0; nIdx < d->nodes[d->nNodes-1].nb; nIdx++ )
                 {
-                    printf("%0.2f ", d->nodes[d->nNodes-1].pBelief[nIdx]);
+                    printf("%0.2f ", d->nodes[d->nNodes-1].belief[nIdx]);
                 }
                 printf("\n");
 
@@ -241,7 +241,7 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
 
     // set up stuff for generative display
     float *outFrame;
-    MALLOC( outFrame, float, d->layerSize[0] * d->nodes[0].ni);
+    MALLOC( outFrame, float, d->layerSize[0] * d->nci[0]);
 
     CvSize size;
     size.height = 16;
@@ -307,7 +307,7 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
                 fprintf(beliefsFile, "%d, ", label);
                 for( j=0; j < d->nodes[d->nNodes-1].nb; j++ )
                 {
-                    fprintf(beliefsFile, "%0.5f, ", d->nodes[d->nNodes-1].pBelief[j]);
+                    fprintf(beliefsFile, "%0.5f, ", d->nodes[d->nNodes-1].belief[j]);
                 }
                 fprintf(beliefsFile, "\n");
             }
@@ -412,7 +412,7 @@ void FormulateBelief( Destin *d, float *image )
     }
 
     // copy node's belief to parent node's input
-    memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
+    CopyOutputBeliefs( d );
 }
 
 uint GenFromPMF( float *pmf, uint len )
@@ -615,7 +615,7 @@ void SampleInputFromBelief( Node *n, float *xf )
     __special xEpsP[n->ns];
     __special xEpsN[n->ns];
 
-    __special pBelief[n->nb];
+    __special belief[n->nb];
     __special bx[n->nb];
     __special bxEps[n->nb];
 
@@ -638,7 +638,7 @@ void SampleInputFromBelief( Node *n, float *xf )
     
     for( i=0; i < n->nb; i++) 
     {
-        pBelief[i] = (__special) n->pBelief[i];
+        belief[i] = (__special) n->belief[i];
     }
     //printf("\n");
 
@@ -648,15 +648,15 @@ void SampleInputFromBelief( Node *n, float *xf )
     ConstrainInput( n, x );
     
     CalculateBelief( n, x, bx );
-    bMSE = BeliefMSE( n->nb, bx, pBelief );
+    bMSE = BeliefMSE( n->nb, bx, belief );
     for( nit=0; nit < nIts; nit++ )
     {
 
         /*
-        printf("pBelief:\n");
+        printf("belief:\n");
         for( i=0; i < n->nb; i++ )
         {
-            printf("%0.3f ", pBelief[i]);
+            printf("%0.3f ", belief[i]);
         }
         printf("\n");
         printf("bx:\n");
@@ -684,15 +684,15 @@ void SampleInputFromBelief( Node *n, float *xf )
             xEpsP[i] += gradEps;
 
             CalculateBelief( n, xEpsP, bxEps );
-            bEpsPMSE = BeliefMSE( n->nb, bxEps, pBelief );
+            bEpsPMSE = BeliefMSE( n->nb, bxEps, belief );
             CalculateBelief( n, xEpsN, bxEps );
-            bEpsNMSE = BeliefMSE( n->nb, bxEps, pBelief );
+            bEpsNMSE = BeliefMSE( n->nb, bxEps, belief );
 
             xGrad[i] = (bEpsPMSE - bEpsNMSE) / (2*gradEps);
         }
         
         CalculateBelief( n, x, bx );
-        bMSE = BeliefMSE( n->nb, bx, pBelief );
+        bMSE = BeliefMSE( n->nb, bx, belief );
         
         log_info("%f\n", bMSE);
 
@@ -715,7 +715,7 @@ void SampleInputFromBelief( Node *n, float *xf )
             __special bxTmp[n->nb];
 
             CalculateBelief( n, xTmp, bxTmp );
-            gMSE = BeliefMSE( n->nb, bxTmp, pBelief );
+            gMSE = BeliefMSE( n->nb, bxTmp, belief );
             
             if( gMSE > bMSE || gMSE > prev_gMSE || g > 16 ) break;
             
@@ -763,7 +763,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
     Node *nTmp;
 
     // initialize the frame
-    for( i=0; i < d->layerSize[0] * d->nodes[0].ni; i++ )
+    for( i=0; i < d->layerSize[0] * d->nci[0]; i++ )
     {
         frame[i] = 0;
     }
@@ -778,19 +778,24 @@ void GenerateInputFromBelief( Destin *d, float *frame )
             SampleInputFromBelief( nTmp, sampledInput );
 
             // pass sampled input to children's previous belief
-            for( i=0; i < 4; i++ )
+            for( i=0; i < nTmp->childNumber; i++ )
             {
+                if (nTmp->children[i] == NULL)
+                {
+                    continue;
+                }
+
                 uint muCol = i*nTmp->children[i]->nb;
                 float maxBelief = 0;
                 uint genWinner = 0;
 
                 for( j=0; j < nTmp->children[i]->nb; j++ )
                 {
-                    nTmp->children[i]->pBelief[j] = sampledInput[muCol+j];
-                    if( nTmp->children[i]->pBelief[j] > maxBelief )
+                    nTmp->children[i]->belief[j] = sampledInput[muCol+j];
+                    if( nTmp->children[i]->belief[j] > maxBelief )
                     {
                         genWinner = j;
-                        maxBelief = nTmp->children[i]->pBelief[j];
+                        maxBelief = nTmp->children[i]->belief[j];
                     }
                 }
                 nTmp->children[i]->genWinner = genWinner;
@@ -816,7 +821,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
     float frameMax = 0;
     float frameMin = 1;
 
-    for( i=0; i < d->layerSize[0] * d->nodes[0].ni; i++ )
+    for( i=0; i < d->layerSize[0] * d->nci[0]; i++ )
     {
         frame[i] = exp(frame[i] / NMEANS);
 
@@ -833,7 +838,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
 
     frameMax -= frameMin;
 
-    for( i=0; i < d->layerSize[0] * d->nodes[0].ni; i++ )
+    for( i=0; i < d->layerSize[0] * d->nci[0]; i++ )
     {
         frame[i] -= frameMin;
         frame[i] /= frameMax;
@@ -910,10 +915,10 @@ void DisplayFeatures( Destin *d )
 
     uint width, height;
 
-    sqrtPatch = (uint) sqrt(d->nodes[0].ni);
+    sqrtPatch = (uint) sqrt(d->nci[0]);
 
     height = d->layerSize[0] * sqrtPatch;
-    width = d->nodes[0].nb * sqrtPatch;
+    width = d->nb[0] * sqrtPatch;
 
     float *frame;
 
@@ -1024,4 +1029,21 @@ void Uniform_ResetStats(Destin * d){
         }
     }
     return;
+}
+
+void GetLayerBeliefs( Destin * d, uint layer, float * beliefs )
+{
+    uint n, offset, i;
+    uint nodeOffset = d->layerNodeOffsets[layer];
+
+    offset = 0;
+    for( n=0; n < d->layerSize[layer]; ++n )
+    {
+        float * belief = d->nodes[nodeOffset + n].outputBelief;
+        for ( i=0; i < d->nb[layer]; ++i, ++offset)
+        {
+            beliefs[offset] = belief[i];
+        }
+    }
+
 }

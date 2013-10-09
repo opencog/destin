@@ -15,9 +15,9 @@
 // and causing an unknown crash.
 // This value should be incremented by the developer when the order of the destin struc
 // fields are moved around or if fields are added, removed, ect.
-#define SERIALIZE_VERSION 3
+#define SERIALIZE_VERSION 4
 
-void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp);
+void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp);
 
 void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
     d->centLearnStrat = strategy;
@@ -53,8 +53,8 @@ Destin * CreateDestin( char *filename ) {
         exit(1);
     }
     
-    uint ni, nl, nc, i, nMovements;
-    uint *nb;
+    uint nl, nc, i, nMovements;
+    uint *nci, *nb;
     float beta, lambda, gamma, starvCoeff;
     float *temp;
 
@@ -68,21 +68,18 @@ Destin * CreateDestin( char *filename ) {
     fscanfResult = fscanf(configFile, "%d", &nc);
     printf("# classes: %d\n", nc);
 
-    // get input dimensionality
-    fscanfResult = fscanf(configFile, "%d", &ni);
-    printf("input dim: %d\n", ni);
-
     // get number of layers
     fscanfResult = fscanf(configFile, "%d", &nl);
     nb = (uint *) malloc(sizeof(uint) * nl);
+    nci = (uint *) malloc(sizeof(uint) * nl);
     temp = (float *) malloc(sizeof(float) * nl);
 
     printf("# layers: %d\n", nl);
 
     // get layer beliefs and temps
     for(i=0; i < nl; i++) {
-        fscanfResult = fscanf(configFile, "%d %f", &nb[i], &temp[i]);
-        printf("\t%d %f\n", nb[i], temp[i]);
+        fscanfResult = fscanf(configFile, "%d %d %f", &nci[i], &nb[i], &temp[i]);
+        printf("\t%d %d %f\n", nci[i], nb[i], temp[i]);
     }
 
     // get coeffs
@@ -110,7 +107,7 @@ Destin * CreateDestin( char *filename ) {
     printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
     printf("isUniform: %s. belief transform: %s.\n", isUniform ? "YES" : "NO", bts);
 
-    newDestin = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, 1);
+    newDestin = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, 1);
     SetBeliefTransform(newDestin, bte);
 
     fclose(configFile);
@@ -121,95 +118,47 @@ Destin * CreateDestin( char *filename ) {
     return newDestin;
 }
 
-
-/** Calculates input offsets for a node.
- * The input offsets allow the node to recieve the correct input in the correct geometry.
- * This creates a heirarchy of 2x2 children to 1 parent node.
- * This calculates input offsets for both the input nodes ( for pixel inputs ) and upper layer nodes ( for childrens' beliefs )
- *
- * @param d - Destin struct
- * @param layer - the layer of the node to calculate input offsets
- * @param layer_node_id - linear position of the node in the given layer from 0 to d->layerSize[layer] - 1
- * @param child_layer_belief_offset - offset in the belief pipeline where the child layer's concatonated belief output vector begins
- * this this should be zero for the 0th and 1st layer.
- * @param child_input_region_width - If its an input node this is 4 ( 4x4 pixel input), otherwise 2 for 2x2 child node input
- * @param inputOffsets_out - pointer to preallocated uint array which will hold the calculated offsets.
+/** Calculates input offsets for square shape nodes from layer 0
+ * @param layerWidth   - width of layer 0
+ * @param nIdx - node index in the layer 0
+ * @param ni   - dimensionality of input, should be square number
+ * @param inputOffsets - pointer to preallocated uint array which will hold calculated offsets.
  */
-void CalcNodeInputOffsets(
+void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inputOffsets)
+{
+    uint zr, zc;                 // zero layer row, col coordinates
+    uint ir, ic;                 // input layer row, col coordinates
+    uint inputWidth = (uint) sqrt(ni);
+    uint inputLayerWidth = layerWidth * inputWidth;   // input layer width
 
-    Destin * d,
-    uint layer,
-    uint layer_node_id,
-    uint child_layer_belief_offset,
-    uint child_input_region_width, //width of the input region in pixels (when layer = 0) or nodes ( for upper layers)
-    uint * inputOffsets_out){
+    zr = nIdx / layerWidth;      // Convert node index into row, col coordinates
+    zc = nIdx % layerWidth;
 
-    uint    pr, //parent row
-            pc, //parent col
-            cr, //child row in the entire child layer ( or pixel row if input image)
-            cc, //child col in the entire child layer ( or pixel col if input image)
-            clnw,//child layer node width
-            cirw = child_input_region_width,
-            clnb,//child layer nb ( size of output belief vector for each child node)
-            plw = d->layerWidth[layer], //parent layer width
-            i, j, k;//parent layer width
+    ir = zr * inputWidth;        // Convert coordinates into input layer row, col coordinates
+    ic = zc * inputWidth;
 
-    if(layer == 0){
-        // If its the input layer then pretend each pixel of the 4x4 input image( assuming ni = 16)
-        // is a node (in layer below layer 0) with nb = 1, then the nodes in
-        // layer 0 take in 4x4 prentend child nodes instead of just 2x2 nodes like in the upper layers
-        clnb = 1;
-        clnw = plw * cirw ; // Each layer 0 node takes in a square region of width 4 pretend nodes (i.e pixels)
-                            // so this is equal to the image width.
-    }else{
-        clnb = d->nb[layer - 1],//child layer nb
-        clnw = plw * cirw; //the width of the entire child layer in nodes
-    }
-
-    pr = layer_node_id / plw; // Convert nodeid into row, col coordinates
-    pc = layer_node_id % plw;
-
-    cr = pr * cirw;
-    cc = pc * cirw;
-    uint cos[cirw * cirw]; // Child output start ( start of child node belief output vector)
-    uint child_region_row, // The row in the 4x4 or 2x2 input region
-         child_region_col; // The col in the 4x4 or 2x2 input region
-
-    i = 0;
-    for(child_region_row = 0 ;child_region_row < cirw; child_region_row++){
-        for(child_region_col = 0 ; child_region_col < cirw; child_region_col++){
-            //store where this child's output belief vector starts
-            cos[i] = child_layer_belief_offset + clnb * ( (cr + child_region_row) * clnw + (cc + child_region_col) );
+    uint row, col;
+    uint i = 0;
+    for (row = 0; row < inputWidth; row++)
+    {
+        for (col = 0; col < inputWidth; col++)
+        {
+            inputOffsets[i] = (ir + row) * inputLayerWidth + (ic + col);
             i++;
         }
     }
+};
 
-
-    k=0;
-    for(i = 0 ; i < cirw * cirw ; i++){
-        for(j = 0 ; j < clnb ; j++){
-            inputOffsets_out[k++] = cos[i] + j;
-        }
-    }
-
-}
-
-Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
+Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
 {
-    uint i, l, maxNb, maxNs;
-    size_t bOffset ;
-
+    uint i, j, l, maxNb, maxNs;
 
     Destin *d;
 
     // initialize a new Destin object
     MALLOC(d, Destin, 1);
 
-    initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
-
-    // init belief and input offsets (pointers to big belief and input chunks we
-    // allocated above)
-    bOffset = 0;
+    initializeDestinParameters(nb, isUniform, nci, extRatio, nl, nMovements, d, nc, temp);
 
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
@@ -217,7 +166,6 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
     maxNs = 0;
 
     uint n = 0;
-    uint child_layer_offset = 0;
 
     // initialize the rest of the network
 
@@ -229,34 +177,35 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
             maxNb = nb[l];
         }
 
-        uint np = ((l == nl - 1) ? 0 : nb[l + 1]);
-
-        ni = (l == 0 ? ni : 4*nb[l-1]);
-
         float * sharedCentroids;
 
-        // calculate the state dimensionality (number of inputs + number of beliefs)
-        // 2013.4.17
-        // CZT
-        uint ns = nb[l] + np + nc + (( l == 0) ? ni*extRatio : ni);
+        uint np = ((l + 1 == nl) ? 0 : nb[l+1]);
+        uint ni = (l == 0 ? nci[0] : nci[l] * nb[l-1]);
+        uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
 
         if (ns > maxNs)
         {
             maxNs = ns;
         }
 
+        // TODO: move to new method InitCentroid
         if(isUniform){
             MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
             MALLOC(sharedCentroids, float, ns*nb[l]);
             MALLOC(d->uf_sigma[l], float, ns*nb[l]);
-
-            // 2013.7.4
-            // CZT: uf_absvar;
             MALLOC(d->uf_absvar[l], float, ns*nb[l]);
-            // 2013.7.18
-            // CZT:
             MALLOC(d->uf_avgSquaredDelta[l], float, ns*nb[l]);
             MALLOC(d->uf_avgAbsDelta[l], float, ns*nb[l]);
+
+            for ( i=0; i < nb[l]; i++)
+            {
+                for ( j=0; j < ns; j++)
+                {
+                    sharedCentroids[i*ns + j] = (float) rand() / (float) RAND_MAX;
+                    d->uf_sigma[l][i*ns + j] = INIT_SIGMA;
+                    d->uf_absvar[l][i*ns + j] = 0.0;
+                }
+            }
         }else{
             sharedCentroids = NULL;
         }
@@ -265,12 +214,11 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            CalcNodeInputOffsets(d,
-                                 l, // layer
-                                 i, // linear node position in the current layer
-                                 child_layer_offset,
-                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
-                                 inputOffsets);
+            if (l == 0)
+            {
+                CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
+            }
+
             InitNode(
                         n,
                         d,
@@ -286,28 +234,14 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
                         lambda,
                         temp[l],
                         &d->nodes[n],
-                        inputOffsets,
-                        (l == 0 ? NULL : d->inputPipeline),
-                        &d->belief[bOffset],
-                        sharedCentroids
+                        (l > 0 ? NULL : inputOffsets),
+                        sharedCentroids,
+                        (l > 0 ? nci[l] : 0)
                     );
-
-            if(l > 0){
-                MALLOC( d->nodes[n].children, Node *, 4 );
-            }
-
-            // increment belief offset (so beliefs are mapped contiguously in memory)
-            bOffset += nb[l];
         }//next node
-
-        if(l > 0){
-            // where the beliefs of the next layer begin
-            child_layer_offset += ni * d->layerSize[l];
-        }
-
     }//next layer
 
-    LinkParentBeliefToChildren( d );
+    LinkParentsToChildren( d );
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
@@ -316,9 +250,10 @@ Destin * InitDestin( uint ni, uint nl, uint *nb, uint nc, float beta, float lamb
 
 
 //TODO: make this a private function
-void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp)
+void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp)
 {
-    uint l, i;
+    uint l;
+    int i; // must be signed int
     d->serializeVersion = SERIALIZE_VERSION;
     d->nNodes = 0;
     d->nLayers = nl;
@@ -345,16 +280,12 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
     MALLOC(d->nb, uint, nl);
     memcpy(d->nb, nb, sizeof(uint)*nl);
 
-    // get number of nodes to allocate
-    // starting from the top layer with one node,
-    // each subsequent layer has 4x the nodes.
-    //
-    // eg., 2-layer: 05 nodes
-    //      3-layer: 21 nodes
-    //      4-layer: 85 nodes
-    //
-    // also keep track of the number of beliefs
-    // to allocate
+    MALLOC(d->nci, uint, nl);
+    for ( l = 0; l < nl; l++)
+    {
+        // make sure layer sizes are square
+        d->nci[l] = (uint)sqrt(nci[l])*(uint)sqrt(nci[l]);
+    }
 
     MALLOC(d->layerSize, uint, nl);
     MALLOC(d->layerNodeOffsets, uint, nl);
@@ -367,44 +298,27 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
         d->layerMask[i] = 0;
     }
 
-    uint nNodes = 0;
-    uint nBeliefs = 0;
-    for( i=0, l=nl ; l != 0; l--, i++ )
+    d->layerSize[d->nLayers-1] = 1;
+    d->layerWidth[d->nLayers-1] = 1;
+    for ( i=d->nLayers-2; i >= 0; i-- )
     {
-        d->layerSize[i] = 1 << 2*(l-1);
-        d->layerWidth[i] = (uint)sqrt(d->layerSize[i]);
-        d->layerNodeOffsets[i] = nNodes;
-
-        nNodes += d->layerSize[i];
-
-        nBeliefs += d->layerSize[i] * nb[i];
+        d->layerSize[i] = d->layerSize[i+1]*d->nci[i+1];
+        d->layerWidth[i] = d->layerWidth[i+1]*(uint)sqrt(d->nci[i+1]);
     }
 
-
-    d->inputImageSize = d->layerSize[0] * ni;
+    uint nNodes = 0;
+    for( i=0; i < d->nLayers; i++ )
+    {
+        d->layerNodeOffsets[i] = nNodes;
+        nNodes += d->layerSize[i];
+    }
+    d->inputImageSize = d->layerSize[0] * d->nci[0];
     d->extRatio = extRatio;
 
     d->nNodes = nNodes;
 
-    // input pipeline -- all beliefs are copied from the output of each
-    // node to the input of the next node on each timestep. we want
-    // the belief of each node except for the top node (its output goes
-    // to no input to another node) to be easily copied to the input
-    // of the next node, so we allocate a static buffer for it.
-    uint nInputPipeline = nBeliefs - nb[nl-1];
-
-    d->nInputPipeline = nInputPipeline;
-
     // allocate node pointers on host
     MALLOC(d->nodes, Node, nNodes);
-
-    // allocate space for inputs to nodes
-    MALLOC(d->inputPipeline, float, nInputPipeline);
-
-    // allocate space for beliefs for nodes on host
-    MALLOC(d->belief, float, nBeliefs);
-
-    d->nBeliefs = nBeliefs;
 
     if(isUniform){
         // Allocate for each layer an array of size number = n centroids for that layer
@@ -450,14 +364,13 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint ni, int extRatio,
 // addCentroid
 // Keep 'shareCentroids', 'uf_starv', 'uf_sigma', 'uf_avgDelta',
 // 'uf_persistWinCounts', 'uf_persistWinCounts_detailed', 'uf_absvar';
-void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
+void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
                   int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma,
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
     uint i, l, maxNb, maxNs, j;
-    size_t bOffset ;
 
-    initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
+    initializeDestinParameters(nb, isUniform, nci, extRatio, nl, nMovements, d, nc, temp);
 
     if(isUniform){
         /*********************************************************************/
@@ -482,22 +395,17 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
         }
     }
 
-    // init belief and input offsets (pointers to big belief and input chunks we
-    // allocated above)
-    bOffset = 0;
-
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
     maxNb = 0;
     maxNs = 0;
 
     uint n = 0;
-    uint child_layer_offset = 0;
 
     /* New method */
     // My thought: initialize the new centroid and get the related information
     // just before running!
-    int niCurr = currLayer==0 ? ni : 4*d->nb[currLayer-1];
+    int niCurr = currLayer==0 ? d->nci[0] : d->nci[currLayer] * d->nb[currLayer-1];
     int npCurr = currLayer==nl-1 ? 0 : d->nb[currLayer+1];
     int nsCurr = currLayer==0 ? niCurr*extRatio+d->nb[currLayer]+npCurr : niCurr+d->nb[currLayer]+npCurr;
     float * newCentroid;
@@ -562,15 +470,10 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
             maxNb = nb[l];
         }
 
-        uint np = ((l == nl - 1) ? 0 : nb[l + 1]);
-
-        ni = (l == 0 ? ni : 4*nb[l-1]);
-
         float * sharedCentroids;
 
-        // calculate the state dimensionality (number of inputs + number of beliefs)
-        // 2013.4.17
-        // CZT
+        uint np = ((l + 1 == nl) ? 0 : nb[l+1]);
+        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
         uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
 
         if (ns > maxNs)
@@ -735,29 +638,30 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
             else if(l==currLayer+1)
             {
                 int tempI, tempJ, tempK;
+                uint childs = d->nci[l];
                 for(tempI=0; tempI<d->nb[l]; ++tempI)
                 {
-                    for(tempJ=0; tempJ<4; ++tempJ)
+                    for(tempJ=0; tempJ<childs; ++tempJ)
                     {
                         for(tempK=0; tempK<d->nb[l-1]-1; ++tempK)
                         {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
+                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+tempK];
+                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+tempK];
                             //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+tempK];
+                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+tempK];
                         }
 #ifdef USE_METHOD1
                         // New method
                         float fSum = 0.0;
                         for(tempK=0; tempK<d->sizeInd; ++tempK)
                         {
-                            fSum += sharedCen[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
+                            fSum += sharedCen[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
                         }
                         sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = fSum/(float)d->sizeInd;
                         fSum = 0.0;
                         for(tempK=0; tempK<d->sizeInd; ++tempK)
                         {
-                            fSum += sigma[l][tempI*(ns-4)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
+                            fSum += sigma[l][tempI*(ns-childs)+tempJ*(d->nb[l-1]-1)+d->nearInd[tempK]];
                         }
                         d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = fSum/(float)d->sizeInd;
 #endif
@@ -768,12 +672,12 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                         d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+d->nb[l-1]-1] = 0.0;
 #endif
                     }
-                    for(tempJ=4*d->nb[l-1]; tempJ<ns; ++tempJ)
+                    for(tempJ=childs*d->nb[l-1]; tempJ<ns; ++tempJ)
                     {
-                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-4)+tempJ-4];
-                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-4)+tempJ-4];
+                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns-childs)+tempJ-childs];
+                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns-childs)+tempJ-childs];
                         //
-                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-4)+tempJ-4];
+                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns-childs)+tempJ-childs];
                     }
                 }
             }
@@ -796,13 +700,12 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            CalcNodeInputOffsets(d,
-                                 l, // layer
-                                 i, // linear node position in the current layer
-                                 child_layer_offset,
-                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
-                                 inputOffsets);
-            updateCentroid_node(
+            if (l == 0)
+            {
+                CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
+            }
+
+            InitNode(
                         n,
                         d,
                         l,
@@ -817,28 +720,14 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
                         lambda,
                         temp[l],
                         &d->nodes[n],
-                        inputOffsets,
-                        (l == 0 ? NULL : d->inputPipeline),
-                        &d->belief[bOffset],
-                        sharedCentroids
+                        (l > 0 ? NULL : inputOffsets),
+                        sharedCentroids,
+                        (l > 0 ? d->nci[l] : 0)
                     );
-
-            if(l > 0){
-                MALLOC( d->nodes[n].children, Node *, 4 );
-            }
-
-            // increment belief offset (so beliefs are mapped contiguously in memory)
-            bOffset += nb[l];
         }//next node
-
-        if(l > 0){
-            // where the beliefs of the next layer begin
-            child_layer_offset += ni * d->layerSize[l];
-        }
-
     }//next layer
 
-    LinkParentBeliefToChildren( d );
+    LinkParentsToChildren( d );
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
@@ -862,134 +751,16 @@ void addCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, fl
 }
 
 /*****************************************************************************/
-// 2013.6.3
-// Keep 'mu', 'uf_sigma';
-void updateCentroid_node
-    (
-    uint         nodeIdx,
-    Destin *     d,
-    uint         layer,
-    uint         ni,
-    uint         nb,
-    uint         np,
-    uint         nc,
-    uint         ns,
-    float       starvCoeff,
-    float       beta,
-    float       gamma,
-    float       lambda,
-    float       temp,
-    Node        *node,
-    uint        *inputOffsets,
-    float       *input_host,
-    float       *belief_host,
-    float       *sharedCentroids
-    )
-{
-
-    // Initialize node parameters
-    node->d             = d;
-    node->nIdx          = nodeIdx;
-    node->nb            = nb;
-    node->ni            = ni;
-    node->np            = np;
-    node->ns            = ns;
-    node->nc            = nc;
-    node->starvCoeff    = starvCoeff;
-    node->beta          = beta;
-    node->nLambda        = lambda;
-    node->gamma         = gamma;
-    node->temp          = temp;
-    node->winner        = 0;
-    node->layer         = layer;
-
-    if(sharedCentroids == NULL){
-        //not uniform so each node gets own centroids
-        MALLOC( node->mu, float, nb*ns );
-    }else{
-        node->mu = sharedCentroids;
-    }
-
-    MALLOC( node->beliefEuc, float, nb );
-    MALLOC( node->beliefMal, float, nb );
-    MALLOC( node->observation, float, ns );
-    MALLOC( node->genObservation, float, ns );
-
-    if(d->isUniform){
-        //uniform destin uses shared counts
-        node->starv = d->uf_starv[layer];
-        node->nCounts = NULL;
-        node->sigma = NULL;
-    }else{
-        MALLOC( node->starv, float, nb );
-        MALLOC( node->nCounts, long, nb );
-        MALLOC( node->sigma, float, nb*ns );
-    }
-
-    MALLOC( node->delta, float, ns);
-    node->children = NULL;
-
-    // copy the input offset for the inputs (should be NULL for non-input nodes)
-    MALLOC(node->inputOffsets, uint, ni);
-    memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
-
-    // point to the block-allocated space
-    node->input = input_host;
-    uint i,j;
-    if(input_host != NULL){
-        for(i = 0 ; i < ni ; i++){
-            node->input[node->inputOffsets[i]] = 0.5; //prevent nans caused by uninitialized memory
-        }
-    }
-
-    node->pBelief = belief_host;
-
-
-    for( i=0; i < nb; i++ )
-    {
-        // init belief (node output)
-        node->pBelief[i] = 1 / (float)nb;
-        node->beliefEuc[i] = 1 / (float)nb;
-        node->beliefMal[i] = 1 / (float)nb;
-
-        if(!d->isUniform){
-            node->nCounts[i] = 0;
-            // init starv trace to one
-            node->starv[i] = 1.0f;
-        }
-
-        // init mu and sigma
-        for(j=0; j < ns; j++)
-        {
-            //node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
-            if(d->isUniform){
-                // TODO: all the nodes in the layer are initing the same shared sigma vectors redundantly, may
-                // want to initialize this outside of the node
-                //node->d->uf_sigma[layer][i * ns + j] = INIT_SIGMA;
-            }else{
-                node->sigma[i*ns+j] = INIT_SIGMA;
-            }
-        }
-    }
-
-    for( i=0; i < ns; i++ )
-    {
-        node->observation[i] = (float) rand() / (float) RAND_MAX;
-    }
-}
-
-/*****************************************************************************/
 // 2013.6.6
 // CZT
 // killCentroid
-void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
+void killCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
                   int extRatio, int currLayer, int kill_ind, float ** sharedCen, float ** starv, float ** sigma,
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
     uint i, l, maxNb, maxNs, j;
-    size_t bOffset ;
 
-    initializeDestinParameters(nb, isUniform, ni, extRatio, nl, nMovements, d, nc, temp);
+    initializeDestinParameters(nb, isUniform, nci, extRatio, nl, nMovements, d, nc, temp);
         /*********************************************************************/
         // uf_starv
         // uf_persistWinCounts
@@ -1023,17 +794,12 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         }
     }
 
-    // init belief and input offsets (pointers to big belief and input chunks we
-    // allocated above)
-    bOffset = 0;
-
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
     maxNb = 0;
     maxNs = 0;
 
     uint n = 0;
-    uint child_layer_offset = 0;
 
     // initialize the rest of the network
 
@@ -1045,18 +811,11 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
             maxNb = nb[l];
         }
 
-        uint np = ((l == nl - 1) ? 0 : nb[l + 1]);
-
-        ni = (l == 0 ? ni : 4*nb[l-1]);
-
         float * sharedCentroids;
 
-        // calculate the state dimensionality (number of inputs + number of beliefs)
-        //uint ns = ni + nb[l] + np + nc;
-        // 2013.4.17
-        // CZT
-        //
-        uint ns = (l == 0 ? ni*extRatio+nb[l]+np+nc : ni+nb[l]+np+nc);
+        uint np = ((l + 1 == nl) ? 0 : nb[l+1]);
+        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
+        uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
 
         if (ns > maxNs)
         {
@@ -1143,31 +902,32 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
             else if(l==currLayer+1)
             {
                 int tempI, tempJ, tempK;
+                uint childs = d->nci[l];
                 for(tempI=0; tempI<d->nb[l]; ++tempI)
                 {
-                    for(tempJ=0; tempJ<4; ++tempJ)
+                    for(tempJ=0; tempJ<childs; ++tempJ)
                     {
                         for(tempK=0; tempK<kill_ind; ++tempK)
                         {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                             //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                         }
                         for(tempK=kill_ind+1; tempK<nb[l-1]+1; ++tempK)
                         {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sharedCen[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sigma[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sharedCen[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sigma[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                             //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = absvar[l][tempI*(ns+4)+tempJ*(d->nb[l-1]+1)+tempK];
+                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = absvar[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
                         }
                     }
-                    for(tempJ=4*d->nb[l-1]; tempJ<ns; ++tempJ)
+                    for(tempJ=childs*d->nb[l-1]; tempJ<ns; ++tempJ)
                     {
-                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+4)+tempJ+4];
-                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+4)+tempJ+4];
+                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+childs)+tempJ+childs];
+                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+childs)+tempJ+childs];
                         //
-                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+4)+tempJ+4];
+                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+childs)+tempJ+childs];
                     }
                 }
             }
@@ -1189,13 +949,12 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )
         {
-            CalcNodeInputOffsets(d,
-                                 l, // layer
-                                 i, // linear node position in the current layer
-                                 child_layer_offset,
-                                 (l > 0 ? 2: (uint)sqrt(ni) ), // width of how many children (2x2) or pixels (4x4) the node has
-                                 inputOffsets);
-            updateCentroid_node(
+            if (l == 0)
+            {
+                CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
+            }
+
+            InitNode(
                         n,
                         d,
                         l,
@@ -1210,28 +969,14 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
                         lambda,
                         temp[l],
                         &d->nodes[n],
-                        inputOffsets,
-                        (l == 0 ? NULL : d->inputPipeline),
-                        &d->belief[bOffset],
-                        sharedCentroids
+                        (l > 0 ? NULL : inputOffsets),
+                        sharedCentroids,
+                        (l > 0 ? d->nci[l] : 0)
                     );
-
-            if(l > 0){
-                MALLOC( d->nodes[n].children, Node *, 4 );
-            }
-
-            // increment belief offset (so beliefs are mapped contiguously in memory)
-            bOffset += nb[l];
         }//next node
-
-        if(l > 0){
-            // where the beliefs of the next layer begin
-            child_layer_offset += ni * d->layerSize[l];
-        }
-
     }//next layer
 
-    LinkParentBeliefToChildren( d );
+    LinkParentsToChildren( d );
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
@@ -1254,22 +999,24 @@ void killCentroid(Destin * d, uint ni, uint nl, uint *nb, uint nc, float beta, f
     FREE(absvar);
 }
 
-void LinkParentBeliefToChildren( Destin *d )
+void LinkParentsToChildren( Destin *d )
 {
     uint l, cr, cc, pr, pc, child_layer_width;
+    uint piw;   // parent input width
     Node * child_node;
     Node * parent_node;
 
-    for(l = 0 ; l < d->nLayers - 1 ; l++){
+    for(l = 0 ; l + 1 < d->nLayers ; l++){
         child_layer_width = d->layerWidth[l];
+        piw = (uint) sqrt(d->nci[l+1]);
         for(cr = 0 ; cr < child_layer_width; cr++){
-            pr = cr / 2;
+            pr = cr / piw;
             for(cc = 0; cc < child_layer_width ; cc++){
-                pc = cc / 2;
+                pc = cc / piw;
                 child_node = GetNodeFromDestin(d, l, cr, cc);
                 parent_node = GetNodeFromDestin(d, l+1, pr, pc);
-                child_node->parent_pBelief = parent_node->pBelief;
-                parent_node->children[(cr % 2) * 2 + cc % 2] = child_node;
+                parent_node->children[(cr % piw) * piw + cc % piw] = child_node;
+                child_node->parent = parent_node;
             }
         }
     }
@@ -1321,15 +1068,28 @@ void DestroyDestin( Destin * d )
 
     FREE(d->temp);
     FREE(d->nb);
+    FREE(d->nci);
     FREE(d->nodes);
     FREE(d->layerMask);
-    FREE(d->inputPipeline);
-    FREE(d->belief);
     FREE(d->layerSize);
     FREE(d->layerNodeOffsets);
     FREE(d->layerWidth);
     FREE(d->inputLabel);
     FREE(d);
+}
+
+// copy previous beliefs into nodes output
+void CopyOutputBeliefs( Destin *d )
+{
+    uint i, n;
+
+    for( n=0; n < d->nNodes; n++ )
+    {
+        for( i=0; i < d->nodes[n].nb; i++)
+        {
+            d->nodes[n].outputBelief[i] = d->nodes[n].belief[i];
+        }
+    }
 }
 
 // set all nodes to have a uniform belief
@@ -1341,11 +1101,12 @@ void ClearBeliefs( Destin *d )
     {
         for( i=0; i < d->nodes[n].nb; i++)
         {
-            d->nodes[n].pBelief[i] = 1 / (float) d->nodes[n].nb;
+            d->nodes[n].belief[i] = 1 / (float) d->nodes[n].nb;
+            d->nodes[n].outputBelief[i] = d->nodes[n].belief[i];
         }
     }
 
-    memcpy( d->inputPipeline, d->belief, sizeof(float)*d->nInputPipeline );
+    CopyOutputBeliefs( d );
 }
 
 void SaveDestin( Destin *d, char *filename )
@@ -1367,10 +1128,10 @@ void SaveDestin( Destin *d, char *filename )
     // write destin hierarchy information to disk
     fwrite(&d->nMovements,  sizeof(uint), 1,            dFile);
     fwrite(&d->nc,          sizeof(uint), 1,            dFile);
-    fwrite(&d->nodes[0].ni, sizeof(uint), 1,            dFile);
     fwrite(&d->nLayers,     sizeof(uint), 1,            dFile);
     fwrite(&d->isUniform,   sizeof(bool), 1,            dFile);
     fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
+    fwrite(d->nci,          sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
     fwrite(d->temp,                 sizeof(float),              d->nLayers,  dFile);
@@ -1384,12 +1145,15 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->beliefTransform,     sizeof(BeliefTransformEnum),1,           dFile);
     fwrite(&d->fixedLearnRate,      sizeof(float),              1,           dFile);
 
-    //write belief states
-    fwrite(d->inputPipeline, sizeof(float), d->nInputPipeline, dFile);
-    fwrite(d->belief,        sizeof(float), d->nBeliefs,       dFile);
+    // write node belief states
+    for( i=0; i < d->nNodes; i++ )
+    {
+        nTmp = &d->nodes[i];
+        fwrite(nTmp->belief,           sizeof(float), nTmp->nb, dFile);
+        fwrite(nTmp->outputBelief,     sizeof(float), nTmp->nb, dFile);
+    }
 
     // write node statistics to disk
-
     if(d->isUniform){
         for(l = 0 ; l < d->nLayers; l++){
             nTmp = GetNodeFromDestin(d, l, 0, 0); //get the 0th node of the layer
@@ -1405,7 +1169,6 @@ void SaveDestin( Destin *d, char *filename )
         for( i=0; i < d->nNodes; i++ )
         {
             nTmp = &d->nodes[i];
-
             // write statistics
             fwrite(nTmp->mu,        sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
             fwrite(nTmp->sigma,     sizeof(float),  nTmp->nb*nTmp->ns,  dFile);
@@ -1413,7 +1176,6 @@ void SaveDestin( Destin *d, char *filename )
             fwrite(nTmp->nCounts,   sizeof(long),   nTmp->nb,           dFile);
         }
     }
-
 
     fclose(dFile);
 }
@@ -1432,10 +1194,10 @@ Destin * LoadDestin( Destin *d, const char *filename )
     }
 
     uint serializeVersion;
-    uint nMovements, nc, ni, nl;
+    uint nMovements, nc, nl;
     bool isUniform;
     int extendRatio; //TODO: make this a uint
-    uint *nb;
+    uint *nci, *nb;
 
     float beta, lambda, gamma, starvCoeff;
     float *temp;
@@ -1456,14 +1218,15 @@ Destin * LoadDestin( Destin *d, const char *filename )
     // read destin hierarchy information from disk
     freadResult = fread(&nMovements,  sizeof(uint), 1, dFile);
     freadResult = fread(&nc,          sizeof(uint), 1, dFile);
-    freadResult = fread(&ni,          sizeof(uint), 1, dFile);
     freadResult = fread(&nl,          sizeof(uint), 1, dFile);
     freadResult = fread(&isUniform,   sizeof(bool), 1, dFile);
 
     MALLOC(nb, uint, nl);
+    MALLOC(nci, uint, nl);
     MALLOC(temp, float, nl);
 
     freadResult = fread(nb, sizeof(uint), nl, dFile);
+    freadResult = fread(nci, sizeof(uint), nl, dFile);
 
     // read destin params from disk
     freadResult = fread(temp,         sizeof(float),    nl,  dFile);
@@ -1473,7 +1236,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&starvCoeff,  sizeof(float),    1,   dFile);
     freadResult = fread(&extendRatio, sizeof(int),      1,   dFile);
 
-    d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, extendRatio);
+    d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, extendRatio);
 
     // temporary arrays were copied in InitDestin
     FREE(nb); nb = NULL;
@@ -1488,8 +1251,13 @@ Destin * LoadDestin( Destin *d, const char *filename )
 
     freadResult = fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
 
-    freadResult = fread(d->inputPipeline, sizeof(float),         d->nInputPipeline, dFile);
-    freadResult = fread(d->belief,        sizeof(float),         d->nBeliefs,       dFile);
+    // load node belief states
+    for( i=0; i < d->nNodes; i++ )
+    {
+        nTmp = &d->nodes[i];
+        freadResult = fread(nTmp->belief,      sizeof(float), nTmp->nb, dFile);
+        freadResult = fread(nTmp->outputBelief, sizeof(float), nTmp->nb, dFile);
+    }
 
     if(isUniform){
         for(l = 0 ; l < d->nLayers; l++){
@@ -1536,9 +1304,8 @@ void InitNode
     float       temp,
     Node        *node,
     uint        *inputOffsets,
-    float       *input_host,
-    float       *belief_host,
-    float       *sharedCentroids
+    float       *sharedCentroids,
+    uint        childNumber
     )
 {
 
@@ -1552,11 +1319,12 @@ void InitNode
     node->nc            = nc;
     node->starvCoeff    = starvCoeff;
     node->beta          = beta;
-    node->nLambda        = lambda;
+    node->nLambda       = lambda;
     node->gamma         = gamma;
     node->temp          = temp;
     node->winner        = 0;
     node->layer         = layer;
+    node->childNumber   = childNumber;
 
     int relativeIndex = nodeIdx - d->layerNodeOffsets[layer];
     node->row           = relativeIndex / d->layerWidth[layer];
@@ -1569,8 +1337,10 @@ void InitNode
         node->mu = sharedCentroids;
     }
 
+    MALLOC( node->belief, float, nb );
     MALLOC( node->beliefEuc, float, nb );
     MALLOC( node->beliefMal, float, nb );
+    MALLOC( node->outputBelief, float, nb);
     MALLOC( node->observation, float, ns );
     MALLOC( node->genObservation, float, ns );
 
@@ -1586,50 +1356,46 @@ void InitNode
     }
 
     MALLOC( node->delta, float, ns);
-    node->children = NULL;
 
-    // copy the input offset for the inputs (should be NULL for non-input nodes)
-    MALLOC(node->inputOffsets, uint, ni);
-    memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
-
-    // point to the block-allocated space
-    node->input = input_host;
     uint i,j;
-    if(input_host != NULL){
-        for(i = 0 ; i < ni ; i++){
-            node->input[node->inputOffsets[i]] = 0.5; //prevent nans caused by uninitialized memory
+
+    node->parent = NULL;
+    if (layer == 0)
+    {
+        node->children = NULL;
+    } else {
+        MALLOC( node->children, Node *, childNumber );
+        for ( i = 0; i < childNumber; i++ )
+        {
+            node->children[i] = NULL;
         }
     }
 
-    node->pBelief = belief_host;
-
+    // copy the input offset for the inputs (should be NULL for non-input nodes)
+    if( inputOffsets == NULL ){
+        node->inputOffsets = NULL;
+    }else{
+        MALLOC(node->inputOffsets, uint, ni);
+        memcpy(node->inputOffsets, inputOffsets, sizeof(uint) * ni);
+    }
 
     for( i=0; i < nb; i++ )
     {
         // init belief (node output)
-        node->pBelief[i] = 1 / (float)nb;
+        node->belief[i] = 1 / (float)nb;
         node->beliefEuc[i] = 1 / (float)nb;
         node->beliefMal[i] = 1 / (float)nb;
+        node->outputBelief[i] = node->belief[i];
 
         if(!d->isUniform){
             node->nCounts[i] = 0;
             // init starv trace to one
             node->starv[i] = 1.0f;
-        }
 
-        // init mu and sigma
-        for(j=0; j < ns; j++)
-        {
-            node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
-            if(d->isUniform){
-                //TODO: all the nodes in the layer are initing the same shared sigma vectors redundantly, may
-                //want to initialize this outside of the node
-                node->d->uf_sigma[layer][i * ns + j] = INIT_SIGMA;
-
-                // 2013.7.5
-                // CZT: uf_absvar
-                node->d->uf_absvar[layer][i*ns + j] = 0.0; // ???
-            }else{
+            // init mu and sigma
+            for(j=0; j < ns; j++)
+            {
+                node->mu[i*ns+j] = (float) rand() / (float) RAND_MAX;
                 node->sigma[i*ns+j] = INIT_SIGMA;
             }
         }
@@ -1670,8 +1436,10 @@ void DestroyNode( Node *n)
         FREE( n->starv );
     }
 
+    FREE( n->belief );
     FREE( n->beliefEuc );
     FREE( n->beliefMal );
+    FREE( n->outputBelief );
     FREE( n->observation );
     FREE( n->genObservation );
 
@@ -1683,6 +1451,7 @@ void DestroyNode( Node *n)
     }
 
     n->children = NULL;
+    n->parent = NULL;
 
     // if it is a zero-layer node, free the input offset array on the host
     if( n->inputOffsets != NULL)
@@ -1693,8 +1462,10 @@ void DestroyNode( Node *n)
     // 2013.4.16
     // CZT
     //
+    n->belief = NULL;
     n->beliefEuc = NULL;
     n->beliefMal = NULL;
+    n->outputBelief = NULL;
     n->observation = NULL;
     n->genObservation = NULL;
     n->delta = NULL;

@@ -28,13 +28,6 @@ int regressionTest(){
         dna.doDestin(images[i % nImages]);
     }
 
-    uint beliefSize = dna.getNetwork()->nBeliefs;
-
-    float beliefTotal = 0;
-    for(int i = 0 ; i < beliefSize ; i++){
-        beliefTotal += dna.getNetwork()->belief[i];
-    }
-
     cout << dna.getNode(3,0,0)->beliefMal[0] << endl;
     cout << dna.getNode(3,0,0)->beliefMal[1] << endl;
     cout << dna.getNode(3,0,0)->beliefMal[2] << endl;

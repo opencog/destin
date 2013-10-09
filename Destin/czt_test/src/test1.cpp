@@ -1330,9 +1330,9 @@ int test_extRatio()
 {
     // extRatio will affect 'ns', thus the size of 'observation', 'mu' and the related parameters
 
-    uint ni, nl;
-    ni = 16;
+    uint nl;
     nl = 1;
+    uint nci [] = {16};
     uint nb [] = {4};  // 4 centroids;
     uint nc = 0;
     float beta = 1;
@@ -1357,7 +1357,7 @@ int test_extRatio()
         .9, .9, .9, .9,
         .9, .9, .9, .9
     };
-    Destin * d = InitDestin(ni, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, extRatio);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, extRatio);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     d->layerMask[0] = 1;
@@ -1367,7 +1367,7 @@ int test_extRatio()
 
     assertTrue(n->ni == 16);
     assertTrue(n->d->extRatio == extRatio);
-    assertTrue(n->ns == ni*extRatio+nb[0]+0+nc);
+    assertTrue(n->ns == nci[0]*extRatio+nb[0]+0+nc);
 
     // GetObservation; test whether it's extended to contain more info;
     GetObservation( d->nodes, image, nid );
