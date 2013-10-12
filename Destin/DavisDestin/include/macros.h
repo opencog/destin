@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define PRINTF printf
 
@@ -29,6 +30,22 @@
     } else {                                            \
         oops("error: free()\n");                        \
     }                                                   \
+}
+
+#define SIZEV(n) ((n < 16) ? 16 : 1 << ((uint)(log(n-1)/log(2)) + 1))
+
+#define MALLOCV(s,t,n) {                                    \
+    if((s = (t *) malloc(SIZEV(n*sizeof(t)))) == NULL) {    \
+        oops("error: malloc()\n");                          \
+    }                                                       \
+}
+
+#define REALLOCV(s,t,n,c) {                                 \
+    if (SIZEV((n+c)*sizeof(t)) > SIZEV(n*sizeof(t))) {                            \
+        if((s = (t *) realloc(s, SIZEV((n+c)*sizeof(t)))) == NULL) {   \
+            oops("error: realloc()\n");                     \
+        }                                                   \
+    }                                                       \
 }
 
 #endif

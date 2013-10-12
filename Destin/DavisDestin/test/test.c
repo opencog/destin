@@ -979,6 +979,43 @@ int testCentroidImageGeneration(){
     return 0;
 }
 
+int testArrayOperations() {
+    assertIntEquals(16, SIZEV(0));
+    assertIntEquals(16, SIZEV(1));
+    assertIntEquals(16, SIZEV(7));
+    assertIntEquals(16, SIZEV(16));
+    assertIntEquals(32, SIZEV(17));
+    assertIntEquals(32, SIZEV(25));
+    assertIntEquals(32, SIZEV(31));
+    assertIntEquals(32, SIZEV(32));
+    assertIntEquals(64, SIZEV(33));
+    assertIntEquals(256, SIZEV(157));
+    assertIntEquals(2048, SIZEV(1345));
+    assertIntEquals(2097152, SIZEV(1345678));
+
+    // check if writing at the end of the buffer does not cause memory crash
+    float * array;
+    MALLOCV(array,float,5);
+    array[15] = 1;
+    REALLOCV(array,float,5,2);
+    array[15] = 1;
+    REALLOCV(array,float,7,70);   // check if the array expands
+    array[127] = 1;
+    REALLOCV(array,float,77,-70); // check if the array does not shrink
+    array[127] = 1;
+    REALLOCV(array,float,7,10);   // the array shrinks now (side effect) size 128 -> size 32
+    REALLOCV(array,float,17,1345678);  // check large array
+    array[2097152] = 1;
+    FREE(array);
+
+    int * intArray;
+    MALLOCV(intArray,int,129);
+    intArray[255] = 1;
+    FREE(intArray);
+
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
@@ -996,6 +1033,7 @@ int main(int argc, char ** argv ){
     RUN(testLoadFromConfig);
     RUN(testGenerateInputFromBelief);
     RUN(test8Layers);
+    RUN(testArrayOperations);
 
     //RUN(testGetNode); //TODO: fix and renable this test
     RUN(testCentroidImageGeneration);
