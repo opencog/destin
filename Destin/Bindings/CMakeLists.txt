@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 FIND_PACKAGE(SWIG 2.0.4)
-FIND_LIBRARY(highgui NAMES highgui opencv_highgui)
 
 INCLUDE_DIRECTORIES(
         ../DavisDestin/include
@@ -14,11 +13,8 @@ INCLUDE_DIRECTORIES(
 if(NOT SWIG_FOUND)
     message(FATAL_ERROR "SWIG wasnt found")
 endif()
-if(NOT highgui)
-    message(FATAL_ERROR "highgui not found")
-endif()
 
-if(SWIG_FOUND AND highgui)
+if(SWIG_FOUND)
     INCLUDE(UseSWIG)
 
     add_subdirectory(Java)

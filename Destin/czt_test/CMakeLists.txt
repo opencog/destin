@@ -19,9 +19,20 @@ ADD_LIBRARY( stereovision SHARED
 
 TARGET_LINK_LIBRARIES(stereovision ${OpenCV_LIBS})
 
-SET(testlibs common destinalt avutil stereovision som)
+if(WIN32)
+set(avutil "") # don't link avutil on windows
+else()
+set(avutil avutil)
+endif()
+
+SET(testlibs common destinalt ${avutil} stereovision som)
     
 INCLUDE_DIRECTORIES(../Common ../DavisDestin/include include ../SOM)
 
 ADD_EXECUTABLE(test1 src/test1.cpp )
 TARGET_LINK_LIBRARIES(test1 ${testlibs})
+
+install(TARGETS test1 stereovision
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib/static )
