@@ -308,7 +308,7 @@ int testUniform(){
     c1 = 0.95;
     c2 = 0.99;
     dist = sqrt( (c2  - c1) * (c2 - c1));
-    assertFloatEquals( 1.0 / (1 + dist), d->nodes[3].beliefEuc[3], 6e-8);
+    assertFloatEquals( 1.0 / (1 + dist), d->nodes[3].beliefEuc[3], 6.3e-8);
 
     Uniform_ResetStats(d);
     assertLongArrayEqualsV( d->uf_persistWinCounts[0], 4, 0L, 0L, 0L, 0L );
@@ -374,7 +374,7 @@ int testUniform(){
     float * ad = d->uf_avgDelta[0];
     //calculate muSqDiff for layer 0
     float msq = ad[0*9] * ad[0*9] + ad[1*9] * ad[1*9] + ad[2*9] * ad[2*9] + ad[3*9] * ad[3*9];
-    assertFloatEquals(msq, n[0].muSqDiff, 1e-12);
+    assertFloatEquals(msq, n[0].muSqDiff, 4.5e-10);
 
     DestroyDestin(d);
     return 0;
@@ -426,7 +426,7 @@ int testUniformFormulate(){
     assertFloatArrayEqualsEV(d->uf_starv[0], 1e-12, 4,
         1.0 - starvCoef, 1.0, 1.0, 1.0);
 
-    assertFloatEquals(d->muSumSqDiff, n[0].muSqDiff + n[4].muSqDiff, 1e-12 );
+    assertFloatEquals(d->muSumSqDiff, n[0].muSqDiff + n[4].muSqDiff, 4.5e-8 );
 
     // check that outputBeliefs are copied
     uint i;
@@ -511,8 +511,8 @@ int testSaveDestin1(){
     assertTrue(d->maxNs == maxNs);
     assertFloatEquals(0.0, d->muSumSqDiff, 0); //it currently resets to 0
 
-    assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
-    assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 0.0  );
+    assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 1e-36);
+    assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 1e-36);
 
     DestroyDestin(d);
     FREE(uf_avgDelta[0]);
