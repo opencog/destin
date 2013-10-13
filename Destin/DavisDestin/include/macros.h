@@ -31,4 +31,8 @@
     }                                                   \
 }
 
+#ifdef _WIN32
+typedef unsigned int uint;
+#endif
+
 #endif

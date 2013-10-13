@@ -161,7 +161,7 @@ public:
     {
 
         struct stat s;
-        lstat(cifar_dir.c_str(), &s);
+        stat(cifar_dir.c_str(), &s);
 
         if(!S_ISDIR(s.st_mode)){
             throw runtime_error(string("not a directory: ")+cifar_dir);

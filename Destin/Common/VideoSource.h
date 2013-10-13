@@ -14,14 +14,14 @@
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 
+#ifndef _WIN32
 extern "C"{
 #define UINT64_C //hack to avoid compile error in libavutil/log.h
 #include <libavutil/log.h> //used to turn off warning message
 //"No accelerated colorspace conversion found from yuv422p to bgr24."
 // that occurs when opening certain video files
-
 }
-
+#endif
 using namespace std;
 
 
@@ -115,7 +115,9 @@ public:
         /*cap->set(CV_CAP_PROP_FRAME_WIDTH, target_size.width);
         cap->set(CV_CAP_PROP_FRAME_HEIGHT, target_size.height);*/
         cvMoveWindow(win_title.c_str(), 50, 50);
-        av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
+#ifndef _WIN32
+        av_log_setb_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
+#endif
 	}
 
 	bool isOpened() {
