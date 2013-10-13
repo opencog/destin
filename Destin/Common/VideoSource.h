@@ -116,7 +116,7 @@ public:
         cap->set(CV_CAP_PROP_FRAME_HEIGHT, target_size.height);*/
         cvMoveWindow(win_title.c_str(), 50, 50);
 #ifndef _WIN32
-        av_log_setb_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
+        av_log_set_level(AV_LOG_QUIET);//turn off message " No accelerated colorspace conversion found from yuv422p to bgr24"
 #endif
 	}
 
