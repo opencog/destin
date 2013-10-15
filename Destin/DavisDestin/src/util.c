@@ -9,6 +9,7 @@
 #include "macros.h"
 #include "node.h"
 #include "destin.h"
+#include "array.h"
 
 // Defines the version of destin structs that it can load and save.
 // This is to try to prevent loading older incompatible destin structs from file

@@ -6,6 +6,7 @@
 #include "destin.h"
 #include "unit_test.h"
 #include "cent_image_gen.h"
+#include "array.h"
 
 Destin * makeDestinFromLayerCfg(uint layers, uint *nci, uint *nb)
 {
@@ -72,7 +73,7 @@ int testInit(){
     DestroyDestin(d);
 
     printf("destroyed non uniform\n");
-    
+
     //test uniform destin init
     isUniform = true;
     d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
@@ -995,28 +996,79 @@ int testArrayOperations() {
 
     // check if writing at the end of the buffer does not cause memory crash
     float * array;
-    MALLOCV(array,float,5);
-    array[15] = 1;
-    REALLOCV(array,float,5,2);
-    array[15] = 1;
-    REALLOCV(array,float,7,70);   // check if the array expands
-    array[127] = 1;
-    REALLOCV(array,float,77,-70); // check if the array does not shrink
-    array[127] = 1;
-    REALLOCV(array,float,7,10);   // the array shrinks now (side effect) size 128 -> size 32
-    REALLOCV(array,float,17,1345678);  // check large array
+
+    MALLOCV(array, float, 5);         // should allocate 32 bytes (first power of 2 larger then 5*sizeof(float))
+    array[6] = 1;                     // write to 24 byte offset (larger then 5*sizeof(float)
+    array[7] = 2;                     // write again
+    REALLOCV(array, float, 5, 2);     // should not resize the array
+    array[6] = 1;
+    REALLOCV(array, float, 7, 70);    // check if the array expands now
+    array[75] = 1;
+    assertFloatEquals(1.0, array[6], 1e-12); // check if the reallocation preserves data
+    assertFloatEquals(2.0, array[7], 1e-12);
+
+    REALLOCV(array, float, 77, -70);  // check if the array does not shrink
+    array[75] = 1;
+    REALLOCV(array, float, 7, 10);    // the array shrinks now (this is a side effect on purpose)
+                                      // change size from 128 to 32 (* sizeof(float))
+    REALLOCV(array, float, 17,1345678);  // check large array
     array[2097152] = 1;
     FREE(array);
 
     int * intArray;
-    MALLOCV(intArray,int,129);
+    MALLOCV(intArray, int, 129);
     intArray[255] = 1;
     FREE(intArray);
+
+    // Check array insert element
+    MALLOCV(intArray,int,0);
+    ArrayInsertInt(&intArray, 0, 0, 1);
+    ArrayInsertInt(&intArray, 1, 0, 2);
+    ArrayInsertInt(&intArray, 2, 0, 3);
+    ArrayInsertInt(&intArray, 3, 2, 4);
+    ArrayInsertInt(&intArray, 4, 2, 5);
+    assertIntArrayEqualsV(intArray, 5, 3, 2, 5, 4, 1);
+
+    // Check array insert multiple
+    int index[3] = {0, 2, 5};
+    int values[3] = {11, 12, 13};
+    ArrayInsertInts(&intArray, 5, index, values, 3);
+    assertIntArrayEqualsV(intArray, 8, 11, 3, 2, 12, 5, 4, 1, 13);
+    int index1[4] = {6, 6, 8, 8};
+    int values1[4] = {21, 22, 23, 24};
+    ArrayInsertInts(&intArray, 8, index1, values1, 4);
+    assertIntArrayEqualsV(intArray, 12, 11, 3, 2, 12, 5, 4, 21, 22, 1, 13, 23, 24);
+
+    // Check array delete
+    ArrayDeleteInt(&intArray, 12, 11);
+    ArrayDeleteInt(&intArray, 11, 6);
+    ArrayDeleteInt(&intArray, 10, 6);
+    ArrayDeleteInt(&intArray, 9, 0);
+    assertIntArrayEqualsV(intArray, 8, 3, 2, 12, 5, 4, 1, 13, 23);
+
+    // Check array delete multiple
+    int index2[5] = {0, 3, 4, 6, 7};
+    ArrayDeleteInts(&intArray, 8, index2, 5);
+    assertIntArrayEqualsV(intArray, 3, 2, 12, 1);
+    FREE(intArray);
+
+    // Check other types
+    int ** intPointerArray;
+    MALLOCV(intPointerArray,int *,0);
+    int * intPointerValues[3] = {index, index1, index2};
+    int index3[3] = {0, 0, 0};
+    ArrayInsertPtrs((void *) &intPointerArray, 0, index3, intPointerValues, 3);
+    assertTrue(intPointerArray[2] == index2);
+    ArrayDeletePtr((void *) &intPointerArray, 3, 1);
+    assertTrue(intPointerArray[1] == index2);
 
     return 0;
 }
 
 int main(int argc, char ** argv ){
+
+    RUN(testArrayOperations);
+    RUN(testArrayOperations);
 
     //RUN( shouldFail );
     RUN(testVarArgs);
