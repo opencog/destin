@@ -1,7 +1,9 @@
-You will need around 10GB of free disk space to build and install the prequisites.
+You will need around 10GB of free disk space to build and install the prerequisites. This has been tested on Window 7 64 bit.
+
+This windows build is still a work in progress. Unit tests need to be fixed and Python and Java bindings need to be tested.
 
 ***************************
-*** Install Qt Creator IDE ( using MingGW ) :
+*** Install Qt Creator IDE (using MinGW) :
 
 Go to http://qt-project.org/downloads
 Look for, download and install using the "Qt 5.1.1 for Windows 32-bit (MinGW 4.8, OpenGL, 666 MB)" link. When running the installer it may take a minute or two before anything shows up due to the large file size. 
@@ -172,7 +174,7 @@ To run it from Qt Creator IDE:
 
 With the DeSTIN project open, click the "Projects" tab button on the left. 
 Open the Run settings by clicking the "Run" button near the top.
-Chose the executable to run with the Run Configuration drop down. Unfortunatly, each time you change the executable, you have to re enter the settings below.
+Chose the executable to run with the Run Configuration drop down. Unfortunately, each time you change the executable, you have to re enter the settings below.
 
 Set the Working Directory to C:\cygwin\home\<your home>\destin\Destin-build\install\bin
 In the Run Environment settings:
