@@ -29,7 +29,7 @@ Building
 --------
 Instructions below are for Ubuntu. 
 
-See Windows build instructions at https://github.com/opencog/destin/blob/master/WindowsBuild.txt
+See Windows build instructions at https://github.com/opencog/destin/blob/master/WindowsBuild.md
 
 Dependencies:
 CMake ( >= 2.8 )
