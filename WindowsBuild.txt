@@ -27,6 +27,11 @@ Download from http://www.swig.org/download.html, look for the windows prebuild e
 Extract everything to C:\swigwin-2.0.11 so you can find it's README and other files at C:\swigwin-2.0.11\README
 
 ***************************
+*** Install CMake
+Download and install using the defaults: http://www.cmake.org/files/v2.8/cmake-2.8.12-win32-x86.exe
+( Link was found from this page: http://www.cmake.org/cmake/resources/software.html )
+
+***************************
 *** Build OpenCV From source:
 
 ( Note: if you have an opencv installation already at c:\ then you may want to rename it to c:\dontuse-opencv so that cmake does not automatically try to use that one. )
@@ -37,6 +42,8 @@ Unzip to c:\ so that you can find the README file at c:\opencv-2.4.6\README
 Open the QT Creator IDE.
 File -> Open File or Project -> Select the C:\opencv-2.4.6\CMakeLists.txt file.
 Set the build location to C:\opencv-2.4.6\mingwbuild -> Next
+First time setup, find your cmake executable, probably located at C:\Program Files\CMake 2.8\bin\cmake.exe 
+Next
 Generator: MinGW Generator
 Click "Run CMake". 
 The log window should say at the end:
