@@ -1,196 +1,229 @@
+To see these instructions formatted, view this file at https://github.com/opencog/destin/blob/master/WindowsBuild.md
+
 You will need around 10GB of free disk space to build and install the prerequisites. This has been tested on Window 7 64 bit.
 
 This windows build is still a work in progress. Unit tests need to be fixed and Python and Java bindings need to be tested.
 
-***************************
-*** Install Qt Creator IDE (using MinGW) :
-
+Install Qt Creator IDE (using MinGW)
+----------------------------------------------
 Go to http://qt-project.org/downloads
+
 Look for, download and install using the "Qt 5.1.1 for Windows 32-bit (MinGW 4.8, OpenGL, 666 MB)" link. When running the installer it may take a minute or two before anything shows up due to the large file size. 
 
-
-***************************
-*** (Optional) Install Java
+(Optional) Install Java
+------------------------------
 You only need this if you want to play with the Java language bindings. These have not been tested on windows yet.
+
 Download and install a Java JDK using the defaults.
 
-***************************
-*** Install Python:
-
+Install Python
+---------------
 Download and install python using http://www.python.org/ftp/python/2.7.5/python-2.7.5.msi
 Use the defaults. Installs to C:\Python27\
 
-***************************
-*** Install SWIG
+Install SWIG
+---------------
+* Download from http://www.swig.org/download.html, look for the windows prebuild executable http://prdownloads.sourceforge.net/swig/swigwin-2.0.11.zip
+* Extract everything to C:\swigwin-2.0.11 so you can find it's README and other files at C:\swigwin-2.0.11\README
 
-Download from http://www.swig.org/download.html, look for the windows prebuild executable http://prdownloads.sourceforge.net/swig/swigwin-2.0.11.zip
-Extract everything to C:\swigwin-2.0.11 so you can find it's README and other files at C:\swigwin-2.0.11\README
 
-***************************
-*** Install CMake
+Install CMake
+-----------------
 Download and install using the defaults: http://www.cmake.org/files/v2.8/cmake-2.8.12-win32-x86.exe
+
 ( Link was found from this page: http://www.cmake.org/cmake/resources/software.html )
 
-***************************
-*** Build OpenCV From source:
-
+Build OpenCV From source:
+-----------------------------------
 ( Note: if you have an opencv installation already at c:\ then you may want to rename it to c:\dontuse-opencv so that cmake does not automatically try to use that one. )
 
-Download the source from https://github.com/Itseez/opencv/archive/2.4.6.zip
-Unzip to c:\ so that you can find the README file at c:\opencv-2.4.6\README
+* Download the source from https://github.com/Itseez/opencv/archive/2.4.6.zip
 
-Open the QT Creator IDE.
-File -> Open File or Project -> Select the C:\opencv-2.4.6\CMakeLists.txt file.
-Set the build location to C:\opencv-2.4.6\mingwbuild -> Next
-First time setup, find your cmake executable, probably located at C:\Program Files\CMake 2.8\bin\cmake.exe 
-Next
-Generator: MinGW Generator
-Click "Run CMake". 
+* Unzip to c:\ so that you can find the README file at c:\opencv-2.4.6\README
+
+* Open the QT Creator IDE.
+File -> Open File or Project -> Select the C:\opencv-2.4.6\CMakeLists.txt file
+.
+* Set the build location to C:\opencv-2.4.6\mingwbuild -> Next
+
+* First time setup, find your cmake executable, probably located at C:\Program Files\CMake 2.8\bin\cmake.exe 
+
+* Next
+* Generator: MinGW Generator
+
+* Click "Run CMake". 
+
 The log window should say at the end:
 
 	-- Configuring done
 	-- Generating done
 	-- Build files have been written to: C:/opencv-2.4.6/mingwbuild
 
-Click Finish.
+* Click Finish.
 
-You should see that OpenCV is opened. Click the "Projects" tab button on the left.
-Under Build Steps section, click the "Details" drop down button on the right. Check the "install" target. Uncheck the "all" target. In "Additional Arguments" section use -j to speed up compiling. For example, use -j8 for if your CPU has a quad core with hyper threading.
+* You should see that OpenCV is opened. Click the "Projects" tab button on the left.
 
-These settings save automatically. Now press the hammer button in the bottom left to begin building. Press the "Compile Output" button on the bottom bar to see build progress. This may take several minutes.
+* Under Build Steps section, click the "Details" drop down button on the right. Check the "install" target. Uncheck the "all" target. 
 
-Now to build the Debug libs:
-In the top menu bar click Build -> Run CMake
-In the "Arguments:" section put:
+* In "Additional Arguments" section use -j to speed up compiling. For example, use -j8 for if your CPU has a quad core with hyper threading.
 
--DCMAKE_BUILD_TYPE=Debug
+* These settings save automatically. Now press the hammer button in the bottom left to begin building. Press the "Compile Output" button on the bottom bar to see build progress. This may take several minutes.
+
+##### Now to build the Debug libs:
+* In the top menu bar click Build -> Run CMake. In the "Arguments:" section put:
+
+`-DCMAKE_BUILD_TYPE=Debug`
  
-Set the Generator to "MingGW Generatator". Click "Run CMake". You can ignore the "ImportError: No module named numpy.distutils" error. You should again see "-- Build files have been written to: C:/opencv-2.4.6/mingwbuild" at the end of the log window. Click Finish. Build the same as before using the hammer button.
+* Set the Generator to "MingGW Generatator". Click "Run CMake". You can ignore the "ImportError: No module named numpy.distutils" error. 
 
-In windows explorer inspect the C:\opencv-2.4.6\mingwbuild\install\lib directory. You should see about 18 pairs of libopencv dlls. In the pairs, one is the release build dll, and the other is the debug build dll postfixed with d.
+* You should again see `-- Build files have been written to: C:/opencv-2.4.6/mingwbuild` at the end of the log window. Click Finish. Build the same as before using the hammer button.
 
-Close the OpenCV project from QT Creator using File -> Close Project "OpenCV".
+* In windows explorer inspect the C:\opencv-2.4.6\mingwbuild\install\lib directory. You should see about 18 pairs of libopencv dlls. In the pairs, one is the release build dll, and the other is the debug build dll postfixed with d.
 
-******************************************
-*** Recommended step: Install Cygwin Git:
+* Close the OpenCV project from QT Creator using File -> Close Project "OpenCV".
+
+Recommended step: Install Cygwin Git:
+-------------------------------------------------
 
 If you have trouble with the following instructions also see http://x.cygwin.com/docs/ug/setup.html#setup-cygwin-x-installing for alternate instructions.
 
-Visit http://www.cygwin.com/install.html to download the setup ( direct link: http://www.cygwin.com/setup-x86.exe ). I've only tested with x86 setup version on windows 7 64bit.
+* Visit http://www.cygwin.com/install.html to download the setup ( direct link: http://www.cygwin.com/setup-x86.exe ). I've only tested with x86 setup version on windows 7 64bit.
 
-Launch the setup file.
-Next -> Install From Internet
-Root Directory C:\cygwin 
-Install for all Users.
-Next.
-Choose a Local Package Directory, anywhere but C:\cygwin. I chose C:\Users\Ted\Documents\Downloads\cygwin-install
-Next.
-Direct connection should work fine. 
-Next.
-Choose A Download site. If you happen to pick a bad one the download may be slow.
-Next.
+* Launch the setup file.
 
-In the package selection window, click the "View" button in the top right to put it to "Full" view. This lists all packages without any categorization. Select packages to be installed by clicking the icon in the "New" column next to each package to be installed.
+*  Next -> Install From Internet
 
-Use the search box, type in "git". 
+* Root Directory C:\cygwin 
 
-Choose the packages:
-git, git-completion, git-gui, gitk
+* Install for all Users.
 
-Also search for and select packages xinit and xorg-server. These will let you use git gui and gitk using the x server.
+* Next.
 
-After selecting packages, click next. Click next again to let it automatically resolve dependencies. 
-Click Next again, it will start installing everything. 
-Select the option to create the shortcut on your desktop.
+* Choose a Local Package Directory, anywhere but C:\cygwin. I chose C:\Users\Ted\Documents\Downloads\cygwin-install
 
-To run git gui and gitk:
-From the cygwin command prompt, type:
-$ startxwin
+* Next.
 
-This will open an additional window. You will also see a X icon in your quick start icons area.
+* Direct connection should work fine. 
+
+* Next.
+
+* Choose A Download site. If you happen to pick a bad one the download may be slow.
+
+* Next.
+
+* In the package selection window, click the "View" button in the top right to put it to "Full" view. This lists all packages without any categorization. Select packages to be installed by clicking the icon in the "New" column next to each package to be installed.
+
+* Use the search box, type in "git". 
+
+* Choose the packages: git, git-completion, git-gui, gitk
+
+* Search for and select packages xinit and xorg-server. These will let you use git gui and gitk using the x server.
+
+* After selecting packages, click next. Click next again to let it automatically resolve dependencies. 
+
+* Click Next again, it will start installing everything. 
+
+* Select the option to create the shortcut on your desktop.
+
+* To run git gui and gitk, from the cygwin command prompt, type:
+ 
+   $ startxwin
+
+* This will open an additional window. You will also see a X icon in your quick start icons area.
+
 In that window you can then run:
-$ git gui &
+
+    $ git gui &
 
 or 
 
-$ gitk --all &
+    $ gitk --all &
 
 Git gui is useful for making commits. Gitk is very useful to see commit history. 
 
 If you want to be able to run these commands from your current terminal without using the additional window, then after running startxwin then run this command:
-$ export DISPLAY=":0"
+
+    $ export DISPLAY=":0"
 
 You can append that command to the end of the file c:\cygwin\home\<Your user>\.bashrc to have that command automatically run in each new cygwin terminal.
 
-*********************************************
-*** Using Cygwin Git to get the Destin Source
-
+Using Cygwin Git to get the Destin Source
+--------------------------------------------------------
 Open the Cygwin terminal.
 Type the commands:
 
-$ cd
-$ git clone http://github.com/opencog/destin.git
-$ cd destin
-$ git submodule init
-$ git submodule update
+    $ cd
+    $ git clone http://github.com/opencog/destin.git
+    $ cd destin
+    $ git submodule init
+    $ git submodule update
 
-This command will download the source to 
-C:\cygwin\home\<your user>\destin
+This command will download the source to C:\cygwin\home\<your user>\destin
 
-*********************************************
-*** Building DeSTIN with Qt Creator IDE
 
-Open Qt Creator IDE.
-File -> Open File Or Project. Open the destin/Destin/CMakeLists.txt
+Building DeSTIN with Qt Creator IDE
+----------------------------------------------
 
-For Build Location, use the default destin\Destin-build directory. Next.
+* Open Qt Creator IDE. 
 
-Run CMake: 
-	Arguments: none
-	Generator: MinGW Generator
-	Click Run CMake.
+* File -> Open File Or Project. Open the destin/Destin/CMakeLists.txt
+
+* For Build Location, use the default destin\Destin-build directory. Next.
+
+* Run CMake: 
+	* Arguments: none
+	* Generator: MinGW Generator
+	* Click Run CMake.
 
 The log window should say something like
--- Build files have been written to: C:/cygwin/home/<your home/destin/Destin-build
+
+    -- Build files have been written to: C:/cygwin/home/<your home/destin/Destin-build
 
 If you get the error:
-Cannot find source file:
 
+    Cannot find source file:
     cluster/src/cluster
 	
 Then you forgot to run the git submodule command from the last section.
 
-Click the "Projects" tab button on the left.
-Under Build Steps section, click the "Details" drop down button on the right. Check the "install" target. Uncheck the "all" target. In "Additional Arguments" section use -j to speed up compiling. For example, use -j8 for if your CPU has a quad core with hyper threading.
+* Click the "Projects" tab button on the left.
+    * Under Build Steps section, click the "Details" drop down button on the right. 
+    * Check the "install" target. Uncheck the "all" target. 
+    * In "Additional Arguments" section use -j to speed up compiling. For example, use -j8 for if your CPU has a quad core with hyper threading.
 
-These settings save automatically. Now press the hammer button in the bottom left to begin building. Press the "Compile Output" button on the bottom bar to see build progress.
+These settings save automatically. 
 
-*********************************************
-*** Running DeSTIN compiled executables:
+* Now press the hammer button in the bottom left to begin building. 
 
-To run the destin.exe executable in Cygwin:
+* Press the "Compile Output" button on the bottom bar to see build progress.
 
-Edit the file 
+Running DeSTIN compiled executables:
+-----------------------------------------------------
 
-$ export PATH="$PATH:/cygdrive/c/opencv-2.4.6/mingwbuild/bin"
-$ export PATH="$PATH:/cygdrive/c/Qt/Qt5.1.1/Tools/mingw48_32/bin"
-$ cd ~/destin/Destin-build/install/bin
-$ ./destin.exe
+#### To run the destin.exe executable in Cygwin, 
 
-To run it from Qt Creator IDE:
+Type the commands:
 
-With the DeSTIN project open, click the "Projects" tab button on the left. 
-Open the Run settings by clicking the "Run" button near the top.
-Chose the executable to run with the Run Configuration drop down. Unfortunately, each time you change the executable, you have to re enter the settings below.
+	$ export PATH="$PATH:/cygdrive/c/opencv-2.4.6/mingwbuild/bin"
+	$ export PATH="$PATH:/cygdrive/c/Qt/Qt5.1.1/Tools/mingw48_32/bin"
+	$ cd ~/destin/Destin-build/install/bin
+	$ ./destin.exe
 
-Set the Working Directory to C:\cygwin\home\<your home>\destin\Destin-build\install\bin
-In the Run Environment settings:
-	Base Environment: Clean Environment
-	Use the Add Button: 
-		Variable: PATH 
-		Value: C:\opencv-2.4.6\mingwbuild\install\bin;C:\Qt\Qt5.1.1\Tools\mingw48_32\bin
+#### To run it from Qt Creator IDE:
 
+* With the DeSTIN project open, click the "Projects" tab button on the left. 
 
-Click the green triangle button on the left pane to run it. Press the "Application Output" button on the bottom to see the output.
+* Open the Run settings by clicking the "Run" button near the top.
 
+* Chose the executable to run with the Run Configuration drop down. Unfortunately, each time you change the executable, you have to re enter the settings below.
+
+* Set the Working Directory to C:\cygwin\home\<your home>\destin\Destin-build\install\bin
+
+* In the Run Environment settings:
+	* Base Environment: Clean Environment
+	* Use the Add Button: 
+		* Variable: PATH 
+		* Value: `C:\opencv-2.4.6\mingwbuild\install\bin;C:\Qt\Qt5.1.1\Tools\mingw48_32\bin`
+
+* Click the green triangle button on the left pane to run it. Press the "Application Output" button on the bottom to see the output.
 
