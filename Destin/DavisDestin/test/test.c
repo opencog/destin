@@ -155,14 +155,15 @@ int testFormulateStages(){
     assertFloatArrayEquals( expected_obs , n->observation,3);
 
 
-    assignFloatArray(&n->mu[0 * n->ns], 3, 0.5, 0.5, 0.5);
-    assignFloatArray(&n->mu[1 * n->ns], 3, 0.0, 0.5, 1.0);
+    assignFloatArray(n->mu[0], 3, 0.5, 0.5, 0.5);
+    assignFloatArray(n->mu[1], 3, 0.0, 0.5, 1.0);
 
 
     assertFloatArrayEqualsEV(n->starv, 1e-12, 2, 1.0,1.0);//starv is initalized to 1.0
 
     assertTrue(INIT_SIGMA == 0.00001);
-    assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
+    assertFloatArrayEqualsE2DV(n->sigma, 1e-5, 2, 3, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA,
+                                                     INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
 
     assertFloatArrayEqualsEV(n->beliefEuc, 1e-12, 2, 0.5, 0.5);
     assertFloatArrayEqualsEV(n->beliefMal, 1e-12, 2, 0.5, 0.5);
@@ -185,7 +186,8 @@ int testFormulateStages(){
     CalcCentroidMovement( d->nodes, d->inputLabel, nid );
     MoveCentroids(d->nodes, nid);
     assertTrue( n->winner == 0 );
-    assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, 0.00001249, 0.00000999, 0.00000999, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
+    assertFloatArrayEqualsE2DV(n->sigma, 1e-5, 2, 3, 0.00001249, 0.00000999, 0.00000999,
+                                                     INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
     UpdateStarvation(d->nodes, nid);
     assertFloatArrayEqualsEV(n->starv, 0.0, 2, 1.0, 0.9);
     DestroyDestin(d);
@@ -215,6 +217,14 @@ int testVarArgs(void){
    assertFloatEquals(.3, f[1],1e-7);
 
    assertFloatArrayEqualsEV(f, 1e-7, 2, 0.2, 0.3  );
+
+   float * f2d[3];
+   f2d[0] = toFloatArray(4, 0.1, 0.2, 0.3, 0.4);
+   f2d[1] = toFloatArray(4, 1.2, 1.3, 1.4, 1.5);
+   f2d[2] = toFloatArray(4, 2.3, 2.4, 2.5, 2.6);
+   assertFloatArrayEqualsE2DV(f2d, 1e-7, 3, 4, 0.1, 0.2, 0.3, 0.4,
+                                               1.2, 1.3, 1.4, 1.5,
+                                               2.3, 2.4, 2.5, 2.6);
 
    int an_int_array[] = {2, 4, 6, 8};
    assertIntArrayEqualsV(an_int_array, 4, 2, 4, 6, 8);
@@ -257,7 +267,7 @@ int testUniform(){
     //mu is a table nb x ns. ns = ni + nb + np + nc
     //nb = 4 (centroids), ns = 9
     //all nodes point to the same centroids in a layer for uniform destin
-    assignFloatArray(n->mu, 4 * 9,
+    assignFloatArray2D(n->mu, 4, 9,
         0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
@@ -347,24 +357,22 @@ int testUniform(){
         Uniform_AverageDeltas(d->nodes, nid);
     }
 
-    
+
     assertIntArrayEqualsV(d->uf_winCounts[0], nb[0], 0, 2, 1, 1);
-    assertFloatArrayEqualsEV(d->uf_avgDelta[0], 3e-8, nb[0] * d->nodes[0].ns,
+    assertFloatArrayEqualsE2DV(d->uf_avgDelta[0], 1e-5, nb[0], d->nodes[0].ns,
         0.0,                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //average delta for shared centroid 0
         ((0.11 - 0.06) + (0.22 - 0.06)) / 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         ( 0.88 - 0.86 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         ( 0.99 - 0.95 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);//average delta for shared centroid 3
     
-    
-    float layer0SharedSigma[nb[0] * d->nodes[0].ns];
-    float layer1SharedSigma[nb[1] * d->nodes[1].ns];
-    Uniform_ApplyDeltas(d, 0, layer0SharedSigma);
-    Uniform_ApplyDeltas(d, 1, layer1SharedSigma);
+
+    Uniform_ApplyDeltas(d, 0, d->uf_sigma[0]);
+    Uniform_ApplyDeltas(d, 1, d->uf_sigma[1]);
 
     assertTrue(n[0].nCounts == NULL); //these are null in uniform destin
 
     //check that the shared centroids were moved to the correct positions
-    assertFloatArrayEqualsEV(n[0].mu, 2e-8, 4 * 9,
+    assertFloatArrayEqualsE2DV(n[0].mu, 1e-5, 4, 9,
         0.05,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 0, unchanged because it wasn't a winner
         0.165, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 1, averaged because two nodes picked it
                                                                    //averaged between node 0 and node 1 observations, .11 and .22 = .165
@@ -372,9 +380,9 @@ int testUniform(){
         0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
     //Uniform_UpdateStarvation(d->nodes, 0);
 
-    float * ad = d->uf_avgDelta[0];
+    float ** ad = d->uf_avgDelta[0];
     //calculate muSqDiff for layer 0
-    float msq = ad[0*9] * ad[0*9] + ad[1*9] * ad[1*9] + ad[2*9] * ad[2*9] + ad[3*9] * ad[3*9];
+    float msq = ad[0][0] * ad[0][0] + ad[1][0] * ad[1][0] + ad[2][0] * ad[2][0] + ad[3][0] * ad[3][0];
     assertFloatEquals(msq, n[0].muSqDiff, 1e-12);
 
     DestroyDestin(d);
@@ -408,7 +416,7 @@ int testUniformFormulate(){
     //mu is a table nb x ns. ns = ni + nb + np + nc
     //nb = 4 (centroids), ns = 9
     //all nodes point to the same centroids in a layer for uniform destin
-    assignFloatArray(n->mu, 4 * 9,
+    assignFloatArray2D(n->mu, 4, 9,
         0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
@@ -417,7 +425,7 @@ int testUniformFormulate(){
     FormulateBelief(d, image);
 
     //check that the shared centroids were moved to the correct positions
-    assertFloatArrayEqualsEV(n->mu, 2e-8, 4 * 9,
+    assertFloatArrayEqualsE2DV(n->mu, 2e-8, 4, 9,
         0.05,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 0, unchanged because it wasn't a winner
         0.165, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 1, averaged because two nodes picked it
                                                                    //averaged between node 0 and node 1 observations, .11 and .22 = .165
@@ -481,10 +489,10 @@ int testSaveDestin1(){
     FormulateBelief(d, image);
     FormulateBelief(d, image);
 
-
     //backup uf_aveDelta
-    int sizes[] =  {nb[0]  * ns0, nb[1] * ns1};
-    float ** uf_avgDelta = copyFloatDim2Array(d->uf_avgDelta, 2, sizes);
+    float ** uf_avgDelta[2];
+    uf_avgDelta[0] = copyFloatDim2Array(d->uf_avgDelta[0], nb[0], ns0);
+    uf_avgDelta[1] = copyFloatDim2Array(d->uf_avgDelta[1], nb[1], ns1);
 
     SaveDestin(d, "unit_test_destin.save");
     DestroyDestin(d);
@@ -512,13 +520,19 @@ int testSaveDestin1(){
     assertTrue(d->maxNs == maxNs);
     assertFloatEquals(0.0, d->muSumSqDiff, 0); //it currently resets to 0
 
-    assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 0.0  );
-    assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 0.0  );
+    assertFloatArrayEqualsE2D(uf_avgDelta[0], d->uf_avgDelta[0], nb[0], ns0, 0.0);
+    assertFloatArrayEqualsE2D(uf_avgDelta[1], d->uf_avgDelta[1], nb[1], ns1, 0.0);
 
     DestroyDestin(d);
+    uint c;
+    for (c = 0; c < nb[0]; c++){
+        FREE(uf_avgDelta[0][c]);
+    }
+    for (c = 0; c < nb[1]; c++){
+        FREE(uf_avgDelta[1][c]);
+    }
     FREE(uf_avgDelta[0]);
     FREE(uf_avgDelta[1]);
-    FREE(uf_avgDelta);
     return 0;
 }
 
@@ -926,23 +940,20 @@ int testCentroidImageGeneration(){
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = GetNodeFromDestin(d, 0, 0 ,0);
-    n->mu[0 * n->ns + 0] = 0.0;
-    n->mu[1 * n->ns + 0] = 1.0; // black ( or is it white?)
+    n->mu[0][0] = 0.0;
+    n->mu[1][0] = 1.0; // black ( or is it white?)
 
     n = GetNodeFromDestin(d, 1, 0 ,0);
-    assignFloatArray(&n->mu[0], 8,          0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //all black
-    assignFloatArray(&n->mu[1 * n->ns], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //all white
+    assignFloatArray(n->mu[0], 8,  0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //all black
+    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //all white
 
     n = GetNodeFromDestin(d, 2, 0 ,0);
 
     //top half black, bottom half white
-    assignFloatArray(&n->mu[0], 8,          1.0, 0.0, 1.0, 0.0,
-                                            0.0, 1.0, 0.0, 1.0);
+    assignFloatArray(n->mu[0], 8,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0);
 
     //all black, bottom right dark grey
-    assignFloatArray(&n->mu[1 * n->ns], 8,  1.0, 0.0, 1.0, 0.0,
-                                            1.0, 0.0, 0.75, 0.25);
-
+    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.75, 0.25);
 
     float *** images = Cig_CreateCentroidImages(d, 1.0);
 

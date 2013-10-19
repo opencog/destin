@@ -42,6 +42,8 @@ set(destalt_sources
     src/belief_transform.c
     include/array.h
     src/array.c
+    include/centroid.h
+    src/centroid.c
 )
 
 ADD_LIBRARY( destinalt SHARED ${destalt_sources})

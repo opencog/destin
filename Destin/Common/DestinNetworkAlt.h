@@ -112,16 +112,6 @@ public:
     // 2013.6.6
     void updateDestin_kill(SupportedImageWidths width, unsigned int layers,
             unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer, int kill_ind);
-
-    /*************************************************************************/
-    // 2013.6.4-6, 2013.7.4
-    // CZT: keep the value for updating DeSTIN, adding or killing centroids;
-    float ** getSharedCentroids();
-    float ** getStarv();
-    float ** getSigma();
-    long ** getPersistWinCounts();
-    long ** getPersistWinCounts_detailed();
-    float ** getAbsvar();
     //
     float getSep(int layer);
     float getVar(int layer);
@@ -135,7 +125,6 @@ public:
     void displayFloatCentroids(int layer);
     void displayFloatVector(std::string title, std::vector<float> vec);
     void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
-    void getSelectedSigma(int layer, int idx, std::vector<float> & outSigma);
     void normalizeChildrenPart(std::vector<float> & inCen, int ni);
 
     void isTraining(bool isTraining);

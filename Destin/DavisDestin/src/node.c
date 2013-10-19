@@ -145,7 +145,7 @@ void CalculateDistances( Node *n, uint nIdx )
 
 
     // Get the sigma array depending on whether uniform or non-uniform destin is being used
-    float * sigma = n->d->isUniform ? n->d->uf_sigma[n->layer] : n->sigma;
+    float ** sigma = n->d->isUniform ? n->d->uf_sigma[n->layer] : n->sigma;
     // Get the dynamic starvation factor array depending on whether uniform or non-uniform destin is being used
     float * starv = n->d->isUniform ? n->d->uf_starv[n->layer] : n->starv;
 
@@ -156,10 +156,6 @@ void CalculateDistances( Node *n, uint nIdx )
         sumEuc = 0;
         sumMal = 0;
 
-        // mu contains the probabilities (or grayscales) of the centroids in this node
-        // bRow = start index of the probabilities (or grayscales) of the current centroid
-        uint bRow = i*ns;
-
         // iterate over each state for belief
         // Loop through the items in the vector, ignoring the context
         for( j=0; j < ns-nc; j++ )
@@ -167,19 +163,19 @@ void CalculateDistances( Node *n, uint nIdx )
             // mu contains the probabilities (or grayscales) of the centroids in this node
 
             // Calculate the difference between the input (observation) and the centroid's current location
-            delta = n->observation[j] - n->mu[bRow+j];
+            delta = n->observation[j] - n->mu[i][j];
             // Start distance calculation
             delta *= delta;
 
             // 2013.7.24
             // CZT: allDelta
-            //n->allDelta[bRow + j] = fabs(delta);
+            //n->allDelta[i][j] = fabs(delta);
 #ifdef CHECK_BELIEF_ZERO
             if(isnan(delta)){
                 oops("delta was nan\n");
             }
             if(isinf(delta)){
-                oops("delta was inf. obs: %e, mu: %e\n", n->observation[j], n->mu[bRow + j]);
+                oops("delta was inf. obs: %e, mu: %e\n", n->observation[j], n->mu[i][j]);
             }
 #endif
             // Reduce the distance by the starvation factor
@@ -189,7 +185,7 @@ void CalculateDistances( Node *n, uint nIdx )
             sumEuc += delta;
 
             // Retrieve the sigma from the sigma array based on the centroid data column and add the distance to the Mahalanobis sum
-            sumMal += delta / sigma[bRow+j];
+            sumMal += delta / sigma[i][j];
         }
 
         // Dead code
@@ -337,9 +333,6 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
     // just an iterator
     uint i;
 
-    // gets the row offset for the mu/sigma matrices to update
-    uint winnerOffset = n->winner * n->ns;
-
     // the difference between an element of the observation and
     // an element of the mu matrix
     float delta;
@@ -362,11 +355,11 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
     {
         if(i>=ncStart && i<ncEnd)
         {
-            delta = (float) label[i - ncStart] - n->mu[winnerOffset+i];
+            delta = (float) label[i - ncStart] - n->mu[n->winner][i];
         }
         else
         {
-            delta = n->observation[i] - n->mu[winnerOffset+i];
+            delta = n->observation[i] - n->mu[n->winner][i];
         }
         n->delta[i] = delta;
     }
@@ -377,33 +370,21 @@ void CalcCentroidMovement( Node *n, uint *label, uint nIdx )
 void Uniform_AverageDeltas(Node * n, uint nIdx){
     n = &n[nIdx];
     int count = n->d->uf_winCounts[n->layer][n->winner];
+    uint s;
     if(count > 0){
-        uint s;
         for(s = 0; s < n->ns ; s++){
-            n->d->uf_avgDelta[n->layer][n->winner * n->ns + s] += n->delta[s] / (float)count;
-
-            // 2013.7.18
-            // CZT:
-            n->d->uf_avgSquaredDelta[n->layer][n->winner * n->ns + s] += n->delta[s]*n->delta[s] / (float)(count);
+            n->d->uf_avgDelta[n->layer][n->winner][s] += n->delta[s] / (float)count;
+            n->d->uf_avgSquaredDelta[n->layer][n->winner][s] += n->delta[s]*n->delta[s] / (float)(count);
         }
     }
 
-    // 2013.7.25
-    // CZT: Should calculate all nodes' delta for the same layer; for TEST;
-    uint i,j;
-    for(i=0; i<n->nb; ++i)
-    {
-        for(j=0; j<n->ns; ++j)
-        {
-            n->d->uf_avgAbsDelta[n->layer][i * n->ns + j] += fabs(n->delta[j]) / (float)n->d->layerSize[n->layer];
-        }
+    for(s = 0; s < n->ns ; s++){
+        n->d->uf_avgAbsDelta[n->layer][s] += fabs(n->delta[s]) / (float)n->d->layerSize[n->layer];
     }
-
-    return;
 }
 
 // CZT: uniform;
-void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
+void Uniform_ApplyDeltas(Destin * d, uint layer, float ** layerSharedSigma){
     uint c, s, ns;
     float diff, learnRate, dt;
 
@@ -418,23 +399,22 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
         ns = n->ns;
         for(s = 0 ; s < ns ; s++){
             //move the centroid with the averaged delta
-            dt = d->uf_avgDelta[layer][c * ns + s];
+            dt = d->uf_avgDelta[layer][c][s];
             diff = dt * learnRate;
-            n->mu[c * ns + s] += diff; //all nodes in a layer share this n->mu pointer
+            n->mu[c][s] += diff; //all nodes in a layer share this n->mu pointer
 #ifdef CHECK_BIG_MU
-            if ( n->mu[c * ns + s] > 1.0){
-                oops("Big mu value:%e at line %i\n",n->mu[c * ns + s],__LINE__ );
+            if ( n->mu[c][s] > 1.0){
+                oops("Big mu value:%e at line %i\n",n->mu[c][s],__LINE__ );
             }
 #endif
             n->muSqDiff += diff * diff; //only 0th node of each layer gets a muSqDiff
             //TODO: write unit test for layerSharedSigma
             //layerSharedSigma[c * ns + s] += n->beta * (dt * dt - layerSharedSigma[c * ns + s]);
-            layerSharedSigma[c * ns + s] += n->beta * (d->uf_avgSquaredDelta[layer][c * ns + s] - layerSharedSigma[c * ns + s]);
-
-            // 2013.7.4
-            // CZT: as Ben suggested, uf_absvar;
-            d->uf_absvar[layer][c*ns + s] += n->beta * (d->uf_avgAbsDelta[layer][c * ns + s] - d->uf_absvar[layer][c*ns + s]);  // for TEST;
+            layerSharedSigma[c][s] += n->beta * (d->uf_avgSquaredDelta[layer][c][s] - layerSharedSigma[c][s]);
         }
+    }
+    for(s = 0 ; s < ns ; s++){
+        d->uf_absvar[layer][s] += n->beta * (d->uf_avgAbsDelta[layer][s] - d->uf_absvar[layer][s]);
     }
     return;
 }
@@ -443,9 +423,6 @@ void Uniform_ApplyDeltas(Destin * d, uint layer, float * layerSharedSigma){
 void MoveCentroids( Node *n, uint nIdx ){
     n = &n[nIdx];
     
-    // gets the row offset for the mu/sigma matrices to update
-    uint winnerOffset = n->winner*n->ns;
-
     // increment number of counts for winning centroid.
     n->nCounts[n->winner]++;
 
@@ -459,17 +436,17 @@ void MoveCentroids( Node *n, uint nIdx ){
         float dTmp = learnRate * delta;
 
         // move the winning centroid
-        n->mu[winnerOffset+i] += dTmp;
+        n->mu[n->winner][i] += dTmp;
 #ifdef CHECK_BIG_MU
-        if (n->mu[winnerOffset+i]  > 1.0){
-            oops("Big mu value:%e at line %i\n",n->mu[winnerOffset+i] ,__LINE__ );
+        if (n->mu[n->winner][i]  > 1.0){
+            oops("Big mu value:%e at line %i\n",n->mu[n->winner][i] ,__LINE__ );
         }
 #endif
         // increment the sq. difference
         n->muSqDiff += dTmp * dTmp;
 
         // update the variance of the winning centroid
-        n->sigma[winnerOffset+i] += n->beta * (delta*delta - n->sigma[winnerOffset+i]);
+        n->sigma[n->winner][i] += n->beta * (delta*delta - n->sigma[n->winner][i]);
 
         // Ben:
         //n->absvar[winnerOffset+i]  += n->beta * ( fabs(delta) - n->absvar[winnerOffset+i]);

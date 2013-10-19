@@ -72,6 +72,31 @@ bool _assertFloatArrayEquals(float * expected, float * actual, int length, doubl
     return true;
 }
 
+bool _assertFloatArrayEqualsE2D(float ** expected, float ** actual, int rows, int cols, double epsilon, int line){
+    int i, j;
+    if(rows <= 0 ){
+        printf("assertFloatArrayEquals2D FAILED, line: %i, negative or zero array rows: %i", line, rows);
+        return false;
+    }
+    if(cols <= 0 ){
+        printf("assertFloatArrayEquals2D FAILED, line: %i, negative or zero array columns: %i", line, cols);
+        return false;
+    }
+
+    for(i = 0 ; i < rows ; i++){
+        for(j = 0 ; j < cols; j++){
+            if(isnan(expected[i][j]) || isnan(actual[i][j]) || fabs( expected[i][j] - actual[i][j]) > epsilon ){
+                printf("assertFloatArrayEquals2D FAILED, line: %i, on (%i, %i) with array size (%i, %i)\n",
+                       line, i, j, rows, cols);
+                printf("expected: %e, actual: %e, difference: %e\n", expected[i][j], actual[i][j], expected[i][j] - actual[i][j]);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 bool _assertIntArrayEquals(int * expected, int * actual, int length, int line){
     int i;
     if(length <= 0 ){
@@ -189,6 +214,27 @@ bool _assertBoolArrayEquals(bool * expected, bool * actual, int length, int line
     va_end(arg_list);\
 }\
 
+#define ut_varags_to_array2d( dest, last_fixed_argument, rows, cols, the_type ){\
+    va_list arg_list;\
+    va_start(arg_list, last_fixed_argument);\
+    int i, j;\
+    for ( i = 0; i < rows; i++ ){\
+        for ( j = 0; j < cols; j++ ){\
+            dest[i][j] = va_arg(arg_list, the_type);\
+        }\
+    }\
+    va_end(arg_list);\
+}\
+
+#define ut_flatten_2d_array( dest, src, rows, cols ){\
+    int i, j;\
+    for ( i = 0; i < rows; i++ ){\
+        for ( j = 0; j < cols; j++ ){\
+            dest[i*cols + j] = src[i][j];\
+        }\
+    }\
+}\
+
 /** same as assertFloatArrayEquals but asserts true if difference is less than epsilon
  */
 #define assertFloatArrayEqualsE( exp, act, len, epsilon ){\
@@ -203,6 +249,14 @@ bool _assertFloatArrayEqualsEV(float *actual, float epsilon, int len, int line, 
     return _assertFloatArrayEquals(expected, actual, len, epsilon, line );
 }
 
+bool _assertFloatArrayEqualsE2DV(float **actual2D, float epsilon, int rows, int cols, int line, ...){
+    int len = rows * cols;
+    float expected[len];
+    float actual[len];
+    ut_varags_to_array(expected, line, len, double);
+    ut_flatten_2d_array(actual, actual2D, rows, cols);
+    return _assertFloatArrayEquals(expected, actual, len, epsilon, line );
+}
 
 /** Test float array with epislon and variable arguments.
   * Must write floats as 1.0 and not 1 for example or
@@ -210,6 +264,18 @@ bool _assertFloatArrayEqualsEV(float *actual, float epsilon, int len, int line, 
   */
 #define assertFloatArrayEqualsEV( act, epsilon, len, args... ){\
     if(! _assertFloatArrayEqualsEV(act, epsilon, len, __LINE__, args )){\
+        return 1;\
+    }\
+}\
+
+#define assertFloatArrayEqualsE2DV( act, epsilon, rows, cols, args... ){\
+    if(! _assertFloatArrayEqualsE2DV(act, epsilon, rows, cols, __LINE__, args )){\
+        return 1;\
+    }\
+}\
+
+#define assertFloatArrayEqualsE2D( exp, act, rows, cols, epsilon){\
+    if(! _assertFloatArrayEqualsE2D(exp, act, rows, cols, epsilon, __LINE__)){\
         return 1;\
     }\
 }\
@@ -308,6 +374,19 @@ void assignFloatArray(float * dest, int length, ...){
     ut_varags_to_array(dest, length, length, double);
 }
 
+/** assigns the dest array the float values pass as arguments
+ * CAUTION: Be sure to write float constants. To pass 1 for example, write 1.0
+ * and not 1 or they will be skipped or other errors may occur
+ * dest array has 2 dimensions
+ *
+ * @rows - number of rows
+ * @cols - number of columns
+ */
+void assignFloatArray2D(float ** dest, int rows, int cols, ...){
+
+    ut_varags_to_array2d(dest, cols, rows, cols, double);
+}
+
 /** assigns the dest unsigned int array with the int values pass as arguments
  * CAUTION: Be sure to write int constants. To pass 1 for example, write 1
  * and not 1.0 or they will be skipped or other errors may occur
@@ -368,16 +447,16 @@ bool _assertIntEquals( int expected, int actual, int line){
 /** Copies and returns a 2 dimenional array.
 * @param src - source 2 dimensional array to copy
 * @param rows - how many child arrays in the parent array, i.e. size of first dimension
-* @param lengths - an array giving the sizes of each of the child arrays which can be different
+* @param cols - size of child arrays, i.e size of second dimension
 * @return - copied array, user is responsible for freeing it when no longer needed.
 */
-float** copyFloatDim2Array(float** src, int rows, int sizes[]){
+float** copyFloatDim2Array(float** src, int rows, int cols){
    float ** ret;
    int r;
    UT_MALLOC(ret, float *, rows);
     for(r = 0 ; r < rows ; r++){
-        UT_MALLOC(ret[r], float, sizes[r] );
-        memcpy(ret[r], src[r], sizeof(float) * sizes[r] );
+        UT_MALLOC(ret[r], float, cols );
+        memcpy(ret[r], src[r], sizeof(float) * cols );
     }
     return ret;
 }

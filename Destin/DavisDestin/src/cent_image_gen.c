@@ -150,7 +150,7 @@ void Cig_UpdateCentroidImages(Destin * d,
 
         for(c = 0 ; c < d->nb[l]; c++){
             for(p = 0 ; p < n->ni ; p++){
-                images[l][c][p] = n->mu[c * n->ns + p];
+                images[l][c][p] = n->mu[c][p];
             }
 
             int nRatio;
@@ -158,7 +158,7 @@ void Cig_UpdateCentroidImages(Destin * d,
             {
                 for(p=0; p<n->ni; ++p)
                 {
-                    images[l][c][n->ni*nRatio + p] = n->mu[c*n->ns + n->ni*nRatio + n->nb + n->np + p];
+                    images[l][c][n->ni*nRatio + p] = n->mu[c][n->ni*nRatio + n->nb + n->np + p];
                 }
             }
         }
@@ -186,7 +186,7 @@ void Cig_UpdateCentroidImages(Destin * d,
                 // generate its representative image and store it in
                 // the appropriate section of combined_images;
                 Cig_BlendImages(images[l - 1],
-                              &n->mu[c * n->ns + child_section * d->nb[l - 1]],
+                              &n->mu[c][child_section * d->nb[l - 1]],
                               d->nb[l - 1],
                               prev_image_width * prev_image_width,
                               weighParameter,

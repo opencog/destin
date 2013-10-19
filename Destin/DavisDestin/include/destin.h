@@ -45,13 +45,21 @@ typedef struct Destin {
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
                                         // which means all nodes in a layer share their centroids
 
-    //uniform destin shared centroid variables
+    // uniform destin shared centroid variables
+    float       *** uf_mu;              // shared centroids location, resizable array of size nl x nb x ns
+    float       *** uf_sigma;           // shared centroids sigma, resizable array of size nl x nb x ns
+    float       ** uf_absvar;           // layers absolute deviation, resizable array of size nl x ns
+
     uint        ** uf_winCounts;        // Counts how many nodes in a layer pick the given centroid as winner in one call of ForumateBeliefs
-                                        //
-    float       ** uf_avgDelta;         //used to average node centroid movement vectors
-    long        ** uf_persistWinCounts; //keeps track how many times the shared centroids win over the lifetime of the training the destin network.
-    float       ** uf_sigma;            //shared centroids sigma, one array per layer of size nb x ns
-    float       ** uf_starv;            //shared centroids starvation
+    long        ** uf_persistWinCounts; // keeps track how many times the shared centroids win over the lifetime of the training the destin network.
+    long        ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
+                                        // this counting array contains all counts for all node
+
+    float       *** uf_avgDelta;        // used to average node centroid movement vectors
+    float       *** uf_avgSquaredDelta;
+    float       ** uf_avgAbsDelta;
+
+    float       ** uf_starv;            // shared centroids starvation
 
     /*The following is coded by CZT*/
     // 2013.6.10
@@ -60,13 +68,6 @@ typedef struct Destin {
     //2013.7.2
     int inputImageSize;
     int extRatio;
-    // 2013.6.13, 2013.7.3
-    long ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
-                                           // I think one more counting array should be necessary;
-    float ** uf_absvar;
-    float ** uf_avgSquaredDelta;
-    float ** uf_avgAbsDelta;
-    /*END*/
 } Destin  ;
 /* Destin Struct Definition End */
 
@@ -90,17 +91,6 @@ Destin * InitDestin(    // initialize Destin.
     bool,               // is uniform - if nodes in a layer share one list of centroids
     int                 // extRatio
 );
-
-// 2013.5.31
-void addCentroid(Destin *d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
-                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
-                  int currLayer, float **sharedCen, float **starv, float **sigma,
-                  long ** persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
-// 2013.6.6
-void killCentroid(Destin *d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma,
-                  float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio,
-                  int currLayer, int kill_ind, float **sharedCen, float **starv, float **sigma,
-                  long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar);
 
 void LinkParentsToChildren(             // link parents to their children
                     Destin *            // initialized destin pointer
