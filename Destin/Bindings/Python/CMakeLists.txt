@@ -7,6 +7,11 @@ if(PYTHONLIBS_FOUND)
     SET(CMAKE_SWIG_OUTDIR . )            
     SWIG_ADD_MODULE(pydestin python swig_destin_python.i )
     
-    SWIG_LINK_LIBRARIES(pydestin ${highgui} destinalt common som cm_ordered_treeminer_wrapper)
-    
+    SWIG_LINK_LIBRARIES(pydestin ${OpenCV_LIBS} destinalt common som cm_ordered_treeminer_wrapper ${PYTHON_LIBRARY})
+
+    install(TARGETS _pydestin
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/static
+    )
 endif(PYTHONLIBS_FOUND)

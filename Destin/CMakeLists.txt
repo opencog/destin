@@ -10,6 +10,18 @@ SET(CMAKE_BUILD_TYPE Release)
 #SET(CMAKE_EXE_LINKER_FLAGS -pg)
 #ADD_DEFINITIONS( -pg)
 
+####
+
+if(WIN32)
+set(SWIG_EXECUTABLE    C:/swigwin-2.0.11/swig.exe)
+set(OpenCV_DIR  C:/opencv-2.4.6/mingwbuild/install)
+set(CMAKE_MODULE_PATH  C:/opencv-2.4.6/mingwbuild/install)
+set(CMAKE_LIBRARY_PATH C:/opencv-2.4.6/mingwbuild/install/lib)
+endif()
+####
+
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
+
 FIND_PACKAGE( OpenCV REQUIRED)
 ADD_SUBDIRECTORY(TreeMining)
 ADD_SUBDIRECTORY(Common)

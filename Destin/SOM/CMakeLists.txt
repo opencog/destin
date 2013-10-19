@@ -13,3 +13,8 @@ SET_TARGET_PROPERTIES(som PROPERTIES LINKER_LANGUAGE CXX)
 
 add_executable( testSOM TestSom.cpp)
 target_link_libraries(testSOM som)
+
+install(TARGETS som testSOM
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib/static )

@@ -32,6 +32,10 @@
     }                                                   \
 }
 
+#ifdef _WIN32
+typedef unsigned int uint;
+#endif
+
 #define MIN_SIZEV       16
 #define SIZEV(n) ((n < MIN_SIZEV) ? MIN_SIZEV : 1 << ((uint)(log(n-1)/log(2)) + 1))
 
@@ -48,6 +52,5 @@
         }                                                   \
     }                                                       \
 }
-
 
 #endif

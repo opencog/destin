@@ -27,7 +27,9 @@ For more detailed development progress see Diary.md
 
 Building
 --------
-Development has been done with Ubuntu 12.
+Instructions below are for Ubuntu. 
+
+See Windows build instructions at https://github.com/opencog/destin/blob/master/WindowsBuild.md
 
 Dependencies:
 CMake ( >= 2.8 )

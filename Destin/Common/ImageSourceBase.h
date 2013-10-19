@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <opencv/cv.h>
+#include <macros.h>
 
 using namespace std;
 class ImageSourceBase {

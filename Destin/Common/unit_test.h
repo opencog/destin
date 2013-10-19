@@ -10,6 +10,9 @@
 #include <memory.h>
 #include <sys/time.h>
 
+#ifdef _WIN32
+typedef unsigned int uint;
+#endif
 int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests have failed
 
 #define ut_oops(s) { fprintf(stderr, s); exit(1); }

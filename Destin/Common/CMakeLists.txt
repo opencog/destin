@@ -26,5 +26,11 @@ add_executable( testDestinNetworkAlt TestDestinNetworkAlt.cpp )
 find_package( OpenCV REQUIRED) 
 
 target_link_libraries(testCifarSource ${OpenCV_LIBS})
-target_link_libraries(common cm_ordered_treeminer_wrapper)
+target_link_libraries(common cm_ordered_treeminer_wrapper destinalt)
 target_link_libraries(testDestinNetworkAlt common destinalt)
+
+install(TARGETS common testCifarSource testDestinNetworkAlt
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib/static
+)
