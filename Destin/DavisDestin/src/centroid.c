@@ -1,6 +1,7 @@
 #include "macros.h"
 #include "centroid.h"
 #include "destin.h"
+#include "array.h"
 
 void InitUniformCentroids(Destin *d, uint l, uint nb, uint ns)
 {
@@ -43,6 +44,107 @@ void InitUniformCentroids(Destin *d, uint l, uint nb, uint ns)
         d->uf_absvar[l][j] = 0;
     }
 }
+
+void DeleteUniformCentroid(Destin *d, uint l, uint idx)
+{
+    uint i, j, ni, nb, ns;
+
+    Node * n = GetNodeFromDestin(d, l, 0, 0);
+    nb = n->nb;
+    ni = n->ni;
+    ns = n->ns;
+
+    // Layer l
+    for (i = 0; i < nb; i++)
+    {
+        ArrayDeleteFloat(&d->uf_mu[l][i], ns, ni+idx);
+        ArrayDeleteFloat(&d->uf_sigma[l][i], ns, ni+idx);
+        ArrayDeleteFloat(&d->uf_avgDelta[l][i], ns, ni+idx);
+        ArrayDeleteFloat(&d->uf_avgSquaredDelta[l][i], ns, ni+idx);
+    }
+    ArrayDeleteFloat(&d->uf_absvar[l], ns, ni+idx);
+    ArrayDeleteFloat(&d->uf_avgAbsDelta[l], ns, ni+idx);
+
+    ArrayDeleteArray((void *)&d->uf_mu[l], nb, idx);
+    ArrayDeleteArray((void *)&d->uf_sigma[l], nb, idx);
+    ArrayDeleteUInt(&d->uf_winCounts[l], nb, idx);
+    ArrayDeleteLong(&d->uf_persistWinCounts[l], nb, idx);
+    ArrayDeleteLong(&d->uf_persistWinCounts_detailed[l], nb, idx);
+    ArrayDeleteArray((void *)&d->uf_avgDelta[l], nb, idx);
+    ArrayDeleteArray((void *)&d->uf_avgSquaredDelta[l], nb, idx);
+    ArrayDeleteFloat(&d->uf_avgAbsDelta[l], nb, idx);
+    ArrayDeleteFloat(&d->uf_starv[l], nb, idx);
+
+    d->nb[l]--;  // decrease global number of centroids for layer l
+    for (j = 0; j < d->layerSize[l]; j++)
+    {
+        n =& d->nodes[d->layerNodeOffsets[l] + j];
+        n->nb--;  // decrease number of centroid for each node from layer l
+        n->ns--;  // decrease dimensionality of centroids
+
+        // pointers may change due to reallocation
+        n->mu = d->uf_mu[l];
+        n->starv = d->uf_starv[l];
+    }
+
+    // Layer l+1
+    if (l+1 < d->nLayers)
+    {
+        n = GetNodeFromDestin(d, l+1, 0, 0);
+        ns = n->ns;
+        uint childIndexes[n->childNumber];  // indexes of deleted centroids for all childs
+
+        for (i = 0; i < n->childNumber; i++)
+        {
+            childIndexes[i] = i*nb + idx;
+        }
+        for (i = 0; i < n->nb; i++)
+        {
+            ArrayDeleteFloats(&d->uf_mu[l+1][i], ns, childIndexes, n->childNumber);
+            ArrayDeleteFloats(&d->uf_sigma[l+1][i], ns, childIndexes, n->childNumber);
+            ArrayDeleteFloats(&d->uf_avgDelta[l+1][i], ns, childIndexes, n->childNumber);
+            ArrayDeleteFloats(&d->uf_avgSquaredDelta[l+1][i], ns, childIndexes, n->childNumber);
+        }
+        ArrayDeleteFloats(&d->uf_absvar[l], ns, childIndexes, n->childNumber);
+        ArrayDeleteFloats(&d->uf_avgAbsDelta[l], ns, childIndexes, n->childNumber);
+
+        for (j = 0; j < d->layerSize[l+1]; j++)
+        {
+            n =& d->nodes[d->layerNodeOffsets[l+1] + j];
+            n->ns -= n->childNumber;  // decrease dimensionality of centroids
+        }
+    }
+
+    // Layer l-1
+    if (l > 0)
+    {
+        n = GetNodeFromDestin(d, l-1, 0, 0);
+        ns = n->ns;
+        uint pIdx = n->ni + n->nb + idx; // index of deleted parent centroid
+
+        for (i = 0; i < n->nb; i++)
+        {
+            ArrayDeleteFloat(&d->uf_mu[l-1][i], ns, pIdx);
+            ArrayDeleteFloat(&d->uf_sigma[l-1][i], ns, pIdx);
+            ArrayDeleteFloat(&d->uf_avgDelta[l-1][i], ns, pIdx);
+            ArrayDeleteFloat(&d->uf_avgSquaredDelta[l-1][i], ns, pIdx);
+        }
+        ArrayDeleteFloat(&d->uf_absvar[l-1], ns, pIdx);
+        ArrayDeleteFloat(&d->uf_avgAbsDelta[l-1], ns, pIdx);
+
+        for (j = 0; j < d->layerSize[l-1]; j++)
+        {
+            n =& d->nodes[d->layerNodeOffsets[l-1] + j];
+            n->ns--;  // decrease dimensionality of centroids
+        }
+    }
+
+}
+
+void AddUniformCentroid(Destin *d, uint l)
+{
+}
+
 
 /*****************************************************************************/
 /*
@@ -379,250 +481,6 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
             sharedCentroids = NULL;
         }
 
-
-        uint inputOffsets[ni];
-        for( i=0; i < d->layerSize[l]; i++, n++ )
-        {
-            if (l == 0)
-            {
-                CalcSquareNodeInputOffsets(d->layerWidth[0], i, ni, inputOffsets);
-            }
-
-            InitNode(
-                        n,
-                        d,
-                        l,
-                        ni,
-                        nb[l],
-                        np,
-                        nc,
-                        ns,
-                        starvCoeff,
-                        beta,
-                        gamma,
-                        lambda,
-                        temp[l],
-                        &d->nodes[n],
-                        (l > 0 ? NULL : inputOffsets),
-                        (l > 0 ? d->nci[l] : 0)
-                    );
-        }//next node
-    }//next layer
-
-    LinkParentsToChildren( d );
-    d->maxNb = maxNb;
-    d->maxNs = maxNs;
-
-    // 2013.7.3
-    // CZT: should FREE to avoid memory leak;
-    for(i=0; i<nl; ++i)
-    {
-        FREE(sharedCen[i]);
-        FREE(starv[i]);
-        FREE(sigma[i]);
-        FREE(persistWinCounts[i]);
-        FREE(persistWinCounts_detailed[i]);
-        FREE(absvar[i]);
-    }
-    FREE(sharedCen);
-    FREE(starv);
-    FREE(sigma);
-    FREE(persistWinCounts);
-    FREE(persistWinCounts_detailed);
-    FREE(absvar);
-}
-
-// 2013.6.6
-// CZT
-// killCentroid
-void killCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
-                  int extRatio, int currLayer, int kill_ind, float ** sharedCen, float ** starv, float ** sigma,
-                  long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
-{
-    uint i, l, maxNb, maxNs, j;
-
-    initializeDestinParameters(nb, isUniform, nci, extRatio, nl, nMovements, d, nc, temp);
-        // uf_starv
-        // uf_persistWinCounts
-    if(isUniform){
-        for(l=0; l<d->nLayers; ++l)
-        {
-            if(l == currLayer)
-            {
-                for(i=0; i<kill_ind; ++i)
-                {
-                    d->uf_starv[l][i] = starv[l][i];
-                    d->uf_persistWinCounts[l][i] = persistWinCounts[l][i];
-                    d->uf_persistWinCounts_detailed[l][i] = persistWinCounts_detailed[l][i];
-                }
-                for(i=kill_ind+1; i<d->nb[l]+1; ++i)
-                {
-                    d->uf_starv[l][i-1] = starv[l][i];
-                    d->uf_persistWinCounts[l][i-1] = persistWinCounts[l][i];
-                    d->uf_persistWinCounts_detailed[l][i-1] = persistWinCounts_detailed[l][i];
-                }
-            }
-            else
-            {
-                for(i=0; i<d->nb[l]; ++i)
-                {
-                    d->uf_starv[l][i] = starv[l][i];
-                    d->uf_persistWinCounts[l][i] = persistWinCounts[l][i];
-                    d->uf_persistWinCounts_detailed[l][i] = persistWinCounts_detailed[l][i];
-                }
-            }
-        }
-    }
-
-    // keep track of the max num of beliefs and states.  we need this information
-    // to correctly call kernels later
-    maxNb = 0;
-    maxNs = 0;
-
-    uint n = 0;
-
-    // initialize the rest of the network
-
-    for( l=0; l < nl; l++ )
-    {
-        // update max belief
-        if( nb[l] > maxNb )
-        {
-            maxNb = nb[l];
-        }
-
-        float * sharedCentroids;
-
-        uint np = ((l + 1 == nl) ? 0 : nb[l+1]);
-        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
-        uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
-
-        if (ns > maxNs)
-        {
-            maxNs = ns;
-        }
-
-        if(isUniform){
-            MALLOC(d->uf_avgDelta[l], float, ns*nb[l]);
-            MALLOC(sharedCentroids, float, ns*nb[l]);
-            MALLOC(d->uf_sigma[l], float, ns*nb[l]);
-            //
-            MALLOC(d->uf_absvar[l], float, ns*nb[l]);
-            //
-            MALLOC(d->uf_avgSquaredDelta[l], float, ns*nb[l]);
-            MALLOC(d->uf_avgAbsDelta[l], float, ns*nb[l]);
-
-            // 2013.6.4
-            // Keep the shareCentroids, uf_avgDelta, uf_sigma
-            if(l == currLayer)
-            {
-                int tempI, tempJ;
-                int tempRange = l==0?ni*(d->extRatio-1):0;
-                for(tempI=0; tempI<kill_ind; ++tempI)
-                {
-                    for(tempJ=0; tempJ<ns-d->nb[l]-np-tempRange+kill_ind; ++tempJ)
-                    {
-                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+1)+tempJ];
-                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+1)+tempJ];
-                        //
-                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+1)+tempJ];
-                    }
-                    for(tempJ=ns-d->nb[l]-np-tempRange+kill_ind+1; tempJ<ns+1; ++tempJ)
-                    {
-                        sharedCentroids[tempI*ns+tempJ-1] = sharedCen[l][tempI*(ns+1)+tempJ];
-                        d->uf_sigma[l][tempI*ns+tempJ-1] = sigma[l][tempI*(ns+1)+tempJ];
-                        //
-                        d->uf_absvar[l][tempI*ns+tempJ-1] = absvar[l][tempI*(ns+1)+tempJ];
-                    }
-                }
-                for(tempI=kill_ind+1; tempI<d->nb[l]+1; ++tempI)
-                {
-                    for(tempJ=0; tempJ<ns-d->nb[l]-np-tempRange+kill_ind; ++tempJ)
-                    {
-                        sharedCentroids[(tempI-1)*ns+tempJ] = sharedCen[l][tempI*(ns+1)+tempJ];
-                        d->uf_sigma[l][(tempI-1)*ns+tempJ] = sigma[l][tempI*(ns+1)+tempJ];
-                        //
-                        d->uf_absvar[l][(tempI-1)*ns+tempJ] = absvar[l][tempI*(ns+1)+tempJ];
-                    }
-                    for(tempJ=ns-d->nb[l]-np-tempRange+kill_ind+1; tempJ<ns+1; ++tempJ)
-                    {
-                        sharedCentroids[(tempI-1)*ns+tempJ-1] = sharedCen[l][tempI*(ns+1)+tempJ];
-                        d->uf_sigma[l][(tempI-1)*ns+tempJ-1] = sigma[l][tempI*(ns+1)+tempJ];
-                        //
-                        d->uf_absvar[l][(tempI-1)*ns+tempJ-1] = absvar[l][tempI*(ns+1)+tempJ];
-                    }
-                }
-
-            }
-            // currLayer-1
-            else if(l==currLayer-1)
-            {
-                int tempI, tempJ;
-                int tempRange = l==0?ni*(d->extRatio-1):0;
-                for(tempI=0; tempI<d->nb[l]; ++tempI)
-                {
-                    for(tempJ=0; tempJ<ns-np-tempRange+kill_ind; ++tempJ)
-                    {
-                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+1)+tempJ];
-                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+1)+tempJ];
-                        //
-                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+1)+tempJ];
-                    }
-                    for(tempJ=ns-np-tempRange+kill_ind+1; tempJ<ns+1; ++tempJ)
-                    {
-                        sharedCentroids[tempI*ns+tempJ-1] = sharedCen[l][tempI*(ns+1)+tempJ];
-                        d->uf_sigma[l][tempI*ns+tempJ-1] = sigma[l][tempI*(ns+1)+tempJ];
-                        //
-                        d->uf_absvar[l][tempI*ns+tempJ-1] = absvar[l][tempI*(ns+1)+tempJ];
-                    }
-                }
-            }
-            // currLayer+1
-            else if(l==currLayer+1)
-            {
-                int tempI, tempJ, tempK;
-                uint childs = d->nci[l];
-                for(tempI=0; tempI<d->nb[l]; ++tempI)
-                {
-                    for(tempJ=0; tempJ<childs; ++tempJ)
-                    {
-                        for(tempK=0; tempK<kill_ind; ++tempK)
-                        {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK] = sharedCen[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = sigma[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
-                            //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK] = absvar[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
-                        }
-                        for(tempK=kill_ind+1; tempK<nb[l-1]+1; ++tempK)
-                        {
-                            sharedCentroids[tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sharedCen[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
-                            d->uf_sigma[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = sigma[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
-                            //
-                            d->uf_absvar[l][tempI*ns+tempJ*d->nb[l-1]+tempK-1] = absvar[l][tempI*(ns+childs)+tempJ*(d->nb[l-1]+1)+tempK];
-                        }
-                    }
-                    for(tempJ=childs*d->nb[l-1]; tempJ<ns; ++tempJ)
-                    {
-                        sharedCentroids[tempI*ns+tempJ] = sharedCen[l][tempI*(ns+childs)+tempJ+childs];
-                        d->uf_sigma[l][tempI*ns+tempJ] = sigma[l][tempI*(ns+childs)+tempJ+childs];
-                        //
-                        d->uf_absvar[l][tempI*ns+tempJ] = absvar[l][tempI*(ns+childs)+tempJ+childs];
-                    }
-                }
-            }
-            else
-            {
-                for(i=0; i<ns*d->nb[l]; ++i)
-                {
-                    sharedCentroids[i] = sharedCen[l][i];
-                    d->uf_sigma[l][i] = sigma[l][i];
-                    //
-                    d->uf_absvar[l][i] = absvar[l][i];
-                }
-            }
-        }else{
-            sharedCentroids = NULL;
-        }
 
         uint inputOffsets[ni];
         for( i=0; i < d->layerSize[l]; i++, n++ )

@@ -21,6 +21,7 @@
 extern "C" {
 #include "destin.h"
 #include "node.h"
+#include "centroid.h"
 #include "cent_image_gen.h"
 }
 
@@ -104,15 +105,9 @@ public:
             float * input_dev //pointer to input memory on device
             );
 
+    void addCentroid(unsigned int layer);
+    void deleteCentroid(unsigned int layer, unsigned int idx);
 
-
-    // 2013.6.3
-    void updateDestin_add(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer);
-    // 2013.6.6
-    void updateDestin_kill(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer, int kill_ind);
-    //
     float getSep(int layer);
     float getVar(int layer);
     float getQuality(int layer);

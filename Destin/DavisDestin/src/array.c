@@ -33,6 +33,11 @@ void ArrayInsertUInt(uint **array, uint length, uint index, uint value)
     ArrayInsertElement((void *) array, sizeof(uint), length, index, &value);
 }
 
+void ArrayInsertLong(long **array, uint length, uint index, long value)
+{
+    ArrayInsertElement((void *) array, sizeof(long), length, index, &value);
+}
+
 void ArrayInsertFloat(float **array, uint length, uint index, float value)
 {
     ArrayInsertElement((void *) array, sizeof(float), length, index, &value);
@@ -87,6 +92,11 @@ void ArrayInsertUInts(uint **array, uint length, uint *index, uint *values, uint
     ArrayInsertMultiple((void *) array, sizeof(uint), length, index, values, indexLength);
 }
 
+void ArrayInsertLongs(long **array, uint length, uint *index, long *values, uint indexLength)
+{
+    ArrayInsertMultiple((void *) array, sizeof(long), length, index, values, indexLength);
+}
+
 void ArrayInsertFloats(float **array, uint length, uint *index, float *values, uint indexLength)
 {
     ArrayInsertMultiple((void *) array, sizeof(float), length, index, values, indexLength);
@@ -98,42 +108,62 @@ void ArrayInsertPtrs(void **array, uint length, uint *index, void *values, uint 
 }
 
 
-void ArrayDeleteElement(void **array, size_t size, uint length, uint index)
+void ArrayDeleteElement(void **array, size_t size, uint length, uint index, void (*DeleteElement)(void *))
 {
     if (index >= length)
     {
         fprintf(stderr, "ArrayDeleteElement(): index is out of range!\n");
         return;
     }
+
+    char *_array = (char *) *array;
+    if (DeleteElement != NULL)
+    {
+        DeleteElement((void *) _array + index * size);
+    }
     if (index < length - 1)
     {
-        char *_array = (char *) *array;
         memmove(_array + index * size, _array + (index + 1) * size, (length - index - 1) * size);
     }
 }
 
+void ArrayFreeElement(void * element)
+{
+    FREE(element);
+}
+
 void ArrayDeleteInt(int **array, uint length, uint index)
 {
-    ArrayDeleteElement((void *) array, sizeof(int), length, index);
+    ArrayDeleteElement((void *) array, sizeof(int), length, index, NULL);
 }
 
 void ArrayDeleteUInt(uint **array, uint length, uint index)
 {
-    ArrayDeleteElement((void *) array, sizeof(uint), length, index);
+    ArrayDeleteElement((void *) array, sizeof(uint), length, index, NULL);
+}
+
+void ArrayDeleteLong(long **array, uint length, uint index)
+{
+    ArrayDeleteElement((void *) array, sizeof(long), length, index, NULL);
 }
 
 void ArrayDeleteFloat(float **array, uint length, uint index)
 {
-    ArrayDeleteElement((void *) array, sizeof(float), length, index);
+    ArrayDeleteElement((void *) array, sizeof(float), length, index, NULL);
 }
 
 void ArrayDeletePtr(void **array, uint length, uint index)
 {
-    ArrayDeleteElement((void *) array, sizeof(void *), length, index);
+    ArrayDeleteElement((void *) array, sizeof(void *), length, index, NULL);
+}
+
+void ArrayDeleteArray(void **array, uint length, uint index)
+{
+    ArrayDeleteElement((void *) array, sizeof(void *), length, index, &ArrayFreeElement);
 }
 
 
-void ArrayDeleteMultiple(void **array, size_t size, uint length, uint *index, uint indexLength)
+void ArrayDeleteMultiple(void **array, size_t size, uint length, uint *index, uint indexLength, void (*DeleteElement)(void *))
 {
     if (indexLength == 0)
         return;
@@ -155,6 +185,10 @@ void ArrayDeleteMultiple(void **array, size_t size, uint length, uint *index, ui
             fprintf(stderr, "ArrayDeleteMultiple(): wrong order of indexes!\n");
             return;
         }
+        if (DeleteElement != NULL)
+        {
+            DeleteElement((void *) _array + index[k] * size);
+        }
         if (index[k] < index[k + 1] - 1)
         {
             memmove(_array + (index[k] - k) * size, _array + (index[k] + 1) * size, (index[k+1] - index[k] - 1) * size);
@@ -162,6 +196,10 @@ void ArrayDeleteMultiple(void **array, size_t size, uint length, uint *index, ui
     }
 
     k = indexLength - 1;
+    if (DeleteElement != NULL)
+    {
+        DeleteElement((void *) _array + index[k] * size);
+    }
     if (index[k] < length - 1)
     {
         memmove(_array + (index[k] - k) * size, _array + (index[k] + 1) * size, (length - index[k] - 1) * size);
@@ -170,20 +208,30 @@ void ArrayDeleteMultiple(void **array, size_t size, uint length, uint *index, ui
 
 void ArrayDeleteInts(int **array, uint length, uint *index, uint indexLength)
 {
-    ArrayDeleteMultiple((void *) array, sizeof(int), length, index, indexLength);
+    ArrayDeleteMultiple((void *) array, sizeof(int), length, index, indexLength, NULL);
 }
 
 void ArrayDeleteUInts(uint **array, uint length, uint *index, uint indexLength)
 {
-    ArrayDeleteMultiple((void *) array, sizeof(uint), length, index, indexLength);
+    ArrayDeleteMultiple((void *) array, sizeof(uint), length, index, indexLength, NULL);
+}
+
+void ArrayDeleteLongs(long **array, uint length, uint *index, uint indexLength)
+{
+    ArrayDeleteMultiple((void *) array, sizeof(long), length, index, indexLength, NULL);
 }
 
 void ArrayDeleteFloats(float **array, uint length, uint *index, uint indexLength)
 {
-    ArrayDeleteMultiple((void *) array, sizeof(float), length, index, indexLength);
+    ArrayDeleteMultiple((void *) array, sizeof(float), length, index, indexLength, NULL);
 }
 
 void ArrayDeletePtrs(void **array, uint length, uint *index, uint indexLength)
 {
-    ArrayDeleteMultiple((void *) array, sizeof(void *), length, index, indexLength);
+    ArrayDeleteMultiple((void *) array, sizeof(void *), length, index, indexLength, NULL);
+}
+
+void ArrayDeleteArrays(void **array, uint length, uint *index, uint indexLength)
+{
+    ArrayDeleteMultiple((void *) array, sizeof(void *), length, index, indexLength, &ArrayFreeElement);
 }

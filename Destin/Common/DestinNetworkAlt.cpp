@@ -95,145 +95,26 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     isTraining(true);
 }
 
-// 2013.6.3
-// CZT
-// If adding centroids; Only for uniform!
-void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer)
+void DestinNetworkAlt::addCentroid(unsigned int layer)
 {
     if(!isUniform)
     {
-        printf("The adding action NOW is only for Uniform DeSTIN!\n");
+        printf("The add action is only for Uniform DeSTIN!\n");
         return;
     }
 
-    training = true;
-    beta = .01;
-    lambda = .1; // 0.1
-    gamma = .1;  // 0.1
-    isUniform = isUniform;
-    centroidImages = NULL;
-    centroidImageWeightParameter = 1.0;
-
-    uint c, l;
-    callback = NULL;
-    initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
-
-    uint layer_inputs[layers];
-    initDefaultTopology(layers, layer_inputs);
-
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
-    }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
-    }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-/* TODO: to be refactored
-    addCentroid(
-            destin,
-            layer_inputs,
-            layers,
-            centroid_counts,
-            n_classes,
-            beta,
-            lambda,
-            gamma,
-            temperatures,
-            starv_coef,
-            num_movements,
-            isUniform,
-            extRatio,
-            currLayer,
-     );
-*/
-
-    setBeliefTransform(DST_BT_NONE);
-    ClearBeliefs(destin);
-    SetLearningStrat(destin, CLS_DECAY_c1); //
-    isTraining(true);
+    AddUniformCentroid(destin, layer);
 }
 
-// 2013.6.6
-// CZT
-// If killing centroids; Only for uniform!
-void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer, int kill_ind)
+void DestinNetworkAlt::deleteCentroid(unsigned int layer, unsigned int idx)
 {
     if(!isUniform)
     {
-        printf("The killing action NOW is only for Uniform DeSTIN!\n");
+        printf("The delete action is only for Uniform DeSTIN!\n");
         return;
     }
 
-    training = true;
-    beta = .01;
-    lambda = .1; // 0.1
-    gamma = .1;  // 0.1
-    isUniform = isUniform;
-    centroidImages = NULL;
-    centroidImageWeightParameter = 1.0;
-
-    uint c, l;
-    callback = NULL;
-    initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
-
-    uint layer_inputs[layers];
-    initDefaultTopology(layers, layer_inputs);
-
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
-    }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
-    }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-/* TODO: to be refactored
-    killCentroid(
-            destin,
-            layer_inputs,
-            layers,
-            centroid_counts,
-            n_classes,
-            beta,
-            lambda,
-            gamma,
-            temperatures,
-            starv_coef,
-            num_movements,
-            isUniform,
-            extRatio,
-            currLayer,
-            kill_ind,
-     );
-*/
-
-    setBeliefTransform(DST_BT_NONE);
-    ClearBeliefs(destin);
-    SetLearningStrat(destin, CLS_DECAY_c1); //
-    isTraining(true);
+    DeleteUniformCentroid(destin, layer, idx);
 }
 
 // 2013.7.4
