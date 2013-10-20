@@ -751,7 +751,6 @@ void SampleInputFromBelief( Node *n, float *xf )
     for( i=0; i < n->ns; i++ )
     {
         xf[i] = (float) x[i];
-        n->genObservation[i] = xf[i];
     }
 }
 

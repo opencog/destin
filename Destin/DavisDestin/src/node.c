@@ -188,9 +188,6 @@ void CalculateDistances( Node *n, uint nIdx )
             sumMal += delta / sigma[i][j];
         }
 
-        // Dead code
-        n->genObservation[i] = sumMal;
-
         // Take the square root of the distance to finalize the distance calculation
         sumEuc = sqrt(sumEuc);
         sumMal = sqrt(sumMal);
@@ -492,3 +489,22 @@ void Uniform_UpdateStarvation(Destin * d, uint layer, float * sharedStarvation, 
 
 }
 
+void UpdateNodeSizes(Node * n, uint ni, uint nb, uint np, uint nc)
+{
+    n->ni = ni;
+    n->nb = nb;
+    n->np = np;
+    n->nc = nc;
+
+    uint ns = nb + np + nc + ((n->layer == 0) ? ni*n->d->extRatio : ni);
+    n->ns = ns;
+
+    if (nb > n->d->maxNb)
+    {
+        n->d->maxNb = nb;
+    }
+    if (ns > n->d->maxNs)
+    {
+        n->d->maxNs == ns;
+    }
+}

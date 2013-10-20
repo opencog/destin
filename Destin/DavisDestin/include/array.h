@@ -19,6 +19,11 @@ void ArrayInsertLong(long **array, uint length, uint index, long value);
 void ArrayInsertFloat(float **array, uint length, uint index, float value);
 void ArrayInsertPtr(void **array, uint length, uint index, void *value);
 
+#define ArrayAppendInt(array, length, value)    ArrayInsertInt(array, length, length, value)
+#define ArrayAppendUInt(array, length, value)   ArrayInsertUInt(array, length, length, value)
+#define ArrayAppendLong(array, length, value)   ArrayInsertLong(array, length, length, value)
+#define ArrayAppendFloat(array, length, value)  ArrayInsertFloat(array, length, length, value)
+#define ArrayAppendPtr(array, length, value)    ArrayInsertPtr(array, length, length, value)
 
 /*
  * Insert multiple elements into the array. The array length is increased by a number of inserted elements (indexLength)

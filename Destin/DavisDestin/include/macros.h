@@ -9,6 +9,8 @@
 
 #define PRINTF printf
 
+#define _MIN(a, b)       (a < b ? a : b)
+#define _MAX(a, b)       (a > b ? a : b)
 
 #ifdef UNIT_TEST
 #define log_info(s...)do{}while(0)

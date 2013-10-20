@@ -686,7 +686,6 @@ void InitNode
     MALLOCV( node->beliefMal, float, nb );
     MALLOCV( node->outputBelief, float, nb);
     MALLOCV( node->observation, float, ns );
-    MALLOCV( node->genObservation, float, ns );
 
     node->parent = NULL;
     if (layer == 0)
@@ -777,7 +776,6 @@ void DestroyNode( Node *n)
     FREE( n->beliefMal );
     FREE( n->outputBelief );
     FREE( n->observation );
-    FREE( n->genObservation );
 
     if( n->children != NULL )
     {
@@ -801,7 +799,6 @@ void DestroyNode( Node *n)
     n->beliefMal = NULL;
     n->outputBelief = NULL;
     n->observation = NULL;
-    n->genObservation = NULL;
     n->delta = NULL;
     n->inputOffsets = NULL;/**/
 }

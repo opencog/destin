@@ -62,9 +62,6 @@ typedef struct Destin {
     float       ** uf_starv;            // shared centroids starvation
 
     /*The following is coded by CZT*/
-    // 2013.6.10
-    int sizeInd;
-    int * nearInd;
     //2013.7.2
     int inputImageSize;
     int extRatio;

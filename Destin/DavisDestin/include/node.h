@@ -54,7 +54,6 @@ typedef struct Node {
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
                             // belief, and parent's previous belief ( length ni+nb+np )
-    float * genObservation;
     
     // node beliefs
     float * beliefEuc;      // belief (euclidean distance), length nb
@@ -94,6 +93,15 @@ void  InitNode(                         // initialize a node.
                  uint *,                // input offsets from input image (NULL for any non-input node)
                  uint                   // number of children
                 );
+
+// Recalculates ns, checks destin maxNb i MaxNs
+void UpdateNodeSizes(
+                 Node *,                // pointer to node
+                 uint ni,               // new input dimensionality
+                 uint nb,               // new previous belief dimensionality
+                 uint np,               // new parent belief dimensionality
+                 uint nc                // new context dimensionality
+);
 
 // 2013.6.21
 void evenInitForMu(float ** tempMu, int tempNb, int tempNs);
