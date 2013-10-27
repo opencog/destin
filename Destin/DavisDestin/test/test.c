@@ -1,4 +1,4 @@
-
+// 
 #include <float.h>
 #include <memory.h>
 #include <stdio.h>
@@ -6,6 +6,7 @@
 #include "destin.h"
 #include "unit_test.h"
 #include "cent_image_gen.h"
+#include "array.h"
 
 Destin * makeDestinFromLayerCfg(uint layers, uint *nci, uint *nb)
 {
@@ -72,7 +73,7 @@ int testInit(){
     DestroyDestin(d);
 
     printf("destroyed non uniform\n");
-    
+
     //test uniform destin init
     isUniform = true;
     d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
@@ -154,14 +155,15 @@ int testFormulateStages(){
     assertFloatArrayEquals( expected_obs , n->observation,3);
 
 
-    assignFloatArray(&n->mu[0 * n->ns], 3, 0.5, 0.5, 0.5);
-    assignFloatArray(&n->mu[1 * n->ns], 3, 0.0, 0.5, 1.0);
+    assignFloatArray(n->mu[0], 3, 0.5, 0.5, 0.5);
+    assignFloatArray(n->mu[1], 3, 0.0, 0.5, 1.0);
 
 
     assertFloatArrayEqualsEV(n->starv, 1e-12, 2, 1.0,1.0);//starv is initalized to 1.0
 
     assertTrue(INIT_SIGMA == 0.00001);
-    assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
+    assertFloatArrayEqualsE2DV(n->sigma, 1e-5, 2, 3, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA,
+                                                     INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
 
     assertFloatArrayEqualsEV(n->beliefEuc, 1e-12, 2, 0.5, 0.5);
     assertFloatArrayEqualsEV(n->beliefMal, 1e-12, 2, 0.5, 0.5);
@@ -184,7 +186,8 @@ int testFormulateStages(){
     CalcCentroidMovement( d->nodes, d->inputLabel, nid );
     MoveCentroids(d->nodes, nid);
     assertTrue( n->winner == 0 );
-    assertFloatArrayEqualsEV(n->sigma, 1e-12, 6, 0.00001249, 0.00000999, 0.00000999, INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
+    assertFloatArrayEqualsE2DV(n->sigma, 1e-5, 2, 3, 0.00001249, 0.00000999, 0.00000999,
+                                                     INIT_SIGMA, INIT_SIGMA, INIT_SIGMA);
     UpdateStarvation(d->nodes, nid);
     assertFloatArrayEqualsEV(n->starv, 0.0, 2, 1.0, 0.9);
     DestroyDestin(d);
@@ -214,6 +217,14 @@ int testVarArgs(void){
    assertFloatEquals(.3, f[1],1e-7);
 
    assertFloatArrayEqualsEV(f, 1e-7, 2, 0.2, 0.3  );
+
+   float * f2d[3];
+   f2d[0] = toFloatArray(4, 0.1, 0.2, 0.3, 0.4);
+   f2d[1] = toFloatArray(4, 1.2, 1.3, 1.4, 1.5);
+   f2d[2] = toFloatArray(4, 2.3, 2.4, 2.5, 2.6);
+   assertFloatArrayEqualsE2DV(f2d, 1e-7, 3, 4, 0.1, 0.2, 0.3, 0.4,
+                                               1.2, 1.3, 1.4, 1.5,
+                                               2.3, 2.4, 2.5, 2.6);
 
    int an_int_array[] = {2, 4, 6, 8};
    assertIntArrayEqualsV(an_int_array, 4, 2, 4, 6, 8);
@@ -256,7 +267,7 @@ int testUniform(){
     //mu is a table nb x ns. ns = ni + nb + np + nc
     //nb = 4 (centroids), ns = 9
     //all nodes point to the same centroids in a layer for uniform destin
-    assignFloatArray(n->mu, 4 * 9,
+    assignFloatArray2D(n->mu, 4, 9,
         0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
@@ -346,24 +357,22 @@ int testUniform(){
         Uniform_AverageDeltas(d->nodes, nid);
     }
 
-    
+
     assertIntArrayEqualsV(d->uf_winCounts[0], nb[0], 0, 2, 1, 1);
-    assertFloatArrayEqualsEV(d->uf_avgDelta[0], 3e-8, nb[0] * d->nodes[0].ns,
+    assertFloatArrayEqualsE2DV(d->uf_avgDelta[0], 1e-5, nb[0], d->nodes[0].ns,
         0.0,                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //average delta for shared centroid 0
         ((0.11 - 0.06) + (0.22 - 0.06)) / 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         ( 0.88 - 0.86 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         ( 0.99 - 0.95 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);//average delta for shared centroid 3
     
-    
-    float layer0SharedSigma[nb[0] * d->nodes[0].ns];
-    float layer1SharedSigma[nb[1] * d->nodes[1].ns];
-    Uniform_ApplyDeltas(d, 0, layer0SharedSigma);
-    Uniform_ApplyDeltas(d, 1, layer1SharedSigma);
+
+    Uniform_ApplyDeltas(d, 0, d->uf_sigma[0]);
+    Uniform_ApplyDeltas(d, 1, d->uf_sigma[1]);
 
     assertTrue(n[0].nCounts == NULL); //these are null in uniform destin
 
     //check that the shared centroids were moved to the correct positions
-    assertFloatArrayEqualsEV(n[0].mu, 2e-8, 4 * 9,
+    assertFloatArrayEqualsE2DV(n[0].mu, 1e-5, 4, 9,
         0.05,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 0, unchanged because it wasn't a winner
         0.165, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 1, averaged because two nodes picked it
                                                                    //averaged between node 0 and node 1 observations, .11 and .22 = .165
@@ -371,9 +380,9 @@ int testUniform(){
         0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
     //Uniform_UpdateStarvation(d->nodes, 0);
 
-    float * ad = d->uf_avgDelta[0];
+    float ** ad = d->uf_avgDelta[0];
     //calculate muSqDiff for layer 0
-    float msq = ad[0*9] * ad[0*9] + ad[1*9] * ad[1*9] + ad[2*9] * ad[2*9] + ad[3*9] * ad[3*9];
+    float msq = ad[0][0] * ad[0][0] + ad[1][0] * ad[1][0] + ad[2][0] * ad[2][0] + ad[3][0] * ad[3][0];
     assertFloatEquals(msq, n[0].muSqDiff, 4.5e-10);
 
     DestroyDestin(d);
@@ -407,7 +416,7 @@ int testUniformFormulate(){
     //mu is a table nb x ns. ns = ni + nb + np + nc
     //nb = 4 (centroids), ns = 9
     //all nodes point to the same centroids in a layer for uniform destin
-    assignFloatArray(n->mu, 4 * 9,
+    assignFloatArray2D(n->mu, 4, 9,
         0.05, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.06, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
         0.86, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
@@ -416,7 +425,7 @@ int testUniformFormulate(){
     FormulateBelief(d, image);
 
     //check that the shared centroids were moved to the correct positions
-    assertFloatArrayEqualsEV(n->mu, 2e-8, 4 * 9,
+    assertFloatArrayEqualsE2DV(n->mu, 2e-8, 4, 9,
         0.05,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 0, unchanged because it wasn't a winner
         0.165, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, //centroid location 1, averaged because two nodes picked it
                                                                    //averaged between node 0 and node 1 observations, .11 and .22 = .165
@@ -480,10 +489,10 @@ int testSaveDestin1(){
     FormulateBelief(d, image);
     FormulateBelief(d, image);
 
-
     //backup uf_aveDelta
-    int sizes[] =  {nb[0]  * ns0, nb[1] * ns1};
-    float ** uf_avgDelta = copyFloatDim2Array(d->uf_avgDelta, 2, sizes);
+    float ** uf_avgDelta[2];
+    uf_avgDelta[0] = copyFloatDim2Array(d->uf_avgDelta[0], nb[0], ns0);
+    uf_avgDelta[1] = copyFloatDim2Array(d->uf_avgDelta[1], nb[1], ns1);
 
     SaveDestin(d, "unit_test_destin.save");
     DestroyDestin(d);
@@ -511,13 +520,19 @@ int testSaveDestin1(){
     assertTrue(d->maxNs == maxNs);
     assertFloatEquals(0.0, d->muSumSqDiff, 0); //it currently resets to 0
 
-    assertFloatArrayEqualsE(uf_avgDelta[0], d->uf_avgDelta[0], nb[0] * ns0, 1e-36);
-    assertFloatArrayEqualsE(uf_avgDelta[1], d->uf_avgDelta[1], nb[1] * ns1, 1e-36);
+    assertFloatArrayEqualsE2D(uf_avgDelta[0], d->uf_avgDelta[0], nb[0], ns0, 1e-36);
+    assertFloatArrayEqualsE2D(uf_avgDelta[1], d->uf_avgDelta[1], nb[1], ns1, 1e-36);
 
     DestroyDestin(d);
+    uint c;
+    for (c = 0; c < nb[0]; c++){
+        FREE(uf_avgDelta[0][c]);
+    }
+    for (c = 0; c < nb[1]; c++){
+        FREE(uf_avgDelta[1][c]);
+    }
     FREE(uf_avgDelta[0]);
     FREE(uf_avgDelta[1]);
-    FREE(uf_avgDelta);
     return 0;
 }
 
@@ -925,23 +940,20 @@ int testCentroidImageGeneration(){
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = GetNodeFromDestin(d, 0, 0 ,0);
-    n->mu[0 * n->ns + 0] = 0.0;
-    n->mu[1 * n->ns + 0] = 1.0; // black ( or is it white?)
+    n->mu[0][0] = 0.0;
+    n->mu[1][0] = 1.0; // black ( or is it white?)
 
     n = GetNodeFromDestin(d, 1, 0 ,0);
-    assignFloatArray(&n->mu[0], 8,          0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //all black
-    assignFloatArray(&n->mu[1 * n->ns], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //all white
+    assignFloatArray(n->mu[0], 8,  0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //all black
+    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //all white
 
     n = GetNodeFromDestin(d, 2, 0 ,0);
 
     //top half black, bottom half white
-    assignFloatArray(&n->mu[0], 8,          1.0, 0.0, 1.0, 0.0,
-                                            0.0, 1.0, 0.0, 1.0);
+    assignFloatArray(n->mu[0], 8,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0);
 
     //all black, bottom right dark grey
-    assignFloatArray(&n->mu[1 * n->ns], 8,  1.0, 0.0, 1.0, 0.0,
-                                            1.0, 0.0, 0.75, 0.25);
-
+    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.75, 0.25);
 
     float *** images = Cig_CreateCentroidImages(d, 1.0);
 
@@ -979,6 +991,117 @@ int testCentroidImageGeneration(){
     return 0;
 }
 
+// Used for delete element callback tests
+long _testDeleteLongCounter;
+void _testDeleteLong(void * elem)
+{
+    _testDeleteLongCounter += *((long *) elem);
+}
+
+int testArrayOperations() {
+    assertIntEquals(16, SIZEV(0));
+    assertIntEquals(16, SIZEV(1));
+    assertIntEquals(16, SIZEV(7));
+    assertIntEquals(16, SIZEV(16));
+    assertIntEquals(32, SIZEV(17));
+    assertIntEquals(32, SIZEV(25));
+    assertIntEquals(32, SIZEV(31));
+    assertIntEquals(32, SIZEV(32));
+    assertIntEquals(64, SIZEV(33));
+    assertIntEquals(256, SIZEV(157));
+    assertIntEquals(2048, SIZEV(1345));
+    assertIntEquals(2097152, SIZEV(1345678));
+
+    // check if writing at the end of the buffer does not cause memory crash
+    float * array;
+
+    MALLOCV(array, float, 5);         // should allocate 32 bytes (first power of 2 larger then 5*sizeof(float))
+    array[6] = 1;                     // write to 24 byte offset (larger then 5*sizeof(float)
+    array[7] = 2;                     // write again
+    REALLOCV(array, float, 5, 2);     // should not resize the array
+    array[6] = 1;
+    REALLOCV(array, float, 7, 70);    // check if the array expands now
+    array[75] = 1;
+    assertFloatEquals(1.0, array[6], 1e-12); // check if the reallocation preserves data
+    assertFloatEquals(2.0, array[7], 1e-12);
+
+    REALLOCV(array, float, 77, -70);  // check if the array does not shrink
+    array[75] = 1;
+    REALLOCV(array, float, 7, 10);    // the array shrinks now (this is a side effect on purpose)
+                                      // change size from 128 to 32 (* sizeof(float))
+    REALLOCV(array, float, 17,1345678);  // check large array
+    array[2097152] = 1;
+    FREE(array);
+
+    int * intArray;
+    MALLOCV(intArray, int, 129);
+    intArray[255] = 1;
+    FREE(intArray);
+
+    // Check array insert element
+    MALLOCV(intArray,int,0);
+    ArrayAppendInt(&intArray, 0, 3);
+    ArrayAppendInt(&intArray, 1, 2);
+    ArrayAppendInt(&intArray, 2, 1);
+    ArrayInsertInt(&intArray, 3, 2, 4);
+    ArrayInsertInt(&intArray, 4, 2, 5);
+    assertIntArrayEqualsV(intArray, 5, 3, 2, 5, 4, 1);
+
+    // Check array insert multiple
+    int index[3] = {0, 2, 5};
+    int values[3] = {11, 12, 13};
+    ArrayInsertInts(&intArray, 5, index, values, 3);
+    assertIntArrayEqualsV(intArray, 8, 11, 3, 2, 12, 5, 4, 1, 13);
+    int index1[4] = {6, 6, 8, 8};
+    int values1[4] = {21, 22, 23, 24};
+    ArrayInsertInts(&intArray, 8, index1, values1, 4);
+    assertIntArrayEqualsV(intArray, 12, 11, 3, 2, 12, 5, 4, 21, 22, 1, 13, 23, 24);
+
+    // Check array delete
+    ArrayDeleteInt(&intArray, 12, 11);
+    ArrayDeleteInt(&intArray, 11, 6);
+    ArrayDeleteInt(&intArray, 10, 6);
+    ArrayDeleteInt(&intArray, 9, 0);
+    assertIntArrayEqualsV(intArray, 8, 3, 2, 12, 5, 4, 1, 13, 23);
+
+    // Check array delete multiple
+    int index2[5] = {0, 3, 4, 6, 7};
+    ArrayDeleteInts(&intArray, 8, index2, 5);
+    assertIntArrayEqualsV(intArray, 3, 2, 12, 1);
+    FREE(intArray);
+
+    // Check other types
+    int ** intPointerArray;
+    MALLOCV(intPointerArray,int *,0);
+    int * intPointerValues[3] = {index, index1, index2};
+    int index3[3] = {0, 0, 0};
+    ArrayInsertPtrs((void *) &intPointerArray, 0, index3, intPointerValues, 3);
+    assertTrue(intPointerArray[2] == index2);
+    ArrayDeletePtr((void *) &intPointerArray, 3, 1);
+    assertTrue(intPointerArray[1] == index2);
+    FREE(intPointerArray);
+
+    // Check if delete element callback is executed
+    long * longArray;
+    MALLOCV(longArray,long,0);
+    ArrayAppendLong(&longArray, 0, 5);
+    int index4[3] = {1, 1, 1};
+    long values4[3] = {7, 8, 9};
+    ArrayInsertLongs(&longArray, 1, index4, values4, 3);
+    assertLongArrayEqualsV(longArray, 4, 5L, 7L, 8L, 9L);
+
+    _testDeleteLongCounter = 0;
+    ArrayDeleteElement((void *)&longArray, sizeof(long), 4, 2, &_testDeleteLong);
+    assertTrue(_testDeleteLongCounter == 8L);
+    int index5[2] = {0, 2};
+    ArrayDeleteMultiple((void *)&longArray, sizeof(long), 3, index5, 2, &_testDeleteLong);
+    assertTrue(_testDeleteLongCounter == 22L);
+
+    // Check delete array
+
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
@@ -996,6 +1119,7 @@ int main(int argc, char ** argv ){
     RUN(testLoadFromConfig);
     RUN(testGenerateInputFromBelief);
     RUN(test8Layers);
+    RUN(testArrayOperations);
 
     //RUN(testGetNode); //TODO: fix and renable this test
     RUN(testCentroidImageGeneration);

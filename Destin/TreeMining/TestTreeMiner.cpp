@@ -76,18 +76,18 @@ int testDisplayTree(){
     /// set black and white for level 0
     for(int i = 0 ; i < n->ns - 4 ; i++){ // ns - 4 skips the recurrence and parent belief section of the centroids
         //n->mu is shared with all nodes in uniform destin
-        n->mu[i + n->ns * 0] = 1.0; //centroid 0 is black block
-        n->mu[i + n->ns * 1] = 0.0; //centroid 1 is white block
+        n->mu[0][i] = 1.0; //centroid 0 is black block
+        n->mu[1][i] = 0.0; //centroid 1 is white block
     }
 
     n = dn.getNode(1,0,0);
     assertIntEquals(12, n->ns );
 
     /// set centroids to black and white for level 1
-    assignFloatArray(&n->mu[n->ns * 0], 8,
+    assignFloatArray(n->mu[0], 8,
                      1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //black
 
-    assignFloatArray(&n->mu[n->ns * 1], 8,
+    assignFloatArray(n->mu[1], 8,
                      0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //white
 
 
@@ -95,10 +95,10 @@ int testDisplayTree(){
     n = dn.getNode(2,0,0);
     assertIntEquals(10, n->ns );
 
-    assignFloatArray(&n->mu[n->ns * 0], 8,
+    assignFloatArray(n->mu[0], 8,
                      1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //black
 
-    assignFloatArray(&n->mu[n->ns * 1], 8,
+    assignFloatArray(n->mu[1], 8,
                      0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //white
 
     /****

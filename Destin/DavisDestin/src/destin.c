@@ -509,7 +509,7 @@ void CalculateBelief( Node *n, __special *x, __special *b )
 
         for( j=0; j < n->ns - n->nc; j++ )
         {
-            bDiff = x[j] - (__special) n->mu[i*n->ns + j];
+            bDiff = x[j] - (__special) n->mu[i][j];
             bDiff *= bDiff;
             bDiff *= (__special) n->starv[i];
 
@@ -630,7 +630,7 @@ void SampleInputFromBelief( Node *n, float *xf )
     // init x to fuzzy distance of winning centroid
     for( i=0; i < n->ns; i++ )
     {
-        x[i] = NormRND(n->mu[n->genWinner*n->ns+i], 0.1);//n->sigma[n->genWinner*n->ns+i]);
+        x[i] = NormRND(n->mu[n->genWinner][i], 0.1);//n->sigma[n->genWinner][i]);
 
         if( x[i] > 1 ) x[i] = 1;
         if( x[i] < 0 ) x[i] = 0;
@@ -751,7 +751,6 @@ void SampleInputFromBelief( Node *n, float *xf )
     for( i=0; i < n->ns; i++ )
     {
         xf[i] = (float) x[i];
-        n->genObservation[i] = xf[i];
     }
 }
 
@@ -811,7 +810,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
 
             for( i=0; i < nTmp->ni; i++ )
             {
-                sampledInput[i] = nTmp->mu[nTmp->genWinner*nTmp->ns+i];
+                sampledInput[i] = nTmp->mu[nTmp->genWinner][i];
                 frame[nTmp->inputOffsets[i]] += log(sampledInput[i]);
             }
         }
@@ -883,7 +882,7 @@ void DisplayLayerFeatures( Destin *d, int layer, int node_start, int nodes )
             {
                 for( j=0; j < sqrtPatch; j++, u++ )
                 {
-                    frame[(n * sqrtPatch + i) * sqrtPatch * node->nb + j + b * sqrtPatch ] = node->mu[b * node->ns + u];
+                    frame[(n * sqrtPatch + i) * sqrtPatch * node->nb + j + b * sqrtPatch ] = node->mu[b][u];
                 }
             }
         }
@@ -932,7 +931,7 @@ void DisplayFeatures( Destin *d )
             {
                 for( j=0; j < sqrtPatch; j++, u++ )
                 {
-                    frame[(n*sqrtPatch+i) * sqrtPatch*d->nodes[n].nb + j + b*sqrtPatch] = d->nodes[n].mu[b*d->nodes[n].ns+u];
+                    frame[(n*sqrtPatch+i) * sqrtPatch*d->nodes[n].nb + j + b*sqrtPatch] = d->nodes[n].mu[b][u];
                 }
             }
         }
@@ -1020,12 +1019,13 @@ void Uniform_ResetStats(Destin * d){
         for(c = 0 ; c < d->nb[l]; c++){
             d->uf_winCounts[l][c] = 0;
             for(s = 0 ; s < ns ;s++){
-                d->uf_avgDelta[l][c*ns + s] = 0;
-
-                // 2013.7.18
-                d->uf_avgAbsDelta[l][c*ns + s] = 0;
-                d->uf_avgSquaredDelta[l][c*ns + s] = 0;
+                d->uf_avgDelta[l][c][s] = 0;
+                d->uf_avgSquaredDelta[l][c][s] = 0;
             }
+        }
+        for(s = 0 ; s < ns; s++)
+        {
+            d->uf_avgAbsDelta[l][s] = 0;
         }
     }
     return;

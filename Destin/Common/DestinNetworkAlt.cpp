@@ -95,269 +95,26 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     isTraining(true);
 }
 
-// 2013.6.3
-// CZT
-// If adding centroids; Only for uniform!
-void DestinNetworkAlt::updateDestin_add(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer)
+void DestinNetworkAlt::addCentroid(unsigned int layer)
 {
     if(!isUniform)
     {
-        printf("The adding action NOW is only for Uniform DeSTIN!\n");
+        printf("The add action is only for Uniform DeSTIN!\n");
         return;
     }
 
-    training = true;
-    beta = .01;
-    lambda = .1; // 0.1
-    gamma = .1;  // 0.1
-    isUniform = isUniform;
-    centroidImages = NULL;
-    centroidImageWeightParameter = 1.0;
-
-    uint c, l;
-    callback = NULL;
-    initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
-
-    uint layer_inputs[layers];
-    initDefaultTopology(layers, layer_inputs);
-
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
-    }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
-    }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-    addCentroid(
-            destin,
-            layer_inputs,
-            layers,
-            centroid_counts,
-            n_classes,
-            beta,
-            lambda,
-            gamma,
-            temperatures,
-            starv_coef,
-            num_movements,
-            isUniform,
-            extRatio,
-            currLayer,
-            getSharedCentroids(),
-            getStarv(),
-            getSigma(),
-            getPersistWinCounts(),
-            getPersistWinCounts_detailed(),
-            getAbsvar()
-     );
-
-    setBeliefTransform(DST_BT_NONE);
-    ClearBeliefs(destin);
-    SetLearningStrat(destin, CLS_DECAY_c1); //
-    isTraining(true);
+    AddUniformCentroid(destin, layer);
 }
 
-// 2013.6.6
-// CZT
-// If killing centroids; Only for uniform!
-void DestinNetworkAlt::updateDestin_kill(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int extRatio, int currLayer, int kill_ind)
+void DestinNetworkAlt::deleteCentroid(unsigned int layer, unsigned int idx)
 {
     if(!isUniform)
     {
-        printf("The killing action NOW is only for Uniform DeSTIN!\n");
+        printf("The delete action is only for Uniform DeSTIN!\n");
         return;
     }
 
-    training = true;
-    beta = .01;
-    lambda = .1; // 0.1
-    gamma = .1;  // 0.1
-    isUniform = isUniform;
-    centroidImages = NULL;
-    centroidImageWeightParameter = 1.0;
-
-    uint c, l;
-    callback = NULL;
-    initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
-
-    uint layer_inputs[layers];
-    initDefaultTopology(layers, layer_inputs);
-
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
-    }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
-    }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-    killCentroid(
-            destin,
-            layer_inputs,
-            layers,
-            centroid_counts,
-            n_classes,
-            beta,
-            lambda,
-            gamma,
-            temperatures,
-            starv_coef,
-            num_movements,
-            isUniform,
-            extRatio,
-            currLayer,
-            kill_ind,
-            getSharedCentroids(),
-            getStarv(),
-            getSigma(),
-            getPersistWinCounts(),
-            getPersistWinCounts_detailed(),
-            getAbsvar()
-     );
-
-    setBeliefTransform(DST_BT_NONE);
-    ClearBeliefs(destin);
-    SetLearningStrat(destin, CLS_DECAY_c1); //
-    isTraining(true);
-}
-
-/*****************************************************************************/
-// 2013.6.4
-// CZT
-// Get sharedCentroids or mu; Only for uniform!
-float ** DestinNetworkAlt::getSharedCentroids()
-{
-    float ** sharedCentroids;
-    MALLOC(sharedCentroids, float *, destin->nLayers);
-    int i;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        Node * currNode = getNode(i, 0, 0);
-        MALLOC(sharedCentroids[i], float, currNode->nb*currNode->ns);
-        for(int j=0; j<currNode->nb*currNode->ns; ++j)
-        {
-            sharedCentroids[i][j] = currNode->mu[j];
-        }
-    }
-    return sharedCentroids;
-}
-
-// 2013.6.5
-// CZT
-// Get uf_starv; Only for uniform!
-float ** DestinNetworkAlt::getStarv()
-{
-    float ** starv;
-    MALLOC(starv, float *, destin->nLayers);
-    int i;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        MALLOC(starv[i], float, destin->nb[i]);
-        for(int j=0; j<destin->nb[i]; ++j)
-        {
-            starv[i][j] = destin->uf_starv[i][j];
-        }
-    }
-    return starv;
-}
-
-// 2013.6.6
-// CZT
-// Get uf_persistWinCounts; Only for uniform!
-long ** DestinNetworkAlt::getPersistWinCounts()
-{
-    long ** persistWinCounts;
-    MALLOC(persistWinCounts, long *, destin->nLayers);
-    int i;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        MALLOC(persistWinCounts[i], long, destin->nb[i]);
-        for(int j=0; j<destin->nb[i]; ++j)
-        {
-            persistWinCounts[i][j] = destin->uf_persistWinCounts[i][j];
-        }
-    }
-    return persistWinCounts;
-}
-
-// 2013.6.5
-// CZT
-// Get uf_sigma; Only for uniform!
-float ** DestinNetworkAlt::getSigma()
-{
-    float ** sigma;
-    MALLOC(sigma, float *, destin->nLayers);
-    int i;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        Node * currNode = getNode(i, 0, 0);
-        MALLOC(sigma[i], float, currNode->nb*currNode->ns);
-        for(int j=0; j<currNode->nb*currNode->ns; ++j)
-        {
-            sigma[i][j] = destin->uf_sigma[i][j];
-        }
-    }
-    return sigma;
-}
-
-// 2013.6.13
-// CZT: get uf_persistWinCounts_detailed, only for uniform!
-long ** DestinNetworkAlt::getPersistWinCounts_detailed()
-{
-    long ** persistWinCounts_detailed;
-    MALLOC(persistWinCounts_detailed, long *, destin->nLayers);
-    int i;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        MALLOC(persistWinCounts_detailed[i], long, destin->nb[i]);
-        for(int j=0; j<destin->nb[i]; ++j)
-        {
-            persistWinCounts_detailed[i][j] = destin->uf_persistWinCounts_detailed[i][j];
-        }
-    }
-    return persistWinCounts_detailed;
-}
-
-// 2013.7.4
-// CZT: get uf_absvar, only for uniform;
-float ** DestinNetworkAlt::getAbsvar()
-{
-    float ** absvar;
-    MALLOC(absvar, float *, destin->nLayers);
-    int i, j;
-    for(i=0; i<destin->nLayers; ++i)
-    {
-        Node * currNode = getNode(i, 0, 0);
-        MALLOC(absvar[i], float, currNode->nb*currNode->ns);
-        for(j=0; j<currNode->nb*currNode->ns; ++j)
-        {
-            absvar[i][j] = destin->uf_absvar[i][j];
-        }
-    }
-    return absvar;
+    DeleteUniformCentroid(destin, layer, idx);
 }
 
 // 2013.7.4
@@ -377,14 +134,14 @@ float DestinNetworkAlt::getSep(int layer)
                 float fTemp;
                 for(k=0; k<currNode->ni; ++k)
                 {
-                    fSum += fabs(currNode->mu[i*currNode->ns + k]
-                                 - currNode->mu[j*currNode->ns + k]);
+                    fSum += fabs(currNode->mu[i][k]
+                                 - currNode->mu[j][k]);
                 }
                 for(k=currNode->ni + currNode->nb + currNode->np + currNode->nc;
                     k < currNode->ns; ++k)
                 {
-                    fSum += fabs(currNode->mu[i*currNode->ns + k]
-                                 - currNode->mu[j*currNode->ns + k]);
+                    fSum += fabs(currNode->mu[i][k]
+                                 - currNode->mu[j][k]);
                 }
                 fTemp = fSum / (currNode->ni * (layer==0 ? destin->extRatio : 1));
 
@@ -409,28 +166,18 @@ float DestinNetworkAlt::getVar(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
     std::vector<float> var(currNode->nb);
-    int i,j;
-    float fSum;
-    for(i=0; i<currNode->nb; ++i)
+    int j;
+    float fSum = 0.0;
+    for(j=0; j<currNode->ni; ++j)
     {
-        fSum = 0.0;
-        for(j=0; j<currNode->ni; ++j)
-        {
-            fSum += destin->uf_absvar[layer][i*currNode->ns + j];
-        }
-        for(j=currNode->ni+currNode->nb+currNode->np+currNode->nc;
-            j<currNode->ns; ++j)
-        {
-            fSum += destin->uf_absvar[layer][i*currNode->ns + j];
-        }
-        var[i] = fSum / (currNode->ni * (layer == 0 ? destin->extRatio : 1));
+        fSum += destin->uf_absvar[layer][j];
     }
-    fSum = 0.0;
-    for(i=0; i<currNode->nb; ++i)
+    for(j=currNode->ni+currNode->nb+currNode->np+currNode->nc;
+        j<currNode->ns; ++j)
     {
-        fSum += var[i];
+        fSum += destin->uf_absvar[layer][j];
     }
-    return fSum/currNode->nb;
+    return fSum / (currNode->ni * (layer == 0 ? destin->extRatio : 1));
 }
 
 // 2013.7.4
@@ -451,17 +198,17 @@ void DestinNetworkAlt::displayFloatCentroids(int layer)
     {
         for(int j=0; j<currNode->ni; ++j)
         {
-            printf("%f  ", currNode->mu[i*currNode->ns + j]);
+            printf("%f  ", currNode->mu[i][j]);
         }
         printf("\n");
         for(int j=0; j<currNode->nb; ++j)
         {
-            printf("%f  ", currNode->mu[i*currNode->ns + j + currNode->ni]);
+            printf("%f  ", currNode->mu[i][j + currNode->ni]);
         }
         printf("\n");
         for(int j=0; j<currNode->np; ++j)
         {
-            printf("%f  ", currNode->mu[i*currNode->ns + j + currNode->ni + currNode->nb]);
+            printf("%f  ", currNode->mu[i][j + currNode->ni + currNode->nb]);
         }
         printf("\n");
         if(i != currNode->nb-1)
@@ -489,21 +236,9 @@ void DestinNetworkAlt::getSelectedCentroid(int layer, int idx, std::vector<float
     outCen.clear();
 
     Node * currNode = getNode(layer, 0, 0);
-    for(int i=currNode->ns*idx; i<currNode->ns*(idx+1); ++i)
+    for(int i=0; i<currNode->ns; ++i)
     {
-        outCen.push_back(currNode->mu[i]);
-    }
-}
-
-void DestinNetworkAlt::getSelectedSigma(int layer, int idx, std::vector<float> & outSigma)
-{
-    // Clear the vector
-    outSigma.clear();
-
-    Node * currNode = getNode(layer, 0, 0);
-    for(int i=currNode->ns*idx; i<currNode->ns*(idx+1); ++i)
-    {
-        outSigma.push_back(destin->uf_sigma[layer][i]);
+        outCen.push_back(currNode->mu[idx][i]);
     }
 }
 
@@ -701,14 +436,14 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
                 for(int k=0; k<currNode->ni; ++k)
                 //for(int k=0; k<currNode->ns; ++k)
                 {
-                    delta = extendCen[i][k] - currNode->mu[j*currNode->ns + k];
+                    delta = extendCen[i][k] - currNode->mu[j][k];
 
                     delta *= delta;
 
                     // Assume starv is 1
                     delta *= 1;
 
-                    sumMal += delta/destin->uf_sigma[srcLayer][j*currNode->ns + k];
+                    sumMal += delta/destin->uf_sigma[srcLayer][j][k];
                 }
 
                 sumMal = sqrt(sumMal);
@@ -798,7 +533,7 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                     for(int k=j*childNode->ns; k<j*childNode->ns+childNode->ni; ++k)
                     {
                         //
-                        tempCen[k-j*childNode->ns] += normSelCen[i*childNode->nb+j] * childNode->mu[k];
+                        tempCen[k-j*childNode->ns] += normSelCen[i*childNode->nb+j] * childNode->mu[j][k-j*childNode->ns];
                     }
                 }
                 //displayFloatVector("\n", tempCen);
@@ -832,7 +567,7 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                     for(int k=j*childNode->ns; k<j*childNode->ns+childNode->ni; ++k)
                     {
                         //
-                        tempCen[k - j*childNode->ns] += normSelCen[i*childNode->nb + j] * childNode->mu[k];
+                        tempCen[k - j*childNode->ns] += normSelCen[i*childNode->nb + j] * childNode->mu[j][k-j*childNode->ns];
                     }
                 }
 
@@ -909,16 +644,16 @@ void DestinNetworkAlt::printNodeCentroidPositions(int layer, int row, int col){
             if(dimension % (n->ni / 4) == 0){
                 printf("\n");
             }
-            printf("%.5f ", n->mu[centroid*n->ns + dimension]);
+            printf("%.5f ", n->mu[centroid][dimension]);
         }
         printf("\n");
         printf(" self ");
         for(int end = dimension + n->nb ; dimension < end ; dimension++){
-            printf("%.5f ", n->mu[centroid*n->ns + dimension]);
+            printf("%.5f ", n->mu[centroid][dimension]);
         }
         printf(" parent ");
         for(int end = dimension + n->np ; dimension < end ; dimension++){
-            printf("%.5f ", n->mu[centroid*n->ns + dimension]);
+            printf("%.5f ", n->mu[centroid][dimension]);
         }
         printf("\n");
     }
@@ -1040,7 +775,7 @@ void DestinNetworkAlt::moveCentroidToInput(int layer, int row, int col, int cent
     if(centroid >= destin->nb[layer]){
         throw std::domain_error("moveCentroidToInput: centroid out of bounds.");
     }
-    float * cent = &n->mu[centroid * n->ns];
+    float * cent = n->mu[centroid];
     memcpy(cent, n->observation, n->ns * sizeof(float));
 }
 

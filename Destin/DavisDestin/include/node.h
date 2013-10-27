@@ -22,7 +22,7 @@
 /* Node Struct Definition */
 typedef struct Node {
     /* HOST VARIABLES BEGIN */
-	struct Destin *  d;			// referece to parent destin network
+    struct Destin * d;      // referece to parent destin network
     // node parameters
     uint    nIdx;           // node id. Can retrieve this node from a destin heirarchy like this: destin->nodes[nIdx]
     uint     nb;            // number of beliefs ( number of centroids )
@@ -42,11 +42,9 @@ typedef struct Node {
     uint     genWinner;     // winning centroid index for generative procedure
 
     // node statistics
-    //TODO: make a uf_mu for uniform shared centroids instead of treating it differently
-    float * mu;             // centroid locations ( a table nb x ns  ) . In uniform destin, all nodes in a layer share this pointer)
-                            // See GetObservation for structure of centroids. Input -> own beliefs -> parent beliefs -> context ( unused )
-
-    float * sigma;          // centroid variances
+    float ** mu;            // centroid locations (resizable array nb x ns)
+                            // in uniform destin, all nodes in a layer share the pointer to d->uf_mu[layer]
+    float ** sigma;         // centroid variances (resizable array nb x ns)
     float * starv;          // centroid starvation coefficients. ( points to destin->uf_starv if it's uniform destin)
 
     float   muSqDiff;
@@ -56,7 +54,6 @@ typedef struct Node {
                             // (null for non-input layer nodes)
     float * observation;    // contains the node's input, previous 
                             // belief, and parent's previous belief ( length ni+nb+np )
-    float * genObservation;
     
     // node beliefs
     float * beliefEuc;      // belief (euclidean distance), length nb
@@ -94,12 +91,20 @@ void  InitNode(                         // initialize a node.
                  float,                 // temperature
                  Node *,                // pointer node on host
                  uint *,                // input offsets from input image (NULL for any non-input node)
-                 float *,               // pointer to shared centroids for nodes in a layer. Is NULL if centroids are not shared ( i.e. classic destin, non uniform)
                  uint                   // number of children
                 );
 
+// Recalculates ns, checks destin maxNb i MaxNs
+void UpdateNodeSizes(
+                 Node *,                // pointer to node
+                 uint ni,               // new input dimensionality
+                 uint nb,               // new previous belief dimensionality
+                 uint np,               // new parent belief dimensionality
+                 uint nc                // new context dimensionality
+);
+
 // 2013.6.21
-void evenInitForMu(float * tempMu, int tempNb, int tempNs);
+void evenInitForMu(float ** tempMu, int tempNb, int tempNs);
 
 void DestroyNode(
                  Node *
@@ -145,7 +150,7 @@ void Uniform_AverageDeltas(
 void Uniform_ApplyDeltas(
                     struct Destin *,
                     uint,               // layer to apply deltas
-                    float *             // shared sigma float array to use. Table nb x ns
+                    float **            // shared sigma float array to use. Table nb x ns
                 );
 
 void Uniform_UpdateStarvation(

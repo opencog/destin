@@ -5,9 +5,12 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define PRINTF printf
 
+#define _MIN(a, b)       (a < b ? a : b)
+#define _MAX(a, b)       (a > b ? a : b)
 
 #ifdef UNIT_TEST
 #define log_info(s...)do{}while(0)
@@ -34,5 +37,22 @@
 #ifdef _WIN32
 typedef unsigned int uint;
 #endif
+
+#define MIN_SIZEV       16
+#define SIZEV(n) ((n < MIN_SIZEV) ? MIN_SIZEV : 1 << ((uint)(log(n-1)/log(2)) + 1))
+
+#define MALLOCV(s,t,n) {                                    \
+    if((s = (t *) malloc(SIZEV(n*sizeof(t)))) == NULL) {    \
+        oops("error: malloc()\n");                          \
+    }                                                       \
+}
+
+#define REALLOCV(s,t,n,c) {                                 \
+    if (SIZEV((n+c)*sizeof(t)) > SIZEV(n*sizeof(t))) {      \
+        if((s = (t *) realloc(s, SIZEV((n+c)*sizeof(t)))) == NULL) {   \
+            oops("error: realloc()\n");                     \
+        }                                                   \
+    }                                                       \
+}
 
 #endif
