@@ -127,6 +127,10 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
 
             // decrease centroid dimensionality for each node from layer l+1
             UpdateNodeSizes(n, n->ni - n->childNumber, n->nb, n->np, n->nc);
+
+            // pointers may change due to reallocation
+            n->mu = d->uf_mu[l+1];
+            n->starv = d->uf_starv[l+1];
         }
     }
 
@@ -156,9 +160,12 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
 
             // decrease centroid dimensionality for each node from layer l-1
             UpdateNodeSizes(n, n->ni, n->nb, n->np-1, n->nc);
+
+            // pointers may change due to reallocation
+            n->mu = d->uf_mu[l-1];
+            n->starv = d->uf_starv[l-1];
         }
     }
-
 }
 
 void AddUniformCentroid(Destin *d, uint l)
@@ -260,6 +267,10 @@ void AddUniformCentroid(Destin *d, uint l)
 
             // increase centroid dimensionality for each node from layer l+1
             UpdateNodeSizes(n, n->ni + n->childNumber, n->nb, n->np, n->nc);
+
+            // pointers may change due to reallocation
+            n->mu = d->uf_mu[l+1];
+            n->starv = d->uf_starv[l+1];
         }
     }
 
@@ -289,6 +300,10 @@ void AddUniformCentroid(Destin *d, uint l)
 
             // increase centroid dimensionality for each node from layer l-1
             UpdateNodeSizes(n, n->ni, n->nb, n->np+1, n->nc);
+
+            // pointers may change due to reallocation
+            n->mu = d->uf_mu[l-1];
+            n->starv = d->uf_starv[l-1];
         }
     }
 }

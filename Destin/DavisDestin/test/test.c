@@ -991,6 +991,13 @@ int testCentroidImageGeneration(){
     return 0;
 }
 
+// Used for delete element callback tests
+long _testDeleteLongCounter;
+void _testDeleteLong(void * elem)
+{
+    _testDeleteLongCounter += *((long *) elem);
+}
+
 int testArrayOperations() {
     assertIntEquals(16, SIZEV(0));
     assertIntEquals(16, SIZEV(1));
@@ -1033,9 +1040,9 @@ int testArrayOperations() {
 
     // Check array insert element
     MALLOCV(intArray,int,0);
-    ArrayInsertInt(&intArray, 0, 0, 1);
-    ArrayInsertInt(&intArray, 1, 0, 2);
-    ArrayInsertInt(&intArray, 2, 0, 3);
+    ArrayAppendInt(&intArray, 0, 3);
+    ArrayAppendInt(&intArray, 1, 2);
+    ArrayAppendInt(&intArray, 2, 1);
     ArrayInsertInt(&intArray, 3, 2, 4);
     ArrayInsertInt(&intArray, 4, 2, 5);
     assertIntArrayEqualsV(intArray, 5, 3, 2, 5, 4, 1);
@@ -1072,14 +1079,30 @@ int testArrayOperations() {
     assertTrue(intPointerArray[2] == index2);
     ArrayDeletePtr((void *) &intPointerArray, 3, 1);
     assertTrue(intPointerArray[1] == index2);
+    FREE(intPointerArray);
+
+    // Check if delete element callback is executed
+    long * longArray;
+    MALLOCV(longArray,long,0);
+    ArrayAppendLong(&longArray, 0, 5);
+    int index4[3] = {1, 1, 1};
+    long values4[3] = {7, 8, 9};
+    ArrayInsertLongs(&longArray, 1, index4, values4, 3);
+    assertLongArrayEqualsV(longArray, 4, 5L, 7L, 8L, 9L);
+
+    _testDeleteLongCounter = 0;
+    ArrayDeleteElement((void *)&longArray, sizeof(long), 4, 2, &_testDeleteLong);
+    assertTrue(_testDeleteLongCounter == 8L);
+    int index5[2] = {0, 2};
+    ArrayDeleteMultiple((void *)&longArray, sizeof(long), 3, index5, 2, &_testDeleteLong);
+    assertTrue(_testDeleteLongCounter == 22L);
+
+    // Check delete array
 
     return 0;
 }
 
 int main(int argc, char ** argv ){
-
-    RUN(testArrayOperations);
-    RUN(testArrayOperations);
 
     //RUN( shouldFail );
     RUN(testVarArgs);
