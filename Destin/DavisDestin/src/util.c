@@ -636,7 +636,7 @@ void InitNode
     float       temp,
     Node        *node,
     uint        *inputOffsets,
-    uint        childNumber
+    uint        nChildren
     )
 {
 
@@ -655,7 +655,7 @@ void InitNode
     node->temp          = temp;
     node->winner        = 0;
     node->layer         = layer;
-    node->childNumber   = childNumber;
+    node->nChildren     = nChildren;
 
     int relativeIndex = nodeIdx - d->layerNodeOffsets[layer];
     node->row           = relativeIndex / d->layerWidth[layer];
@@ -692,8 +692,8 @@ void InitNode
     {
         node->children = NULL;
     } else {
-        MALLOC( node->children, Node *, childNumber );
-        for ( i = 0; i < childNumber; i++ )
+        MALLOC( node->children, Node *, nChildren );
+        for ( i = 0; i < nChildren; i++ )
         {
             node->children[i] = NULL;
         }

@@ -52,7 +52,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
         uint childBeliefs = n->d->nb[n->layer - 1];
 
         i = 0;
-        for ( j = 0; j < n->childNumber; j++ )
+        for ( j = 0; j < n->nChildren; j++ )
         {
             // children may be NULL i.e. if childsNumber is not square for DeSTIN square geometry
             if ( n->children[j] != NULL )

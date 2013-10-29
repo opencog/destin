@@ -102,31 +102,31 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
     {
         n = GetNodeFromDestin(d, l+1, 0, 0);
         ns = n->ns;
-        uint childIndexes[n->childNumber];  // indexes of deleted centroids for all childs
+        uint childIndexes[n->nChildren];  // indexes of deleted centroids for all childs
 
-        for (i = 0; i < n->childNumber; i++)
+        for (i = 0; i < n->nChildren; i++)
         {
             childIndexes[i] = i*nb + idx;
         }
         for (i = 0; i < n->nb; i++)
         {
-            ArrayDeleteFloats(&d->uf_mu[l+1][i], ns, childIndexes, n->childNumber);
-            ArrayDeleteFloats(&d->uf_sigma[l+1][i], ns, childIndexes, n->childNumber);
-            ArrayDeleteFloats(&d->uf_avgDelta[l+1][i], ns, childIndexes, n->childNumber);
-            ArrayDeleteFloats(&d->uf_avgSquaredDelta[l+1][i], ns, childIndexes, n->childNumber);
+            ArrayDeleteFloats(&d->uf_mu[l+1][i], ns, childIndexes, n->nChildren);
+            ArrayDeleteFloats(&d->uf_sigma[l+1][i], ns, childIndexes, n->nChildren);
+            ArrayDeleteFloats(&d->uf_avgDelta[l+1][i], ns, childIndexes, n->nChildren);
+            ArrayDeleteFloats(&d->uf_avgSquaredDelta[l+1][i], ns, childIndexes, n->nChildren);
         }
-        ArrayDeleteFloats(&d->uf_absvar[l], ns, childIndexes, n->childNumber);
-        ArrayDeleteFloats(&d->uf_avgAbsDelta[l], ns, childIndexes, n->childNumber);
+        ArrayDeleteFloats(&d->uf_absvar[l], ns, childIndexes, n->nChildren);
+        ArrayDeleteFloats(&d->uf_avgAbsDelta[l], ns, childIndexes, n->nChildren);
 
         for (j = 0; j < d->layerSize[l+1]; j++)
         {
             n =& d->nodes[d->layerNodeOffsets[l+1] + j];
 
-            ArrayDeleteFloats(&n->delta, ns, childIndexes, n->childNumber);
-            ArrayDeleteFloats(&n->observation, ns, childIndexes, n->childNumber);
+            ArrayDeleteFloats(&n->delta, ns, childIndexes, n->nChildren);
+            ArrayDeleteFloats(&n->observation, ns, childIndexes, n->nChildren);
 
             // decrease centroid dimensionality for each node from layer l+1
-            UpdateNodeSizes(n, n->ni - n->childNumber, n->nb, n->np, n->nc);
+            UpdateNodeSizes(n, n->ni - n->nChildren, n->nb, n->np, n->nc);
 
             // pointers may change due to reallocation
             n->mu = d->uf_mu[l+1];
@@ -238,11 +238,11 @@ void AddUniformCentroid(Destin *d, uint l)
     {
         n = GetNodeFromDestin(d, l+1, 0, 0);
         ns = n->ns;
-        uint childIndexes[n->childNumber];  // indexes of added centroids for all childs
-        float childValues[n->childNumber];  // initial values for all childs
-        float childSigmas[n->childNumber];
+        uint childIndexes[n->nChildren];  // indexes of added centroids for all childs
+        float childValues[n->nChildren];  // initial values for all childs
+        float childSigmas[n->nChildren];
 
-        for (i = 0; i < n->childNumber; i++)
+        for (i = 0; i < n->nChildren; i++)
         {
             childIndexes[i] = i*nb;
             childValues[i] = 0;
@@ -250,23 +250,23 @@ void AddUniformCentroid(Destin *d, uint l)
         }
         for (i = 0; i < n->nb; i++)
         {
-            ArrayInsertFloats(&d->uf_mu[l+1][i], ns, childIndexes, childValues, n->childNumber);
-            ArrayInsertFloats(&d->uf_sigma[l+1][i], ns, childIndexes, childSigmas, n->childNumber);
-            ArrayInsertFloats(&d->uf_avgDelta[l+1][i], ns, childIndexes, childValues, n->childNumber);
-            ArrayInsertFloats(&d->uf_avgSquaredDelta[l+1][i], ns, childIndexes, childValues, n->childNumber);
+            ArrayInsertFloats(&d->uf_mu[l+1][i], ns, childIndexes, childValues, n->nChildren);
+            ArrayInsertFloats(&d->uf_sigma[l+1][i], ns, childIndexes, childSigmas, n->nChildren);
+            ArrayInsertFloats(&d->uf_avgDelta[l+1][i], ns, childIndexes, childValues, n->nChildren);
+            ArrayInsertFloats(&d->uf_avgSquaredDelta[l+1][i], ns, childIndexes, childValues, n->nChildren);
         }
-        ArrayInsertFloats(&d->uf_absvar[l], ns, childIndexes, childValues, n->childNumber);
-        ArrayInsertFloats(&d->uf_avgAbsDelta[l], ns, childIndexes, childValues, n->childNumber);
+        ArrayInsertFloats(&d->uf_absvar[l], ns, childIndexes, childValues, n->nChildren);
+        ArrayInsertFloats(&d->uf_avgAbsDelta[l], ns, childIndexes, childValues, n->nChildren);
 
         for (j = 0; j < d->layerSize[l+1]; j++)
         {
             n =& d->nodes[d->layerNodeOffsets[l+1] + j];
 
-            ArrayInsertFloats(&n->delta, ns, childIndexes, childValues, n->childNumber);
-            ArrayInsertFloats(&n->observation, ns, childIndexes, childValues, n->childNumber);
+            ArrayInsertFloats(&n->delta, ns, childIndexes, childValues, n->nChildren);
+            ArrayInsertFloats(&n->observation, ns, childIndexes, childValues, n->nChildren);
 
             // increase centroid dimensionality for each node from layer l+1
-            UpdateNodeSizes(n, n->ni + n->childNumber, n->nb, n->np, n->nc);
+            UpdateNodeSizes(n, n->ni + n->nChildren, n->nb, n->np, n->nc);
 
             // pointers may change due to reallocation
             n->mu = d->uf_mu[l+1];
@@ -377,7 +377,7 @@ void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint ne
         n = GetNodeFromDestin(d, l+1, 0, 0);
         for (i = 0; i < n->nb; i++)
         {
-            for (j = 0; j < n->childNumber; j++)
+            for (j = 0; j < n->nChildren; j++)
             {
                 UpdateAvgNearNeighbours(d->uf_mu[l+1][i], neighbours, nearest, j*nb, idx);
                 UpdateAvgNearNeighbours(d->uf_sigma[l+1][i], neighbours, nearest, j*nb, idx);
