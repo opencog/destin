@@ -34,7 +34,7 @@ typedef struct Node {
     uint     nc;            // number of classes
     float   starvCoeff;     // starvation coefficient
     float   beta;           // sigma update weight (centroid variance)
-    float   nLambda;        // parent previous belief weighting
+    float   lambdaCoeff;    // parent previous belief weighting
     float   gamma;          // previous belief weighting
     float   temp;           // temperature for boltzmann normalization
 

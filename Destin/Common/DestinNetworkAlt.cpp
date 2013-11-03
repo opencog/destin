@@ -37,7 +37,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
         unsigned int centroid_counts [], bool isUniform, int extRatio) :
         training(true),
         beta(.01),
-        lambda(.1),
+        lambdaCoeff(.1),
         gamma(.1),
         isUniform(isUniform),
         centroidImages(NULL),
@@ -76,7 +76,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
             centroid_counts,
             n_classes,
             beta,
-            lambda,
+            lambdaCoeff,
             gamma,
             temperatures,
             starv_coef,
@@ -733,12 +733,12 @@ void DestinNetworkAlt::setParentBeliefDamping(float gamma){
     }
 }
 
-void DestinNetworkAlt::setPreviousBeliefDamping(float lambda){
+void DestinNetworkAlt::setPreviousBeliefDamping(float lambdaCoeff){
     if(gamma < 0 || gamma > 1.0){
-        throw std::domain_error("setParentBeliefDamping: lambda must be between 0 and 1");
+        throw std::domain_error("setParentBeliefDamping: lambdaCoeff must be between 0 and 1");
     }
     for(int n = 0; n < destin->nNodes ; n++){
-        destin->nodes[n].nLambda = lambda;
+        destin->nodes[n].lambdaCoeff = lambdaCoeff;
     }
 
 }
@@ -760,7 +760,7 @@ void DestinNetworkAlt::load(const char * fileName){
     this->beta = n->beta;
     this->gamma = n->gamma;
     this->isUniform = destin->isUniform;
-    this->lambda = n->nLambda;
+    this->lambdaCoeff = n->lambdaCoeff;
 
     if(temperatures != NULL){
         delete [] temperatures;

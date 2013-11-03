@@ -57,7 +57,7 @@ Destin * CreateDestin( char *filename ) {
     
     uint nl, nc, i, nMovements;
     uint *nci, *nb;
-    float beta, lambda, gamma, starvCoeff;
+    float beta, lambdaCoeff, gamma, starvCoeff;
     float *temp;
 
     // parse config file
@@ -86,7 +86,7 @@ Destin * CreateDestin( char *filename ) {
 
     // get coeffs
     fscanfResult = fscanf(configFile, "%f", &beta);
-    fscanfResult = fscanf(configFile, "%f", &lambda);
+    fscanfResult = fscanf(configFile, "%f", &lambdaCoeff);
     fscanfResult = fscanf(configFile, "%f", &gamma);
     fscanfResult = fscanf(configFile, "%f", &starvCoeff);
 
@@ -106,10 +106,10 @@ Destin * CreateDestin( char *filename ) {
 
     BeliefTransformEnum bte = BeliefTransform_S_to_E(bts);
 
-    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
+    printf("beta: %0.2f. lambdaCoeff: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambdaCoeff, gamma, starvCoeff);
     printf("isUniform: %s. belief transform: %s.\n", isUniform ? "YES" : "NO", bts);
 
-    newDestin = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, 1);
+    newDestin = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff, nMovements, isUniform, 1);
     SetBeliefTransform(newDestin, bte);
 
     fclose(configFile);
@@ -151,7 +151,7 @@ void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inpu
     }
 };
 
-Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
+Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float lambdaCoeff, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
 {
     uint i, j, l, maxNb, maxNs;
     Destin *d;
@@ -210,7 +210,7 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float la
                         starvCoeff,
                         beta,
                         gamma,
-                        lambda,
+                        lambdaCoeff,
                         temp[l],
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
@@ -457,7 +457,7 @@ void SaveDestin( Destin *d, char *filename )
     // write destin params to disk
     fwrite(d->temp,                 sizeof(float),              d->nLayers,  dFile);
     fwrite(&d->nodes[0].beta,       sizeof(float),              1,           dFile); //TODO consider moving these constants to the destin struc
-    fwrite(&d->nodes[0].nLambda,    sizeof(float),              1,           dFile);
+    fwrite(&d->nodes[0].lambdaCoeff,sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
     fwrite(&d->extRatio,            sizeof(int),                1,           dFile);
@@ -525,7 +525,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     int extendRatio; //TODO: make this a uint
     uint *nci, *nb;
 
-    float beta, lambda, gamma, starvCoeff;
+    float beta, lambdaCoeff, gamma, starvCoeff;
     float *temp;
 
     dFile = fopen(filename, "r");
@@ -557,12 +557,12 @@ Destin * LoadDestin( Destin *d, const char *filename )
     // read destin params from disk
     freadResult = fread(temp,         sizeof(float),    nl,  dFile);
     freadResult = fread(&beta,        sizeof(float),    1,   dFile);
-    freadResult = fread(&lambda,      sizeof(float),    1,   dFile);
+    freadResult = fread(&lambdaCoeff,      sizeof(float),    1,   dFile);
     freadResult = fread(&gamma,       sizeof(float),    1,   dFile);
     freadResult = fread(&starvCoeff,  sizeof(float),    1,   dFile);
     freadResult = fread(&extendRatio, sizeof(int),      1,   dFile);
 
-    d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temp, starvCoeff, nMovements, isUniform, extendRatio);
+    d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff, nMovements, isUniform, extendRatio);
 
     // temporary arrays were copied in InitDestin
     FREE(nb); nb = NULL;
@@ -591,7 +591,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
             for(i = 0 ; i < d->nb[l]; i++){
                 freadResult = fread(d->uf_mu[l][i],          sizeof(float),  nTmp->ns,    dFile);
                 freadResult = fread(d->uf_sigma[l][i],       sizeof(float),  nTmp->ns,    dFile);
-                freadResult = fread(d->uf_avgDelta[l][i],       sizeof(float),  nTmp->ns,    dFile);
+                freadResult = fread(d->uf_avgDelta[l][i],    sizeof(float),  nTmp->ns,    dFile);
             }
             freadResult = fread(d->uf_absvar[l],             sizeof(float),  nTmp->ns,    dFile);
             freadResult = fread(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],    dFile);
@@ -632,7 +632,7 @@ void InitNode
     float       starvCoeff,
     float       beta,
     float       gamma,
-    float       lambda,
+    float       lambdaCoeff,
     float       temp,
     Node        *node,
     uint        *inputOffsets,
@@ -650,7 +650,7 @@ void InitNode
     node->nc            = nc;
     node->starvCoeff    = starvCoeff;
     node->beta          = beta;
-    node->nLambda       = lambda;
+    node->lambdaCoeff   = lambdaCoeff;
     node->gamma         = gamma;
     node->temp          = temp;
     node->winner        = 0;

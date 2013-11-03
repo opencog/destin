@@ -17,7 +17,7 @@ Destin * makeDestinFromLayerCfg(uint layers, uint *nci, uint *nb)
 
     uint nc = 0;
     float beta = 0.001;
-    float lambda = 0.10;
+    float lambdaCoeff = 0.10;
     float gamma = 0.10;
 
     float temperature [] = {7.5, 8.5, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0};
@@ -25,7 +25,7 @@ Destin * makeDestinFromLayerCfg(uint layers, uint *nci, uint *nb)
     uint nMovements = 0;
     bool isUniform = true;
 
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     return d;
 }
@@ -47,7 +47,7 @@ int testInit(){
     uint nb [] = {1}; //1 centroid
     uint nc = 0;
     float beta = 1;
-    float lambda = 1;
+    float lambdaCoeff = 1;
     float gamma = 1;
     float temperature [] = {1};
     float starvCoef = 0.1;
@@ -59,7 +59,7 @@ int testInit(){
         .09, .10, .11, .12,
         .13, .14, .15, .16
     };
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     Node * n = &d->nodes[0];
 
@@ -76,7 +76,7 @@ int testInit(){
 
     //test uniform destin init
     isUniform = true;
-    d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     printf("Inited uniform.\n");
@@ -94,13 +94,13 @@ int testFormulateNotCrash(){
     uint nb [] = {1}; //1 centroid
     uint nc = 0;
     float beta = 1;
-    float lambda = 1;
+    float lambdaCoeff = 1;
     float gamma = 1;
     float temperature [] = {1};
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     float image [] = {0.0};
     FormulateBelief(d, image );
@@ -117,13 +117,13 @@ int testFormulateStages(){
     uint nb [] = {2}; //2 centroids
     uint nc = 0; // 0 classes
     float beta = 0.001;
-    float lambda = 1;
+    float lambdaCoeff = 1;
     float gamma = 1;
     float temperature [] = {5};
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = false;
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1;
     float image [] = {0.55};
@@ -247,13 +247,13 @@ int testUniform(){
     uint nb [] = {4,4}; //4 shared centroids per layer
     uint nc = 0; // 0 classes
     float beta = 0.001;
-    float lambda = 1;
+    float lambdaCoeff = 1;
     float gamma = 1;
     float temperature [] = {10, 10};
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     assertTrue(d->isUniform);
 
@@ -397,13 +397,13 @@ int testUniformFormulate(){
     uint nb [] = {4,4}; //4 shared centroids per layer
     uint nc = 0; // 0 classes
     float beta = 0.001;
-    float lambda = 1;
+    float lambdaCoeff = 1;
     float gamma = 1;
     float temperature [] = {10, 10};
     float starvCoef = 0.1;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1; //turn on cluster training
     d->layerMask[1] = 1;
@@ -457,7 +457,7 @@ int testSaveDestin1(){
     uint nb [] = {3,4}; //4 shared centroids per layer
     uint nc = 6; // 0 classes
     float beta = 0.001;
-    float lambda = 0.96;
+    float lambdaCoeff = 0.96;
     float gamma = 0.78;
     float temperature [] = {7.5, 8.5};
     float starvCoef = 0.12;
@@ -466,7 +466,7 @@ int testSaveDestin1(){
     uint ns0 = nci[0] + nb[0] + nb[1] + nc;
     uint ns1 = 4*nb[0] + nb[1] + 0 + nc;
 
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
@@ -507,7 +507,7 @@ int testSaveDestin1(){
 
     assertTrue(n->ni == 16);
     assertFloatEquals(0.001, n->beta, 1e-10);
-    assertFloatEquals(0.96, n->nLambda, 1e-07); //accuracy is not very good
+    assertFloatEquals(0.96, n->lambdaCoeff, 1e-07); //accuracy is not very good
     assertFloatEquals( 0.78, n->gamma, 3e-8);
     assertFloatArrayEqualsEV(d->temp, 1e-12, 2, 7.5, 8.5 );
     assertTrue(n->starvCoeff == starvCoef);
@@ -554,14 +554,14 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTra
     uint nb [] = {3, 4, 2, 4}; //4 shared centroids per layer
     uint nc = 6; // 0 classes
     float beta = 0.001;
-    float lambda = 0.56;
+    float lambdaCoeff = 0.56;
     float gamma = 0.28;
     float temperature [] = {3.5, 4.5, 5.0, 4.4};
     float starvCoef = 0.12;
     uint nMovements = 4;
     uint i, j;
 
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, bt);
     turnOnMask(d);
 
@@ -654,7 +654,7 @@ int testLoadFromConfig(){
     Node * n = &d->nodes[0];
     assertTrue(n->ni == 16);
     assertFloatEquals(0.002, n->beta, 1e-8);
-    assertFloatEquals(0.1, n->nLambda, 1e-8);
+    assertFloatEquals(0.1, n->lambdaCoeff, 1e-8);
     assertFloatEquals(0.2, n->gamma, 1e-8);
     assertFloatEquals(0.001, n->starvCoeff, 1e-8);
     assertTrue(d->beliefTransform == DST_BT_BOLTZ);
@@ -671,13 +671,13 @@ int _testGenerateInputFromBelief(bool isUniform){
     uint nb [] = {3,4,2,2}; //centroids per layer
     uint nc = 0;
     float beta = 0.001;
-    float lambda = 0.10;
+    float lambdaCoeff = 0.10;
     float gamma = 0.10;
     float temperature [] = {7.5, 8.5, 4.0, 4.0};
     float starvCoef = 0.12;
     uint nMovements = 0;
 
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
     d->layerMask[2] = 1;
@@ -713,13 +713,13 @@ int testGetNode(){
     uint nb [] = {2,2,2,2}; //centroids per layer
     uint nc = 0;
     float beta = 0.001;
-    float lambda = 0.10;
+    float lambdaCoeff = 0.10;
     float gamma = 0.10;
     float temperature [] = {7.5, 8.5, 4.0,3.3};
     float starvCoef = 0.12;
     uint nMovements = 0;
 
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, false, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, false, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     float image[] = {
@@ -930,13 +930,13 @@ int testCentroidImageGeneration(){
     uint nb [] = {2,2,2}; //centroids per layer
     uint nc = 0;
     float beta = 0.001;
-    float lambda = 0.10;
+    float lambdaCoeff = 0.10;
     float gamma = 0.10;
     float temperature [] = {7.5, 8.5, 4.0,3.3};
     float starvCoef = 0.12;
     uint nMovements = 0;
     bool isUniform = true;
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, 1);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, 1);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = GetNodeFromDestin(d, 0, 0 ,0);

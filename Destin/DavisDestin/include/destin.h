@@ -80,7 +80,7 @@ Destin * InitDestin(    // initialize Destin.
     uint *,             // belief dimensionality for each layer
     uint,               // number of classes
     float,              // beta coeff
-    float,              // lambda coeff
+    float,              // lambdaCoeff coeff
     float,              // gamma coeff
     float *,            // temperature for each layer
     float,              // starv coeff

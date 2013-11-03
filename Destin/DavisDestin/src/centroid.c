@@ -406,7 +406,7 @@ void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint ne
 // addCentroid
 // Keep 'shareCentroids', 'uf_starv', 'uf_sigma', 'uf_avgDelta',
 // 'uf_persistWinCounts', 'uf_persistWinCounts_detailed', 'uf_absvar';
-void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambda, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
+void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, float lambdaCoeff, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform,
                   int extRatio, int currLayer, float ** sharedCen, float ** starv, float ** sigma,
                   long **persistWinCounts, long ** persistWinCounts_detailed, float ** absvar)
 {
@@ -756,7 +756,7 @@ void addCentroid(Destin * d, uint *nci, uint nl, uint *nb, uint nc, float beta, 
                         starvCoeff,
                         beta,
                         gamma,
-                        lambda,
+                        lambdaCoeff,
                         temp[l],
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
