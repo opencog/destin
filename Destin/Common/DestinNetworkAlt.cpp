@@ -99,30 +99,6 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     isTraining(true);
 }
 
-void DestinNetworkAlt::addCentroid(unsigned int layer)
-{
-    if(!isUniform)
-    {
-        printf("The add action is only for Uniform DeSTIN!\n");
-        return;
-    }
-    Node * node = getNode(layer, 0, 0);
-
-    AddUniformCentroid(destin, layer);
-    InitUniformCentroidByAvgNearNeighbours(destin, layer, node->nb, 5);
-}
-
-void DestinNetworkAlt::deleteCentroid(unsigned int layer, unsigned int idx)
-{
-    if(!isUniform)
-    {
-        printf("The delete action is only for Uniform DeSTIN!\n");
-        return;
-    }
-
-    DeleteUniformCentroid(destin, layer, idx);
-}
-
 // 2013.7.4
 // CZT: get sep;
 float DestinNetworkAlt::getSep(int layer)
@@ -627,6 +603,11 @@ void DestinNetworkAlt::setTemperatures(float temperatures[]){
 void DestinNetworkAlt::doDestin( //run destin with the given input
         float * input_dev //pointer to input memory on device
         ) {
+
+    if (destin->isUniform){
+        Uniform_DeleteCentroids(destin);
+        Uniform_AddNewCentroids(destin);
+    }
 
     FormulateBelief(destin, input_dev);
 

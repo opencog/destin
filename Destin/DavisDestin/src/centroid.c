@@ -60,7 +60,7 @@ void InitUniformCentroids(Destin *d, uint l, uint ni, uint nb, uint np, uint ns)
         MALLOCV(d->uf_avgSquaredDelta[l][i], float, ns);
 
         d->uf_winCounts[l][i] = 0;
-        d->uf_winFreqs[l][i] = 1/nb;
+        d->uf_winFreqs[l][i] = 1/(float) nb;
         d->uf_persistWinCounts[l][i] = 0;
         d->uf_persistWinCounts_detailed[l][i] = 0;
         d->uf_starv[l][i] = 1;

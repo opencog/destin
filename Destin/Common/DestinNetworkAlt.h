@@ -105,9 +105,6 @@ public:
             float * input_dev //pointer to input memory on device
             );
 
-    void addCentroid(unsigned int layer);
-    void deleteCentroid(unsigned int layer, unsigned int idx);
-
     float getSep(int layer);
     float getVar(int layer);
     float getQuality(int layer);
