@@ -129,7 +129,8 @@ void ArrayDeleteElement(void **array, size_t size, uint length, uint index, void
 
 void ArrayFreeElement(void * element)
 {
-    FREE(element);
+    char ** _element = (char **) element;
+    FREE(*_element);
 }
 
 void ArrayDeleteInt(int **array, uint length, uint index)

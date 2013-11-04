@@ -49,6 +49,8 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     callback = NULL;
     initTemperatures(layers, centroid_counts);
     float starv_coef = 0.05;
+    float freq_coef = 0.05;
+    float freq_treshold = 0.01;
     uint n_classes = 0;//doesn't look like its used
     uint num_movements = 0; //this class does not use movements
 
@@ -80,6 +82,8 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
             gamma,
             temperatures,
             starv_coef,
+            freq_coef,
+            freq_treshold,
             num_movements,
             isUniform,
             extRatio
@@ -102,8 +106,10 @@ void DestinNetworkAlt::addCentroid(unsigned int layer)
         printf("The add action is only for Uniform DeSTIN!\n");
         return;
     }
+    Node * node = getNode(layer, 0, 0);
 
     AddUniformCentroid(destin, layer);
+    InitUniformCentroidByAvgNearNeighbours(destin, layer, node->nb, 5);
 }
 
 void DestinNetworkAlt::deleteCentroid(unsigned int layer, unsigned int idx)
@@ -621,6 +627,7 @@ void DestinNetworkAlt::setTemperatures(float temperatures[]){
 void DestinNetworkAlt::doDestin( //run destin with the given input
         float * input_dev //pointer to input memory on device
         ) {
+
     FormulateBelief(destin, input_dev);
 
     if(this->callback != NULL){

@@ -40,7 +40,9 @@ typedef struct Destin {
     BeliefTransformEnum beliefTransform;
     BeliefTransformFunc beliefTransformFunc;
 
-    float       fixedLearnRate;       // if CLS_Fixed is set for centLearnStrat, then this is the fixed learning rate to use, otherwise ignored.
+    float       freqCoeff;              // coefficient for updating centroid's estimated frequency (d->winFreqs)
+    float       freqTreshold;           // if centroid's estimated frequency deteriorate below the treshold the centroid is wiped out
+    float       fixedLearnRate;         // if CLS_Fixed is set for centLearnStrat, then this is the fixed learning rate to use, otherwise ignored.
 
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
                                         // which means all nodes in a layer share their centroids
@@ -54,6 +56,8 @@ typedef struct Destin {
     long        ** uf_persistWinCounts; // keeps track how many times the shared centroids win over the lifetime of the training the destin network.
     long        ** uf_persistWinCounts_detailed;  // Because uf_persistWinCounts just count once when a centroid won,
                                         // this counting array contains all counts for all node
+    float       ** uf_winFreqs;         // Estimated frequency how many nodes in a layer pick the given centroid as winner
+                                        // in recent history of calls of FormulateBelief (on-line algorithm)
 
     float       *** uf_avgDelta;        // used to average node centroid movement vectors
     float       *** uf_avgSquaredDelta;
@@ -84,6 +88,8 @@ Destin * InitDestin(    // initialize Destin.
     float,              // gamma coeff
     float *,            // temperature for each layer
     float,              // starv coeff
+    float,              // frequency coeff
+    float,              // frequency treshold
     uint,               // number of movements per digit presentation
     bool,               // is uniform - if nodes in a layer share one list of centroids
     int                 // extRatio
