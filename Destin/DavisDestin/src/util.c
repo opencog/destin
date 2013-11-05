@@ -847,3 +847,55 @@ float normrnd(float mean, float stddev) {
         return n2*stddev + mean;
     }
 }
+
+
+DestinConfig* CreateDefaultConfig(uint layers){
+    DestinConfig * config;
+    MALLOC(config, DestinConfig, 1);
+
+    config->beta = 0.001;
+
+    uint i, defaultCentroidsPerLayer = 5;
+
+    MALLOC(config->centroids, uint, layers);
+    for(i = 0 ; i < layers ; i++){
+        config->centroids[i] = defaultCentroidsPerLayer;
+    }
+
+    config->extRatio = 1;
+    config->freqCoeff =  0.05; //TODO: set to good value
+    config->freqTreshold = 0.01; //TODO: set to good value
+    config->gamma = 0.10;
+    config->inputDim = 16;  // 4x4 pixel input per bottom layer node
+    config->isUniform = true;
+    config->lambdaCoeff = 0.10;
+
+    MALLOC(config->layerWidths, uint, layers);
+    for(i = 0 ; i < layers ; i++){
+        config->layerWidths[i] = (uint)pow(2, layers - i - 1);
+    }
+
+    MALLOC(config->nci, uint, layers);
+    config->nci[0] = config->inputDim;
+    for(i = 1 ; i < layers ; i++){
+        config->nci[i] = 4;
+    }
+
+    config->nClasses = 0;
+    config->nLayers = layers;
+    config->nMovements = 0;
+    config->starvCoeff = 0.12;
+
+    MALLOC(config->temperatures, float, layers);
+    for(i = 0; i < layers; i++){
+        config->temperatures[i] = config->centroids[i] * 2.0;
+    }
+    return config;
+}
+
+void DestroyConfig(DestinConfig * c){
+    FREE(c->centroids);         c->centroids = NULL;
+    FREE(c->nci);    c->nci = NULL;
+    FREE(c->temperatures);      c->temperatures = NULL;
+    FREE(c);
+}

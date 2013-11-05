@@ -63,12 +63,34 @@ typedef struct Destin {
 
     float       ** uf_starv;            // shared centroids starvation
 
-    /*The following is coded by CZT*/
-    //2013.7.2
-    int inputImageSize;
-    int extRatio;
-} Destin  ;
-/* Destin Struct Definition End */
+    int         inputImageSize;         // d->layerSize[0] * d->nci[0]
+
+    /* Extend the input size by this integer amount.
+       Used for example to take in 2 images for stero vision for example,
+       or 3 RGB images at once. */
+    int         extRatio;
+
+} Destin; // end Destin typedef
+
+typedef struct DestinConfig {
+    float  beta;
+    uint  *centroids;
+    int    extRatio;
+    float  freqCoeff;
+    float  freqTreshold;
+    float  gamma;
+    uint   inputDim;        // pixels input per bottom layer node
+    bool   isUniform;
+    float  lambdaCoeff;
+    uint  *layerWidths;
+    uint  *nci;
+    uint   nClasses;
+    uint   nLayers;
+    uint   nMovements;
+    float  starvCoeff;
+    float *temperatures;
+
+} DestinConfig; // end DestinConfig typedef
 
 /* Destin Functions Begin */
 Destin * CreateDestin(                  // create destin from a config file
@@ -188,6 +210,7 @@ void Uniform_ResetStats(
                             Destin *
                           );
 
+DestinConfig* CreateDefaultConfig(uint layers);
+void DestroyConfig(DestinConfig *);
 /* Destin Functions End */
-
 #endif
