@@ -23,9 +23,12 @@ int TEST_HAS_FAILURES = false; //checked at the end to determine if any tests ha
     }                                                   \
 }
 
-
+/**
+ * Runs the test function passed in by name.
+ * The test function should return 0 for passing or non zero otherwise.
+ */
 #define RUN( f ){                           \
-    printf("Running " #f "\n");             \
+    printf("**Running " #f "\n");             \
     int r = f();                            \
     if(r != 0){                             \
         TEST_HAS_FAILURES = true;           \
@@ -355,6 +358,20 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
     }\
 }\
 
+
+#define UT_PRINT_ARRAY(the_type, format_flag)\
+    void print_##the_type##_array(the_type * array, int length){\
+        int i;\
+        printf(#the_type " array:");\
+        for(i = 0 ; i < length -1 ; i++){\
+            printf(" %i: %" format_flag ", ", i, array[i]);\
+        }\
+        printf("%i: %" format_flag "\n", i, array[i]);\
+    }\
+
+UT_PRINT_ARRAY(int, "i")
+UT_PRINT_ARRAY(float, "e")
+UT_PRINT_ARRAY(long, "li")
 
 void printFloatArray(float * array, int length){
     int i;
