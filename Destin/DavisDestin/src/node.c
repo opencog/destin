@@ -7,6 +7,7 @@
 #include "destin.h"
 #include "node.h"
 #include "macros.h"
+#include "centroid.h"
 
 //checks various things if this is compiled for the unit test
 #ifdef UNIT_TEST
@@ -487,6 +488,41 @@ void Uniform_UpdateStarvation(Destin * d, uint layer, float * sharedStarvation, 
     }
 #endif
 
+}
+
+void Uniform_UpdateFrequency(Destin * d, uint layer, float * sharedFrequency, uint * sharedCentroidsWinCounts, float freqCoeff)
+{
+    uint i, nb = d->nb[layer];
+
+    for(i = 0; i < nb ; i++){
+        sharedFrequency[i] = sharedFrequency[i] * (1 - freqCoeff) +
+                             freqCoeff * ( sharedCentroidsWinCounts[i] / (float) d->layerSize[layer]);
+    }
+}
+
+//TODO: optimize to delete many centroids at one shot
+void Uniform_DeleteCentroids(Destin *d)
+{
+    uint nb;
+    int l, c;
+
+    for (l = 0; l < d->nLayers; l++)
+    {
+        nb = d->nb[l];
+        for (c = nb - 1; c >= 0; c--)
+        {
+//            printf("LAYER: %d, CENTROID: %d, FREQ: %f\n", l, c, d->uf_winFreqs[l][c]);
+            if (d->uf_winFreqs[l][c] < 1/(float) nb * d->freqTreshold)
+            {
+//                printf ("DELETE!!!\n");
+                DeleteUniformCentroid(d, l, c);
+            }
+        }
+    }
+}
+
+void Uniform_AddNewCentroids(Destin *d)
+{
 }
 
 void UpdateNodeSizes(Node * n, uint ni, uint nb, uint np, uint nc)

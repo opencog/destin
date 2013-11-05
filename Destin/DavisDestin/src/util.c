@@ -17,9 +17,10 @@
 // and causing an unknown crash.
 // This value should be incremented by the developer when the order of the destin struc
 // fields are moved around or if fields are added, removed, ect.
-#define SERIALIZE_VERSION 5
+#define SERIALIZE_VERSION 6
 
-void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp);
+void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements,
+                                Destin* d, uint nc, float *temp, float freqCoeff, float freqTreshold);
 
 void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
     d->centLearnStrat = strategy;
@@ -57,7 +58,7 @@ Destin * CreateDestin( char *filename ) {
     
     uint nl, nc, i, nMovements;
     uint *nci, *nb;
-    float beta, lambdaCoeff, gamma, starvCoeff;
+    float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold;
     float *temp;
 
     // parse config file
@@ -89,6 +90,8 @@ Destin * CreateDestin( char *filename ) {
     fscanfResult = fscanf(configFile, "%f", &lambdaCoeff);
     fscanfResult = fscanf(configFile, "%f", &gamma);
     fscanfResult = fscanf(configFile, "%f", &starvCoeff);
+    fscanfResult = fscanf(configFile, "%f", &freqCoeff);
+    fscanfResult = fscanf(configFile, "%f", &freqTreshold);
 
     // is uniform, i.e. shared centroids
     // 0 = uniform off, 1 = uniform on
@@ -106,10 +109,12 @@ Destin * CreateDestin( char *filename ) {
 
     BeliefTransformEnum bte = BeliefTransform_S_to_E(bts);
 
-    printf("beta: %0.2f. lambdaCoeff: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambdaCoeff, gamma, starvCoeff);
+    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambdaCoeff, gamma, starvCoeff);
+    printf("freqCoeff: %0.3f. freqTreshold: %0.3f. ", freqCoeff, freqTreshold);
     printf("isUniform: %s. belief transform: %s.\n", isUniform ? "YES" : "NO", bts);
 
-    newDestin = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff, nMovements, isUniform, 1);
+    newDestin = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
+                           freqCoeff, freqTreshold, nMovements, isUniform, 1);
     SetBeliefTransform(newDestin, bte);
 
     fclose(configFile);
@@ -149,9 +154,10 @@ void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inpu
             i++;
         }
     }
-};
+}
 
-Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float lambdaCoeff, float gamma, float *temp, float starvCoeff, uint nMovements, bool isUniform, int extRatio)
+Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float lambdaCoeff, float gamma, float *temp,
+                     float starvCoeff, float freqCoeff, float freqTreshold, uint nMovements, bool isUniform, int extRatio)
 {
     uint i, j, l, maxNb, maxNs;
     Destin *d;
@@ -159,7 +165,7 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float la
     // initialize a new Destin object
     MALLOC(d, Destin, 1);
 
-    initializeDestinParameters(nb, isUniform, nci, extRatio, nl, nMovements, d, nc, temp);
+    initializeDestinParameters(nb, isUniform, nci, extRatio, nl, nMovements, d, nc, temp, freqCoeff, freqTreshold);
 
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
@@ -187,7 +193,7 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float la
         }
 
         if(isUniform){
-            InitUniformCentroids(d, l, nb[l], ns);
+            InitUniformCentroids(d, l, ni, nb[l], np, ns);
         }
 
         uint inputOffsets[ni];
@@ -227,7 +233,8 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint nc, float beta, float la
 }
 
 //TODO: make this a private function
-void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements, Destin* d, uint nc, float *temp)
+void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements, Destin* d,
+                                uint nc, float *temp, float freqCoeff, float freqTreshold)
 {
     uint l;
     int i; // must be signed int
@@ -243,6 +250,8 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRati
     SetBeliefTransform(d, DST_BT_NONE);
 
     d->fixedLearnRate = 0.1;
+    d->freqCoeff = freqCoeff;
+    d->freqTreshold = freqTreshold;
 
     MALLOC(d->inputLabel, uint, nc);
     for( i=0; i < nc; i++ )
@@ -302,6 +311,8 @@ void initializeDestinParameters(uint *nb, bool isUniform, uint *nci, int extRati
         // that counts how many nodes in a layer pick the given centroid as winner.
         MALLOC(d->uf_winCounts, uint *, d->nLayers);
         MALLOC(d->uf_persistWinCounts, long *, d->nLayers);
+        MALLOC(d->uf_winFreqs, float *, d->nLayers);
+
         // Used to calculate the shared centroid delta averages
         MALLOC(d->uf_avgDelta, float **, d->nLayers);
         MALLOC(d->uf_mu, float **, d->nLayers);
@@ -363,6 +374,7 @@ void DestroyDestin( Destin * d )
             FREE(d->uf_sigma[i]);
             FREE(d->uf_absvar[i]);
             FREE(d->uf_winCounts[i]);
+            FREE(d->uf_winFreqs[i]);
             FREE(d->uf_persistWinCounts[i]);
             FREE(d->uf_persistWinCounts_detailed[i]);
             FREE(d->uf_avgDelta[i]);
@@ -374,6 +386,7 @@ void DestroyDestin( Destin * d )
         FREE(d->uf_sigma);
         FREE(d->uf_absvar);
         FREE(d->uf_winCounts);
+        FREE(d->uf_winFreqs);
         FREE(d->uf_persistWinCounts);
         FREE(d->uf_persistWinCounts_detailed);
         FREE(d->uf_avgDelta);
@@ -460,6 +473,8 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->nodes[0].lambdaCoeff,sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
+    fwrite(&d->freqCoeff,           sizeof(float),              1,           dFile);
+    fwrite(&d->freqTreshold,        sizeof(float),              1,           dFile);
     fwrite(&d->extRatio,            sizeof(int),                1,           dFile);
 
     fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
@@ -485,6 +500,7 @@ void SaveDestin( Destin *d, char *filename )
             }
             fwrite(d->uf_absvar[l],             sizeof(float),  nTmp->ns,               dFile);
             fwrite(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],               dFile);
+            fwrite(d->uf_winFreqs[l],           sizeof(float),  d->nb[l],               dFile);
             fwrite(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
             fwrite(d->uf_persistWinCounts_detailed[l],   sizeof(long),   d->nb[l],      dFile);
             fwrite(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
@@ -525,7 +541,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     int extendRatio; //TODO: make this a uint
     uint *nci, *nb;
 
-    float beta, lambdaCoeff, gamma, starvCoeff;
+    float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold;
     float *temp;
 
     dFile = fopen(filename, "r");
@@ -560,9 +576,12 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&lambdaCoeff,      sizeof(float),    1,   dFile);
     freadResult = fread(&gamma,       sizeof(float),    1,   dFile);
     freadResult = fread(&starvCoeff,  sizeof(float),    1,   dFile);
+    freadResult = fread(&freqCoeff,   sizeof(float),    1,   dFile);
+    freadResult = fread(&freqTreshold, sizeof(float),   1,   dFile);
     freadResult = fread(&extendRatio, sizeof(int),      1,   dFile);
 
-    d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff, nMovements, isUniform, extendRatio);
+    d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
+                   freqCoeff, freqTreshold, nMovements, isUniform, extendRatio);
 
     // temporary arrays were copied in InitDestin
     FREE(nb); nb = NULL;
@@ -595,6 +614,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
             }
             freadResult = fread(d->uf_absvar[l],             sizeof(float),  nTmp->ns,    dFile);
             freadResult = fread(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],    dFile);
+            freadResult = fread(d->uf_winFreqs[l],           sizeof(float),  d->nb[l],    dFile);
             freadResult = fread(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],    dFile);
             freadResult = fread(d->uf_persistWinCounts_detailed[l],   sizeof(long),   d->nb[l],    dFile);
             freadResult = fread(d->uf_starv[l],              sizeof(float),  d->nb[l],    dFile);

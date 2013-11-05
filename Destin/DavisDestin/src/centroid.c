@@ -5,7 +5,36 @@
 #include "destin.h"
 #include "array.h"
 
-void InitUniformCentroids(Destin *d, uint l, uint nb, uint ns)
+void _normalizeFloatArray(float * array, uint length)
+{
+    uint i;
+    float sum;
+
+    for (i = 0; i < length; i++)
+    {
+        sum += array[i];
+    }
+    for (i = 0; i < length; i++)
+    {
+        array[i] = (sum > 0) ? array[i] / sum : 1 / length;
+    }
+}
+
+void _initUniformCentroidMu(float * mu, uint ni, uint nb, uint np, uint ns)
+{
+    uint i;
+
+    for (i = 0; i < ns; i++)
+    {
+        mu[i] = (float) rand() / (float) RAND_MAX;
+    }
+
+    // previous belief and parent belief parts of centroid dimensionality should be normalized
+    _normalizeFloatArray(mu + ni, nb);
+    _normalizeFloatArray(mu + ni + nb, np);
+}
+
+void InitUniformCentroids(Destin *d, uint l, uint ni, uint nb, uint np, uint ns)
 {
     uint i, j;
 
@@ -14,6 +43,7 @@ void InitUniformCentroids(Destin *d, uint l, uint nb, uint ns)
     MALLOCV(d->uf_absvar[l], float, ns);
 
     MALLOCV(d->uf_winCounts[l], uint, nb);
+    MALLOCV(d->uf_winFreqs[l], float, nb);
     MALLOCV(d->uf_persistWinCounts[l], long, nb);
     MALLOCV(d->uf_persistWinCounts_detailed[l], long, nb);
     MALLOCV(d->uf_starv[l], float, nb);
@@ -30,13 +60,14 @@ void InitUniformCentroids(Destin *d, uint l, uint nb, uint ns)
         MALLOCV(d->uf_avgSquaredDelta[l][i], float, ns);
 
         d->uf_winCounts[l][i] = 0;
+        d->uf_winFreqs[l][i] = 1/(float) nb;
         d->uf_persistWinCounts[l][i] = 0;
         d->uf_persistWinCounts_detailed[l][i] = 0;
         d->uf_starv[l][i] = 1;
 
         for (j=0; j < ns; j++)
         {
-            d->uf_mu[l][i][j] = (float) rand() / (float) RAND_MAX;
+            _initUniformCentroidMu(d->uf_mu[l][i], ni, nb, np, ns);
             d->uf_sigma[l][i][j] = INIT_SIGMA;
         }
     }
@@ -76,6 +107,9 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
     ArrayDeleteArray((void *)&d->uf_avgSquaredDelta[l], nb, idx);
     ArrayDeleteFloat(&d->uf_avgAbsDelta[l], nb, idx);
     ArrayDeleteFloat(&d->uf_starv[l], nb, idx);
+
+    ArrayDeleteFloat(&d->uf_winFreqs[l], nb, idx);
+    _normalizeFloatArray(d->uf_winFreqs[l], nb - 1);
 
     d->nb[l]--;  // decrease global number of centroids for layer l
     for (j = 0; j < d->layerSize[l]; j++)
@@ -170,11 +204,13 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
 
 void AddUniformCentroid(Destin *d, uint l)
 {
-    uint i, j, ni, nb, ns, idx;
+    uint i, j, ni, nb, np, ns, idx;
+    float sumFreqs = 0;    // frequency of new centroid is initialized as average frequency of layer centroids
 
     Node * n = GetNodeFromDestin(d, l, 0, 0);
     nb = n->nb;
     ni = n->ni;
+    np = n->ns;
     ns = n->ns;
     idx = ni + nb;
 
@@ -186,11 +222,9 @@ void AddUniformCentroid(Destin *d, uint l)
     MALLOCV(newAvgDelta, float, ns+1);
     MALLOCV(newAvgSquaredDelta, float, ns+1);
 
-    // TODO: initialization depends on method
-    // TODO: 1/ns, 1/ni etc.
     for (j=0; j < ns; j++)
     {
-        d->uf_mu[l][i][j] = (float) rand() / (float) RAND_MAX;
+        _initUniformCentroidMu(d->uf_mu[l][i], ni, nb, np, ns);
         d->uf_sigma[l][i][j] = INIT_SIGMA;
     }
     for (i = 0; i < nb; i++)
@@ -199,6 +233,7 @@ void AddUniformCentroid(Destin *d, uint l)
         ArrayInsertFloat(&d->uf_sigma[l][i], ns, idx, INIT_SIGMA);
         ArrayInsertFloat(&d->uf_avgDelta[l][i], ns, idx, 0);
         ArrayInsertFloat(&d->uf_avgSquaredDelta[l][i], ns, idx, 0);
+        sumFreqs += d->uf_winFreqs[l][i];
     }
     ArrayInsertFloat(&d->uf_absvar[l], ns, idx, 0);
     ArrayInsertFloat(&d->uf_avgAbsDelta[l], ns, idx, 0);
@@ -212,6 +247,9 @@ void AddUniformCentroid(Destin *d, uint l)
     ArrayAppendPtr((void *)&d->uf_avgSquaredDelta[l], nb, newAvgSquaredDelta);
     ArrayAppendFloat(&d->uf_avgAbsDelta[l], nb, 0);
     ArrayAppendFloat(&d->uf_starv[l], nb, 1);
+
+    ArrayAppendFloat(&d->uf_winFreqs[l], nb, (sumFreqs > 0) ? sumFreqs/nb : 1/nb);
+    _normalizeFloatArray(d->uf_winFreqs[l], nb);
 
     d->nb[l]++;  // increase global number of centroids for layer l
     for (j = 0; j < d->layerSize[l]; j++)

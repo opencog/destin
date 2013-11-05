@@ -161,4 +161,21 @@ void Uniform_UpdateStarvation(
                     float               // starvation coefficient
                 );
 
+void Uniform_UpdateFrequency(
+                    struct Destin  *,
+                    uint,               // layer
+                    float * ,           // shared estimated frequency vector for given layer
+                    uint * ,            // shared centroids win counts vector for given layer
+                    float               // estimated frequency coefficient
+                );
+
+void Uniform_DeleteCentroids(
+                    struct Destin  *
+                );
+
+void Uniform_AddNewCentroids(
+                    struct Destin  *
+                );
+
+
 #endif
