@@ -9,10 +9,8 @@
 
 #define INIT_SIGMA 0.00001
 
-
-/* Destin Struct Definition */
 typedef struct Destin {
-    uint serializeVersion;              // Identifies the compaitibility version of this destin structure during saves and loads.s
+    uint serializeVersion;              // Identifies the compaitibility version of this destin structure during saves and loads.
     uint maxNb;                         // max number of beliefs for all nodes (important for kernels)
     uint maxNs;
     uint nc;                            // number of classes to discriminate
@@ -25,7 +23,7 @@ typedef struct Destin {
 
     struct Node * nodes;                // pointer to list of host nodes
 
-    float       * temp;                 // temperatures for each layer
+    float       * temp;                 // temperatures for each layer, used with the belief tranform functions.
     float       * dataSet;              // pointer to dataset
 
     uint        * inputLabel;           // input label (used during supervised training)
@@ -37,8 +35,8 @@ typedef struct Destin {
     CentroidLearnStrat   centLearnStrat;        // centroid learning strategy enum
     CentroidLearnStratFunc centLearnStratFunc;  // centroid learning strategy function pointer
 
-    BeliefTransformEnum beliefTransform;
-    BeliefTransformFunc beliefTransformFunc;
+    BeliefTransformEnum beliefTransform; // which belief transform to apply to output beliefs.
+    BeliefTransformFunc beliefTransformFunc; // function pointer for the belief transform
 
     float       fixedLearnRate;       // if CLS_Fixed is set for centLearnStrat, then this is the fixed learning rate to use, otherwise ignored.
 

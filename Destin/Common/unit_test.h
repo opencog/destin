@@ -359,6 +359,7 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
 }\
 
 
+// macro to generate print array functions
 #define UT_PRINT_ARRAY(the_type, format_flag)\
     void print_##the_type##_array(the_type * array, int length){\
         int i;\
@@ -369,6 +370,7 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
         printf("%i: %" format_flag "\n", i, array[i]);\
     }\
 
+// define print array functions for each type
 UT_PRINT_ARRAY(int, "i")
 UT_PRINT_ARRAY(float, "e")
 UT_PRINT_ARRAY(long, "li")
