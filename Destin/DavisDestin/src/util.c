@@ -159,7 +159,7 @@ void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inpu
 }
 
 Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, float beta, float lambdaCoeff, float gamma, float *temp,
-                     float starvCoeff, float freqCoeff, float freqTreshold, float addCoeff, uint nMovements, bool isUniform, int extRatio)
+                     float starvCoeff, float freqCoeff, float freqTreshold, float addCoeff, uint nMovements, bool isUniform, uint extRatio)
 {
     uint i, j, l, maxNb, maxNs;
     Destin *d;
@@ -236,7 +236,7 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, fl
 }
 
 //TODO: make this a private function
-void initializeDestinParameters(uint *nb, uint *layerMaxNb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements, Destin* d,
+void initializeDestinParameters(uint *nb, uint *layerMaxNb, bool isUniform, uint *nci, uint extRatio, uint nl, uint nMovements, Destin* d,
                                 uint nc, float *temp, float freqCoeff, float freqTreshold, float addCoeff)
 {
     uint l;
@@ -485,7 +485,7 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->freqCoeff,           sizeof(float),              1,           dFile);
     fwrite(&d->freqTreshold,        sizeof(float),              1,           dFile);
     fwrite(&d->addCoeff,            sizeof(float),              1,           dFile);
-    fwrite(&d->extRatio,            sizeof(int),                1,           dFile);
+    fwrite(&d->extRatio,            sizeof(uint),               1,           dFile);
 
     fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
     fwrite(&d->beliefTransform,     sizeof(BeliefTransformEnum),1,           dFile);
@@ -548,7 +548,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     uint serializeVersion;
     uint nMovements, nc, nl;
     bool isUniform;
-    int extendRatio; //TODO: make this a uint
+    uint extendRatio;
     uint *nci, *nb, *layerMaxNb;
 
     float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
@@ -583,15 +583,15 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(nci, sizeof(uint), nl, dFile);
 
     // read destin params from disk
-    freadResult = fread(temp,         sizeof(float),    nl,  dFile);
-    freadResult = fread(&beta,        sizeof(float),    1,   dFile);
-    freadResult = fread(&lambdaCoeff,      sizeof(float),    1,   dFile);
-    freadResult = fread(&gamma,       sizeof(float),    1,   dFile);
-    freadResult = fread(&starvCoeff,  sizeof(float),    1,   dFile);
-    freadResult = fread(&freqCoeff,   sizeof(float),    1,   dFile);
-    freadResult = fread(&freqTreshold, sizeof(float),   1,   dFile);
-    freadResult = fread(&addCoeff,    sizeof(float),    1,   dFile);
-    freadResult = fread(&extendRatio, sizeof(int),      1,   dFile);
+    freadResult = fread(temp,          sizeof(float),    nl,  dFile);
+    freadResult = fread(&beta,         sizeof(float),    1,   dFile);
+    freadResult = fread(&lambdaCoeff,  sizeof(float),    1,   dFile);
+    freadResult = fread(&gamma,        sizeof(float),    1,   dFile);
+    freadResult = fread(&starvCoeff,   sizeof(float),    1,   dFile);
+    freadResult = fread(&freqCoeff,    sizeof(float),    1,   dFile);
+    freadResult = fread(&freqTreshold, sizeof(float),    1,   dFile);
+    freadResult = fread(&addCoeff,     sizeof(float),    1,   dFile);
+    freadResult = fread(&extendRatio,  sizeof(uint),     1,   dFile);
 
     d = InitDestin(nci, nl, nb, layerMaxNb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
                    freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, extendRatio);
@@ -877,8 +877,8 @@ DestinConfig* CreateDefaultConfig(uint layers){
     }
 
     config->extRatio = 1;
-    config->freqCoeff =  0.05; //TODO: set to good value
-    config->freqTreshold = 0.01; //TODO: set to good value
+    config->freqCoeff =  0.05;
+    config->freqTreshold = 0.01;
     config->gamma = 0.10;
     config->inputDim = 16;  // 4x4 pixel input per bottom layer node
     config->isUniform = true;

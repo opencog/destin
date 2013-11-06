@@ -116,7 +116,7 @@ Destin * InitDestin(    // initialize Destin.
     float,              // addition coefficient
     uint,               // number of movements per digit presentation
     bool,               // is uniform - if nodes in a layer share one list of centroids
-    int                 // extRatio
+    uint                 // extRatio
 );
 
 void LinkParentsToChildren(             // link parents to their children
