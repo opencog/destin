@@ -79,6 +79,29 @@ public:
         return beliefs;
     }
 
+    void openMatFile(string matfile){
+
+    }
+
+    void closeMatFile(){
+
+    }
+
+    /**
+     * This appends the current beliefs to the Mat file.
+     * First it writes the label ( i.e. cifar image class)
+     * that was used to generate the current beliefs.
+     * Then it writes the concatonated beliefs given by the getBeliefs() method.
+     * The lenght of the belief vector is given by getOutputSize()
+     *
+     * @brief writeBeliefToDisk
+     * @param label - used to identify what type of input image was given to Destin that
+     * led to the current output beliefs.
+     */
+    void writeBeliefToMat(int label){
+
+    }
+
 protected:
 
     void deleteBeliefs(){
