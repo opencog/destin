@@ -16,7 +16,25 @@ void _normalizeFloatArray(float * array, uint length)
     }
     for (i = 0; i < length; i++)
     {
-        array[i] = (sum > 0) ? array[i] / sum : 1 / length;
+        array[i] = (sum > 0) ? array[i] / sum : 1 / (float) length;
+    }
+}
+
+void _normalizeMu(float * mu, uint ni, uint nb, uint np)
+{
+    uint i;
+
+    // TODO: in recursive mode previous belief and parent belief should be normalized to 1
+
+    // Recursive mode off
+    for (i = ni; i < ni+nb; i++)
+    {
+        mu[i] = 1/(float) nb;
+    }
+    // Recursive mode off
+    for (i = ni+nb; i < ni+nb+np; i++)
+    {
+        mu[i] = 1/(float) np;
     }
 }
 
@@ -24,14 +42,15 @@ void _initUniformCentroidMu(float * mu, uint ni, uint nb, uint np, uint ns)
 {
     uint i;
 
-    for (i = 0; i < ns; i++)
+    for (i = 0; i < ni; i++)
     {
         mu[i] = (float) rand() / (float) RAND_MAX;
     }
-
-    // previous belief and parent belief parts of centroid dimensionality should be normalized
-    _normalizeFloatArray(mu + ni, nb);
-    _normalizeFloatArray(mu + ni + nb, np);
+    for (i = ni+nb+np; i < ns; i++)
+    {
+        mu[i] = (float) rand() / (float) RAND_MAX;
+    }
+    _normalizeMu(mu, ni, nb, np);
 }
 
 void InitUniformCentroids(Destin *d, uint l, uint ni, uint nb, uint np, uint ns)
@@ -65,9 +84,9 @@ void InitUniformCentroids(Destin *d, uint l, uint ni, uint nb, uint np, uint ns)
         d->uf_persistWinCounts_detailed[l][i] = 0;
         d->uf_starv[l][i] = 1;
 
+        _initUniformCentroidMu(d->uf_mu[l][i], ni, nb, np, ns);
         for (j=0; j < ns; j++)
         {
-            _initUniformCentroidMu(d->uf_mu[l][i], ni, nb, np, ns);
             d->uf_sigma[l][i][j] = INIT_SIGMA;
         }
     }
@@ -80,17 +99,19 @@ void InitUniformCentroids(Destin *d, uint l, uint ni, uint nb, uint np, uint ns)
 
 void DeleteUniformCentroid(Destin *d, uint l, uint idx)
 {
-    uint i, j, ni, nb, ns;
+    uint i, j, ni, nb, np, ns;
 
     Node * n = GetNodeFromDestin(d, l, 0, 0);
     nb = n->nb;
     ni = n->ni;
+    np = n->np;
     ns = n->ns;
 
     // Layer l
     for (i = 0; i < nb; i++)
     {
         ArrayDeleteFloat(&d->uf_mu[l][i], ns, ni+idx);
+        _normalizeMu(d->uf_mu[l][i], ni, nb-1, np);
         ArrayDeleteFloat(&d->uf_sigma[l][i], ns, ni+idx);
         ArrayDeleteFloat(&d->uf_avgDelta[l][i], ns, ni+idx);
         ArrayDeleteFloat(&d->uf_avgSquaredDelta[l][i], ns, ni+idx);
@@ -105,7 +126,6 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
     ArrayDeleteLong(&d->uf_persistWinCounts_detailed[l], nb, idx);
     ArrayDeleteArray((void *)&d->uf_avgDelta[l], nb, idx);
     ArrayDeleteArray((void *)&d->uf_avgSquaredDelta[l], nb, idx);
-    ArrayDeleteFloat(&d->uf_avgAbsDelta[l], nb, idx);
     ArrayDeleteFloat(&d->uf_starv[l], nb, idx);
 
     ArrayDeleteFloat(&d->uf_winFreqs[l], nb, idx);
@@ -149,8 +169,8 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
             ArrayDeleteFloats(&d->uf_avgDelta[l+1][i], ns, childIndexes, n->childNumber);
             ArrayDeleteFloats(&d->uf_avgSquaredDelta[l+1][i], ns, childIndexes, n->childNumber);
         }
-        ArrayDeleteFloats(&d->uf_absvar[l], ns, childIndexes, n->childNumber);
-        ArrayDeleteFloats(&d->uf_avgAbsDelta[l], ns, childIndexes, n->childNumber);
+        ArrayDeleteFloats(&d->uf_absvar[l+1], ns, childIndexes, n->childNumber);
+        ArrayDeleteFloats(&d->uf_avgAbsDelta[l+1], ns, childIndexes, n->childNumber);
 
         for (j = 0; j < d->layerSize[l+1]; j++)
         {
@@ -178,6 +198,7 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
         for (i = 0; i < n->nb; i++)
         {
             ArrayDeleteFloat(&d->uf_mu[l-1][i], ns, pIdx);
+            _normalizeMu(d->uf_mu[l-1][i], n->ni, n->nb, n->np-1);
             ArrayDeleteFloat(&d->uf_sigma[l-1][i], ns, pIdx);
             ArrayDeleteFloat(&d->uf_avgDelta[l-1][i], ns, pIdx);
             ArrayDeleteFloat(&d->uf_avgSquaredDelta[l-1][i], ns, pIdx);
@@ -205,35 +226,37 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
 void AddUniformCentroid(Destin *d, uint l)
 {
     uint i, j, ni, nb, np, ns, idx;
-    float sumFreqs = 0;    // frequency of new centroid is initialized as average frequency of layer centroids
 
     Node * n = GetNodeFromDestin(d, l, 0, 0);
     nb = n->nb;
     ni = n->ni;
-    np = n->ns;
+    np = n->np;
     ns = n->ns;
     idx = ni + nb;
 
     // Layer l
     float * newMu, * newSigma, * newAvgDelta, * newAvgSquaredDelta;
 
-    MALLOCV(newMu, float, ns+1);
-    MALLOCV(newSigma, float, ns+1);
-    MALLOCV(newAvgDelta, float, ns+1);
-    MALLOCV(newAvgSquaredDelta, float, ns+1);
+    MALLOCV(newMu, float, (ns+1));
+    MALLOCV(newSigma, float, (ns+1));
+    MALLOCV(newAvgDelta, float, (ns+1));
+    MALLOCV(newAvgSquaredDelta, float, (ns+1));
 
-    for (j=0; j < ns; j++)
+    _initUniformCentroidMu(newMu, ni, nb+1, np, ns+1);
+    for (j=0; j < ns+1; j++)
     {
-        _initUniformCentroidMu(d->uf_mu[l][i], ni, nb, np, ns);
-        d->uf_sigma[l][i][j] = INIT_SIGMA;
+        newSigma[j] = INIT_SIGMA;
+        newAvgDelta[j] = 0;
+        newAvgSquaredDelta[j] = 0;
     }
+
     for (i = 0; i < nb; i++)
     {
         ArrayInsertFloat(&d->uf_mu[l][i], ns, idx, 0);
+        _normalizeMu(d->uf_mu[l][i], ni, nb+1, np);
         ArrayInsertFloat(&d->uf_sigma[l][i], ns, idx, INIT_SIGMA);
         ArrayInsertFloat(&d->uf_avgDelta[l][i], ns, idx, 0);
         ArrayInsertFloat(&d->uf_avgSquaredDelta[l][i], ns, idx, 0);
-        sumFreqs += d->uf_winFreqs[l][i];
     }
     ArrayInsertFloat(&d->uf_absvar[l], ns, idx, 0);
     ArrayInsertFloat(&d->uf_avgAbsDelta[l], ns, idx, 0);
@@ -245,11 +268,10 @@ void AddUniformCentroid(Destin *d, uint l)
     ArrayAppendLong(&d->uf_persistWinCounts_detailed[l], nb, 0);
     ArrayAppendPtr((void *)&d->uf_avgDelta[l], nb, newAvgDelta);
     ArrayAppendPtr((void *)&d->uf_avgSquaredDelta[l], nb, newAvgSquaredDelta);
-    ArrayAppendFloat(&d->uf_avgAbsDelta[l], nb, 0);
     ArrayAppendFloat(&d->uf_starv[l], nb, 1);
 
-    ArrayAppendFloat(&d->uf_winFreqs[l], nb, (sumFreqs > 0) ? sumFreqs/nb : 1/nb);
-    _normalizeFloatArray(d->uf_winFreqs[l], nb);
+    ArrayAppendFloat(&d->uf_winFreqs[l], nb, 1/(float) nb);
+    _normalizeFloatArray(d->uf_winFreqs[l], nb+1);
 
     d->nb[l]++;  // increase global number of centroids for layer l
     for (j = 0; j < d->layerSize[l]; j++)
@@ -282,7 +304,7 @@ void AddUniformCentroid(Destin *d, uint l)
 
         for (i = 0; i < n->childNumber; i++)
         {
-            childIndexes[i] = i*nb;
+            childIndexes[i] = (i+1)*nb;
             childValues[i] = 0;
             childSigmas[i] = INIT_SIGMA;
         }
@@ -293,8 +315,8 @@ void AddUniformCentroid(Destin *d, uint l)
             ArrayInsertFloats(&d->uf_avgDelta[l+1][i], ns, childIndexes, childValues, n->childNumber);
             ArrayInsertFloats(&d->uf_avgSquaredDelta[l+1][i], ns, childIndexes, childValues, n->childNumber);
         }
-        ArrayInsertFloats(&d->uf_absvar[l], ns, childIndexes, childValues, n->childNumber);
-        ArrayInsertFloats(&d->uf_avgAbsDelta[l], ns, childIndexes, childValues, n->childNumber);
+        ArrayInsertFloats(&d->uf_absvar[l+1], ns, childIndexes, childValues, n->childNumber);
+        ArrayInsertFloats(&d->uf_avgAbsDelta[l+1], ns, childIndexes, childValues, n->childNumber);
 
         for (j = 0; j < d->layerSize[l+1]; j++)
         {
@@ -322,6 +344,7 @@ void AddUniformCentroid(Destin *d, uint l)
         for (i = 0; i < n->nb; i++)
         {
             ArrayInsertFloat(&d->uf_mu[l-1][i], ns, pIdx, 0);
+            _normalizeMu(d->uf_mu[l-1][i], n->ni, n->nb, n->np+1);
             ArrayInsertFloat(&d->uf_sigma[l-1][i], ns, pIdx, INIT_SIGMA);
             ArrayInsertFloat(&d->uf_avgDelta[l-1][i], ns, pIdx, 0);
             ArrayInsertFloat(&d->uf_avgSquaredDelta[l-1][i], ns, pIdx, 0);
@@ -344,8 +367,10 @@ void AddUniformCentroid(Destin *d, uint l)
             n->starv = d->uf_starv[l-1];
         }
     }
-}
 
+    // TODO: use proper method based on learning strategy
+    InitUniformCentroidByAvgNearNeighbours(d, l, nb, 5);
+}
 
 // Private structure for q-sorting neighbouring centroids
 // Neighbours are sorted by distance from given centroid
@@ -377,11 +402,11 @@ float _calcNeighboursDistanceEuc(float * mu1, float * mu2, uint ns)
 
 #define UpdateAvgNearNeighbours(array, neighbours, count, offset, idx) {\
     uint c;                                          \
-    float sum;                                       \
-    for (c = 1; c <= nearest; c++) {                 \
+    float sum = 0;                                   \
+    for (c = 1; c <= count; c++) {                   \
         sum += array[offset + neighbours[c].index];  \
     }                                                \
-    array[offset + idx] = sum/nearest;               \
+    array[offset + idx] = sum/count;                 \
 }
 
 void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint nearest)
@@ -403,6 +428,7 @@ void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint ne
     nearest = _MIN(nearest, nb-1);
 
     // Layer l
+    // TODO: this is irrelevant if recursive mode is off
     for (i = 0; i < nb; i++)
     {
         UpdateAvgNearNeighbours(d->uf_mu[l][i], neighbours, nearest, ni, idx);
@@ -424,6 +450,7 @@ void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint ne
     }
 
     // Layer l-1
+    // TODO: this is irrelevant if recursive mode is off
     if (l > 0)
     {
         n = GetNodeFromDestin(d, l-1, 0, 0);
@@ -433,8 +460,10 @@ void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint ne
         {
             UpdateAvgNearNeighbours(d->uf_mu[l-1][i], neighbours, nearest, offset, idx);
             UpdateAvgNearNeighbours(d->uf_sigma[l-1][i], neighbours, nearest, offset, idx);
+            _normalizeFloatArray(d->uf_mu[l-1][i] + offset, nb);
         }
     }
+
 }
 
 

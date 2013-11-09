@@ -20,7 +20,8 @@ typedef struct Destin {
     uint nMovements;                    // number of movements per digit presentation
     uint nLayers;                       // number of layers in network
     float muSumSqDiff;
-    uint *nb;                           // number of beliefs in a node of a layer
+    uint *nb;                           // current number of beliefs in a node of a layer
+    uint *layerMaxNb;                   // max number of beliefs for layer (upper limit for centroid addition)
     uint *nci;                          // input dimensionality for layer 0 and number of children for layers above zero
 
     struct Node * nodes;                // pointer to list of host nodes
@@ -42,6 +43,7 @@ typedef struct Destin {
 
     float       freqCoeff;              // coefficient for updating centroid's estimated frequency (d->winFreqs)
     float       freqTreshold;           // if centroid's estimated frequency deteriorate below the treshold the centroid is wiped out
+    float       addCoeff;               // coefficient for estimating probablity of adding a new centroid to a layer
     float       fixedLearnRate;         // if CLS_Fixed is set for centLearnStrat, then this is the fixed learning rate to use, otherwise ignored.
 
     bool        isUniform;              // internal flag to determine if this destin has been made uniform
@@ -81,15 +83,17 @@ Destin * InitDestin(    // initialize Destin.
     uint *,             // array with input dimensionality for layer 0 and numbers of children for layers above zero
                         // numbers of children should be square
     uint,               // number of layers
-    uint *,             // belief dimensionality for each layer
+    uint *,             // initial number of centroids for each layer
+    uint *,             // maximum number of centroids for each layer
     uint,               // number of classes
     float,              // beta coeff
     float,              // lambda coeff
     float,              // gamma coeff
     float *,            // temperature for each layer
     float,              // starv coeff
-    float,              // frequency coeff
+    float,              // frequency coefficient
     float,              // frequency treshold
+    float,              // addition coefficient
     uint,               // number of movements per digit presentation
     bool,               // is uniform - if nodes in a layer share one list of centroids
     int                 // extRatio

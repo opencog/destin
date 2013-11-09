@@ -504,17 +504,20 @@ void Uniform_UpdateFrequency(Destin * d, uint layer, float * sharedFrequency, ui
 void Uniform_DeleteCentroids(Destin *d)
 {
     uint nb;
-    int l, c;
+    int l, c, i;
 
     for (l = 0; l < d->nLayers; l++)
     {
+        // layer not trained
+        if (d->layerMask[l] == 0)
+        {
+            continue;
+        }
         nb = d->nb[l];
         for (c = nb - 1; c >= 0; c--)
         {
-//            printf("LAYER: %d, CENTROID: %d, FREQ: %f\n", l, c, d->uf_winFreqs[l][c]);
             if (d->uf_winFreqs[l][c] < 1/(float) nb * d->freqTreshold)
             {
-//                printf ("DELETE!!!\n");
                 DeleteUniformCentroid(d, l, c);
             }
         }
@@ -523,6 +526,30 @@ void Uniform_DeleteCentroids(Destin *d)
 
 void Uniform_AddNewCentroids(Destin *d)
 {
+    uint l, i;
+    float absvar;
+
+    for (l = 0; l < d->nLayers; l++)
+    {
+        // layer not trained or belief dimensionality reached
+        if (d->layerMask[l] == 0 || d->nb[l] >= d->layerMaxNb[l])
+        {
+            continue;
+        }
+
+        Node * n = GetNodeFromDestin(d, l, 0, 0);
+        absvar = 0;
+        for (i = 0; i < n->ns; i++)
+        {
+            absvar += d->uf_absvar[l][i];
+        }
+        absvar /= n->ns;
+        float rnd = (float) rand() / (float) RAND_MAX;
+        if (rnd < d->addCoeff * absvar * absvar)
+        {
+            AddUniformCentroid(d, l);
+        }
+    }
 }
 
 void UpdateNodeSizes(Node * n, uint ni, uint nb, uint np, uint nc)

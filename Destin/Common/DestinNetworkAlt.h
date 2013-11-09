@@ -109,6 +109,9 @@ public:
     float getVar(int layer);
     float getQuality(int layer);
 
+    std::vector<float> getLayersVariances();
+    std::vector<float> getLayersSeparations();
+
     /*************************************************************************/
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);
     void rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, int dstLayer);

@@ -48,14 +48,23 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     uint c, l;
     callback = NULL;
     initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
-    float freq_coef = 0.05;
-    float freq_treshold = 0.01;
+    float starv_coeff = 0.05;
+    float freq_coeff = 0.05;
+    float freq_treshold = 0; // disabled deletion of centroids
+    float add_coeff = 0; // disabled deletion of centroids
     uint n_classes = 0;//doesn't look like its used
     uint num_movements = 0; //this class does not use movements
 
     uint layer_inputs[layers];
     initDefaultTopology(layers, layer_inputs);
+
+    uint initial_counts[layers];    // initial number of centroids
+    uint maximum_counts[layers];    // maximum number of centroids
+    for (int i=0; i < layers; i++)
+    {
+        initial_counts[i] = centroid_counts[i];
+        maximum_counts[i] = centroid_counts[i];
+    }
 
     //figure out how many layers are needed to support the given
     //image width.
@@ -75,15 +84,17 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     destin = InitDestin(
             layer_inputs,
             layers,
-            centroid_counts,
+            initial_counts,
+            maximum_counts,
             n_classes,
             beta,
             lambda,
             gamma,
             temperatures,
-            starv_coef,
-            freq_coef,
+            starv_coeff,
+            freq_coeff,
             freq_treshold,
+            add_coeff,
             num_movements,
             isUniform,
             extRatio
@@ -142,6 +153,16 @@ float DestinNetworkAlt::getSep(int layer)
     return fSum/currNode->nb;
 }
 
+std::vector<float> DestinNetworkAlt::getLayersSeparations()
+{
+    std::vector<float> separations(destin->nLayers);
+    for (int i = 0; i < destin->nLayers; i++)
+    {
+        separations[i] = getSep(i);
+    }
+    return separations;
+}
+
 // 2013.7.4
 // CZT: get var;
 float DestinNetworkAlt::getVar(int layer)
@@ -160,6 +181,16 @@ float DestinNetworkAlt::getVar(int layer)
         fSum += destin->uf_absvar[layer][j];
     }
     return fSum / (currNode->ni * (layer == 0 ? destin->extRatio : 1));
+}
+
+std::vector<float> DestinNetworkAlt::getLayersVariances()
+{
+    std::vector<float> variances(destin->nLayers);
+    for (int i = 0; i < destin->nLayers; i++)
+    {
+        variances[i] = getVar(i);
+    }
+    return variances;
 }
 
 // 2013.7.4

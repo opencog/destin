@@ -114,6 +114,7 @@ junk beliefs, the training on those top ones should be disabled
 
 def createSom():
     global som
+    be.setBottomLayer(bottom_belief_layer)  # calculates output size
     som = som_type(som_height,som_width, be.getOutputSize())
     #euclian = e
     #cosine = u #TODO: test that the character is surviving the translation into c code
