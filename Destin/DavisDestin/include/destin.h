@@ -75,8 +75,9 @@ typedef struct Destin {
 } Destin; // end Destin typedef
 
 typedef struct DestinConfig {
+    float  addCoeff;
     float  beta;
-    uint  *centroids;
+    uint  *centroids;       //TODO: make naming consistent with nb
     int    extRatio;
     float  freqCoeff;
     float  freqTreshold;
@@ -85,7 +86,7 @@ typedef struct DestinConfig {
     bool   isUniform;
     float  lambdaCoeff;
     uint  *layerWidths;
-    uint  *nci;
+    uint  *layerMaxNb;      //TODO: make consistent with centroids
     uint   nClasses;
     uint   nLayers;
     uint   nMovements;
@@ -99,27 +100,31 @@ Destin * CreateDestin(                  // create destin from a config file
                     char *              // filename
         );
 
+Destin * InitDestinWithConfig(DestinConfig *);
+
 Destin * InitDestin(    // initialize Destin.
-    uint *,             // array with input dimensionality for layer 0 and numbers of children for layers above zero
+    uint inputDim,      // length of input vector for each bottom layer node. i.e. is 16 for 4x4 pixel input.
                         // numbers of children should be square
-    uint,               // number of layers
-    uint *,             // initial number of centroids for each layer
-    uint *,             // maximum number of centroids for each layer
-    uint,               // number of classes
-    float,              // beta coeff
-    float,              // lambdaCoeff coeff
-    float,              // gamma coeff
-    float *,            // temperature for each layer
-    float,              // starv coeff
-    float,              // frequency coefficient
-    float,              // frequency treshold
-    float,              // addition coefficient
-    uint,               // number of movements per digit presentation
-    bool,               // is uniform - if nodes in a layer share one list of centroids
-    uint                 // extRatio
+    uint nLayers,       // number of layers
+    uint *nb,           // initial number of centroids for each layer
+    uint *layerMaxNb,   // maximum number of centroids for each layer
+    uint *layerWidths,  // width of each layer
+    uint nc,            // number of classes
+    float beta,         // beta coeff
+    float lambdaCoeff,  // lambdaCoeff coeff
+    float gamma,        // gamma coeff
+    float *temp,        // temperature for each layer
+    float starvCoeff,   // starv coeff
+    float freqCoeff,    // frequency coeff
+    float freqTreshold, // frequency treshold
+    float addCoeff,     // coefficient for estimating probablity of adding a new centroid to a layer
+    uint nMovements,    // number of movements per digit presentation
+    bool isUniform,     // is uniform - if nodes in a layer share one list of centroids
+    uint extRatio       // input extension ratio
 );
 
-void LinkParentsToChildren(             // link parents to their children
+
+bool LinkParentsToChildren(             // link parents to their children
                     Destin *            // initialized destin pointer
                 );
 
@@ -214,7 +219,9 @@ void Uniform_ResetStats(
                             Destin *
                           );
 
+
 DestinConfig* CreateDefaultConfig(uint layers);
 void DestroyConfig(DestinConfig *);
+
 /* Destin Functions End */
 #endif

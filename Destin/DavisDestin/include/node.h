@@ -61,9 +61,17 @@ typedef struct Node {
     float * belief;         // previous belief (euclidean or mal)
     float * outputBelief;   // output belief is used as parent node observation (input from child)
 
+    struct Node ** parents; // Array of size 4 of pointers to parent nodes.
+                            // 0 = NW (north west) parent, 1 = NE, 2 = SW, 3 = SE
+                            // Element of the array will be null if it does not have a parent in the corresponding location.
+                            // If all nodes in the node's layer have only 1 parent (for non overlapping node regions),
+                            // then the parent is always placed in the 0th element and the rest are null.
+
+
+    uint nParents;          // Number of parent nodes. There may be more than one when using overlapping node regions.
+
+    struct Node ** children;// array of nChildren child node pointers (only for layers above 0)
     uint nChildren;         // number of children
-    struct Node * parent;   // pointer to parent node (null for to//p layer node)
-    struct Node ** children;// array of childsNumber child node pointers (only for layers above 0)
 
     float * delta;          // vector that stores difference between observation and mu shared centroid vector
     uint    layer;          // layer this node belongs in

@@ -1,4 +1,3 @@
-// 
 #include <float.h>
 #include <memory.h>
 #include <stdio.h>
@@ -8,67 +7,42 @@
 #include "cent_image_gen.h"
 #include "array.h"
 
-Destin * makeDestinFromLayerCfg(uint layers, uint *nci, uint *nb)
+Destin * makeDestinFromLayerCfg(uint layers, uint inputDim, uint * layerWidths)
 {
-    if(layers > 8){
-        printf("can't make more than 8 layers!\n");
+    DestinConfig * dc = CreateDefaultConfig(layers);
+    dc->inputDim = inputDim;
+    if(layerWidths != NULL){
+        memcpy(dc->layerWidths, layerWidths, sizeof(uint) * layers);
     }
-    uint nl = layers;
 
-    uint nc = 0;
-    float beta = 0.001;
-    float lambdaCoeff = 0.10;
-    float gamma = 0.10;
-
-    float temperature [] = {7.5, 8.5, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0};
-    float starvCoeff = 0.12;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-    bool isUniform = true;
-
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    Destin * d = InitDestinWithConfig(dc);
     SetBeliefTransform(d, DST_BT_BOLTZ);
+    DestroyConfig(dc);
     return d;
 }
 
 Destin * makeDestin(uint layers){
-    if(layers > 8){
-        printf("can't make more than 8 layers!\n");
-    }
-    uint nci [] = {16,4,4,4,4,4,4,4}; // inputs per layer
-    uint nb [] = {2,2,2,2,2,2,2,2}; //centroids per layer
-    return makeDestinFromLayerCfg(layers, nci, nb);
+    return makeDestinFromLayerCfg(layers, 16, NULL);
 }
 
 int testInit(){
 
-    uint nl;
-    nl = 1;
-    uint nci [] = {16};
-    uint nb [] = {1}; //1 centroid
-    uint nc = 0;
-    float beta = 1;
-    float lambdaCoeff = 1;
-    float gamma = 1;
-    float temperature [] = {1};
-    float starvCoeff = 0.1;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-    bool isUniform = false;
+    uint nl = 1;
+
     float image[16] = {
         .01, .02, .03, .04,
         .05, .06, .07, .08,
         .09, .10, .11, .12,
         .13, .14, .15, .16
     };
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+
+    DestinConfig * dc = CreateDefaultConfig(nl);
+    dc->centroids[0] = 1;
+    dc->isUniform = false;
+
+    Destin * d = InitDestinWithConfig(dc);
     SetBeliefTransform(d, DST_BT_BOLTZ);
+
     Node * n = &d->nodes[0];
 
     assertTrue(n->ni == 16);
@@ -76,73 +50,62 @@ int testInit(){
     assertFloatEquals(.02, image[n->inputOffsets[1]], 1e-8);
     assertFloatEquals(.16, image[n->inputOffsets[15]], 1e-8);
 
-
     printf("inited non uniform\n");
+
     DestroyDestin(d);
 
     printf("destroyed non uniform\n");
 
     //test uniform destin init
-    isUniform = true;
-    d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                   freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    dc->isUniform = true;
+    d = InitDestinWithConfig(dc);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     printf("Inited uniform.\n");
     DestroyDestin(d);
     printf("destroyed uniform.\n");
 
+    DestroyConfig(dc);
     return 0;
 }
 
 int testFormulateNotCrash(){
-
     uint nl;
     nl = 1;
-    uint nci [] = {1}; //one dimensional centroid
-    uint nb [] = {1}; //1 centroid
-    uint nc = 0;
-    float beta = 1;
-    float lambdaCoeff = 1;
-    float gamma = 1;
-    float temperature [] = {1};
-    float starvCoeff = 0.1;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-    bool isUniform = false;
 
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    DestinConfig * dc = CreateDefaultConfig(nl);
+    dc->centroids[0] = 1;
+    dc->isUniform = false;
+    dc->inputDim = 1;
+
+    Destin * d = InitDestinWithConfig(dc);
+
     SetBeliefTransform(d, DST_BT_BOLTZ);
     float image [] = {0.0};
     FormulateBelief(d, image );
 
+    DestroyConfig(dc);
     DestroyDestin(d);
 
     return 0;
 }
 
 int testFormulateStages(){
-    uint nl;
-    nl = 1;
-    uint nci [] = {1}; //one dimensional centroid
-    uint nb [] = {2}; //2 centroids
-    uint nc = 0; // 0 classes
-    float beta = 0.001;
-    float lambdaCoeff = 1;
-    float gamma = 1;
-    float temperature [] = {5};
-    float starvCoeff = 0.1;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-    bool isUniform = false;
+    DestinConfig * dc = CreateDefaultConfig(1);
+    dc->inputDim = 1; //one dimensional centroid
+    dc->centroids[0] = 2; //2 centroids
+    dc->beta = 0.001;
+    dc->lambdaCoeff = 1.0;
+    dc->gamma = 1.0;
+    dc->temperatures[0] = 5.0;
+    dc->starvCoeff = 0.1;
+    dc->freqCoeff = 0.05;
+    dc->freqTreshold = 0;
+    dc->isUniform = false;
 
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    Destin * d = InitDestinWithConfig(dc);
+
+
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1;
     float image [] = {0.55};
@@ -151,12 +114,12 @@ int testFormulateStages(){
     Node * n = &d->nodes[0];
     printf("ni: %i, nb: %i, np: %i, ns: %i, nc: %i\n", n->ni, n->nb, n->np, n->ns, n->nc);
 
-    assertTrue(n->ni == nci[0]);
+    assertTrue(n->ni == dc->inputDim);
     assertTrue(n->ni == 1);
-    assertTrue(n->nb == nb[0]);
+    assertTrue(n->nb == dc->centroids[0]);
     assertTrue(n->nb == 2);
     assertTrue(n->np == 0); //no parents
-    assertTrue(n->ns == (nci[0]+nb[0]+0+nc));
+    assertTrue(n->ns == (dc->inputDim + dc->centroids[0] +0+dc->nClasses));
     assertTrue(n->ns == 3);
     assertTrue(n->nc == 0); //# of classes
 
@@ -210,6 +173,7 @@ int testFormulateStages(){
     UpdateStarvation(d->nodes, nid);
     assertFloatArrayEqualsEV(n->starv, 0.0, 2, 1.0, 0.9);
     DestroyDestin(d);
+    DestroyConfig(dc); dc = NULL;
 
     return 0;
 }
@@ -226,6 +190,8 @@ int testVarArgs(void){
     
    float * fa = toFloatArray(3, 9.0, 8.0, 7.0);
    printFloatArray(fa, 3);
+   print_float_array(fa, 3);
+
    float *f = toFloatArray(2,1.2, 1.4);
 
    assertFloatEquals(1.2, f[0],1e-7);
@@ -251,6 +217,8 @@ int testVarArgs(void){
    long a_long_array[] = {3, 6, 9, 12};
    assertLongArrayEqualsV(a_long_array, 4L, 3L, 6L, 9L, 12L);
 
+   print_long_array(a_long_array, 4);
+
    bool a_bool_array[] = {false, false, true, true};
    assertBoolArrayEqualsV(a_bool_array, 4, false, false, true, true);
 
@@ -261,28 +229,20 @@ int testVarArgs(void){
 
 
 int testUniform(){
-    uint nl = 2;
-    uint nci [] = {1,4};
-    uint nb [] = {4,4}; //4 shared centroids per layer
-    uint nc = 0; // 0 classes
-    float beta = 0.001;
-    float lambdaCoeff = 1;
-    float gamma = 1;
-    float temperature [] = {10, 10};
-    float starvCoeff = 0.1;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-    bool isUniform = true;
+    DestinConfig * dc = CreateDefaultConfig(2);
 
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    assignUIntArray(dc->centroids, 2, 4, 4);
+    dc->inputDim = 1;
+    dc->lambdaCoeff = 1;
+    dc->gamma = 1;
+    assignFloatArray(dc->temperatures, 2, 10.0, 10.0);
+    dc->starvCoeff = 0.1;
+    dc->isUniform = true;
+
+    Destin * d = InitDestinWithConfig(dc);
 
     SetBeliefTransform(d, DST_BT_BOLTZ);
     assertTrue(d->isUniform);
-
-
 
     float image []  = {.11,.22,.88,.99};//1 pixel for each of the 4 bottom layer nodes
 
@@ -383,8 +343,8 @@ int testUniform(){
     }
 
 
-    assertIntArrayEqualsV(d->uf_winCounts[0], nb[0], 0, 2, 1, 1);
-    assertFloatArrayEqualsE2DV(d->uf_avgDelta[0], 1e-5, nb[0], d->nodes[0].ns,
+    assertIntArrayEqualsV(d->uf_winCounts[0], dc->centroids[0], 0, 2, 1, 1);
+    assertFloatArrayEqualsE2DV(d->uf_avgDelta[0], 1e-5, dc->centroids[0], d->nodes[0].ns,
         0.0,                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //average delta for shared centroid 0
         ((0.11 - 0.06) + (0.22 - 0.06)) / 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         ( 0.88 - 0.86 ),                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -417,23 +377,15 @@ int testUniform(){
 //same setup as testUniform, but call the main FormulateBelief function to make sure it calls everything in the correct order.
 int testUniformFormulate(){
 
-    uint nl = 2;
-    uint nci [] = {1,4};
-    uint nb [] = {4,4}; //4 shared centroids per layer
-    uint nc = 0; // 0 classes
-    float beta = 0.001;
-    float lambdaCoeff = 1;
-    float gamma = 1;
-    float temperature [] = {10, 10};
-    float starvCoeff = 0.1;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-    bool isUniform = true;
+    DestinConfig * dc = CreateDefaultConfig(2);
+    dc->inputDim = 1;
+    dc->lambdaCoeff = 1;
+    dc->gamma = 1;
+    dc->starvCoeff = 0.1;
+    assignFloatArray(dc->temperatures, 2, 10.0, 10.0);
+    assignUIntArray(dc->centroids, 2, 4, 4); //4 shared centroids per layer
 
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    Destin * d = InitDestinWithConfig(dc);
 
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1; //turn on cluster training
@@ -464,7 +416,7 @@ int testUniformFormulate(){
         0.99,  0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25);//moved directly to node 3 observation because only node 3 picked it
 
     assertFloatArrayEqualsEV(d->uf_starv[0], 1e-12, 4,
-        1.0 - starvCoeff, 1.0, 1.0, 1.0);
+        1.0 - dc->starvCoeff, 1.0, 1.0, 1.0);
 
     assertFloatEquals(d->muSumSqDiff, n[0].muSqDiff + n[4].muSqDiff, 4.5e-8 );
 
@@ -476,32 +428,26 @@ int testUniformFormulate(){
         assertFloatArrayEquals(n->belief, n->outputBelief, n->nb);
     }
 
+    DestroyConfig(dc);
     DestroyDestin(d);
     return 0;
 }
 
 int testSaveDestin1(){
     //test that SaveDestin and LoadDestin are working propertly
+    DestinConfig * dc = CreateDefaultConfig(2);
 
-    uint nl = 2;
-    uint nci [] = {16,4}; //input layer nodes cluster on 4 pixel input.
-    uint nb [] = {3,4}; //4 shared centroids per layer
-    uint nc = 6; // 0 classes
-    float beta = 0.001;
-    float lambdaCoeff = 0.96;
-    float gamma = 0.78;
-    float temperature [] = {7.5, 8.5};
-    float starvCoeff = 0.12;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 4;
-    bool isUniform = true;
-    uint ns0 = nci[0] + nb[0] + nb[1] + nc;
-    uint ns1 = 4*nb[0] + nb[1] + 0 + nc;
+    dc->nClasses = 6;
+    dc->lambdaCoeff = 0.96;
+    dc->gamma = 0.78;
+    assignFloatArray(dc->temperatures, 2, 7.5, 8.5);
+    dc->nMovements = 4;
+    assignUIntArray(dc->centroids, 2, 3, 4);
 
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    Destin * d = InitDestinWithConfig(dc);
+
+    uint ns0 = dc->inputDim + dc->centroids[0]+ dc->centroids[1] + dc->nClasses;
+    uint ns1 = 4*dc->centroids[0] + dc->centroids[1] + 0 + dc->nClasses;
 
     SetBeliefTransform(d, DST_BT_BOLTZ);
     d->layerMask[0] = 1;
@@ -527,8 +473,8 @@ int testSaveDestin1(){
 
     //backup uf_aveDelta
     float ** uf_avgDelta[2];
-    uf_avgDelta[0] = copyFloatDim2Array(d->uf_avgDelta[0], nb[0], ns0);
-    uf_avgDelta[1] = copyFloatDim2Array(d->uf_avgDelta[1], nb[1], ns1);
+    uf_avgDelta[0] = copyFloatDim2Array(d->uf_avgDelta[0], dc->centroids[0], ns0);
+    uf_avgDelta[1] = copyFloatDim2Array(d->uf_avgDelta[1], dc->centroids[1], ns1);
 
     SaveDestin(d, "unit_test_destin.save");
     DestroyDestin(d);
@@ -546,9 +492,9 @@ int testSaveDestin1(){
     assertFloatEquals(0.96, n->lambdaCoeff, 1e-07); //accuracy is not very good
     assertFloatEquals( 0.78, n->gamma, 3e-8);
     assertFloatArrayEqualsEV(d->temp, 1e-12, 2, 7.5, 8.5 );
-    assertTrue(n->starvCoeff == starvCoeff);
-    assertTrue(d->nMovements == nMovements);
-    assertTrue(d->isUniform == isUniform);
+    assertTrue(n->starvCoeff == dc->starvCoeff);
+    assertTrue(d->nMovements == dc->nMovements);
+    assertTrue(d->isUniform == dc->isUniform);
 
     assertIntArrayEqualsV(d->layerMask, 2, 0, 0); //TODO: layer mask is not saved,should be 1, 1
     assertIntArrayEqualsV(d->layerSize, 2, 4, 1);
@@ -556,19 +502,20 @@ int testSaveDestin1(){
     assertTrue(d->maxNs == maxNs);
     assertFloatEquals(0.0, d->muSumSqDiff, 0); //it currently resets to 0
 
-    assertFloatArrayEqualsE2D(uf_avgDelta[0], d->uf_avgDelta[0], nb[0], ns0, 1e-36);
-    assertFloatArrayEqualsE2D(uf_avgDelta[1], d->uf_avgDelta[1], nb[1], ns1, 1e-36);
+    assertFloatArrayEqualsE2D(uf_avgDelta[0], d->uf_avgDelta[0], dc->centroids[0], ns0, 1e-36);
+    assertFloatArrayEqualsE2D(uf_avgDelta[1], d->uf_avgDelta[1], dc->centroids[1], ns1, 1e-36);
 
     DestroyDestin(d);
     uint c;
-    for (c = 0; c < nb[0]; c++){
+    for (c = 0; c < dc->centroids[0]; c++){
         FREE(uf_avgDelta[0][c]);
     }
-    for (c = 0; c < nb[1]; c++){
+    for (c = 0; c < dc->centroids[1]; c++){
         FREE(uf_avgDelta[1][c]);
     }
     FREE(uf_avgDelta[0]);
     FREE(uf_avgDelta[1]);
+    DestroyConfig(dc);
     return 0;
 }
 
@@ -585,28 +532,26 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTra
     //This uses the strategy of checking that the belief outputs are the same
     //after loading a saved destin and repeating the same input image.
 
-    uint nl = 4;
-    uint nci [] = {16, 4, 4, 4};
-    uint nb [] = {3, 4, 2, 4}; //4 shared centroids per layer
-    uint nc = 6; // 0 classes
-    float beta = 0.001;
-    float lambdaCoeff = 0.56;
-    float gamma = 0.28;
-    float temperature [] = {3.5, 4.5, 5.0, 4.4};
-    float starvCoeff = 0.12;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 4;
     uint i, j;
 
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    DestinConfig * dc = CreateDefaultConfig(4);
+    assignUIntArray(dc->centroids, 4, 3, 4, 2, 4);
+    dc->nClasses = 6;
+    dc->lambdaCoeff = 0.56;
+    dc->gamma = 0.28;
+    dc->nMovements = 4;
+    assignFloatArray(dc->temperatures, 4, 3.5, 4.5, 5.0, 4.4);
+    dc->isUniform = isUniform;
+
+    Destin * d = InitDestinWithConfig(dc);
+    DestroyConfig(dc);
+
+    SetLearningStrat(d, learningStrat);
     SetBeliefTransform(d, bt);
     turnOnMask(d);
 
     //generate random images
-    uint image_size = nci[0] * d->layerSize[0];
+    uint image_size = d->nci[0] * d->layerSize[0];
     uint nImages = 5;
     float ** images = makeRandomImages(image_size, nImages);
 
@@ -686,13 +631,16 @@ int testLoadFromConfig(){
     //TODO: add configuration for the learning strategy
     Destin * d = CreateDestin("testconfig.conf");
     assertTrue(d->isUniform == true);
-    assertIntArrayEqualsV(d->nb, 3, 4, 5, 6);
+    assertIntArrayEqualsV(d->layerMaxNb, 3, 7, 8, 9);
+    assertIntArrayEqualsV(d->nb, 3, 2, 4, 5);
     assertFloatArrayEqualsEV(d->temp, 1e-12, 3, 3.1, 3.2, 3.3 );
+    assertFloatEquals(d->addCoeff, 4.3, 1e-6);
     assertTrue(d->nc == 8);
     assertTrue(d->nMovements == 7);
     assertTrue(d->nLayers == 3);
+    assertTrue(d->nci[0] == 4);
     Node * n = &d->nodes[0];
-    assertTrue(n->ni == 16);
+    assertTrue(n->ni == 4);
     assertFloatEquals(0.002, n->beta, 1e-8);
     assertFloatEquals(0.1, n->lambdaCoeff, 1e-8);
     assertFloatEquals(0.2, n->gamma, 1e-8);
@@ -706,22 +654,13 @@ int testLoadFromConfig(){
 //test GenerateInputFromBelief to make sure it doesn't crash
 int _testGenerateInputFromBelief(bool isUniform){
 
-    uint nl = 4;
-    uint nci [] = {16,4,4,4};
-    uint nb [] = {3,4,2,2}; //centroids per layer
-    uint nc = 0;
-    float beta = 0.001;
-    float lambdaCoeff = 0.10;
-    float gamma = 0.10;
-    float temperature [] = {7.5, 8.5, 4.0, 4.0};
-    float starvCoeff = 0.12;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
+    DestinConfig * dc = CreateDefaultConfig(4);
+    assignUIntArray(dc->centroids, 4, 3, 4, 2, 2);
+    assignFloatArray(dc->temperatures, 4, 7.5, 8.5, 4.0, 4.0);
+    dc->isUniform = isUniform;
+    Destin * d = InitDestinWithConfig(dc);
+    DestroyConfig(dc);
 
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
     d->layerMask[0] = 1;
     d->layerMask[1] = 1;
     d->layerMask[2] = 1;
@@ -750,112 +689,6 @@ int testGenerateInputFromBelief(){
     assertTrue(_testGenerateInputFromBelief(true) == 0 );
     return 0;
 }
-
-int testGetNode(){
-    uint nl = 4;
-    uint nci [] = {1,4,4,4};
-    uint nb [] = {2,2,2,2}; //centroids per layer
-    uint nc = 0;
-    float beta = 0.001;
-    float lambdaCoeff = 0.10;
-    float gamma = 0.10;
-    float temperature [] = {7.5, 8.5, 4.0,3.3};
-    float starvCoeff = 0.12;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, false, 1);
-    SetBeliefTransform(d, DST_BT_BOLTZ);
-
-    float image[] = {
-        0.1, 0.2, 0.3, 0.4,
-        0.11, 0.21, 0.31, 0.41,
-        0.12, 0.22, 0.32, 0.42,
-        0.13, 0.23, 0.33, 0.43,
-    };
-    //FormulateBelief(d, image );
-    //FormulateBelief(d, image );
-    //defines the expected mapping between parents and children
-    int matches [] = {
-      //pin   cout cr, cc, pr,pc,player
-        0,    0,  0,  0,  0,  0, 1,
-        1,    1,  0,  0,  0,  0, 1,
-        2,    0,  0,  1,  0,  0, 1,
-        3,    1,  0,  1,  0,  0, 1,
-        4,    0,  1,  0,  0,  0, 1,
-        5,    1,  1,  0,  0,  0, 1,
-        6,    0,  1,  1,  0,  0, 1,
-        7,    1,  1,  1,  0,  0, 1,
-//2nd parent node
-        0,    0,  0,  2,  0,  1, 1,
-        1,    1,  0,  2,  0,  1, 1,
-        2,    0,  0,  3,  0,  1, 1,
-        3,    1,  0,  3,  0,  1, 1,
-        4,    0,  1,  2,  0,  1, 1,
-        5,    1,  1,  2,  0,  1, 1,
-        6,    0,  1,  3,  0,  1, 1,
-        7,    1,  1,  3,  0,  1, 1,
-//3nd parent node
-        0,    0,  2,  0,  1,  0, 1,
-        1,    1,  2,  0,  1,  0, 1,
-        2,    0,  2,  1,  1,  0, 1,
-        3,    1,  2,  1,  1,  0, 1,
-        4,    0,  3,  0,  1,  0, 1,
-        5,    1,  3,  0,  1,  0, 1,
-        6,    0,  3,  1,  1,  0, 1,
-        7,    1,  3,  1,  1,  0, 1,
-//4nd parent node
-        0,    0,  2,  2,  1,  1, 1,
-        1,    1,  2,  2,  1,  1, 1,
-        2,    0,  2,  3,  1,  1, 1,
-        3,    1,  2,  3,  1,  1, 1,
-        4,    0,  3,  2,  1,  1, 1,
-        5,    1,  3,  2,  1,  1, 1,
-        6,    0,  3,  3,  1,  1, 1,
-        7,    1,  3,  3,  1,  1, 1,
-//top layer parent node
-        0,    0,  0,  0,  0,  0, 2,
-        1,    1,  0,  0,  0,  0, 2,
-        2,    0,  0,  1,  0,  0, 2,
-        3,    1,  0,  1,  0,  0, 2,
-        4,    0,  1,  0,  0,  0, 2,
-        5,    1,  1,  0,  0,  0, 2,
-        6,    0,  1,  1,  0,  0, 2,
-        7,    1,  1,  1,  0,  0, 2,
-    };
-    int m;
-    for(m = 0; m < 40 ; m++){
-        printf("m: %i\n", m);
-        int rs = 7;
-        int pi = matches[m*rs+0];//parent input element
-        int co = matches[m*rs+1];//child output belief element
-        int cr = matches[m*rs+2];//child row
-        int cc = matches[m*rs+3];//child col
-        int pr = matches[m*rs+4];//parent row
-        int pc = matches[m*rs+5];//parent column
-        int pl = matches[m*rs+6];//parent layer
-        Node * parent_node = GetNodeFromDestin(d, pl, pr, pc);
-        //assertFloatEquals(parent_node->input[pi], GetNodeFromDestin(d, pl - 1,cr, cc)->belief[co], 1e-12);
-    }
-
-
-    float * obs = d->nodes[0].observation;
-    int l;
-    //try to find if there are overlapping pointers because it looks li
-    for(l = 0; l < nl ; l++){
-        //for(n = 0; n < d->layerSize[l]; n++){
-
-        //}
-    }
-
-    DestroyDestin(d);
-    return 0;
-}
-
-
 
 int test8Layers(){
     Destin * d = makeDestin(8);
@@ -917,26 +750,26 @@ int testLinkParentsToChildren(){
     assertIntEquals(13, parent->children[3]->nIdx);
 
     // Children have parent as their parent
-    assertTrue(parent->children[0]->parent == parent);
-    assertTrue(parent->children[1]->parent == parent);
-    assertTrue(parent->children[2]->parent == parent);
-    assertTrue(parent->children[3]->parent == parent);
+    assertTrue(parent->children[0]->parents[0] == parent);
+    assertTrue(parent->children[1]->parents[0] == parent);
+    assertTrue(parent->children[2]->parents[0] == parent);
+    assertTrue(parent->children[3]->parents[0] == parent);
 
     // Parent of top layer node is null
     Node * root = GetNodeFromDestin(d, 3, 0, 0);
-    assertTrue(root->parent == NULL);
+    assertTrue(root->parents[0] == NULL);
 
     Node * child = GetNodeFromDestin(d, 1, 2, 1);
     parent = GetNodeFromDestin(d, 2, 1, 0);
-    assertTrue (child->parent == parent);
-    assertTrue (parent->parent == root);
+    assertTrue (child->parents[0] == parent);
+    assertTrue (parent->parents[0] == root);
 
     DestroyDestin(d);
 
-    // Check parameters that are not square
-    uint nci [] = { 11, 7, 4 };
-    uint nb [] = { 4, 4, 4 };
-    d = makeDestinFromLayerCfg(3, nci, nb);
+    // Check another
+    uint layerWidths[] = {4, 2, 1};
+    uint inputDim = 9;
+    d = makeDestinFromLayerCfg(3, inputDim, layerWidths);
 
     root = GetNodeFromDestin(d, 2, 0, 0);
     assertIntEquals(20, root->nIdx);
@@ -944,7 +777,7 @@ int testLinkParentsToChildren(){
     assertIntEquals(19, parent->nIdx);
     assertIntEquals(10, parent->children[0]->nIdx);
     assertIntEquals(14, parent->children[2]->nIdx);
-    assertTrue (parent->parent == root);
+    assertTrue (parent->parents[0] == root);
 
     Node * node = GetNodeFromDestin(d, 0, 2, 1);
     assertIntArrayEqualsV(node->inputOffsets, 9, 75, 76, 77, 87, 88, 89, 99, 100, 101);
@@ -952,9 +785,9 @@ int testLinkParentsToChildren(){
     DestroyDestin(d);
 
     // Check another geometry
-    uint nci2 [] = { 1, 16, 9, 1 };
-    uint nb2 [] = { 5, 5, 5, 5 };
-    d = makeDestinFromLayerCfg(4, nci2, nb2);
+    inputDim = 1;
+    uint layerWidths2[] = {12, 3, 1, 1};
+    d = makeDestinFromLayerCfg(4, inputDim, layerWidths2);
 
     root = GetNodeFromDestin(d, 3, 0, 0);
     assertIntEquals(154, root->nIdx);
@@ -964,8 +797,8 @@ int testLinkParentsToChildren(){
     assertIntEquals(149, parent->nIdx);
     assertIntEquals(56, parent->children[0]->nIdx);
     assertIntEquals(69, parent->children[5]->nIdx);
-    assertTrue(parent->children[0]->parent == parent);
-    assertTrue(parent->children[5]->parent == parent);
+    assertTrue(parent->children[0]->parents[0] == parent);
+    assertTrue(parent->children[5]->parents[0] == parent);
 
     DestroyDestin(d);
 
@@ -973,22 +806,15 @@ int testLinkParentsToChildren(){
 }
 
 int testCentroidImageGeneration(){
-    uint nl = 3;
-    uint nci [] = {1,4,4};
-    uint nb [] = {2,2,2}; //centroids per layer
-    uint nc = 0;
-    float beta = 0.001;
-    float lambdaCoeff = 0.10;
-    float gamma = 0.10;
-    float temperature [] = {7.5, 8.5, 4.0,3.3};
-    float starvCoeff = 0.12;
-    float freqCoeff = 0.05;
-    float freqTreshold = 0;
-    float addCoeff = 0;
-    uint nMovements = 0;
-    bool isUniform = true;
-    Destin * d = InitDestin(nci, nl, nb, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoeff,
-                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    DestinConfig * dc = CreateDefaultConfig(3);
+    dc->inputDim = 1;
+    assignUIntArray(dc->centroids, 3, 2, 2, 2);
+    assignFloatArray(dc->temperatures, 3, 7.5, 8.5, 4.0);
+
+    Destin * d = InitDestinWithConfig(dc);
+
+    DestroyConfig(dc);
+
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = GetNodeFromDestin(d, 0, 0 ,0);
@@ -1162,7 +988,91 @@ int testArrayOperations() {
     int index6[2] = {0, 1};
     ArrayDeleteArrays((void *)&floatArrayArray, 2, index6, 2);   // shoud free internal arrays
     FREE(floatArrayArray);
+    return 0;
+}
 
+int testBuildOverlappingHeirarchy(){
+    // Makes a heirarchy that has both overlapping and non overlapping nodes.
+    // Parent layer has overlapping nodes if its width is one less than the child layer width.
+    // Otherwise the parent layer width must divide evenly into the child layer.
+
+    DestinConfig * config = CreateDefaultConfig(5);
+    assertTrue(config->inputDim == 16);
+
+    // Specify the heirarchy with layerWidths
+    assignUIntArray(config->layerWidths, 5,
+                    8, 7, 6, 2, 1);
+
+    Destin * d = InitDestinWithConfig(config);
+
+    assertIntEquals(4, GetNodeFromDestin(d, 1, 0, 0)->nChildren);
+
+    assertIntEquals(9, GetNodeFromDestin(d, 3, 0, 0)->nChildren);
+
+    // make sure it transfered over
+    assertUIntArrayEqualsV(d->layerWidth, 5, 8, 7, 6, 2, 1);
+
+    // Check that the children input counts were computed correctly from the layer widths
+    assertUIntArrayEqualsV(d->nci, 5, 16, 4, 4, 9, 4);
+
+    // Check that the bottom layer nodes have the correct number of parents
+    // for the overlapping node regions.
+    // Child nodes that are overlapping each can have up to 4 parents.
+    uint bottomExpectedParentCounts [] = {1, 2, 2, 2, 2, 2, 2, 1,
+                                          2, 4, 4, 4, 4, 4, 4, 2,
+                                          2, 4, 4, 4, 4, 4, 4, 2,
+                                          2, 4, 4, 4, 4, 4, 4, 2,
+                                          2, 4, 4, 4, 4, 4, 4, 2,
+                                          2, 4, 4, 4, 4, 4, 4, 2,
+                                          2, 4, 4, 4, 4, 4, 4, 2,
+                                          1, 2, 2, 2, 2, 2, 2, 1};
+    int i;
+    for(i = 0 ; i < 8*8 ; i++){
+        assertIntEquals(bottomExpectedParentCounts[i], GetNodeFromDestinI(d, 0, i)->nParents);
+    }
+
+    for(i = 0 ; i < 6*6 ; i++){
+        assertIntEquals(1, GetNodeFromDestinI(d, 2, i)->nParents);
+    }
+
+
+    // Check that overlapping child nodes have the rigt parents in the right positions.
+    // Child nodes that are overlapping each can have up to 4 parents.
+    Node *childNode = GetNodeFromDestin(d, 1, 0, 0);
+    assertTrue(childNode->nParents == 1);
+    assertTrue(childNode->parents[0] == NULL); // North West parent
+    assertTrue(childNode->parents[1] == NULL); // North East parent
+    assertTrue(childNode->parents[2] == NULL); // South West parent
+    assertTrue(childNode->parents[3] == GetNodeFromDestin(d, 2, 0, 0)); // South East parent
+
+    childNode = GetNodeFromDestin(d, 1, 0, 1);
+    assertTrue(childNode->nParents == 2);
+    assertTrue(childNode->parents[0] == NULL); // North West parent
+    assertTrue(childNode->parents[1] == NULL); // North East parent
+    assertTrue(childNode->parents[2] == GetNodeFromDestin(d, 2, 0, 0)); // South West parent
+    assertTrue(childNode->parents[3] == GetNodeFromDestin(d, 2, 0, 1)); // South East parent
+
+    childNode = GetNodeFromDestin(d, 1, 1, 3);
+    assertTrue(childNode->nParents == 4);
+    assertTrue(childNode->parents[0] == GetNodeFromDestin(d, 2, 0, 2)); // North West parent
+    assertTrue(childNode->parents[1] == GetNodeFromDestin(d, 2, 0, 3)); // North East parent
+    assertTrue(childNode->parents[2] == GetNodeFromDestin(d, 2, 1, 2)); // South West parent
+    assertTrue(childNode->parents[3] == GetNodeFromDestin(d, 2, 1, 3)); // South East parent
+
+    // Check that a parent node has the right children
+    Node *parentNode = GetNodeFromDestin(d, 2, 1, 4);
+    assertTrue(parentNode->children[0] == GetNodeFromDestin(d, 1, 1, 4));
+    assertTrue(parentNode->children[1] == GetNodeFromDestin(d, 1, 1, 5));
+    assertTrue(parentNode->children[2] == GetNodeFromDestin(d, 1, 2, 4));
+    assertTrue(parentNode->children[3] == GetNodeFromDestin(d, 1, 2, 5));
+
+    assertTrue(GetNodeFromDestin(d, 1, 1, 4)->parents[3] == parentNode);
+    assertTrue(GetNodeFromDestin(d, 1, 1, 5)->parents[2] == parentNode);
+    assertTrue(GetNodeFromDestin(d, 1, 2, 4)->parents[1] == parentNode);
+    assertTrue(GetNodeFromDestin(d, 1, 2, 5)->parents[0] == parentNode);
+
+    DestroyDestin(d);
+    DestroyConfig(config);
     return 0;
 }
 
@@ -1184,12 +1094,10 @@ int main(int argc, char ** argv ){
     RUN(testGenerateInputFromBelief);
     RUN(test8Layers);
     RUN(testArrayOperations);
-
-    //RUN(testGetNode); //TODO: fix and renable this test
     RUN(testCentroidImageGeneration);
+    RUN(testBuildOverlappingHeirarchy);
 
     UT_REPORT_RESULTS();
 
     return 0;
 }
-

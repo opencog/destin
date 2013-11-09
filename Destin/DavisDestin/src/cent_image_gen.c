@@ -85,6 +85,7 @@ void Cig_BlendImages(float ** images,   // array of images to blend
     return;
 }
 
+//TODO: update to handle nodes that have more than 4 children
 void Cig_ConcatImages(float ** images,// Array of the 4 images to concat.
                   const int rows, // Height of each image to concat.
                   const int cols, // Width of each image to concat.

@@ -17,9 +17,9 @@
 // and causing an unknown crash.
 // This value should be incremented by the developer when the order of the destin struc
 // fields are moved around or if fields are added, removed, ect.
-#define SERIALIZE_VERSION 6
+#define SERIALIZE_VERSION 9
 
-void initializeDestinParameters(uint *nb, uint *layerMaxNb, bool isUniform, uint *nci, int extRatio, uint nl, uint nMovements,
+static void _initializeDestinParameters(uint *nb, uint *layerMaxNb, uint *layerWidths, uint inputDim, bool isUniform, uint extRatio, uint nl, uint nMovements,
                                 Destin* d, uint nc, float *temp, float freqCoeff, float freqTreshold, float addCoeff);
 
 void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
@@ -43,7 +43,6 @@ void SetLearningStrat(Destin * d, CentroidLearnStrat strategy){
 }
 
 // create a destin instantiation from a file
-//TODO: update to work with uniform destin
 Destin * CreateDestin( char *filename ) {
     Destin *newDestin;
     int fscanfResult;
@@ -56,10 +55,7 @@ Destin * CreateDestin( char *filename ) {
         exit(1);
     }
     
-    uint nl, nc, i, nMovements;
-    uint *nci, *nb, *layerMaxNb;
-    float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
-    float *temp;
+    uint nl, i, nMovements, nc;
 
     // parse config file
 
@@ -73,35 +69,37 @@ Destin * CreateDestin( char *filename ) {
 
     // get number of layers
     fscanfResult = fscanf(configFile, "%d", &nl);
-    nb = (uint *) malloc(sizeof(uint) * nl);
-    layerMaxNb = (uint *) malloc(sizeof(uint) * nl);
-    nci = (uint *) malloc(sizeof(uint) * nl);
-    temp = (float *) malloc(sizeof(float) * nl);
+
+    //TODO: fix for layerMaxNb
+    DestinConfig * dc = CreateDefaultConfig(nl);
+    dc->nMovements = nMovements;
+    dc->nClasses = nc;
 
     printf("# layers: %d\n", nl);
-
     // get layer beliefs and temps
     for(i=0; i < nl; i++) {
-        fscanfResult = fscanf(configFile, "%d %d %d %f", &nci[i], &nb[i], &layerMaxNb[i], &temp[i]);
-        printf("\t%d %d %d %f\n", nci[i], nb[i], layerMaxNb[i], temp[i]);
+        fscanfResult = fscanf(configFile, "%u %u %u %f", &dc->layerWidths[i], &dc->centroids[i], &dc->layerMaxNb[i], &dc->temperatures[i]);
+        printf("\t%u %u %u %f\n", dc->layerWidths[i], dc->centroids[i], dc->layerMaxNb[i], dc->temperatures[i]);
     }
 
+    //TODO: update CONFIG.txt
     // get coeffs
-    fscanfResult = fscanf(configFile, "%f", &beta);
-    fscanfResult = fscanf(configFile, "%f", &lambdaCoeff);
-    fscanfResult = fscanf(configFile, "%f", &gamma);
-    fscanfResult = fscanf(configFile, "%f", &starvCoeff);
-    fscanfResult = fscanf(configFile, "%f", &freqCoeff);
-    fscanfResult = fscanf(configFile, "%f", &freqTreshold);
-    fscanfResult = fscanf(configFile, "%f", &addCoeff);
+    fscanfResult = fscanf(configFile, "%u", &dc->inputDim);
+    fscanfResult = fscanf(configFile, "%f", &dc->beta);
+    fscanfResult = fscanf(configFile, "%f", &dc->lambdaCoeff);
+    fscanfResult = fscanf(configFile, "%f", &dc->gamma);
+    fscanfResult = fscanf(configFile, "%f", &dc->starvCoeff);
+    fscanfResult = fscanf(configFile, "%f", &dc->freqCoeff);
+    fscanfResult = fscanf(configFile, "%f", &dc->freqTreshold);
+    fscanfResult = fscanf(configFile, "%f", &dc->addCoeff);
 
     // is uniform, i.e. shared centroids
     // 0 = uniform off, 1 = uniform on
     uint iu;
     fscanfResult = fscanf(configFile, "%u", &iu);
-    bool isUniform = iu == 0 ? false : true;
+    dc->isUniform = iu == 0 ? false : true;
 
-    //TODO: set learning strat and belief transform in config
+    //TODO: set learning strat
     //TODO: fix test config file
     // applies boltzman distibution
     // 0 = off, 1 = on
@@ -111,19 +109,17 @@ Destin * CreateDestin( char *filename ) {
 
     BeliefTransformEnum bte = BeliefTransform_S_to_E(bts);
 
-    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambdaCoeff, gamma, starvCoeff);
-    printf("freqCoeff: %0.3f. freqTreshold: %0.3f. addCoeff: %0.3f ", freqCoeff, freqTreshold, addCoeff);
-    printf("isUniform: %s. belief transform: %s.\n", isUniform ? "YES" : "NO", bts);
+    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",dc->beta, dc->lambdaCoeff, dc->gamma, dc->starvCoeff);
+    printf("freqCoeff: %0.3f. freqTreshold: %0.3f. addCoeff: %0.3f ", dc->freqCoeff, dc->freqTreshold, dc->addCoeff);
+    printf("isUniform: %s. belief transform: %s.\n", dc->isUniform ? "YES" : "NO", bts);
 
-    newDestin = InitDestin(nci, nl, nb, layerMaxNb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
-                           freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
+    newDestin = InitDestinWithConfig(dc);
+
     SetBeliefTransform(newDestin, bte);
 
     fclose(configFile);
 
-    free(nb);
-    free(temp);
-
+    DestroyConfig(dc);
     return newDestin;
 }
 
@@ -133,7 +129,7 @@ Destin * CreateDestin( char *filename ) {
  * @param ni   - dimensionality of input, should be square number
  * @param inputOffsets - pointer to preallocated uint array which will hold calculated offsets.
  */
-void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inputOffsets)
+static void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inputOffsets)
 {
     uint zr, zc;                 // zero layer row, col coordinates
     uint ir, ic;                 // input layer row, col coordinates
@@ -158,17 +154,75 @@ void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inpu
     }
 }
 
-Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, float beta, float lambdaCoeff, float gamma, float *temp,
-                     float starvCoeff, float freqCoeff, float freqTreshold, float addCoeff, uint nMovements, bool isUniform, uint extRatio)
-{
-    uint i, j, l, maxNb, maxNs;
+// Infers nci ( # children inputs ) from layer widths.
+// returns true unless it recieves an unsupported heirarcy.
+bool _InferNCIFromWidths(uint * layerWidths, uint * nci, uint nLayers){
+    uint l;
+    for(l = 1 ; l < nLayers ; l++){
+        uint clw = layerWidths[l - 1]; // child layer width
+        uint plw = layerWidths[l];     // parent layer width
+        if(clw % plw == 0){ // divides evenly, assume non overlapping
+            uint ratio = clw / plw;
+            nci[l] = ratio * ratio;
+        } else if(clw - plw == 1){ // assume overlapping and assume 4 to 1
+            nci[l] = 4;
+        } else {
+            fprintf(stderr, "Non supported heirarchy from layer %i width %i to layer %i width %i!\n", l-1, clw, l, plw);
+            fprintf(stderr, "Returning NULL Destin!\n");
+            return false;
+        }
+    }
+    return true;
+}
+
+Destin * InitDestinWithConfig(DestinConfig * config){
+    return InitDestin(config->inputDim,
+                      config->nLayers,
+                      config->centroids,
+                      config->layerMaxNb,
+                      config->layerWidths,
+                      config->nClasses,
+                      config->beta,
+                      config->lambdaCoeff,
+                      config->gamma,
+                      config->temperatures,
+                      config->starvCoeff,
+                      config->freqCoeff,
+                      config->freqTreshold,
+                      config->addCoeff,
+                      config->nMovements,
+                      config->isUniform,
+                      config->extRatio);
+}
+
+Destin * InitDestin(    // initialize Destin.
+    uint inputDim,      // length of input vector for each bottom layer node. i.e. is 16 for 4x4 pixel input.
+                        // numbers of children should be square
+    uint nLayers,       // number of layers
+    uint *nb,           // initial number of centroids for each layer
+    uint *layerMaxNb,   // maximum number of centroids for each layer
+    uint *layerWidths,  // width of each layer
+    uint nc,            // number of classes
+    float beta,         // beta coeff
+    float lambdaCoeff,  // lambdaCoeff coeff
+    float gamma,        // gamma coeff
+    float *temp,        // temperature for each layer
+    float starvCoeff,   // starv coeff
+    float freqCoeff,    // frequency coeff
+    float freqTreshold, // frequency treshold
+    float addCoeff,     // TODO: comment
+    uint nMovements,    // number of movements per digit presentation
+    bool isUniform,     // is uniform - if nodes in a layer share one list of centroids
+    uint extRatio       // input extension ratio
+){
+    uint i, l, maxNb, maxNs;
     Destin *d;
 
     // initialize a new Destin object
     MALLOC(d, Destin, 1);
 
-    initializeDestinParameters(nb, layerMaxNb, isUniform, nci, extRatio, nl, nMovements, d, nc,
-                               temp, freqCoeff, freqTreshold, addCoeff);
+    _initializeDestinParameters(nb, layerMaxNb, layerWidths, inputDim, isUniform, extRatio, nLayers, nMovements,
+                                d, nc, temp, freqCoeff, freqTreshold, addCoeff);
 
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
@@ -178,7 +232,7 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, fl
     uint n = 0;
 
     // initialize the rest of the network
-    for( l=0; l < nl; l++ )
+    for( l=0; l < nLayers; l++ )
     {
         // update max belief
         if( nb[l] > maxNb )
@@ -186,8 +240,8 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, fl
             maxNb = nb[l];
         }
 
-        uint np = ((l + 1 == nl) ? 0 : nb[l+1]);
-        uint ni = (l == 0 ? nci[0] : nci[l] * nb[l-1]);
+        uint np = ((l + 1 == nLayers) ? 0 : nb[l+1]);
+        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
         uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
 
         if (ns > maxNs)
@@ -223,23 +277,25 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, fl
                         temp[l],
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
-                        (l > 0 ? nci[l] : 0)
+                        (l > 0 ? d->nci[l] : 0)
                     );
         }//next node
     }//next layer
 
-    LinkParentsToChildren( d );
+    if(!LinkParentsToChildren( d )){
+        fprintf(stderr, "Could not link parent to children. Returning NULL destin structure!\n");
+        return NULL;
+    }
+
     d->maxNb = maxNb;
     d->maxNs = maxNs;
 
     return d;
 }
 
-//TODO: make this a private function
-void initializeDestinParameters(uint *nb, uint *layerMaxNb, bool isUniform, uint *nci, uint extRatio, uint nl, uint nMovements, Destin* d,
-                                uint nc, float *temp, float freqCoeff, float freqTreshold, float addCoeff)
+static void _initializeDestinParameters(uint *nb, uint *layerMaxNb, uint *layerWidths, uint inputDim, bool isUniform, uint extRatio, uint nl, uint nMovements,
+                                Destin* d, uint nc, float *temp, float freqCoeff, float freqTreshold, float addCoeff)
 {
-    uint l;
     int i; // must be signed int
     d->serializeVersion = SERIALIZE_VERSION;
     d->nNodes = 0;
@@ -273,16 +329,11 @@ void initializeDestinParameters(uint *nb, uint *layerMaxNb, bool isUniform, uint
     MALLOC(d->layerMaxNb, uint, nl);
     memcpy(d->layerMaxNb, layerMaxNb, sizeof(uint)*nl);
 
-    MALLOC(d->nci, uint, nl);
-    for ( l = 0; l < nl; l++)
-    {
-        // make sure layer sizes are square
-        d->nci[l] = (uint)sqrt(nci[l])*(uint)sqrt(nci[l]);
-    }
-
     MALLOC(d->layerSize, uint, nl);
     MALLOC(d->layerNodeOffsets, uint, nl);
     MALLOC(d->layerWidth, uint, nl);
+    memcpy(d->layerWidth, layerWidths, sizeof(uint) * nl);
+
 
     // init the train mask (determines which layers should be training)
     MALLOC(d->layerMask, uint, d->nLayers);
@@ -291,13 +342,13 @@ void initializeDestinParameters(uint *nb, uint *layerMaxNb, bool isUniform, uint
         d->layerMask[i] = 0;
     }
 
-    d->layerSize[d->nLayers-1] = 1;
-    d->layerWidth[d->nLayers-1] = 1;
-    for ( i=d->nLayers-2; i >= 0; i-- )
-    {
-        d->layerSize[i] = d->layerSize[i+1]*d->nci[i+1];
-        d->layerWidth[i] = d->layerWidth[i+1]*(uint)sqrt(d->nci[i+1]);
+    for( i = 0 ; i < nl; i++){
+        d->layerSize[i] = d->layerWidth[i] * d->layerWidth[i];
     }
+
+    MALLOC(d->nci, uint, nl);
+    d->nci[0] = inputDim;
+    _InferNCIFromWidths(layerWidths, d->nci, nl);
 
     uint nNodes = 0;
     for( i=0; i < d->nLayers; i++ )
@@ -340,27 +391,95 @@ void initializeDestinParameters(uint *nb, uint *layerMaxNb, bool isUniform, uint
     }
 }
 
-void LinkParentsToChildren( Destin *d )
+void _LinkNonOverlapping(uint l, Destin *d)
 {
-    uint l, cr, cc, pr, pc, child_layer_width;
-    uint piw;   // parent input width
-    Node * child_node;
-    Node * parent_node;
+    uint pr, pc;
+    uint cr, cc;
+    uint piw = (uint) sqrt(d->nci[l+1]);
+    Node* parent_node;
+    Node* child_node;
+    uint child_layer_width = d->layerWidth[l];
+    for(cr = 0 ; cr < child_layer_width; cr++){
+        pr = cr / piw;
+        for(cc = 0; cc < child_layer_width ; cc++){
+            pc = cc / piw;
+            child_node = GetNodeFromDestin(d, l, cr, cc);
+            parent_node = GetNodeFromDestin(d, l+1, pr, pc);
+            parent_node->children[(cr % piw) * piw + cc % piw] = child_node;
+            child_node->parents[0] = parent_node;
+            child_node->nParents = 1;
+        }
+    }
+}
 
-    for(l = 0 ; l + 1 < d->nLayers ; l++){
-        child_layer_width = d->layerWidth[l];
-        piw = (uint) sqrt(d->nci[l+1]);
-        for(cr = 0 ; cr < child_layer_width; cr++){
-            pr = cr / piw;
-            for(cc = 0; cc < child_layer_width ; cc++){
-                pc = cc / piw;
-                child_node = GetNodeFromDestin(d, l, cr, cc);
-                parent_node = GetNodeFromDestin(d, l+1, pr, pc);
-                parent_node->children[(cr % piw) * piw + cc % piw] = child_node;
-                child_node->parent = parent_node;
+void _LinkOverlapping(uint l, Destin *d)
+{
+    Node* parent_node;
+    Node* child_node;
+    uint cr, cc;
+    uint child_layer_width = d->layerWidth[l];
+    for(cr = 0 ; cr < child_layer_width; cr++){
+        for(cc = 0; cc < child_layer_width ; cc++){
+            child_node = GetNodeFromDestin(d, l, cr, cc);
+            if(cc > 0 && cr > 0){ // has north west parent
+                parent_node = GetNodeFromDestin(d, l+1, cr-1, cc-1);
+                child_node->parents[0] = parent_node;
+                parent_node->children[3] = child_node;
+                child_node->nParents++;
+            }
+
+            if(cc < child_layer_width - 1 && cr > 0){ // has nort east parent
+                parent_node = GetNodeFromDestin(d, l+1, cr-1, cc);
+                child_node->parents[1] = parent_node;
+                parent_node->children[2] = child_node;
+                child_node->nParents++;
+            }
+
+            if(cc > 0 && cr < child_layer_width - 1){ // has south west parent
+                parent_node = GetNodeFromDestin(d, l+1, cr, cc-1);
+                child_node->parents[2] = parent_node;
+                parent_node->children[1] = child_node;
+                child_node->nParents++;
+            }
+
+            if(cc < child_layer_width - 1 && cr < child_layer_width - 1){ // has south east parent
+                parent_node = GetNodeFromDestin(d, l+1, cr, cc);
+                child_node->parents[3] = parent_node;
+                parent_node->children[0] = child_node;
+                child_node->nParents++;
             }
         }
     }
+}
+
+/* The destin hierarchy is inferred from the destin->layerWidth array.
+
+If a parent layer width is one less than the child layer, then it
+is inferred that the child layer has overlapping nodes. In which
+case the nodes can each have up to 4 parent nodes.
+
+Otherwise, the child layer width must divide evenly by the parent
+layer width i.e. childWidth % parentWidth == 0 and assumed that the
+child nodes are non overlapping and each only have one parent.*/
+bool LinkParentsToChildren( Destin *d )
+{
+    uint l;
+
+    for(l = 0 ; l + 1 < d->nLayers ; l++){
+        int childLayerWidth = d->layerWidth[l];
+        int parentLayerWidth = d->layerWidth[l+1];
+        if(childLayerWidth % parentLayerWidth == 0) {
+            // non overlappings
+            // Child can be divided evenly
+            _LinkNonOverlapping(l, d);
+        } else if(childLayerWidth - parentLayerWidth == 1){
+            _LinkOverlapping(l, d);
+        } else {
+            fprintf(stderr, "Unsupported structure from layer %i to %i.\n", l, l+1);
+            return false;
+        }
+    }
+    return true;
 }
 
 void DestroyDestin( Destin * d )
@@ -377,6 +496,7 @@ void DestroyDestin( Destin * d )
                 FREE(d->uf_avgDelta[i][j]);
                 FREE(d->uf_avgSquaredDelta[i][j]);
             }
+
             FREE(d->uf_mu[i]);
             FREE(d->uf_sigma[i]);
             FREE(d->uf_absvar[i]);
@@ -389,6 +509,7 @@ void DestroyDestin( Destin * d )
             FREE(d->uf_avgSquaredDelta[i]);
             FREE(d->uf_starv[i]);
         }
+
         FREE(d->uf_mu);
         FREE(d->uf_sigma);
         FREE(d->uf_absvar);
@@ -474,7 +595,7 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->isUniform,   sizeof(bool), 1,            dFile);
     fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
     fwrite(d->layerMaxNb,   sizeof(uint), d->nLayers,   dFile);
-    fwrite(d->nci,          sizeof(uint), d->nLayers,   dFile);
+    fwrite(d->layerWidth,   sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
     fwrite(d->temp,                 sizeof(float),              d->nLayers,  dFile);
@@ -486,6 +607,9 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->freqTreshold,        sizeof(float),              1,           dFile);
     fwrite(&d->addCoeff,            sizeof(float),              1,           dFile);
     fwrite(&d->extRatio,            sizeof(uint),               1,           dFile);
+
+    // save input dimensionality i.e. nci[0]
+    fwrite(&d->nci[0],              sizeof(uint),               1,           dFile);
 
     fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
     fwrite(&d->beliefTransform,     sizeof(BeliefTransformEnum),1,           dFile);
@@ -549,7 +673,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     uint nMovements, nc, nl;
     bool isUniform;
     uint extendRatio;
-    uint *nci, *nb, *layerMaxNb;
+    uint *nb, *layerMaxNb, *layerWidths;
 
     float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
     float *temp;
@@ -575,12 +699,12 @@ Destin * LoadDestin( Destin *d, const char *filename )
 
     MALLOC(nb, uint, nl);
     MALLOC(layerMaxNb, uint, nl);
-    MALLOC(nci, uint, nl);
+    MALLOC(layerWidths, uint, nl);
     MALLOC(temp, float, nl);
 
-    freadResult = fread(nb, sizeof(uint), nl, dFile);
-    freadResult = fread(layerMaxNb, sizeof(uint), nl, dFile);
-    freadResult = fread(nci, sizeof(uint), nl, dFile);
+    freadResult = fread(nb,            sizeof(uint),    nl,   dFile);
+    freadResult = fread(layerMaxNb,    sizeof(uint),    nl,   dFile);
+    freadResult = fread(layerWidths,   sizeof(uint),    nl,   dFile);
 
     // read destin params from disk
     freadResult = fread(temp,          sizeof(float),    nl,  dFile);
@@ -593,7 +717,12 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&addCoeff,     sizeof(float),    1,   dFile);
     freadResult = fread(&extendRatio,  sizeof(uint),     1,   dFile);
 
-    d = InitDestin(nci, nl, nb, layerMaxNb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
+    //TODO: verify the results of the read
+
+    uint inputDim; // i.e. destin->nci[0]
+    freadResult = fread(&inputDim,     sizeof(uint),     1,   dFile);
+
+    d = InitDestin(inputDim, nl, nb, layerMaxNb, layerWidths, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
                    freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, extendRatio);
 
     // temporary arrays were copied in InitDestin
@@ -690,6 +819,7 @@ void InitNode
     node->winner        = 0;
     node->layer         = layer;
     node->nChildren     = nChildren;
+    node->nParents      = 0; // will be updated in LinkParentsToChildren()
 
     int relativeIndex = nodeIdx - d->layerNodeOffsets[layer];
     node->row           = relativeIndex / d->layerWidth[layer];
@@ -721,9 +851,7 @@ void InitNode
     MALLOCV( node->outputBelief, float, nb );
     MALLOCV( node->observation, float, ns );
 
-    node->parent = NULL;
-    if (layer == 0)
-    {
+    if (layer == 0){
         node->children = NULL;
     } else {
         MALLOC( node->children, Node *, nChildren );
@@ -731,6 +859,14 @@ void InitNode
         {
             node->children[i] = NULL;
         }
+    }
+
+    // Assume each node may have up to 4 parents
+    // in case of overlapping regions.
+    MALLOC( node->parents, Node *, 4);
+    for( i = 0 ; i < 4; i++)
+    {
+        node->parents[i] = NULL;
     }
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
@@ -817,7 +953,13 @@ void DestroyNode( Node *n)
     }
 
     n->children = NULL;
-    n->parent = NULL;
+
+    if( n->parents != NULL )
+    {
+        FREE( n->parents );
+    }
+
+    n->parents = NULL;
 
     // if it is a zero-layer node, free the input offset array on the host
     if( n->inputOffsets != NULL)
@@ -864,21 +1006,25 @@ float normrnd(float mean, float stddev) {
 
 
 DestinConfig* CreateDefaultConfig(uint layers){
+    // Defaults to classic 4 to 1 non overlapping heirarcy.
+
     DestinConfig * config;
     MALLOC(config, DestinConfig, 1);
-
+    config->addCoeff = 0;
     config->beta = 0.001;
 
     uint i, defaultCentroidsPerLayer = 5;
 
     MALLOC(config->centroids, uint, layers);
+    MALLOC(config->layerMaxNb, uint, layers);
     for(i = 0 ; i < layers ; i++){
         config->centroids[i] = defaultCentroidsPerLayer;
+        config->layerMaxNb[i] = defaultCentroidsPerLayer;
     }
 
     config->extRatio = 1;
     config->freqCoeff =  0.05;
-    config->freqTreshold = 0.01;
+    config->freqTreshold = 0;
     config->gamma = 0.10;
     config->inputDim = 16;  // 4x4 pixel input per bottom layer node
     config->isUniform = true;
@@ -886,13 +1032,8 @@ DestinConfig* CreateDefaultConfig(uint layers){
 
     MALLOC(config->layerWidths, uint, layers);
     for(i = 0 ; i < layers ; i++){
+        // 16, 8, 4, 2, 1... ect.
         config->layerWidths[i] = (uint)pow(2, layers - i - 1);
-    }
-
-    MALLOC(config->nci, uint, layers);
-    config->nci[0] = config->inputDim;
-    for(i = 1 ; i < layers ; i++){
-        config->nci[i] = 4;
     }
 
     config->nClasses = 0;
@@ -908,8 +1049,9 @@ DestinConfig* CreateDefaultConfig(uint layers){
 }
 
 void DestroyConfig(DestinConfig * c){
-    FREE(c->centroids);         c->centroids = NULL;
-    FREE(c->nci);    c->nci = NULL;
-    FREE(c->temperatures);      c->temperatures = NULL;
+    FREE(c->centroids);
+    FREE(c->temperatures);
+    FREE(c->layerWidths);
+    FREE(c->layerMaxNb);
     FREE(c);
 }

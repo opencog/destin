@@ -75,11 +75,6 @@ private:
      */
     void initTemperatures(int layers, uint * centroids);
 
-    /**
-     * Initialize default topology. Each node above layer 0 has 4 children. Each node from layer 0 has 16 inputs.
-     */
-    void initDefaultTopology(int layers, uint * inputs);
-
     const int inputImageWidth;
 
 public:

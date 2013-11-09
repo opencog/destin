@@ -16,15 +16,6 @@ void DestinNetworkAlt::initTemperatures(int layers, uint * centroids){
     }
 }
 
-// Initialize default DeSTIN network topology
-void DestinNetworkAlt::initDefaultTopology(int layers, uint * inputs){
-
-    inputs[0] = 16;
-    for (int l = 1 ; l < layers ; l++){
-        inputs[l] = 4;
-    }
-}
-
 float *** DestinNetworkAlt::getCentroidImages(){
     if(centroidImages==NULL){
         centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
@@ -48,23 +39,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     uint c, l;
     callback = NULL;
     initTemperatures(layers, centroid_counts);
-    float starv_coeff = 0.05;
-    float freq_coeff = 0.05;
-    float freq_treshold = 0; // disabled deletion of centroids
-    float add_coeff = 0; // disabled deletion of centroids
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
 
-    uint layer_inputs[layers];
-    initDefaultTopology(layers, layer_inputs);
-
-    uint initial_counts[layers];    // initial number of centroids
-    uint maximum_counts[layers];    // maximum number of centroids
-    for (int i=0; i < layers; i++)
-    {
-        initial_counts[i] = centroid_counts[i];
-        maximum_counts[i] = centroid_counts[i];
-    }
 
     //figure out how many layers are needed to support the given
     //image width.
@@ -81,24 +56,27 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     if (layers != l) {
         throw std::logic_error("Image width does not match the given number of layers.");
     }
-    destin = InitDestin(
-            layer_inputs,
-            layers,
-            initial_counts,
-            maximum_counts,
-            n_classes,
-            beta,
-            lambdaCoeff,
-            gamma,
-            temperatures,
-            starv_coeff,
-            freq_coeff,
-            freq_treshold,
-            add_coeff,
-            num_movements,
-            isUniform,
-            extRatio
-     );
+
+    DestinConfig *dc = CreateDefaultConfig(layers);
+    dc->addCoeff = 0; // disabled deletion of centroids
+    dc->beta = beta;
+    std::copy(centroid_counts, centroid_counts + layers, dc->centroids); // initial number of centroids
+    dc->extRatio = extRatio;
+    dc->freqCoeff = 0.05;
+    dc->freqTreshold = 0; // disabled deletion of centroids
+    dc->gamma = gamma;
+    dc->inputDim = 16;
+    dc->isUniform = isUniform;
+    dc->lambdaCoeff = lambdaCoeff;
+    std::copy(centroid_counts, centroid_counts + layers, dc->layerMaxNb); // max number of centroids
+    dc->nClasses = 0;
+    dc->nMovements = 0; //this class does not use movements
+    dc->starvCoeff = 0.05;
+    std::copy(temperatures, temperatures + layers, dc->temperatures);
+
+    destin = InitDestinWithConfig(dc);
+
+    DestroyConfig(dc);
 
     setBeliefTransform(DST_BT_NONE);
     ClearBeliefs(destin);
