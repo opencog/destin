@@ -4,11 +4,17 @@
 struct Node;
 struct Destin;
 
+/* This header defines the belief transform functions.
+ * These belief transforms apply a transformation function
+ * to the output belief vectors. For instance, applying the
+ * power normalize transform with high temperature parameter can make
+ * the belief distribution more spikey.
+ */
 /** Emumerates the possible belief transform functions.
   */
 typedef enum {
     DST_BT_BOLTZ,       // destin belief transform boltzmann
-    DST_BT_P_NORM,      // destin belief transform exponential parameter
+    DST_BT_P_NORM,      // power normalization with an exponential parameter
     DST_BT_NONE,        // no transformation is applied
     DST_BT_WTA          // winner take all
 } BeliefTransformEnum;

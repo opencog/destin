@@ -408,6 +408,9 @@ void FormulateBelief( Destin *d, float *image )
 
             // Update shared centroids starvation
             Uniform_UpdateStarvation(d, l, d->uf_starv[l], d->uf_winCounts[l], d->nodes[0].starvCoeff );
+
+            // Update shared centroids estimated frequencies
+            Uniform_UpdateFrequency(d, l, d->uf_winFreqs[l], d->uf_winCounts[l], d->freqCoeff);
         }
     }
 
@@ -777,7 +780,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
             SampleInputFromBelief( nTmp, sampledInput );
 
             // pass sampled input to children's previous belief
-            for( i=0; i < nTmp->childNumber; i++ )
+            for( i=0; i < nTmp->nChildren; i++ )
             {
                 if (nTmp->children[i] == NULL)
                 {

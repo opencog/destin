@@ -8,13 +8,17 @@ nClasses	<int>		256	Number of distinct classes (used by supervised learning)
 nl		<int>		3	Number of layers in network
 for i in 0..nl-1 {
 	nci	<int>		16	Number of inputs for layer 0 nodes or number of childs for nodes above layer 0, should be square
-	nb	<int>		25	Beliefs dimensionality (number of centroids)
+	nb	<int>		2	Initial number of centroids
+	maxNb	<int>		25	Maximum number of centroids
 	temp	<float>		2.0	Temperature
 }
 beta		<float>		0.01	Coefficient
 lambda		<float>		0.1	Coefficient
 gamma		<float> 	0.1	Coefficient
 starvation	<float> 	0.05	Coefficient
+freqCoeff	<float>		0.05	Coefficient
+freqTreshold	<float>		0.0001	Coefficient
+addCoeff	<float>		1.0	Coefficient
 isUniform	<uint>		1	Is Uniform Destin
 beliefTransform	<string> 	"none"	Belief transformation
 
@@ -24,13 +28,16 @@ Example:
 20
 256
 3
-16 25 2.0
-4 25 2.0
-4 25 2.0
+16 2 25 2.0
+4 2 25 2.0
+4 2 25 2.0
 0.01
 0.1
 0.1
 0.05
+0.05
+0.0001
+1.0
 0
 none
 

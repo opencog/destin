@@ -7,6 +7,7 @@
 #include "destin.h"
 #include "node.h"
 #include "macros.h"
+#include "centroid.h"
 
 //checks various things if this is compiled for the unit test
 #ifdef UNIT_TEST
@@ -52,7 +53,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
         uint childBeliefs = n->d->nb[n->layer - 1];
 
         i = 0;
-        for ( j = 0; j < n->childNumber; j++ )
+        for ( j = 0; j < n->nChildren; j++ )
         {
             // children may be NULL i.e. if childsNumber is not square for DeSTIN square geometry
             if ( n->children[j] != NULL )
@@ -487,6 +488,68 @@ void Uniform_UpdateStarvation(Destin * d, uint layer, float * sharedStarvation, 
     }
 #endif
 
+}
+
+void Uniform_UpdateFrequency(Destin * d, uint layer, float * sharedFrequency, uint * sharedCentroidsWinCounts, float freqCoeff)
+{
+    uint i, nb = d->nb[layer];
+
+    for(i = 0; i < nb ; i++){
+        sharedFrequency[i] = sharedFrequency[i] * (1 - freqCoeff) +
+                             freqCoeff * ( sharedCentroidsWinCounts[i] / (float) d->layerSize[layer]);
+    }
+}
+
+//TODO: optimize to delete many centroids at one shot
+void Uniform_DeleteCentroids(Destin *d)
+{
+    uint nb;
+    int l, c, i;
+
+    for (l = 0; l < d->nLayers; l++)
+    {
+        // layer not trained
+        if (d->layerMask[l] == 0)
+        {
+            continue;
+        }
+        nb = d->nb[l];
+        for (c = nb - 1; c >= 0; c--)
+        {
+            if (d->uf_winFreqs[l][c] < 1/(float) nb * d->freqTreshold)
+            {
+                DeleteUniformCentroid(d, l, c);
+            }
+        }
+    }
+}
+
+void Uniform_AddNewCentroids(Destin *d)
+{
+    uint l, i;
+    float absvar;
+
+    for (l = 0; l < d->nLayers; l++)
+    {
+        // layer not trained or belief dimensionality reached
+        if (d->layerMask[l] == 0 || d->nb[l] >= d->layerMaxNb[l])
+        {
+            continue;
+        }
+
+        Node * n = GetNodeFromDestin(d, l, 0, 0);
+        absvar = 0;
+        for (i = 0; i < n->ns; i++)
+        {
+            absvar += d->uf_absvar[l][i];
+        }
+        absvar /= n->ns;
+        float rnd = (float) rand() / (float) RAND_MAX;
+        if (rnd < d->addCoeff * absvar * absvar)
+        {
+            AddUniformCentroid(d, l);
+        }
+    }
 }
 
 void UpdateNodeSizes(Node * n, uint ni, uint nb, uint np, uint nc)

@@ -37,7 +37,7 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
         unsigned int centroid_counts [], bool isUniform, int extRatio) :
         training(true),
         beta(.01),
-        lambda(.1),
+        lambdaCoeff(.1),
         gamma(.1),
         isUniform(isUniform),
         centroidImages(NULL),
@@ -48,12 +48,23 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     uint c, l;
     callback = NULL;
     initTemperatures(layers, centroid_counts);
-    float starv_coef = 0.05;
+    float starv_coeff = 0.05;
+    float freq_coeff = 0.05;
+    float freq_treshold = 0; // disabled deletion of centroids
+    float add_coeff = 0; // disabled deletion of centroids
     uint n_classes = 0;//doesn't look like its used
     uint num_movements = 0; //this class does not use movements
 
     uint layer_inputs[layers];
     initDefaultTopology(layers, layer_inputs);
+
+    uint initial_counts[layers];    // initial number of centroids
+    uint maximum_counts[layers];    // maximum number of centroids
+    for (int i=0; i < layers; i++)
+    {
+        initial_counts[i] = centroid_counts[i];
+        maximum_counts[i] = centroid_counts[i];
+    }
 
     //figure out how many layers are needed to support the given
     //image width.
@@ -73,13 +84,17 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     destin = InitDestin(
             layer_inputs,
             layers,
-            centroid_counts,
+            initial_counts,
+            maximum_counts,
             n_classes,
             beta,
-            lambda,
+            lambdaCoeff,
             gamma,
             temperatures,
-            starv_coef,
+            starv_coeff,
+            freq_coeff,
+            freq_treshold,
+            add_coeff,
             num_movements,
             isUniform,
             extRatio
@@ -93,28 +108,6 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
     //SetLearningStrat(destin, CLS_DECAY_c1);
 
     isTraining(true);
-}
-
-void DestinNetworkAlt::addCentroid(unsigned int layer)
-{
-    if(!isUniform)
-    {
-        printf("The add action is only for Uniform DeSTIN!\n");
-        return;
-    }
-
-    AddUniformCentroid(destin, layer);
-}
-
-void DestinNetworkAlt::deleteCentroid(unsigned int layer, unsigned int idx)
-{
-    if(!isUniform)
-    {
-        printf("The delete action is only for Uniform DeSTIN!\n");
-        return;
-    }
-
-    DeleteUniformCentroid(destin, layer, idx);
 }
 
 // 2013.7.4
@@ -160,6 +153,16 @@ float DestinNetworkAlt::getSep(int layer)
     return fSum/currNode->nb;
 }
 
+std::vector<float> DestinNetworkAlt::getLayersSeparations()
+{
+    std::vector<float> separations(destin->nLayers);
+    for (int i = 0; i < destin->nLayers; i++)
+    {
+        separations[i] = getSep(i);
+    }
+    return separations;
+}
+
 // 2013.7.4
 // CZT: get var;
 float DestinNetworkAlt::getVar(int layer)
@@ -178,6 +181,16 @@ float DestinNetworkAlt::getVar(int layer)
         fSum += destin->uf_absvar[layer][j];
     }
     return fSum / (currNode->ni * (layer == 0 ? destin->extRatio : 1));
+}
+
+std::vector<float> DestinNetworkAlt::getLayersVariances()
+{
+    std::vector<float> variances(destin->nLayers);
+    for (int i = 0; i < destin->nLayers; i++)
+    {
+        variances[i] = getVar(i);
+    }
+    return variances;
 }
 
 // 2013.7.4
@@ -621,6 +634,12 @@ void DestinNetworkAlt::setTemperatures(float temperatures[]){
 void DestinNetworkAlt::doDestin( //run destin with the given input
         float * input_dev //pointer to input memory on device
         ) {
+
+    if (destin->isUniform){
+        Uniform_DeleteCentroids(destin);
+        Uniform_AddNewCentroids(destin);
+    }
+
     FormulateBelief(destin, input_dev);
 
     if(this->callback != NULL){
@@ -733,12 +752,12 @@ void DestinNetworkAlt::setParentBeliefDamping(float gamma){
     }
 }
 
-void DestinNetworkAlt::setPreviousBeliefDamping(float lambda){
+void DestinNetworkAlt::setPreviousBeliefDamping(float lambdaCoeff){
     if(gamma < 0 || gamma > 1.0){
-        throw std::domain_error("setParentBeliefDamping: lambda must be between 0 and 1");
+        throw std::domain_error("setParentBeliefDamping: lambdaCoeff must be between 0 and 1");
     }
     for(int n = 0; n < destin->nNodes ; n++){
-        destin->nodes[n].nLambda = lambda;
+        destin->nodes[n].lambdaCoeff = lambdaCoeff;
     }
 
 }
@@ -760,7 +779,7 @@ void DestinNetworkAlt::load(const char * fileName){
     this->beta = n->beta;
     this->gamma = n->gamma;
     this->isUniform = destin->isUniform;
-    this->lambda = n->nLambda;
+    this->lambdaCoeff = n->lambdaCoeff;
 
     if(temperatures != NULL){
         delete [] temperatures;

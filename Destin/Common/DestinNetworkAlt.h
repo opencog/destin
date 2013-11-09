@@ -49,7 +49,7 @@ private:
     DestinIterationFinishedCallback * callback;
 
     float beta;   //variance learning rate
-    float lambda; //previous belief damping, 0 = disable, 1.0 = keep the same
+    float lambdaCoeff; //previous belief damping, 0 = disable, 1.0 = keep the same
     float gamma;  //parents previous belief damping, 0 = disable, 1.0 = keep the same
 
     float * temperatures; //one temperature per layer. If temperature = #
@@ -105,12 +105,12 @@ public:
             float * input_dev //pointer to input memory on device
             );
 
-    void addCentroid(unsigned int layer);
-    void deleteCentroid(unsigned int layer, unsigned int idx);
-
     float getSep(int layer);
     float getVar(int layer);
     float getQuality(int layer);
+
+    std::vector<float> getLayersVariances();
+    std::vector<float> getLayersSeparations();
 
     /*************************************************************************/
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);
@@ -205,7 +205,7 @@ public:
 
     void setParentBeliefDamping(float gamma);
 
-    void setPreviousBeliefDamping(float lambda);
+    void setPreviousBeliefDamping(float lambdaCoeff);
 
     void clearBeliefs(){
         ClearBeliefs(destin);

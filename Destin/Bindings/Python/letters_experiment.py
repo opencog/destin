@@ -16,11 +16,12 @@ ims = pd.ImageSouceImpl()
 letters = "ABC"
 for l in letters:
     ims.addImage(czm.homeFld + "/Downloads/destin_toshare/train images/%s.png" % l)
-    
+
 #centroids =  [2,2,8,32,40,32,15,len(letters)]
 centroids =  [4,8,16,32,64,32,16,len(letters)]
 layers = len(centroids)
 top_layer = layers - 1
+draw_layer = top_layer;
 dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
 dn.setFixedLearnRate(.1)
 dn.setBeliefTransform(pd.DST_BT_NONE)
@@ -43,17 +44,22 @@ chart_thread = ChartingThread()
 def train():
     for i in xrange(4000):
         if i % 10 == 0:
+            print "#####################################";
             print "Iteration " + str(i)
-            var = dn.getVar(top_layer)
-            print "Variance: " +str(var)
-            
-            sep =  dn.getSep(top_layer)
-            print "Sep: " + str(sep)
-            
-            qual = dn.getQuality(top_layer)
-            print "Quality: " + str(qual)
-            
-            chart.update([qual, var, sep])
+            print ""
+
+            variances = dn.getLayersVariances();
+            separations = dn.getLayersSeparations();
+
+            for j in range(len(centroids)):
+                print "Layer: " + str(j)
+                print "Variance: " + str(variances[j])
+                print "Separation: " + str(separations[j])
+                print "Quality: " + str(separations[j] - variances[j])
+                print "Centroids: " + str(dn.getBeliefsPerNode(j))
+                print ""
+
+            chart.update([separations[draw_layer] - variances[draw_layer], variances[draw_layer], separations[draw_layer]])
             chart.draw()
             #code.interact(local=locals())
             

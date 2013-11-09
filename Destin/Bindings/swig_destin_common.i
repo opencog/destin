@@ -68,6 +68,7 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 namespace std {
 %template(IntVector) vector<int>;
 %template(ShortVector) vector<short>;
+%template(FloatVector) vector<float>;
 }
 
 

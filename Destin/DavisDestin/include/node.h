@@ -34,7 +34,7 @@ typedef struct Node {
     uint     nc;            // number of classes
     float   starvCoeff;     // starvation coefficient
     float   beta;           // sigma update weight (centroid variance)
-    float   nLambda;        // parent previous belief weighting
+    float   lambdaCoeff;    // parent previous belief weighting
     float   gamma;          // previous belief weighting
     float   temp;           // temperature for boltzmann normalization
 
@@ -61,7 +61,7 @@ typedef struct Node {
     float * belief;         // previous belief (euclidean or mal)
     float * outputBelief;   // output belief is used as parent node observation (input from child)
 
-    uint childNumber;       // number of children
+    uint nChildren;         // number of children
     struct Node * parent;   // pointer to parent node (null for to//p layer node)
     struct Node ** children;// array of childsNumber child node pointers (only for layers above 0)
 
@@ -160,5 +160,22 @@ void Uniform_UpdateStarvation(
                     uint * ,            // shared centroids win counts vector for given layer
                     float               // starvation coefficient
                 );
+
+void Uniform_UpdateFrequency(
+                    struct Destin  *,
+                    uint,               // layer
+                    float * ,           // shared estimated frequency vector for given layer
+                    uint * ,            // shared centroids win counts vector for given layer
+                    float               // estimated frequency coefficient
+                );
+
+void Uniform_DeleteCentroids(
+                    struct Destin  *
+                );
+
+void Uniform_AddNewCentroids(
+                    struct Destin  *
+                );
+
 
 #endif
