@@ -72,6 +72,8 @@ typedef struct Destin {
        or 3 RGB images at once. */
     int         extRatio;
 
+    bool        isRecurrent;            // If nodes cluster on their firstParent's beliefs and their own previous beliefs
+
 } Destin; // end Destin typedef
 
 typedef struct DestinConfig {
@@ -83,6 +85,7 @@ typedef struct DestinConfig {
     float  freqTreshold;
     float  gamma;
     uint   inputDim;        // pixels input per bottom layer node
+    bool   isRecurrent;
     bool   isUniform;
     float  lambdaCoeff;
     uint  *layerWidths;
@@ -120,7 +123,8 @@ Destin * InitDestin(    // initialize Destin.
     float addCoeff,     // coefficient for estimating probablity of adding a new centroid to a layer
     uint nMovements,    // number of movements per digit presentation
     bool isUniform,     // is uniform - if nodes in a layer share one list of centroids
-    uint extRatio       // input extension ratio
+    uint extRatio,      // input extension ratio
+    bool isRecurrent    // If nodes cluster on their firstParent's beliefs and their own previous beliefs
 );
 
 

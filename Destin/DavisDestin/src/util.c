@@ -17,7 +17,7 @@
 // and causing an unknown crash.
 // This value should be incremented by the developer when the order of the destin struc
 // fields are moved around or if fields are added, removed, ect.
-#define SERIALIZE_VERSION 9
+#define SERIALIZE_VERSION 10
 
 static void _initializeDestinParameters(uint *nb, uint *layerMaxNb, uint *layerWidths, uint inputDim, bool isUniform, uint extRatio, uint nl, uint nMovements,
                                 Destin* d, uint nc, float *temp, float freqCoeff, float freqTreshold, float addCoeff);
@@ -93,6 +93,10 @@ Destin * CreateDestin( char *filename ) {
     fscanfResult = fscanf(configFile, "%f", &dc->freqTreshold);
     fscanfResult = fscanf(configFile, "%f", &dc->addCoeff);
 
+    uint isRecurrent; // if clusters on previous beliefs and first parent's previous beliefs
+    fscanfResult = fscanf(configFile, "%u", &isRecurrent);
+    dc->isRecurrent = isRecurrent == 0 ? false : true;
+
     // is uniform, i.e. shared centroids
     // 0 = uniform off, 1 = uniform on
     uint iu;
@@ -111,7 +115,7 @@ Destin * CreateDestin( char *filename ) {
 
     printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",dc->beta, dc->lambdaCoeff, dc->gamma, dc->starvCoeff);
     printf("freqCoeff: %0.3f. freqTreshold: %0.3f. addCoeff: %0.3f ", dc->freqCoeff, dc->freqTreshold, dc->addCoeff);
-    printf("isUniform: %s. belief transform: %s.\n", dc->isUniform ? "YES" : "NO", bts);
+    printf("isRecurrent: %s. isUniform: %s. belief transform: %s.\n", dc->isRecurrent ? "YES" : "NO", dc->isUniform ? "YES" : "NO", bts);
 
     newDestin = InitDestinWithConfig(dc);
 
@@ -192,7 +196,9 @@ Destin * InitDestinWithConfig(DestinConfig * config){
                       config->addCoeff,
                       config->nMovements,
                       config->isUniform,
-                      config->extRatio);
+                      config->extRatio,
+                      config->isRecurrent
+                      );
 }
 
 Destin * InitDestin(    // initialize Destin.
@@ -213,7 +219,8 @@ Destin * InitDestin(    // initialize Destin.
     float addCoeff,     // TODO: comment
     uint nMovements,    // number of movements per digit presentation
     bool isUniform,     // is uniform - if nodes in a layer share one list of centroids
-    uint extRatio       // input extension ratio
+    uint extRatio,      // input extension ratio
+    bool isRecurrent    // If nodes cluster on their firstParent's beliefs and their own previous beliefs
 ){
     uint i, l, maxNb, maxNs;
     Destin *d;
@@ -223,6 +230,8 @@ Destin * InitDestin(    // initialize Destin.
 
     _initializeDestinParameters(nb, layerMaxNb, layerWidths, inputDim, isUniform, extRatio, nLayers, nMovements,
                                 d, nc, temp, freqCoeff, freqTreshold, addCoeff);
+
+    d->isRecurrent = isRecurrent;
 
     // keep track of the max num of beliefs and states.  we need this information
     // to correctly call kernels later
@@ -407,6 +416,7 @@ void _LinkNonOverlapping(uint l, Destin *d)
             parent_node = GetNodeFromDestin(d, l+1, pr, pc);
             parent_node->children[(cr % piw) * piw + cc % piw] = child_node;
             child_node->parents[0] = parent_node;
+            child_node->firstParent = parent_node;
             child_node->nParents = 1;
         }
     }
@@ -416,7 +426,7 @@ void _LinkOverlapping(uint l, Destin *d)
 {
     Node* parent_node;
     Node* child_node;
-    uint cr, cc;
+    uint cr, cc, i;
     uint child_layer_width = d->layerWidth[l];
     for(cr = 0 ; cr < child_layer_width; cr++){
         for(cc = 0; cc < child_layer_width ; cc++){
@@ -447,6 +457,15 @@ void _LinkOverlapping(uint l, Destin *d)
                 child_node->parents[3] = parent_node;
                 parent_node->children[0] = child_node;
                 child_node->nParents++;
+            }
+
+            // set the first parent
+            child_node->firstParent = NULL;
+            for(i = 0 ; i < 4 ; i++){
+                if(child_node->parents[i] != NULL){
+                    child_node->firstParent = child_node->parents[i];
+                    break;
+                }
             }
         }
     }
@@ -607,6 +626,7 @@ void SaveDestin( Destin *d, char *filename )
     fwrite(&d->freqTreshold,        sizeof(float),              1,           dFile);
     fwrite(&d->addCoeff,            sizeof(float),              1,           dFile);
     fwrite(&d->extRatio,            sizeof(uint),               1,           dFile);
+    fwrite(&d->isRecurrent,         sizeof(bool),               1,           dFile);
 
     // save input dimensionality i.e. nci[0]
     fwrite(&d->nci[0],              sizeof(uint),               1,           dFile);
@@ -671,7 +691,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
 
     uint serializeVersion;
     uint nMovements, nc, nl;
-    bool isUniform;
+    bool isUniform, isRecurrent;
     uint extendRatio;
     uint *nb, *layerMaxNb, *layerWidths;
 
@@ -716,6 +736,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&freqTreshold, sizeof(float),    1,   dFile);
     freadResult = fread(&addCoeff,     sizeof(float),    1,   dFile);
     freadResult = fread(&extendRatio,  sizeof(uint),     1,   dFile);
+    freadResult = fread(&isRecurrent,  sizeof(bool),     1,   dFile);
 
     //TODO: verify the results of the read
 
@@ -723,7 +744,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&inputDim,     sizeof(uint),     1,   dFile);
 
     d = InitDestin(inputDim, nl, nb, layerMaxNb, layerWidths, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
-                   freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, extendRatio);
+                   freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, extendRatio, isRecurrent);
 
     // temporary arrays were copied in InitDestin
     FREE(nb); nb = NULL;
@@ -868,6 +889,8 @@ void InitNode
     {
         node->parents[i] = NULL;
     }
+
+    node->firstParent = NULL;
 
     // copy the input offset for the inputs (should be NULL for non-input nodes)
     if( inputOffsets == NULL ){
@@ -1027,6 +1050,7 @@ DestinConfig* CreateDefaultConfig(uint layers){
     config->freqTreshold = 0;
     config->gamma = 0.10;
     config->inputDim = 16;  // 4x4 pixel input per bottom layer node
+    config->isRecurrent = false;
     config->isUniform = true;
     config->lambdaCoeff = 0.10;
 

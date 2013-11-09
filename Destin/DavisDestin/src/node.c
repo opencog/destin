@@ -25,7 +25,7 @@
 void GetObservation( Node *n, float *framePtr, uint nIdx )
 {
     n = &n[nIdx];
-
+    bool isRecurrent = n->d->isRecurrent;
     uint i, j, k;
     uint ni, nb, np, ns, nc;
 
@@ -78,30 +78,25 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
             n->observation[i] = framePtr[n->inputOffsets[i]];
         }
     }
-
     // set these to uniform for now.
-    // TODO: REMOVE THIS WHEN RECURRENCE IS ENABLE
-    for( i=0; i < nb; i++ )
-    {
-#ifdef RECURRENCE_ON
-        n->observation[i+ni] = n->outputBelief[i] * n->gamma;
-#else
-        n->observation[i+ni] = 1 / (float) nb;
-#endif
-    }
-
-    for( i=0; i < np; i++ )
-    {
-#ifdef RECURRENCE_ON
-        if (n->parent != NULL)
-        {
-            n->observation[i+ni+nb] = n->parent->outputBelief[i] * n->nLambda;
-        } else {
-            n->observation[i+ni+nb] = 0;
+    if(isRecurrent){
+        for( i=0; i < nb; i++ ){
+            n->observation[i+ni] = n->outputBelief[i] * n->gamma;
         }
-#else
-        n->observation[i+ni+nb] = 1 / (float) np;
-#endif
+        for( i=0; i < np; i++ ){
+            if (n->firstParent != NULL){
+                n->observation[i+ni+nb] = n->firstParent->outputBelief[i] * n->lambdaCoeff;
+            } else {
+                n->observation[i+ni+nb] = 0;
+            }
+        }
+    }else{
+        for( i=0; i < nb; i++ ){
+            n->observation[i+ni] = 1 / (float) nb;
+        }
+        for( i=0; i < np; i++ ){
+            n->observation[i+ni+nb] = 1 / (float) np;
+        }
     }
 
     for( i=0; i < nc; i++ )

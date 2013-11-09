@@ -456,7 +456,7 @@ int testSaveDestin1(){
     SetLearningStrat(d, CLS_FIXED);
     assertTrue(ns0 == d->nodes[0].ns);
     assertTrue(ns1 == d->nodes[4].ns);
-
+    d->isRecurrent = true;
     uint maxNs = d->maxNs;
 
     //random image to apply to mix up the destin states to test serialization
@@ -475,12 +475,12 @@ int testSaveDestin1(){
     float ** uf_avgDelta[2];
     uf_avgDelta[0] = copyFloatDim2Array(d->uf_avgDelta[0], dc->centroids[0], ns0);
     uf_avgDelta[1] = copyFloatDim2Array(d->uf_avgDelta[1], dc->centroids[1], ns1);
-
     SaveDestin(d, "unit_test_destin.save");
     DestroyDestin(d);
     d = NULL;//must be set to NULL or LoadDestin will try to destroy an invalid pointer
     d = LoadDestin(d, "unit_test_destin.save");
 
+    assertTrue(d->isRecurrent);
     assertTrue(d->centLearnStrat == CLS_FIXED);
     assertTrue(d->nLayers == 2);
     assertIntArrayEqualsV(d->nb, 2, 3, 4);
@@ -542,6 +542,7 @@ int _testSaveDestin2(bool isUniform, CentroidLearnStrat learningStrat, BeliefTra
     dc->nMovements = 4;
     assignFloatArray(dc->temperatures, 4, 3.5, 4.5, 5.0, 4.4);
     dc->isUniform = isUniform;
+    dc->isRecurrent = true;
 
     Destin * d = InitDestinWithConfig(dc);
     DestroyConfig(dc);
@@ -646,6 +647,7 @@ int testLoadFromConfig(){
     assertFloatEquals(0.2, n->gamma, 1e-8);
     assertFloatEquals(0.001, n->starvCoeff, 1e-8);
     assertTrue(d->beliefTransform == DST_BT_BOLTZ);
+    assertTrue(d->isRecurrent);
     DestroyDestin(d);
     return 0;
 }
@@ -754,6 +756,7 @@ int testLinkParentsToChildren(){
     assertTrue(parent->children[1]->parents[0] == parent);
     assertTrue(parent->children[2]->parents[0] == parent);
     assertTrue(parent->children[3]->parents[0] == parent);
+    assertTrue(parent->children[3]->firstParent == parent);
 
     // Parent of top layer node is null
     Node * root = GetNodeFromDestin(d, 3, 0, 0);
@@ -762,6 +765,7 @@ int testLinkParentsToChildren(){
     Node * child = GetNodeFromDestin(d, 1, 2, 1);
     parent = GetNodeFromDestin(d, 2, 1, 0);
     assertTrue (child->parents[0] == parent);
+    assertTrue (child->firstParent == parent);
     assertTrue (parent->parents[0] == root);
 
     DestroyDestin(d);
@@ -1036,6 +1040,10 @@ int testBuildOverlappingHeirarchy(){
     }
 
 
+    // Check that the top node has no parents
+    assertTrue(GetNodeFromDestin(d, 4, 0, 0)->nParents == 0);
+    assertTrue(GetNodeFromDestin(d, 4, 0, 0)->firstParent == NULL);
+
     // Check that overlapping child nodes have the rigt parents in the right positions.
     // Child nodes that are overlapping each can have up to 4 parents.
     Node *childNode = GetNodeFromDestin(d, 1, 0, 0);
@@ -1044,6 +1052,7 @@ int testBuildOverlappingHeirarchy(){
     assertTrue(childNode->parents[1] == NULL); // North East parent
     assertTrue(childNode->parents[2] == NULL); // South West parent
     assertTrue(childNode->parents[3] == GetNodeFromDestin(d, 2, 0, 0)); // South East parent
+    assertTrue(childNode->firstParent == childNode->parents[3]);
 
     childNode = GetNodeFromDestin(d, 1, 0, 1);
     assertTrue(childNode->nParents == 2);
@@ -1051,6 +1060,7 @@ int testBuildOverlappingHeirarchy(){
     assertTrue(childNode->parents[1] == NULL); // North East parent
     assertTrue(childNode->parents[2] == GetNodeFromDestin(d, 2, 0, 0)); // South West parent
     assertTrue(childNode->parents[3] == GetNodeFromDestin(d, 2, 0, 1)); // South East parent
+    assertTrue(childNode->firstParent == childNode->parents[2]);
 
     childNode = GetNodeFromDestin(d, 1, 1, 3);
     assertTrue(childNode->nParents == 4);
@@ -1058,6 +1068,7 @@ int testBuildOverlappingHeirarchy(){
     assertTrue(childNode->parents[1] == GetNodeFromDestin(d, 2, 0, 3)); // North East parent
     assertTrue(childNode->parents[2] == GetNodeFromDestin(d, 2, 1, 2)); // South West parent
     assertTrue(childNode->parents[3] == GetNodeFromDestin(d, 2, 1, 3)); // South East parent
+    assertTrue(childNode->firstParent == childNode->parents[0]);
 
     // Check that a parent node has the right children
     Node *parentNode = GetNodeFromDestin(d, 2, 1, 4);
@@ -1065,6 +1076,7 @@ int testBuildOverlappingHeirarchy(){
     assertTrue(parentNode->children[1] == GetNodeFromDestin(d, 1, 1, 5));
     assertTrue(parentNode->children[2] == GetNodeFromDestin(d, 1, 2, 4));
     assertTrue(parentNode->children[3] == GetNodeFromDestin(d, 1, 2, 5));
+    assertTrue(childNode->firstParent == childNode->parents[0]);
 
     assertTrue(GetNodeFromDestin(d, 1, 1, 4)->parents[3] == parentNode);
     assertTrue(GetNodeFromDestin(d, 1, 1, 5)->parents[2] == parentNode);

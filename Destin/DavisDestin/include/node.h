@@ -6,9 +6,6 @@
 #define EPSILON     1e-8
 #define MAX_INTERMEDIATE_BELIEF (1.0 / EPSILON)
 
-// Use at 2013.6.5
-//#define RECURRENCE_ON // if defined then it clusters on its previous and parent's previous belief.
-
 #define USE_MAL     // use mahalanobis distance to calulate beliefs ( gives better results )
 //#define USE_EUC   // use euclidian distance to calculate beliefs
 
@@ -67,6 +64,7 @@ typedef struct Node {
                             // If all nodes in the node's layer have only 1 parent (for non overlapping node regions),
                             // then the parent is always placed in the 0th element and the rest are null.
 
+    struct Node * firstParent; // First parent node that is not NULL.
 
     uint nParents;          // Number of parent nodes. There may be more than one when using overlapping node regions.
 
