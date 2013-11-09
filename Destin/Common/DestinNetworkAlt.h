@@ -49,7 +49,7 @@ private:
     DestinIterationFinishedCallback * callback;
 
     float beta;   //variance learning rate
-    float lambda; //previous belief damping, 0 = disable, 1.0 = keep the same
+    float lambdaCoeff; //previous belief damping, 0 = disable, 1.0 = keep the same
     float gamma;  //parents previous belief damping, 0 = disable, 1.0 = keep the same
 
     float * temperatures; //one temperature per layer. If temperature = #
@@ -205,7 +205,7 @@ public:
 
     void setParentBeliefDamping(float gamma);
 
-    void setPreviousBeliefDamping(float lambda);
+    void setPreviousBeliefDamping(float lambdaCoeff);
 
     void clearBeliefs(){
         ClearBeliefs(destin);

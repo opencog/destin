@@ -58,7 +58,7 @@ Destin * CreateDestin( char *filename ) {
     
     uint nl, nc, i, nMovements;
     uint *nci, *nb, *layerMaxNb;
-    float beta, lambda, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
+    float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
     float *temp;
 
     // parse config file
@@ -88,7 +88,7 @@ Destin * CreateDestin( char *filename ) {
 
     // get coeffs
     fscanfResult = fscanf(configFile, "%f", &beta);
-    fscanfResult = fscanf(configFile, "%f", &lambda);
+    fscanfResult = fscanf(configFile, "%f", &lambdaCoeff);
     fscanfResult = fscanf(configFile, "%f", &gamma);
     fscanfResult = fscanf(configFile, "%f", &starvCoeff);
     fscanfResult = fscanf(configFile, "%f", &freqCoeff);
@@ -111,11 +111,11 @@ Destin * CreateDestin( char *filename ) {
 
     BeliefTransformEnum bte = BeliefTransform_S_to_E(bts);
 
-    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambda, gamma, starvCoeff);
+    printf("beta: %0.2f. lambda: %0.2f. gamma: %0.2f. starvCoeff: %0.2f\n",beta, lambdaCoeff, gamma, starvCoeff);
     printf("freqCoeff: %0.3f. freqTreshold: %0.3f. addCoeff: %0.3f ", freqCoeff, freqTreshold, addCoeff);
     printf("isUniform: %s. belief transform: %s.\n", isUniform ? "YES" : "NO", bts);
 
-    newDestin = InitDestin(nci, nl, nb, layerMaxNb, nc, beta, lambda, gamma, temp, starvCoeff,
+    newDestin = InitDestin(nci, nl, nb, layerMaxNb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
                            freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, 1);
     SetBeliefTransform(newDestin, bte);
 
@@ -156,9 +156,9 @@ void CalcSquareNodeInputOffsets(uint layerWidth, uint nIdx, uint ni, uint * inpu
             i++;
         }
     }
-};
+}
 
-Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, float beta, float lambda, float gamma, float *temp,
+Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, float beta, float lambdaCoeff, float gamma, float *temp,
                      float starvCoeff, float freqCoeff, float freqTreshold, float addCoeff, uint nMovements, bool isUniform, int extRatio)
 {
     uint i, j, l, maxNb, maxNs;
@@ -219,7 +219,7 @@ Destin * InitDestin( uint *nci, uint nl, uint *nb, uint *layerMaxNb, uint nc, fl
                         starvCoeff,
                         beta,
                         gamma,
-                        lambda,
+                        lambdaCoeff,
                         temp[l],
                         &d->nodes[n],
                         (l > 0 ? NULL : inputOffsets),
@@ -479,7 +479,7 @@ void SaveDestin( Destin *d, char *filename )
     // write destin params to disk
     fwrite(d->temp,                 sizeof(float),              d->nLayers,  dFile);
     fwrite(&d->nodes[0].beta,       sizeof(float),              1,           dFile); //TODO consider moving these constants to the destin struc
-    fwrite(&d->nodes[0].nLambda,    sizeof(float),              1,           dFile);
+    fwrite(&d->nodes[0].lambdaCoeff,sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
     fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
     fwrite(&d->freqCoeff,           sizeof(float),              1,           dFile);
@@ -551,7 +551,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     int extendRatio; //TODO: make this a uint
     uint *nci, *nb, *layerMaxNb;
 
-    float beta, lambda, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
+    float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
     float *temp;
 
     dFile = fopen(filename, "r");
@@ -585,7 +585,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     // read destin params from disk
     freadResult = fread(temp,         sizeof(float),    nl,  dFile);
     freadResult = fread(&beta,        sizeof(float),    1,   dFile);
-    freadResult = fread(&lambda,      sizeof(float),    1,   dFile);
+    freadResult = fread(&lambdaCoeff,      sizeof(float),    1,   dFile);
     freadResult = fread(&gamma,       sizeof(float),    1,   dFile);
     freadResult = fread(&starvCoeff,  sizeof(float),    1,   dFile);
     freadResult = fread(&freqCoeff,   sizeof(float),    1,   dFile);
@@ -593,7 +593,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     freadResult = fread(&addCoeff,    sizeof(float),    1,   dFile);
     freadResult = fread(&extendRatio, sizeof(int),      1,   dFile);
 
-    d = InitDestin(nci, nl, nb, layerMaxNb, nc, beta, lambda, gamma, temp, starvCoeff,
+    d = InitDestin(nci, nl, nb, layerMaxNb, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
                    freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, extendRatio);
 
     // temporary arrays were copied in InitDestin
@@ -624,7 +624,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
             for(i = 0 ; i < d->nb[l]; i++){
                 freadResult = fread(d->uf_mu[l][i],          sizeof(float),  nTmp->ns,    dFile);
                 freadResult = fread(d->uf_sigma[l][i],       sizeof(float),  nTmp->ns,    dFile);
-                freadResult = fread(d->uf_avgDelta[l][i],       sizeof(float),  nTmp->ns,    dFile);
+                freadResult = fread(d->uf_avgDelta[l][i],    sizeof(float),  nTmp->ns,    dFile);
             }
             freadResult = fread(d->uf_absvar[l],             sizeof(float),  nTmp->ns,    dFile);
             freadResult = fread(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],    dFile);
@@ -666,11 +666,11 @@ void InitNode
     float       starvCoeff,
     float       beta,
     float       gamma,
-    float       lambda,
+    float       lambdaCoeff,
     float       temp,
     Node        *node,
     uint        *inputOffsets,
-    uint        childNumber
+    uint        nChildren
     )
 {
 
@@ -684,12 +684,12 @@ void InitNode
     node->nc            = nc;
     node->starvCoeff    = starvCoeff;
     node->beta          = beta;
-    node->nLambda       = lambda;
+    node->lambdaCoeff   = lambdaCoeff;
     node->gamma         = gamma;
     node->temp          = temp;
     node->winner        = 0;
     node->layer         = layer;
-    node->childNumber   = childNumber;
+    node->nChildren     = nChildren;
 
     int relativeIndex = nodeIdx - d->layerNodeOffsets[layer];
     node->row           = relativeIndex / d->layerWidth[layer];
@@ -726,8 +726,8 @@ void InitNode
     {
         node->children = NULL;
     } else {
-        MALLOC( node->children, Node *, childNumber );
-        for ( i = 0; i < childNumber; i++ )
+        MALLOC( node->children, Node *, nChildren );
+        for ( i = 0; i < nChildren; i++ )
         {
             node->children[i] = NULL;
         }
@@ -860,4 +860,56 @@ float normrnd(float mean, float stddev) {
         n2_cached = 0;
         return n2*stddev + mean;
     }
+}
+
+
+DestinConfig* CreateDefaultConfig(uint layers){
+    DestinConfig * config;
+    MALLOC(config, DestinConfig, 1);
+
+    config->beta = 0.001;
+
+    uint i, defaultCentroidsPerLayer = 5;
+
+    MALLOC(config->centroids, uint, layers);
+    for(i = 0 ; i < layers ; i++){
+        config->centroids[i] = defaultCentroidsPerLayer;
+    }
+
+    config->extRatio = 1;
+    config->freqCoeff =  0.05; //TODO: set to good value
+    config->freqTreshold = 0.01; //TODO: set to good value
+    config->gamma = 0.10;
+    config->inputDim = 16;  // 4x4 pixel input per bottom layer node
+    config->isUniform = true;
+    config->lambdaCoeff = 0.10;
+
+    MALLOC(config->layerWidths, uint, layers);
+    for(i = 0 ; i < layers ; i++){
+        config->layerWidths[i] = (uint)pow(2, layers - i - 1);
+    }
+
+    MALLOC(config->nci, uint, layers);
+    config->nci[0] = config->inputDim;
+    for(i = 1 ; i < layers ; i++){
+        config->nci[i] = 4;
+    }
+
+    config->nClasses = 0;
+    config->nLayers = layers;
+    config->nMovements = 0;
+    config->starvCoeff = 0.12;
+
+    MALLOC(config->temperatures, float, layers);
+    for(i = 0; i < layers; i++){
+        config->temperatures[i] = config->centroids[i] * 2.0;
+    }
+    return config;
+}
+
+void DestroyConfig(DestinConfig * c){
+    FREE(c->centroids);         c->centroids = NULL;
+    FREE(c->nci);    c->nci = NULL;
+    FREE(c->temperatures);      c->temperatures = NULL;
+    FREE(c);
 }

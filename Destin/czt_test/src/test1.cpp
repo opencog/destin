@@ -1336,7 +1336,7 @@ int test_extRatio()
     uint nb [] = {4};  // 4 centroids;
     uint nc = 0;
     float beta = 1;
-    float lambda = 1;
+    float lambdaCoeff = 1;
     float gamma = 1;
     float temperature [] = {1};
     float starvCoef = 0.1;
@@ -1357,7 +1357,7 @@ int test_extRatio()
         .9, .9, .9, .9,
         .9, .9, .9, .9
     };
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambda, gamma, temperature, starvCoef, nMovements, isUniform, extRatio);
+    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, extRatio);
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     d->layerMask[0] = 1;

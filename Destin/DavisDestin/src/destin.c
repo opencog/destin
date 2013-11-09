@@ -780,7 +780,7 @@ void GenerateInputFromBelief( Destin *d, float *frame )
             SampleInputFromBelief( nTmp, sampledInput );
 
             // pass sampled input to children's previous belief
-            for( i=0; i < nTmp->childNumber; i++ )
+            for( i=0; i < nTmp->nChildren; i++ )
             {
                 if (nTmp->children[i] == NULL)
                 {
