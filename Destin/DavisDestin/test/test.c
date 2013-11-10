@@ -929,7 +929,7 @@ int testArrayOperations() {
     REALLOCV(array, float, 7, 10);    // the array shrinks now (this is a side effect on purpose)
                                       // change size from 128 to 32 (* sizeof(float))
     REALLOCV(array, float, 17,1345678);  // check large array
-    array[2097152] = 1;
+    array[1097152] = 1;
     FREE(array);
 
     int * intArray;
