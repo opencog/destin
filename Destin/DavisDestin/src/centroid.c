@@ -8,7 +8,7 @@
 void _normalizeFloatArray(float * array, uint length)
 {
     uint i;
-    float sum;
+    float sum = 0;
 
     for (i = 0; i < length; i++)
     {
