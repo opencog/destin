@@ -16,7 +16,8 @@
             return NULL;
       }
     }
-    $1[i] = 0;
+  } else if ($input == Py_None){
+      $1 = NULL;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;
@@ -34,12 +35,12 @@
 // See http://www.swig.org/Doc2.0/SWIGDocumentation.html#Typemaps_overloading for more info.
 %typemap(typecheck, precedence=SWIG_TYPECHECK_INT32_ARRAY) unsigned int[] {
   int res = PyList_Check($input);
-  $1 = res;
+  $1 = res || $input == Py_None;
 }
 
 %typemap(typecheck, precedence=SWIG_TYPECHECK_DOUBLE_ARRAY) float [] {
   int res = PyList_Check($input);
-  $1 = res;
+  $1 = res || $input == PyNone;
 }
 
 // let the user use python list for float [] arguments
@@ -59,7 +60,8 @@
             return NULL;
       }
     }
-    $1[i] = 0;
+  } else if ($input == Py_None){
+      $1 = NULL;
   } else {
     PyErr_SetString(PyExc_TypeError,"not a list");
     return NULL;

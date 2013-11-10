@@ -48,7 +48,6 @@ private:
     bool training;
     DestinIterationFinishedCallback * callback;
 
-    float beta;   //variance learning rate
     float lambdaCoeff; //previous belief damping, 0 = disable, 1.0 = keep the same
     float gamma;  //parents previous belief damping, 0 = disable, 1.0 = keep the same
 
@@ -67,6 +66,8 @@ private:
 
     float *** centroidImages;
     bool isUniform;
+    const int inputImageWidth;
+
     /**
      * initTemperatures
      * Input layer stays the same. For the top two layers temperature = centroids * 2
@@ -75,19 +76,40 @@ private:
      */
     void initTemperatures(int layers, uint * centroids);
 
-    /**
-     * Initialize default topology. Each node above layer 0 has 4 children. Each node from layer 0 has 16 inputs.
-     */
-    void initDefaultTopology(int layers, uint * inputs);
-
-    const int inputImageWidth;
+    void init(SupportedImageWidths width, unsigned int layers,
+             unsigned int centroid_counts [], bool isUniform, int extRatio,  unsigned int layer_widths[]);
 
 public:
 
+    /** Builds a DeSTIN network
+      * @param width - width of the input image in pixels
+      * @param layers - number of layers in the heirarchy
+      * @param centroid_counts - centroids per layer. Starts from the bottom layer.
+      * @param isUniform - if nodes in a level share the same pool of centroids.
+      * @param extendRatio - Specifies if destin should expect the input image to be duplicated.
+      * A value other than one means that the input size will be multiplied by this ration. For instance
+      * it may be 2 if inputing a pair of stereo images of the same size.
+      *
+      * @param layer_widths - if null, it will build a classic 4 to 1 non overlapping heirarchy based on the
+      * number of layers. Otherwise it will build the heirarchy according to these rules:
+      * 1) If parent layer width is exactly one less than the child layer width, it assumes the parent nodes share their
+      * children with other adjacent parents in an overlapping fashion. Each child may have up to 4 parents. Chilren nodes
+      * on the edges and corners of the child layer will have less than 4 parents.
+      * 2) Otherwise, if child_layer_width % parent_layer_width == 0 then it assumes that parent nodes do not share children nodes
+      * Each child has just 1 parent. Each parent will have (child_layer_width / parent_layer_width) ^ 2 children.
+      * 3) If neither of the two conditions do not apply, a runtime_error exception will be thrown.
+      */
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform, int extendRatio = 1);
+            unsigned int centroid_counts [], bool isUniform, int extendRatio = 1, unsigned int layer_widths[] = NULL);
 
     virtual ~DestinNetworkAlt();
+
+    /** Runs the DeSTIN algorithm on the float array input.
+      * This is usually a square greyscale image made of float values between 0.0 and 1.0
+      * The size of this array should be equal width x width, where width was passed
+      * into the DestinNetworkAlt constructor.
+      */
+    void doDestin(float * input_array);
 
     int getInputImageWidth(){
         return inputImageWidth;
@@ -101,9 +123,6 @@ public:
 
     void setTemperatures(float temperatures[]);
 
-    void doDestin( //run destin with the given input
-            float * input_dev //pointer to input memory on device
-            );
 
     float getSep(int layer);
     float getVar(int layer);
@@ -275,6 +294,7 @@ public:
 
 
     /** Displays the image generated from getCentroidImageM method.
+      * updateCentroidImages() should be called to recalulate the images to see changes.
       * Opencv cvWaitKey function must be called after to see the image.
       */
     void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" );
@@ -285,6 +305,7 @@ public:
 
     /** Displays all the centroid images of a layer into one large image.
       * Displays the image generated from method getLayerCentroidImages.
+      * updateCentroidImages() should be called to recalulate the images to see changes.
       * Opencv cvWaitKey function must be called after to see the image.
       * @param layer - what layer the centroids belong to
       * @param scale_width - resizes the square image grid width to this size.
@@ -303,6 +324,7 @@ public:
       * are added to the bottom right of the grid until the number is a square number. For example
       * if there are 15 centroid images, then it will display a 4x4 grid with the bottom right corner empty.
       * Only works with uniform destin.
+      * updateCentroidImages() should be called to recalulate the images to see changes.
       *
       * @param layer - what layer the centroids belong to
       * @param scale_width - resizes the square image grid width to this size.

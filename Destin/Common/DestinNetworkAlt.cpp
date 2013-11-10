@@ -16,15 +16,6 @@ void DestinNetworkAlt::initTemperatures(int layers, uint * centroids){
     }
 }
 
-// Initialize default DeSTIN network topology
-void DestinNetworkAlt::initDefaultTopology(int layers, uint * inputs){
-
-    inputs[0] = 16;
-    for (int l = 1 ; l < layers ; l++){
-        inputs[l] = 4;
-    }
-}
-
 float *** DestinNetworkAlt::getCentroidImages(){
     if(centroidImages==NULL){
         centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
@@ -32,11 +23,10 @@ float *** DestinNetworkAlt::getCentroidImages(){
     return centroidImages;
 }
 
-//TODO: comment extRatio parameter
 DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int extRatio) :
+        unsigned int centroid_counts [], bool isUniform, int extRatio, unsigned int layer_widths[]):
+
         training(true),
-        beta(.01),
         lambdaCoeff(.1),
         gamma(.1),
         isUniform(isUniform),
@@ -45,60 +35,49 @@ DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int laye
         inputImageWidth(width)
         {
 
-    uint c, l;
+    init(width, layers, centroid_counts, isUniform, extRatio, layer_widths);
+}
+
+void DestinNetworkAlt::init(SupportedImageWidths width, unsigned int layers,
+                            unsigned int centroid_counts [], bool isUniform, int extRatio, unsigned int layer_widths[]){
     callback = NULL;
     initTemperatures(layers, centroid_counts);
-    float starv_coeff = 0.05;
-    float freq_coeff = 0.05;
-    float freq_treshold = 0; // disabled deletion of centroids
-    float add_coeff = 0; // disabled deletion of centroids
-    uint n_classes = 0;//doesn't look like its used
-    uint num_movements = 0; //this class does not use movements
 
-    uint layer_inputs[layers];
-    initDefaultTopology(layers, layer_inputs);
+    DestinConfig *dc = CreateDefaultConfig(layers);
+    dc->addCoeff = 0; // disabled deletion of centroids
+    dc->beta = 0.01;
+    std::copy(centroid_counts, centroid_counts + layers, dc->centroids); // initial number of centroids
+    dc->extRatio = extRatio;
+    dc->freqCoeff = 0.05;
+    dc->freqTreshold = 0; // disabled deletion of centroids
+    dc->gamma = gamma;
+    dc->isUniform = isUniform;
+    dc->lambdaCoeff = lambdaCoeff;
+    std::copy(centroid_counts, centroid_counts + layers, dc->layerMaxNb); // max number of centroids
 
-    uint initial_counts[layers];    // initial number of centroids
-    uint maximum_counts[layers];    // maximum number of centroids
-    for (int i=0; i < layers; i++)
-    {
-        initial_counts[i] = centroid_counts[i];
-        maximum_counts[i] = centroid_counts[i];
+    if(layer_widths != NULL){ // provide support for non standard heirarchy
+        std::copy(layer_widths, layer_widths + layers, dc->layerWidths);
     }
 
-    //figure out how many layers are needed to support the given
-    //image width.
-    bool supported = false;
-    for (c = 4, l = 1; c <= MAX_IMAGE_WIDTH ; c *= 2, l++) {
-        if (c == width) {
-            supported = true;
-            break;
-        }
+    if(width % dc->layerWidths[0] == 0){
+        int ratio = width / dc->layerWidths[0];
+        dc->inputDim = ratio * ratio;
+    } else {
+        DestroyConfig(dc);
+        throw std::runtime_error("Input image width must be evenly divisible by the bottom layer width.");
     }
-    if(!supported){
-        throw std::logic_error("given image width is not supported.");
+
+    dc->nClasses = 0;
+    dc->nMovements = 0; //this class does not use movements
+    dc->starvCoeff = 0.05;
+    std::copy(temperatures, temperatures + layers, dc->temperatures);
+
+    destin = InitDestinWithConfig(dc);
+    if(destin == NULL){
+        throw std::runtime_error("Could not create the destin structure. Perhaps the given layer widths is not supported.");
     }
-    if (layers != l) {
-        throw std::logic_error("Image width does not match the given number of layers.");
-    }
-    destin = InitDestin(
-            layer_inputs,
-            layers,
-            initial_counts,
-            maximum_counts,
-            n_classes,
-            beta,
-            lambdaCoeff,
-            gamma,
-            temperatures,
-            starv_coeff,
-            freq_coeff,
-            freq_treshold,
-            add_coeff,
-            num_movements,
-            isUniform,
-            extRatio
-     );
+
+    DestroyConfig(dc);
 
     setBeliefTransform(DST_BT_NONE);
     ClearBeliefs(destin);
@@ -631,16 +610,14 @@ void DestinNetworkAlt::setTemperatures(float temperatures[]){
     }
 }
 
-void DestinNetworkAlt::doDestin( //run destin with the given input
-        float * input_dev //pointer to input memory on device
-        ) {
+void DestinNetworkAlt::doDestin(float * input_array ) {
 
     if (destin->isUniform){
         Uniform_DeleteCentroids(destin);
         Uniform_AddNewCentroids(destin);
     }
 
-    FormulateBelief(destin, input_dev);
+    FormulateBelief(destin, input_array);
 
     if(this->callback != NULL){
         this->callback->callback(*this );
@@ -753,7 +730,7 @@ void DestinNetworkAlt::setParentBeliefDamping(float gamma){
 }
 
 void DestinNetworkAlt::setPreviousBeliefDamping(float lambdaCoeff){
-    if(gamma < 0 || gamma > 1.0){
+    if(lambdaCoeff < 0 || lambdaCoeff > 1.0){
         throw std::domain_error("setParentBeliefDamping: lambdaCoeff must be between 0 and 1");
     }
     for(int n = 0; n < destin->nNodes ; n++){
@@ -776,7 +753,6 @@ void DestinNetworkAlt::load(const char * fileName){
 
 
     Node * n = GetNodeFromDestin(destin, 0, 0, 0);
-    this->beta = n->beta;
     this->gamma = n->gamma;
     this->isUniform = destin->isUniform;
     this->lambdaCoeff = n->lambdaCoeff;

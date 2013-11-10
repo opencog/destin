@@ -524,6 +524,23 @@ int testFindSubtreeLocations(){
     return 0;
 }
 
+int testOverLappingDestinHeirarchy(){
+    uint centroids []= {4,4,4,4};
+    uint layer_widths[] = {4,3,2,1};
+
+    DestinNetworkAlt dn(W16, 4, centroids, true, 1, layer_widths );
+    DestinTreeManager dtm(dn, 0);
+
+    assertIntEquals(169,dtm.getWinningCentroidTreeSize())
+    float ** images = makeRandomImages(16*16, 2);
+    dn.doDestin(images[0]);
+    dtm.addTree();
+    dn.doDestin(images[1]);
+    dtm.addTree();
+    freeRandomImages(images, 2);
+    return 0;
+}
+
 int main(int argc, char ** argv){
     RUN(testTreeToVector);
     RUN(testTreeMiner);
@@ -533,6 +550,7 @@ int main(int argc, char ** argv){
     RUN(testTimeSliceTreeExporter);
     RUN(testIsSubtreeOf);
     RUN(testFindSubtreeLocations);
+    RUN(testOverLappingDestinHeirarchy);
     UT_REPORT_RESULTS();
     return 0;
 }

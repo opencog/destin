@@ -4,9 +4,10 @@
 DestinTreeManager::DestinTreeManager(DestinNetworkAlt & destin, int bottom)
     :destin(destin), nLayers(destin.getLayerCount()), winnerTree(NULL)
 {
-    labelBucket = ( 1 << ( sizeof(short) * 8 - 1))/nLayers;
-    childNumBucket = labelBucket / 4;
-    setBottomLayer(bottom);
+    maxChildrenPerParent = 0; // updated in setBottomLayer
+    setBottomLayer(bottom); // updates maxChildrenPerParent
+    labelBucket = ( 1 << ( sizeof(short) * 8 - 1))/nLayers; // divide the range of short numbers into nLayer bucket ranges
+    childNumBucket = labelBucket / maxChildrenPerParent; // further divide the short range into the 4 child positions
     for(int i = 0 ; i <  nLayers; i++){
         if( destin.getBeliefsPerNode(i) >= childNumBucket){
             throw std::domain_error("DestinTreeManager: too many centroids\n.");
@@ -52,11 +53,22 @@ vector<short> DestinTreeManager::getWinningCentroidTreeVector(){
     return winTreeVect;
 }
 
+void DestinTreeManager::calcWinningCentroidTreeSize(const Node * parent, int & count_out){
+    count_out++;
+    if(parent->layer > bottomLayer && parent->children != NULL){
+        for(int i = 0 ; i < parent->nChildren ; i++){
+            calcWinningCentroidTreeSize(parent->children[i], count_out);
+            count_out++; // increment once more for the -1 back track
+        }
+    }
+    return;
+}
+
 int DestinTreeManager::buildTree(const Node * parent, int pos, const int child_num){
     int layer = parent->layer;
     winnerTree[pos] = getTreeLabelForCentroid(parent->winner, layer, child_num);
     if(layer > bottomLayer && parent->children != NULL){
-        for(int i = 0 ; i < 4 ; i++){
+        for(int i = 0 ; i < parent->nChildren ; i++){
             pos = buildTree(parent->children[i], ++pos, i);
             winnerTree[++pos] = -1;
         }
@@ -64,7 +76,20 @@ int DestinTreeManager::buildTree(const Node * parent, int pos, const int child_n
     return pos;
 }
 
-void DestinTreeManager::createConvertNodeLocations(const Node * parent){
+void DestinTreeManager::createConvertNodeLocations(int bottom_layer){
+    int treeNodeSize = winningTreeNodeSize(bottom_layer);
+    Node * root = destin.getNode(nLayers - 1, 0, 0);
+    convertNodeLocation.reserve(treeNodeSize);
+    convertNodeLocation.clear();
+    createConvertNodeLocationsHelper(root);
+}
+
+void DestinTreeManager::createConvertNodeLocationsHelper(const Node * parent){
+
+    if(parent->nChildren >  maxChildrenPerParent){
+        maxChildrenPerParent = parent->nChildren;
+    }
+
     int layer = parent->layer;
     NodeLocation nl;
     nl.col = parent->col;
@@ -72,11 +97,34 @@ void DestinTreeManager::createConvertNodeLocations(const Node * parent){
     nl.layer = layer;
     convertNodeLocation.push_back(nl);
     if(layer > bottomLayer && parent->children != NULL){
-        for(int i = 0 ; i < 4 ; i++){
-            createConvertNodeLocations(parent->children[i]);
+        for(int i = 0 ; i < parent->nChildren ; i++){
+            createConvertNodeLocationsHelper(parent->children[i]);
         }
     }
     return;
+}
+
+int DestinTreeManager::winningTreeNodeSize(int bottom_layer){
+    Destin * d = destin.getNetwork();
+    uint nodes_to_subtract = 0;
+    for(int i = 0 ; i < bottom_layer ; i++){
+        nodes_to_subtract += d->layerSize[i];
+    }
+    return destin.getNetwork()->nNodes - nodes_to_subtract;
+}
+
+void DestinTreeManager::updateTreeParameters(int bottom_layer){
+
+    createConvertNodeLocations(bottom_layer);
+
+    Node * root = destin.getNode(nLayers - 1, 0, 0);
+    winningTreePathSize = 0;
+    calcWinningCentroidTreeSize(root, winningTreePathSize);
+
+    if(winnerTree!=NULL){
+        delete [] winnerTree;
+        winnerTree = NULL;
+    }
 }
 
 void DestinTreeManager::setBottomLayer(unsigned int bottom){
@@ -85,25 +133,7 @@ void DestinTreeManager::setBottomLayer(unsigned int bottom){
     }
 
     bottomLayer = bottom;
-    Destin * d = destin.getNetwork();
-
-    uint nodes_to_subtract = 0;
-    for(int i = 0 ; i < bottom ; i++){
-        nodes_to_subtract += d->layerSize[i];
-    }
-
-    int nodes_used = destin.getNetwork()->nNodes - nodes_to_subtract;
-    winningTreeSize = (nodes_used - 1) * 2 + 1;
-
-    if(winnerTree!=NULL){
-        delete [] winnerTree;
-        winnerTree = NULL;
-    }
-
-    convertNodeLocation.reserve(nodes_used);
-    convertNodeLocation.clear();
-    createConvertNodeLocations(destin.getNode(nLayers - 1, 0, 0));
-
+    updateTreeParameters(bottom);
     return;
 }
 
@@ -115,7 +145,8 @@ cv::Mat DestinTreeManager::getTreeImg(const std::vector<short> & tree){
 
     int layer, cent, child_num;
     decodeLabel(tree[0], cent, layer,  child_num);
-    int w = Cig_GetCentroidImageWidth(destin.getNetwork(), layer);
+    Destin * d = destin.getNetwork();
+    int w = Cig_GetCentroidImageWidth(d, layer);
     cv::Mat img = cv::Mat::zeros(w, w, CV_32FC1); //initialize the image to black
 
     std::vector<int> xs; // x stack
@@ -126,9 +157,10 @@ cv::Mat DestinTreeManager::getTreeImg(const std::vector<short> & tree){
         int label = tree[i];
 
         if(label != -1){
-            decodeLabel(label, cent, layer, child_num); //todo: what if its the root of subtree but not of top node of destin
+            decodeLabel(label, cent, layer, child_num); //TODO: what if its the root of subtree but not of top node of destin
             if(i > 0){
-                calcChildCoords(xs.back(), ys.back(), child_num, layer, x, y);
+                uint childrenWidth = (uint)sqrt(d->nci[layer+1]);
+                calcChildCoords(childrenWidth, xs.back(), ys.back(), child_num, layer, x, y);
             }
             paintCentroidImage(layer, cent, x, y, img );
             xs.push_back(x);
@@ -186,31 +218,19 @@ void DestinTreeManager::paintCentroidImage(int cent_layer, int centroid, int x, 
     return;
 }
 
-void DestinTreeManager::calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out){
-    int w;
-    switch (child_no) {
-        case 0:
-            child_x_out = px;
-            child_y_out = py;
-            break;
-        case 1:
-            w = Cig_GetCentroidImageWidth(destin.getNetwork(), child_layer);
-            child_x_out = px + w;
-            child_y_out = py;
-            break;
-        case 2:
-            w = Cig_GetCentroidImageWidth(destin.getNetwork(), child_layer);
-            child_x_out = px;
-            child_y_out = py + w;
-            break;
-        case 3:
-            w = Cig_GetCentroidImageWidth(destin.getNetwork(), child_layer);
-            child_x_out = px + w;
-            child_y_out = py + w;
-            break;
-        default :
-            throw std::domain_error("DestinNetworlAlt::calcNewCoords: invalid child number.");
-    };
+/**
+  * Calculate the position of the child image given the child number
+  * and the position of the parent image
+  * @param childrenWidth - sqrt(nChildren) - width of the square when the child
+  * nodes are arranged in a square
+  * @param px, py, - coordinate of the parent image, child image is made relative to this
+  */
+void DestinTreeManager::calcChildCoords(uint childrenWidth, int parent_x, int parent_y, int child_number, int child_layer, int & child_x_out, int & child_y_out){
+    int w = Cig_GetCentroidImageWidth(destin.getNetwork(), child_layer);
+    int child_row = child_number / childrenWidth;
+    int child_col = child_number % childrenWidth;
+    child_x_out = w * child_col + parent_x;
+    child_y_out = w * child_row + parent_y;
     return;
 }
 

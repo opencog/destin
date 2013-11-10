@@ -7,18 +7,28 @@ Created on Sat May 18 20:45:29 2013
 
 import common as cm
 
-cm.init(centroids=[4,8,32,32,64,32,4],
-        video_file="color_4.avi", #moving_square.avi
-        learn_rate=0.05)
-                 
+# load the layer_widths and centroids from the 
+# object_tracking_config.py
+from object_tracking_config import *
+
+isTraining=True # train from scratch, or reload from previous run
+
+cm.init(centroids=centroids,
+        video_file="moving_square.avi",
+        learn_rate=0.05,
+        layer_widths=layer_widths,
+        img_width=256
+        )
+#
+
 cm.video_source.enableDisplayWindow()
 cm.network.setIsPOSTraining(True)
 
 def callback(iter):
-    cm.printStats()
     #cm.network.printBeliefGraph(cm.top_layer, 0, 0)
-    print "iter:",iter
-    cm.printFPS()
+    if iter %20 == 0:
+        print "iter:",iter
+        cm.printFPS()
 
 def showTree(index):
     if index >= tm.getMinedTreeCount():
@@ -40,21 +50,21 @@ cm.the_callback = callback
 
 n = cm.network
 
-if True:
+if isTraining:
     cm.go(3200)
     n.save("ot.dst")
 else:
     n.load("ot.dst")
 
 #cm.network.save("ot.dst")
-tm = cm.pd.DestinTreeManager(n,2)
-
+tm = cm.pd.DestinTreeManager(n,1)
+print "size of winning tree is: " + str(tm.getWinningCentroidTreeSize())
 cm.freezeTraining()
 for i in xrange(100):
     cm.go(1)
     tm.addTree()
 
-support = 101
+support = 10
 print "mining..."
 found = tm.mine(support)
 print "Found", found

@@ -372,6 +372,7 @@ bool _assertBoolArrayEqualsV(bool *actual, int len, int line, ...){
 
 // define print array functions for each type
 UT_PRINT_ARRAY(int, "i")
+UT_PRINT_ARRAY(uint, "u")
 UT_PRINT_ARRAY(float, "e")
 UT_PRINT_ARRAY(long, "li")
 

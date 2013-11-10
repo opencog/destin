@@ -8,6 +8,7 @@
 tests="
 ./TreeMining/testTreeMiner
 ./DavisDestin/run_test.sh
+./Bindings/Python/test.sh
 "
 
 all_pass="yes"
