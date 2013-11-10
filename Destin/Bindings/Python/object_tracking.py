@@ -7,17 +7,11 @@ Created on Sat May 18 20:45:29 2013
 
 import common as cm
 
-#layer_widths=[16, 8, 7, 6, 5, 4, 3, 2, 1]
-#centroids=   [2, 32,32,64,16,16,16,16,4]
-layer_widths=[16, 8, 7, 6, 5, 4, 3, 2, 1]
-centroids=   [2,  16,16,16,16,16, 16, 16, 4]
-#centroids=[8,32,32,64,32,4]
+# load the layer_widths and centroids from the 
+# object_tracking_config.py
+from object_tracking_config import *
 
-
-isTraining=False # train from scratch, or reload from previous run
-
-import os
-print "pid is:" + str(os.getpid())
+isTraining=True # train from scratch, or reload from previous run
 
 cm.init(centroids=centroids,
         video_file="moving_square.avi",
@@ -31,10 +25,10 @@ cm.video_source.enableDisplayWindow()
 cm.network.setIsPOSTraining(True)
 
 def callback(iter):
-    cm.printStats()
     #cm.network.printBeliefGraph(cm.top_layer, 0, 0)
-    print "iter:",iter
-    cm.printFPS()
+    if iter %20 == 0:
+        print "iter:",iter
+        cm.printFPS()
 
 def showTree(index):
     if index >= tm.getMinedTreeCount():
@@ -63,7 +57,7 @@ else:
     n.load("ot.dst")
 
 #cm.network.save("ot.dst")
-tm = cm.pd.DestinTreeManager(n,3)
+tm = cm.pd.DestinTreeManager(n,1)
 print "size of winning tree is: " + str(tm.getWinningCentroidTreeSize())
 cm.freezeTraining()
 for i in xrange(100):
