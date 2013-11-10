@@ -78,19 +78,21 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
             n->observation[i] = framePtr[n->inputOffsets[i]];
         }
     }
-    // set these to uniform for now.
     if(isRecurrent){
         for( i=0; i < nb; i++ ){
+            // get previous beliefs
             n->observation[i+ni] = n->outputBelief[i] * n->gamma;
         }
         for( i=0; i < np; i++ ){
             if (n->firstParent != NULL){
+                // get parent's beliefs
                 n->observation[i+ni+nb] = n->firstParent->outputBelief[i] * n->lambdaCoeff;
             } else {
                 n->observation[i+ni+nb] = 0;
             }
         }
     }else{
+        // set these to uniform for now.
         for( i=0; i < nb; i++ ){
             n->observation[i+ni] = 1 / (float) nb;
         }

@@ -479,7 +479,10 @@ case the nodes can each have up to 4 parent nodes.
 
 Otherwise, the child layer width must divide evenly by the parent
 layer width i.e. childWidth % parentWidth == 0 and assumed that the
-child nodes are non overlapping and each only have one parent.*/
+child nodes are non overlapping and each only have one parent.
+
+Returns true if the layers were valid
+*/
 bool LinkParentsToChildren( Destin *d )
 {
     uint l;
