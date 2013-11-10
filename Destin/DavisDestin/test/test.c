@@ -222,6 +222,9 @@ int testVarArgs(void){
    bool a_bool_array[] = {false, false, true, true};
    assertBoolArrayEqualsV(a_bool_array, 4, false, false, true, true);
 
+   free(f2d[0]);
+   free(f2d[1]);
+   free(f2d[2]);
    free(fa);
    free(f);
    return 0;
@@ -369,7 +372,7 @@ int testUniform(){
     //calculate muSqDiff for layer 0
     float msq = ad[0][0] * ad[0][0] + ad[1][0] * ad[1][0] + ad[2][0] * ad[2][0] + ad[3][0] * ad[3][0];
     assertFloatEquals(msq, n[0].muSqDiff, 4.5e-10);
-
+    DestroyConfig(dc);
     DestroyDestin(d);
     return 0;
 }

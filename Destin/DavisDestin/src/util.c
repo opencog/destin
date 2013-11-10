@@ -750,6 +750,7 @@ Destin * LoadDestin( Destin *d, const char *filename )
     FREE(nb); nb = NULL;
     FREE(layerMaxNb); layerMaxNb = NULL;
     FREE(temp); temp = NULL;
+    FREE(layerWidths); layerWidths = NULL;
 
 
     freadResult = fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
