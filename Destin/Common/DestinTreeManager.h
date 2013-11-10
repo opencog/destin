@@ -8,14 +8,16 @@
 /**
  * Performs subtree mining using CMOrderedTreeMinerWrapper.
  * Is able to display the found mined trees.
+ * Currently only supports 4 children to 1 parent node destin heirarchies
  */
 class DestinTreeManager {
 
     DestinNetworkAlt & destin;
     short * winnerTree;
-    int winningTreeSize;
-    uint labelBucket;
+    int winningTreePathSize; // length of winning tree depth first search path. Is # nodes plus "-1" tracebacks.
+    uint labelBucket; // divide the range of short into nLayer bucket ranges
     uint childNumBucket;
+    uint maxChildrenPerParent;
     int bottomLayer;
     const int nLayers;
 
@@ -33,7 +35,7 @@ class DestinTreeManager {
     vector<NodeLocation> convertNodeLocation;
 
     // contructs convertNodeLocation vector
-    void createConvertNodeLocations(const Node * parent);
+    void createConvertNodeLocationsHelper(const Node * parent);
 
     // helper method for getWinningCentroidTree()
     int buildTree(const Node * parent, int pos, const int child_num);
@@ -42,10 +44,19 @@ class DestinTreeManager {
     void paintCentroidImage(int cent_layer, int centroid, int x, int y, cv::Mat & img);
 
     // helper method for getTreeImg()
-    void calcChildCoords(int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out);
+    void calcChildCoords(uint childrenWidth, int px, int py, int child_no, int child_layer, int & child_x_out, int & child_y_out);
 
     // helper for getMinedTreeStructureAsString
     void printHelper(TextTree & pt, short vertex, int level, stringstream & ss);
+
+    // pre calculates the length of the array returned from getWinningCentroidTree()
+    void calcWinningCentroidTreeSize(const Node * parent, int & count_out);
+
+    void updateTreeParameters(int);
+
+    void createConvertNodeLocations(int bottom_layer);
+
+    int winningTreeNodeSize(int bottom_layer);
 
 public:
 
@@ -81,10 +92,13 @@ public:
     vector<short> getWinningCentroidTreeVector();
 
     /** Returns the length of the tree.
+      * Number of destin nodes plus the number of back traces.
+      * An overlapping nodes destin heirarchy will be larger
+      * than expected because each node can be visted serveral times.
       * Length of the array returned from getWinningCentroidTree().
       */
     int getWinningCentroidTreeSize(){
-        return winningTreeSize;
+        return winningTreePathSize;
     }
 
     /** Sets how deep the mined trees are.

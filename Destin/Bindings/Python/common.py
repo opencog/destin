@@ -42,15 +42,15 @@ def top_node():
     # the node is destroyed during reloadingd
     return network.getNode(top_layer, 0, 0)
     
-def init(centroids=[2,4,16,32,64,32,16,8], 
+def init(img_width, centroids=[2,4,16,32,64,32,16,8], 
          video_file=czm.homeFld + "/Dropbox/destin/moving_square.mov", 
          temperature=2.0,
-         learn_rate=0.1):
+         learn_rate=0.1,
+         layer_widths=None):
     global network, layers, video_source, layerMask, top_layer
     layers = len(centroids)
     top_layer = layers - 1
-    img_width = layers_to_enum[layers]
-    network = pd.DestinNetworkAlt(img_width, layers, centroids, True )
+    network = pd.DestinNetworkAlt(img_width, layers, centroids, True, 1, layer_widths)
 
     temps = []
     for i in xrange(layers):        

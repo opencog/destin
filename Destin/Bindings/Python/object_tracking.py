@@ -7,10 +7,26 @@ Created on Sat May 18 20:45:29 2013
 
 import common as cm
 
-cm.init(centroids=[4,8,32,32,64,32,4],
-        video_file="color_4.avi", #moving_square.avi
-        learn_rate=0.05)
-                 
+#layer_widths=[16, 8, 7, 6, 5, 4, 3, 2, 1]
+#centroids=   [2, 32,32,64,16,16,16,16,4]
+layer_widths=[16, 8, 7, 6, 5, 4, 3, 2, 1]
+centroids=   [2,  16,16,16,16,16, 16, 16, 4]
+#centroids=[8,32,32,64,32,4]
+
+
+isTraining=False # train from scratch, or reload from previous run
+
+import os
+print "pid is:" + str(os.getpid())
+
+cm.init(centroids=centroids,
+        video_file="moving_square.avi",
+        learn_rate=0.05,
+        layer_widths=layer_widths,
+        img_width=256
+        )
+#
+
 cm.video_source.enableDisplayWindow()
 cm.network.setIsPOSTraining(True)
 
@@ -40,21 +56,21 @@ cm.the_callback = callback
 
 n = cm.network
 
-if True:
+if isTraining:
     cm.go(3200)
     n.save("ot.dst")
 else:
     n.load("ot.dst")
 
 #cm.network.save("ot.dst")
-tm = cm.pd.DestinTreeManager(n,2)
-
+tm = cm.pd.DestinTreeManager(n,3)
+print "size of winning tree is: " + str(tm.getWinningCentroidTreeSize())
 cm.freezeTraining()
 for i in xrange(100):
     cm.go(1)
     tm.addTree()
 
-support = 101
+support = 10
 print "mining..."
 found = tm.mine(support)
 print "Found", found
