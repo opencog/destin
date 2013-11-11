@@ -295,7 +295,7 @@ void DestinTreeManager::printFoundSubtree(const int treeIndex){
 }
 
 void DestinTreeManager::timeShiftTrees(){
-    tmw.timeShiftDatabase(destin.getLayerCount());
+    tmw.timeShiftDatabase(destin.getLayerCount() - bottomLayer);
 }
 
 vector<int> DestinTreeManager::matchSubtree(int foundSubtreeIndex){
