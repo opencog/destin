@@ -23,9 +23,11 @@ void AddUniformCentroid(
         uint l            // layer
      );
 
-// used to initialize mu/sigma for added centroids (one of methods)
-// new values are calculated by averaging nearest neighbour centroids values
-void InitUniformCentroidByAvgNearNeighbours(
+// The method used to distribute values of beliefs associated with centroid that
+// is going to be deleted. It helps when deleted centroid is very close to good
+// learned centroids. This centroids from neighbourhood get additional weighted
+// belief of deleted centroid where more weights have centroids that are closer.
+void DistributeEvidenceOfDeletedCentroidToNeighbours(
         Destin *destin,   // initialized destin potiner
         uint l,           // layer
         uint idx,         // index of updated centroid
