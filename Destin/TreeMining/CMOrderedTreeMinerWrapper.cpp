@@ -163,6 +163,7 @@ void CMOrderedTreeMinerWrapper::timeShiftDatabase(int treeDepth){
         timeShiftDatabaseHelper(0, treeDepth - 1, i);
     }
 
+    // throw away the last trees
     for(int i = 0 ; i < treeDepth - 1; i++){
         if(database.size() > 0){
             database.pop_back();
