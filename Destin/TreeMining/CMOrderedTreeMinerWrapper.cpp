@@ -68,6 +68,11 @@ void CMOrderedTreeMinerWrapper::addTree(short treeDescription[], int length){
     return;
 }
 
+void CMOrderedTreeMinerWrapper::reset(){
+    database.clear();
+    resetStats();
+    currentPatternTree.initialSize();
+}
 
 void CMOrderedTreeMinerWrapper::mine(int support, vector<PatternTree> & maximal_out){
 

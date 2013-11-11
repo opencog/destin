@@ -272,6 +272,14 @@ public:
      * @param winname - The name of the window that displays the image.
      */
     void displayFoundSubtreeBorders(int foundMinedSubtree, cv::Mat & canvas, bool justOne = true, int thickness = 2, int waitkey_delay = 300, const string & winname = "Tree borders");
+
+    /** Clears the list of added trees and list of found subtrees.
+      */
+    void reset(){
+        foundSubtrees.clear();
+        tmw.reset();
+    }
+
 };
 
 

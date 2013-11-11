@@ -134,6 +134,7 @@ void DestinTreeManager::setBottomLayer(unsigned int bottom){
 
     bottomLayer = bottom;
     updateTreeParameters(bottom);
+    reset();
     return;
 }
 
