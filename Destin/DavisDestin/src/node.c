@@ -491,9 +491,10 @@ void Uniform_UpdateFrequency(Destin * d, uint layer, float * sharedFrequency, ui
 {
     uint i, nb = d->nb[layer];
 
+    float coeff = freqCoeff / (1 + layer);
     for(i = 0; i < nb ; i++){
-        sharedFrequency[i] = sharedFrequency[i] * (1 - freqCoeff) +
-                             freqCoeff * ( sharedCentroidsWinCounts[i] / (float) d->layerSize[layer]);
+        sharedFrequency[i] = sharedFrequency[i] * (1 - coeff) +
+                             coeff * ( sharedCentroidsWinCounts[i] / (float) d->layerSize[layer]);
     }
 }
 
@@ -542,7 +543,7 @@ void Uniform_AddNewCentroids(Destin *d)
         }
         absvar /= n->ns;
         float rnd = (float) rand() / (float) RAND_MAX;
-        if (rnd < d->addCoeff * absvar * absvar)
+        if (rnd < d->addCoeff * absvar)
         {
             AddUniformCentroid(d, l);
         }

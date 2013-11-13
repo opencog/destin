@@ -5,6 +5,9 @@
 #include "destin.h"
 #include "array.h"
 
+#define NEAREST_OF_DELETED_CENTROID     5
+#define VICINITY_OF_ADDED_CENTROID      1
+
 void _normalizeFloatArray(float * array, uint length)
 {
     uint i;
@@ -26,12 +29,12 @@ void _normalizeMu(float * mu, uint ni, uint nb, uint np)
 
     // TODO: in recursive mode previous belief and parent belief should be normalized to 1
 
-    // Recursive mode off
+    // Recurrent mode off
     for (i = ni; i < ni+nb; i++)
     {
         mu[i] = 1/(float) nb;
     }
-    // Recursive mode off
+    // Recurrent mode off
     for (i = ni+nb; i < ni+nb+np; i++)
     {
         mu[i] = 1/(float) np;
@@ -97,6 +100,8 @@ void InitUniformCentroids(Destin *d, uint l, uint ni, uint nb, uint np, uint ns)
     }
 }
 
+void _distributeEvidenceOfDeletedCentroidToNeighbours(Destin *d, uint l, uint idx, uint nearest);
+
 void DeleteUniformCentroid(Destin *d, uint l, uint idx)
 {
     uint i, j, ni, nb, np, ns;
@@ -106,6 +111,8 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
     ni = n->ni;
     np = n->np;
     ns = n->ns;
+
+    _distributeEvidenceOfDeletedCentroidToNeighbours(d, l, idx, NEAREST_OF_DELETED_CENTROID);
 
     // Layer l
     for (i = 0; i < nb; i++)
@@ -223,6 +230,8 @@ void DeleteUniformCentroid(Destin *d, uint l, uint idx)
     }
 }
 
+void _generateNewUniformCentroidMu(Destin *d, uint l, uint vicinity, float * newMu);
+
 void AddUniformCentroid(Destin *d, uint l)
 {
     uint i, j, ni, nb, np, ns, idx;
@@ -242,7 +251,7 @@ void AddUniformCentroid(Destin *d, uint l)
     MALLOCV(newAvgDelta, float, (ns+1));
     MALLOCV(newAvgSquaredDelta, float, (ns+1));
 
-    _initUniformCentroidMu(newMu, ni, nb+1, np, ns+1);
+    _generateNewUniformCentroidMu(d, l, VICINITY_OF_ADDED_CENTROID, newMu);
     for (j=0; j < ns+1; j++)
     {
         newSigma[j] = INIT_SIGMA;
@@ -368,19 +377,17 @@ void AddUniformCentroid(Destin *d, uint l)
         }
     }
 
-    // TODO: use proper method based on learning strategy
-    InitUniformCentroidByAvgNearNeighbours(d, l, nb, 5);
 }
 
 // Private structure for q-sorting neighbouring centroids
-// Neighbours are sorted by distance from given centroid
 typedef struct _Neighbour {
     uint index;      // index in centroid arrays (0..nb-1)
     float distance;  // distance from given centroid
+    float weight;    // closer centroids have higher weights
 } _Neighbour;
 
-// Private comparator of neighbouring centroids
-int _compareNeighbours(void * n1, void * n2)
+// Private comparator of neighbouring centroids by distance (in ascending order)
+int _compareNeighboursByDistance(void * n1, void * n2)
 {
     float d1 = ((_Neighbour *) n1)->distance;
     float d2 = ((_Neighbour *) n2)->distance;
@@ -400,39 +407,48 @@ float _calcNeighboursDistanceEuc(float * mu1, float * mu2, uint ns)
     return dist;
 }
 
-#define UpdateAvgNearNeighbours(array, neighbours, count, offset, idx) {\
-    uint c;                                          \
-    float sum = 0;                                   \
-    for (c = 1; c <= count; c++) {                   \
-        sum += array[offset + neighbours[c].index];  \
-    }                                                \
-    array[offset + idx] = sum/count;                 \
-}
-
-void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint nearest)
+// The method used to distribute values of beliefs associated with centroid that
+// is going to be deleted. It helps when deleted centroid is very close to good
+// learned centroids. This centroids from neighbourhood get additional weighted
+// belief of deleted centroid where more weights have centroids that are closer.
+void _distributeEvidenceOfDeletedCentroidToNeighbours(Destin *d, uint l, uint idx, uint nearest)
 {
-    uint i, j, ni, nb, ns, count;
+    uint i, j, k, nb, ns;
 
     Node * n = GetNodeFromDestin(d, l, 0, 0);
-    ni = n->ni;
     nb = n->nb;
     ns = n->ns;
+
+    if (nb < 2)
+    {
+        fprintf (stderr, "DistributeWeightsOfDeletedCentroid(): called when the layer %d has only single centroid!", l);
+        return;
+    }
 
     _Neighbour neighbours[nb];
     for (i = 0; i < nb; i++)
     {
         neighbours[i].index = i;
-        neighbours[i].distance = _calcNeighboursDistanceEuc(d->uf_mu[l][i], d->uf_mu[l][idx], ns);
+        neighbours[i].distance = _calcNeighboursDistanceEuc(d->uf_mu[l][i], d->uf_mu[l][idx], ns) + EPSILON;
+        neighbours[i].weight = 0;
     }
-    qsort((void *)neighbours, nb, sizeof(_Neighbour), (void *)&_compareNeighbours);
+    qsort((void *)neighbours, nb, sizeof(_Neighbour), (void *)&_compareNeighboursByDistance);
     nearest = _MIN(nearest, nb-1);
 
-    // Layer l
-    // TODO: this is irrelevant if recursive mode is off
-    for (i = 0; i < nb; i++)
+    float sumDistance = 0;
+    for (i = 1; i <= nearest; i++)
     {
-        UpdateAvgNearNeighbours(d->uf_mu[l][i], neighbours, nearest, ni, idx);
-        UpdateAvgNearNeighbours(d->uf_sigma[l][i], neighbours, nearest, ni, idx);
+        sumDistance += neighbours[i].distance;
+    }
+    float sumWeights = 0;
+    for (i = 1; i <= nearest; i++)
+    {
+        neighbours[i].weight = sumDistance / neighbours[i].distance;
+        sumWeights += neighbours[i].weight;
+    }
+    for (i = 1; i <= nearest; i++)
+    {
+        neighbours[i].weight /= sumWeights;
     }
 
     // Layer l+1
@@ -443,25 +459,94 @@ void InitUniformCentroidByAvgNearNeighbours(Destin *d, uint l, uint idx, uint ne
         {
             for (j = 0; j < n->nChildren; j++)
             {
-                UpdateAvgNearNeighbours(d->uf_mu[l+1][i], neighbours, nearest, j*nb, idx);
-                UpdateAvgNearNeighbours(d->uf_sigma[l+1][i], neighbours, nearest, j*nb, idx);
+                for (k = 1; k <= nearest; k++)
+                {
+                    d->uf_mu[l+1][i][nb*j + neighbours[k].index] += d->uf_mu[l+1][i][nb*j + idx] * neighbours[k].weight;
+                    d->uf_sigma[l+1][i][nb*j + neighbours[k].index] += d->uf_sigma[l+1][i][nb*j + idx] * neighbours[k].weight;
+                }
+                // centroid evidence has been distributed
+                d->uf_mu[l+1][i][nb*j + idx] = 0;
+                d->uf_sigma[l+1][i][nb*j + idx] = 0;
             }
         }
     }
 
-    // Layer l-1
-    // TODO: this is irrelevant if recursive mode is off
-    if (l > 0)
-    {
-        n = GetNodeFromDestin(d, l-1, 0, 0);
-        uint offset = n->ni + n->nb;
+    // TODO: RECURRENT MODE: move evidence for l layer and l-1 layer
+}
 
-        for (i = 0; i < n->nb; i++)
+void _sampleNormalDistributedCentroid(float * mu, float * centerMu, float * centerSigma, uint ns)
+{
+    uint i;
+    float u1, u2;
+
+    for (i = 0; i < ns; i++)
+    {
+        u1 = rand() / (float) RAND_MAX;
+        u2 = rand() / (float) RAND_MAX;
+
+        mu[i] = sqrt(-2 * log(u1)) * cos(2 * M_PI * u2) * centerSigma[i] + centerMu[i];
+        mu[i] = (mu[i] > 1) ? 1 : mu[i];
+        mu[i] = (mu[i] < 0) ? 0 : mu[i];
+    }
+}
+
+void _generateNewUniformCentroidMu(Destin *d, uint l, uint vicinity, float * newMu)
+{
+    uint i, j, k, ni, nb, np, ns;
+    float sigma;
+
+    Node * n = GetNodeFromDestin(d, l, 0, 0);
+    ni = n->ni;
+    nb = n->nb;
+    np = n->np;
+    ns = n->ns;
+
+    float weights[nb];
+    uint picked[vicinity];
+    float pickedWeights[vicinity];
+
+    // calculate weights
+    float sumWeight = 0;
+    for (i = 0; i < nb; i++)
+    {
+        sigma = 0;
+        for (j = 0; j < ns; j++)
         {
-            UpdateAvgNearNeighbours(d->uf_mu[l-1][i], neighbours, nearest, offset, idx);
-            UpdateAvgNearNeighbours(d->uf_sigma[l-1][i], neighbours, nearest, offset, idx);
-            _normalizeFloatArray(d->uf_mu[l-1][i] + offset, nb);
+            sigma += d->uf_sigma[l][i][j];
+        }
+        weights[i] = sigma; // d->uf_winFreqs[l][i] * sigma;
+        sumWeight += weights[i];
+    }
+
+    // pick centroids with probability proportional to weights
+    float sumPickedWeights = 0;
+    for (i = 0; i < vicinity; i++)
+    {
+        float pickWeight = 0;
+        float rnd = sumWeight * rand() / (float) RAND_MAX;
+        for (j = 0; (j < nb) && (rnd >= pickWeight); j++)
+        {
+            pickWeight += weights[j];
+        }
+        picked[i] = j - 1;
+        pickedWeights[i] = rand() / (float) RAND_MAX;
+        sumPickedWeights += pickedWeights[i];
+    }
+
+    float centerMu[ns];
+    float centerSigma[ns];
+    for (i = 0; i < ns; i++)
+    {
+        centerMu[i] = 0;
+        centerSigma[i] = INIT_SIGMA;
+        for (j = 0; j < vicinity; j++)
+        {
+            centerMu[i] += d->uf_mu[l][picked[j]][i] * pickedWeights[j] / sumPickedWeights;
         }
     }
+    _sampleNormalDistributedCentroid(newMu, centerMu, centerSigma, ns);
+
+    // TODO: in recurrent mode take care about position nb+1
+    _normalizeMu(newMu, ni, nb+1, np);
 }
 
