@@ -123,6 +123,9 @@ public:
 
     void setTemperatures(float temperatures[]);
 
+    void setFrequencyCoefficients(float freqCoeff, float freqTreshold, float addCoeff);
+    void setStarvationCoefficient(float starvCoeff);
+    void setMaximumCentroidCounts(int count);
 
     float getSep(int layer);
     float getVar(int layer);

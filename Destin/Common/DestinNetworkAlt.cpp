@@ -44,7 +44,7 @@ void DestinNetworkAlt::init(SupportedImageWidths width, unsigned int layers,
     initTemperatures(layers, centroid_counts);
 
     DestinConfig *dc = CreateDefaultConfig(layers);
-    dc->addCoeff = 0; // disabled deletion of centroids
+    dc->addCoeff = 0; // disabled addition of centroids
     dc->beta = 0.01;
     std::copy(centroid_counts, centroid_counts + layers, dc->centroids); // initial number of centroids
     dc->extRatio = extRatio;
@@ -607,6 +607,29 @@ void DestinNetworkAlt::setTemperatures(float temperatures[]){
         for(int n = 0 ; n < destin->layerSize[l]; n++){
             GetNodeFromDestinI(destin, l, n)->temp = temperatures[l];
         }
+    }
+}
+
+void DestinNetworkAlt::setFrequencyCoefficients(float freqCoeff, float freqTreshold, float addCoeff)
+{
+    destin->freqCoeff = freqCoeff;
+    destin->freqTreshold = freqTreshold;
+    destin->addCoeff = addCoeff;
+}
+
+void DestinNetworkAlt::setStarvationCoefficient(float starvCoeff)
+{
+    for (int n = 0; n < destin->nNodes; n++)
+    {
+        destin->nodes[n].starvCoeff = starvCoeff;
+    }
+}
+
+void DestinNetworkAlt::setMaximumCentroidCounts(int count)
+{
+    for (int l = 0; l < destin->nLayers; l++)
+    {
+        destin->layerMaxNb[l] = count;
     }
 }
 
