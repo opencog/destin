@@ -40,7 +40,7 @@ centroids = [7,5,5,5]
 # How many CIFAR images to train destin with. If larger than
 # If this this is larger than the number of possible CIFAR images then some
 # images will be repeated
-training_iterations = 20000
+training_iterations = 10000
 
 supervise_train_iterations = 10000
 
@@ -68,15 +68,15 @@ iterations_per_image = 8
 # See http://www.cs.toronto.edu/~kriz/cifar.html for the possible image classes.
 cs.disableAllClasses()
 cs.setClassIsEnabled(0, True) #airplane
-#cs.setClassIsEnabled(1, True) #automobile
-#cs.setClassIsEnabled(2, True) #bird
-#cs.setClassIsEnabled(3, True) #cat
+cs.setClassIsEnabled(1, True) #automobile
+cs.setClassIsEnabled(2, True) #bird
+cs.setClassIsEnabled(3, True) #cat
 cs.setClassIsEnabled(4, True) #deer
-#cs.setClassIsEnabled(5, True) #dog
-#cs.setClassIsEnabled(6, True) #frog
-#cs.setClassIsEnabled(7, True) #horse
-#cs.setClassIsEnabled(8, True) #ship
-#cs.setClassIsEnabled(9, True) #truck
+cs.setClassIsEnabled(5, True) #dog
+cs.setClassIsEnabled(6, True) #frog
+cs.setClassIsEnabled(7, True) #horse
+cs.setClassIsEnabled(8, True) #ship
+cs.setClassIsEnabled(9, True) #truck
 
 # which ids of the CIFAR images that were used in training
 image_ids = []
@@ -148,7 +148,7 @@ def dump_beliefs():
         
         # write the cifar image type/class ( i.e. cat / dog )
         # and the current beliefs to the mat file
-        be.writeBeliefToMat(cs.getImageClassLabel())
+        be.writeBeliefToMat()
         # get the beliefs from destin
         # You could add a method to the BeliefExporter class to 
             
@@ -174,14 +174,13 @@ waitkey().start()
 
 
 def go():
-    be.openMatFile("destinoutput.mat")
-    # train destin on the cifar images
-    train_destin() 
-    print "Training Supervision..."
-    # show cifar images, and dump resulting beliefs to Mat file
-    dump_beliefs() 
-    be.closeMatFile()
-    print "Done."
-
+	be.createMatFile()
+	train_destin()
+	#train_destin()
+	print "Training Supervision..."
+	# show cifar images, and dump resulting beliefs to a .txt file
+	dump_beliefs()
+	#be.closeMatFile()
+	print "Done."
 #Start it all up
 go()
