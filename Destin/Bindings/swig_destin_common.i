@@ -7,6 +7,7 @@
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 #include "VideoSource.h"
+#include "VideoWriter.h"
 #include "Transporter.h"
 #include "INetwork.h"
 #include "DestinNetworkAlt.h"
@@ -18,7 +19,6 @@
 #include "SomPresentor.h"
 #include "BeliefExporter.h"
 #include "DestinTreeManager.h"
-
 #include "CztMod.h"
 %}
 
@@ -47,6 +47,7 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "destin.h"
 %include "node.h"
 %include "VideoSource.h"
+%include "VideoWriter.h"
 %include "Transporter.h"
 %include "DestinNetworkAlt.h"
 %include "learn_strats.h"
@@ -60,8 +61,7 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %include "cent_image_gen.h"
 %include "belief_transform.h"
 %include "DestinTreeManager.h"
-
-%include "CztMod.h"/**/
+%include "CztMod.h"
 
 /* use c++ vector like a python list */
 %include "std_vector.i"

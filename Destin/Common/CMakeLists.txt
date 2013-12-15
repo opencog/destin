@@ -10,6 +10,7 @@ add_library( common SHARED
     INetwork.h
     Transporter.h
     VideoSource
+    VideoWriter
     unit_test.h
     CifarSource.h
     BeliefExporter.h
