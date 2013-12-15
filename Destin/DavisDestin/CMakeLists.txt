@@ -48,7 +48,7 @@ set(destalt_sources
 )
 
 ADD_LIBRARY( destinalt SHARED ${destalt_sources})
-TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS} gomp )
+TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS} gomp m)
 
 ADD_LIBRARY( destinalt_test SHARED ${destalt_sources})
 TARGET_LINK_LIBRARIES( destinalt_test ${OpenCV_LIBS} m gomp)
