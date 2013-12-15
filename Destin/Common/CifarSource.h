@@ -24,10 +24,30 @@ using namespace std;
 
 typedef unsigned int uint;
 
+
+/** This class loads CIFAR images to be used by DeSTIN.
+    See http://www.cs.toronto.edu/~kriz/cifar.html for info about CIFAR images.
+
+  Here is an excerpt from the above website about the file format of the CIFAR data:
+
+    The binary version contains the files data_batch_1.bin, data_batch_2.bin, ..., data_batch_5.bin, as well as test_batch.bin.
+    Each of these files is formatted as follows:
+    <1 x label><3072 x pixel>
+    ...
+    <1 x label><3072 x pixel>
+
+    In other words, the first byte is the label of the first image, which is a number in the range 0-9.
+    The next 3072 bytes are the values of the pixels of the image.
+
+    The first 1024 bytes are the red channel values, the next 1024 the green, and the final 1024 the blue.
+
+    The values are stored in row-major order, so the first 32 bytes are the red channel values of the first row of the image.
+
+    Each file contains 10000 such 3073-byte "rows" of images, although there is nothing delimiting the rows.
+    Therefore each file should be exactly 30730000 bytes long.
+  */
 class CifarSource : public ImageSourceBase {
-    /** see http://www.cs.toronto.edu/~kriz/cifar.html
-      for info about CIFAR images.
-      */
+
 
     string cifar_dir;
 
@@ -105,9 +125,9 @@ class CifarSource : public ImageSourceBase {
         size_t imageOffset = 0;
 
         for(int i = 0 ; i < nImages ; i++){
-            images[i].classLabel = raw_batch[imageOffset];
-            images[i].image_offset = imageOffset + 1; //skip the class label
-            images[i].image = &raw_batch[images[i].image_offset]; //store pointer to the image part
+            images[i].classLabel = raw_batch[imageOffset]; // first byte is the class label 0 to 9
+            images[i].image_offset = imageOffset + 1; //skip the class label to get the offset of the begining of the image data
+            images[i].image = &raw_batch[images[i].image_offset]; //store pointer to the begining of the image part
 
             //turn it into an opencv color image
             cv::Mat temp = convertToColorMat(images[i].image);
@@ -143,7 +163,7 @@ public:
     /** Constructor
       *
       * @param cifar_dir - the directory which contains the
-      * CIFAR data ffiles data_batch_1.bin  to data_batch_5.bin
+      * CIFAR data files data_batch_1.bin to data_batch_5.bin
       *
       * @param batch - Integer 1 to 5 of which data_batch_*.bin file to use
       * as the image source
