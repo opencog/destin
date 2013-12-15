@@ -62,14 +62,6 @@ public:
         return (float *)grayMats[currentImage].data;
     }
 
-    // 2013.5.7
-    // CZT
-    //
-    float * getGrayImageFloat_c1()
-    {
-        return (float *)getGrayImageMat(512, 512).data;
-    }
-
     /** Same as getGrayImageFloat()
       * Here to be compatible with VideoSource
       */
