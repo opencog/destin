@@ -154,6 +154,9 @@ class CifarSource : public ImageSourceBase {
         fclose(f);
     }
 protected:
+
+    /** Return true if the given image is allowed to be shown.
+      */
      bool isImageIncluded(int index){
         return classesEnabled[images[index].classLabel];
      }

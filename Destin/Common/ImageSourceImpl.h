@@ -12,12 +12,19 @@ using namespace std;
 class ImageSouceImpl: public ImageSourceBase {
 protected:
 
+    /** Return true if the given image is allowed to be shown.
+      * Allows subsclasses to enable or disable an image.
+      * See CifarSouce::isImageIncluded
+      */
     virtual bool isImageIncluded(int index){
         return true;
     }
 
 public:
 
+    /**
+      * Loads an image from a file from the given file path.
+      */
     void addImage(string imagepath){
         cv::Mat grayIm = cv::imread(imagepath, 0);
         if(grayIm.data == NULL){
@@ -27,6 +34,7 @@ public:
 
         if(grayIm.type() == CV_8UC1){
             cv::Mat floatim;
+            // convert from grayscale byte range 0 -> 255 to float range 0.0 -> 1.0
             grayIm.convertTo(floatim, CV_32FC1, 1.0/255.0);
             grayMats.push_back(floatim);
         }else{

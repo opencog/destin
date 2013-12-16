@@ -9,6 +9,18 @@
 using namespace std;
 class ImageSourceBase {
 
+private:
+
+    cv::Mat resizeImage(cv::Mat & image, int rows, int cols){
+        if(rows != image.rows || cols != image.cols ){
+            cv::Mat bigger;
+            cv::resize(image, bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
+            return bigger;
+        }else{
+            return image;
+        }
+    }
+
 protected:
     int currentImage;               // index into images vector
     std::vector<cv::Mat> grayMats;  // store images as grayscal opencv Mats (matrix, images)
@@ -16,7 +28,9 @@ protected:
 
     std::vector<cv::Mat> colorMats;  // store images as color opencv Mats (matrix, images)
 
-
+    /** Return true if the given image is allowed to be shown.
+      * Subclasses should override to determine if the image is allowed to be shown.
+      */
     virtual bool isImageIncluded(int index) = 0;
 public:
 
@@ -73,17 +87,16 @@ public:
       * @params rows, cols - scales the image to this size
       */
     cv::Mat getColorImageMat(int rows = 32, int cols = 32){
-        if(rows != 32 || cols != 32){
-            cv::Mat image = colorMats[currentImage];
-            cv::Mat bigger;
-            cv::resize(image, bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
-            return bigger;
-        }else{
-            return colorMats[currentImage];
-        }
+        return resizeImage(colorMats[currentImage], rows, cols);
     }
 
-
+    /** Returns the "current image" as an opencv image (Mat)
+      * Not suitable for input to DeSTIN, use getGrayImageFloat method instead.
+      * @param rows, cols - optionally scale the image to this size
+      */
+    cv::Mat getGrayImageMat(int rows = 32, int cols = 32){
+        return resizeImage(grayMats[currentImage], rows, cols);
+    }
 
     /** Displays the given image to the user in a window.
       * A call to cv::waitKey() must be called by the user for it to show.
@@ -97,38 +110,20 @@ public:
             return;
         }
 
-        cv::Mat image = colorMats[image_id];
-        cv::Mat bigger;
-        cv::resize(image, bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
+        cv::Mat bigger = resizeImage(colorMats[image_id], rows, cols);
         cv::imshow(window_title, bigger);
     }
 
-    /** Same as displayCifarGrayImage method, except in grayscale
+    /** Same as displayCifarColorImage method, except in grayscale
       */
-    void displayCifarGrayImage(int index, int rows=512, int cols=512, string window_title="CIFAR Gray Image"){
-        if(index < 0 || index >= nImages){
+    void displayCifarGrayImage(int image_id, int rows=512, int cols=512, string window_title="CIFAR Gray Image"){
+        if(image_id < 0 || image_id >= nImages){
             printf("displayCifarGrayImage, index out of bounds\n");
             return;
         }
 
-        cv::Mat bigger;
-        cv::resize(grayMats[index], bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
+        cv::Mat bigger = resizeImage(grayMats[image_id], rows, cols);
         cv::imshow(window_title, bigger);
-    }
-
-    /** Returns the "current image" as an opencv image (Mat)
-      * Not suitable for input to DeSTIN, use getGrayImageFloat method instead.
-      * @param rows, cols - optionally scale the image to this size
-      */
-    cv::Mat getGrayImageMat(int rows = 32, int cols = 32){
-        if(rows != 32 || cols != 32){
-            cv::Mat image = grayMats[currentImage];
-            cv::Mat bigger;
-            cv::resize(image, bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
-            return bigger;
-        }else{
-            return grayMats[currentImage];
-        }
     }
 
     bool grab(){
