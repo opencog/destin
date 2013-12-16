@@ -32,7 +32,7 @@ if (len(sys.argv) > 1):
 
 experiment_root_dir="./experiment_runs"
 
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 
 #letters = "LO+"
 letters = "ABCDE"

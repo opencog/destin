@@ -48,7 +48,6 @@ typedef unsigned int uint;
   */
 class CifarSource : public ImageSourceBase {
 
-
     string cifar_dir;
 
     const int batch;            // batch being used Immutable
@@ -134,6 +133,7 @@ class CifarSource : public ImageSourceBase {
 
             //save it
             colorMats.push_back(temp);
+            addColorFloatImage(temp);
 
             //turn the image grey scale
             cv::Mat gray;
@@ -173,16 +173,17 @@ public:
       * @throws runtime_error if the data_batch bin file cannot be loaded.
       */
     CifarSource(string cifar_dir, int batch ) :
-        ImageSourceBase(10000),
+        ImageSourceBase(32, 32),
         batch(batch),
         numClasses(10),
-        images(nImages),
-        imageSize(1 + 32*32*3),
+        imageSize(1 + 32 * 32 * 3),
         batch_size( imageSize * nImages )
       // 10000 images in a batch. Each image is 1 byte
       // class label, then 32x32 pixels by 3 colors (RGB)
     {
 
+        nImages = 10000; // each cifar batch file as 10,000 images.
+        images.reserve(nImages);
         struct stat s;
         stat(cifar_dir.c_str(), &s);
 

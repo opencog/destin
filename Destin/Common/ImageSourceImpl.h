@@ -10,6 +10,7 @@
 using namespace std;
 
 class ImageSouceImpl: public ImageSourceBase {
+
 protected:
 
     /** Return true if the given image is allowed to be shown.
@@ -20,7 +21,14 @@ protected:
         return true;
     }
 
+
 public:
+
+    ImageSouceImpl(int rows, int cols)
+        :ImageSourceBase(rows, cols) {}
+
+
+    ~ImageSouceImpl(){ }
 
     /**
       * Loads an image from a file from the given file path.
@@ -46,10 +54,16 @@ public:
             printf("addImage: could not load color image at %s\n", imagepath.c_str());
             return;
         }
+        if(colorIm.type() != CV_8UC3){
+            stringstream ss; ss << __PRETTY_FUNCTION__ << ", unexpected opencv color image type." ;
+            throw std::runtime_error(ss.str());
+        }
         colorMats.push_back(colorIm);
+
+        addColorFloatImage(colorIm);
+
         nImages++;
     }
-
 };
 
 #endif

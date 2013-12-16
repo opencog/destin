@@ -120,7 +120,7 @@ dn.setIsPOSTraining(True)
 
 dn.setCentImgWeightExponent(4)
 
-ims = pd.ImageSouceImpl() 
+ims = pd.ImageSouceImpl(512, 512) 
 
 letters = "+LO"
 img_path = czm.homeFld + "/Pictures/treeminingletters/"
