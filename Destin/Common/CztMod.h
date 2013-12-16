@@ -70,14 +70,6 @@ public:
         }
     }
 
-    void getFloatFromImg(string file1, float * tempOut)
-    {
-        cv::Mat tempMat1 = cv::imread(file1, 0);
-        cv::Mat _tempMat1;
-        tempMat1.convertTo(_tempMat1, CV_32FC1, 1.0/255.0);
-        tempOut = (float *)_tempMat1.data;
-    }
-
     // 2013.6.25
     void combineBGR(float * b, float * g, float * r, int size, float * out)
     {
