@@ -24,7 +24,8 @@ Use the defaults. Installs to C:\Python27\
 Install SWIG
 ---------------
 * Download from http://www.swig.org/download.html, look for the windows prebuild executable http://prdownloads.sourceforge.net/swig/swigwin-2.0.11.zip
-* Extract everything to C:\swigwin-2.0.11 so you can find it's README and other files at C:\swigwin-2.0.11\README
+* Extract everything to C:\swigwin-2.0.11 so you can find it's README and other files at C:\swigwin-2.0.11\README. You will probably need to move up the nested 
+C:\swigwin-2.0.11\swigwin-2.0.11 directory to C:\
 
 
 Install CMake
@@ -33,8 +34,16 @@ Download and install using the defaults: http://www.cmake.org/files/v2.8/cmake-2
 
 ( Link was found from this page: http://www.cmake.org/cmake/resources/software.html )
 
-Build OpenCV From source:
------------------------------------
+Install prebuilt OpenCV for Mingw
+----------------------------------
+* Download from my dropbox ( I've compiled it): 
+https://dl.dropboxusercontent.com/u/49968823/destin/opencv-2.4.6-mingw-x86.zip Google Chrome may complain that it's not commonly downloaded. Use the dropdown button to keep it.
+
+* Move the zip to c:\ and extract all. Move the inner "opencv-2.4.6" folder out to the root to c:\, then delete the left over empty opencv-2.4.6-mingw-x86 folder. When done
+properly you should able to find the file OpenCVConfig.cmake at C:\opencv-2.4.6\mingwbuild\install\OpenCVConfig.cmake and the rest of the files there too. 
+
+Build OpenCV From source ( If not using my prebuilt OpenCV):
+------------------------------------------------------------
 ( Note: if you have an opencv installation already at c:\ then you may want to rename it to c:\dontuse-opencv so that cmake does not automatically try to use that one. )
 
 * Download the source from https://github.com/Itseez/opencv/archive/2.4.6.zip
@@ -166,9 +175,11 @@ Building DeSTIN with Qt Creator IDE
 
 * Open Qt Creator IDE. 
 
-* File -> Open File Or Project. Open the destin/Destin/CMakeLists.txt
+* File -> Open File Or Project. Locate your local destin repository and open the destin/Destin/CMakeLists.txt file
 
 * For Build Location, use the default destin\Destin-build directory. Next.
+
+* You may need to "Choose CMake Executable". Your cmake.exe is probably located at C:\Program Files (x86)\CMake 2.8\bin\cmake.exe. Next.
 
 * Run CMake: 
 	* Arguments: none
@@ -184,7 +195,9 @@ If you get the error:
     Cannot find source file:
     cluster/src/cluster
 	
-Then you forgot to run the git submodule command from the last section.
+Then you forgot to run the git submodule command from the "Using Cygwin Git to get the Destin Source" section. You may need to learn how to use the submodule command if you use a different git tool.
+
+* Click Finish.
 
 * Click the "Projects" tab button on the left.
     * Under Build Steps section, click the "Details" drop down button on the right. 
@@ -195,7 +208,9 @@ These settings save automatically.
 
 * Now press the hammer button in the bottom left to begin building. 
 
-* Press the "Compile Output" button on the bottom bar to see build progress.
+* Press the "Compile Output" button on the bottom bar to see build progress. In newer version of Qt Creator you have to click the updown/arrow button to bring up a menu to select "Compile Output".
+
+* You can ignore the compile warning "Returning a pointer or reference in a director method is not recommended." 
 
 Running DeSTIN compiled executables:
 -----------------------------------------------------
@@ -213,9 +228,9 @@ Type the commands:
 
 * With the DeSTIN project open, click the "Projects" tab button on the left. 
 
-* Open the Run settings by clicking the "Run" button near the top.
+* Open the Run settings by clicking the pill shaped "Run" button near the top ( to the right of the "Build" button ).
 
-* Chose the executable to run with the Run Configuration drop down. Unfortunately, each time you change the executable, you have to re enter the settings below.
+* In the Run section, use the "Run configuration" dropdown to chose the executable to run. Unfortunately, each time you change the executable, you have to re enter the settings below.
 
 * Set the Working Directory to C:\cygwin\home\<your home>\destin\Destin-build\install\bin
 
