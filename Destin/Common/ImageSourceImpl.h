@@ -28,7 +28,7 @@ public:
         :ImageSourceBase(rows, cols) {}
 
 
-    ~ImageSouceImpl(){ }
+    virtual ~ImageSouceImpl(){}
 
     /**
       * Loads an image from a file from the given file path.

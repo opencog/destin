@@ -58,10 +58,10 @@ class CifarSource : public ImageSourceBase {
 
     map< string, unsigned int> name_to_class; // maps the class name to the class number
 
-    const int       imageSize;  // size of an image in bytes ( label + image data)
+    const int imageDataSize;    // size of an image in bytes ( label + image data)
 
-    const size_t    batch_size; // size of raw batch data in bytes
-    uchar *         raw_batch;  // raw batch file data
+    size_t batch_size;          // size of raw batch data in bytes
+    uchar * raw_batch;          // raw batch file data
 
     typedef struct {
         int classLabel;         // image class indicated by an integer
@@ -149,7 +149,7 @@ class CifarSource : public ImageSourceBase {
 
             grayMats.push_back(floatgray);
 
-            imageOffset += imageSize;
+            imageOffset += imageDataSize;
         }
         fclose(f);
     }
@@ -176,14 +176,14 @@ public:
         ImageSourceBase(32, 32),
         batch(batch),
         numClasses(10),
-        imageSize(1 + 32 * 32 * 3),
-        batch_size( imageSize * nImages )
+        imageDataSize(1 + 32 * 32 * 3)
       // 10000 images in a batch. Each image is 1 byte
       // class label, then 32x32 pixels by 3 colors (RGB)
     {
 
         nImages = 10000; // each cifar batch file as 10,000 images.
         images.reserve(nImages);
+        batch_size =  imageDataSize * nImages;
         struct stat s;
         stat(cifar_dir.c_str(), &s);
 
@@ -205,7 +205,7 @@ public:
         loadBatch();
     }
 
-    ~CifarSource(){
+    virtual ~CifarSource(){
         delete [] classesEnabled;
         delete [] raw_batch;
     }

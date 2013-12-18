@@ -10,16 +10,14 @@ using namespace std;
 class ImageSourceBase {
 
 private:
-    const int rows, cols; // default output size of the images
-    const int imageSize; // rows * cols
 
-    cv::Mat resizeImage(cv::Mat & image, int rows, int cols){
-        rows = rows == -1 ? this->rows : rows;
-        cols = cols == -1 ? this->cols : cols;
+    cv::Mat resizeImage(cv::Mat & image, int n_rows, int n_cols){
+        n_rows = n_rows == -1 ? this->rows : n_rows;
+        n_cols = n_cols == -1 ? this->cols : n_cols;
 
-        if(rows != image.rows || cols != image.cols ){
+        if(n_rows != image.rows || n_cols != image.cols ){
             cv::Mat bigger;
-            cv::resize(image, bigger, cv::Size(rows, cols), 0, 0, CV_INTER_NN);
+            cv::resize(image, bigger, cv::Size(n_rows, n_cols), 0, 0, CV_INTER_NN);
             return bigger;
         }else{
             return image;
@@ -27,6 +25,8 @@ private:
     }
 
 protected:
+    const int rows, cols; // default output size of the images
+    const int imageSize; // rows * cols
 
     int currentImage;               // index into images vector
     std::vector<cv::Mat> grayMats;  // store images as grayscal opencv Mats (matrix, images)
@@ -165,7 +165,8 @@ public:
       *                   The image_id can be different from and does not
       *                   change the "current image".
       * @param rows, cols - optionally scale the image to this size
-      * If not specifed, it defaults to the rows, cols as passed into the constructor
+      * If not specifed, it defaults to the rows, cols to -1 which means
+      * use the values that were passed into the constructor
       */
     void displayCifarColorImage(int image_id, int rows=-1, int cols=-1, string window_title="CIFAR Color Image"){
         if(image_id < 0 || image_id >= nImages){
