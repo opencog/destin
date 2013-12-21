@@ -148,10 +148,8 @@ def dump_beliefs():
         
         # write the cifar image type/class ( i.e. cat / dog )
         # and the current beliefs to the mat file
-        be.writeBeliefToMat()
-        # get the beliefs from destin
-        # You could add a method to the BeliefExporter class to 
-            
+        print "class label: %i " % (cs.getImageClassLabel())
+        be.writeBeliefToDisk(cs.getImageClassLabel())
     
 def showCifarImage(id):
      cs.setCurrentImage(id)
@@ -174,13 +172,10 @@ waitkey().start()
 
 
 def go():
-	be.createMatFile()
 	train_destin()
-	#train_destin()
 	print "Training Supervision..."
 	# show cifar images, and dump resulting beliefs to a .txt file
 	dump_beliefs()
-	#be.closeMatFile()
 	print "Done."
 #Start it all up
 go()

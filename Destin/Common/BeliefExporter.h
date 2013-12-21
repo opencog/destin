@@ -17,21 +17,34 @@ class BeliefExporter {
     int bottomLayer;
     float * beliefs;
 
+    bool fileIsOpen;
+    FILE *filePtr;
+    string fileName;
 public:
 
     /** Constructor
       * @param network - destin network to export belielfs
       * @param bottom - layer to start including the beliefs for. See getOutputSize()
+      * @param file_name - uses this file name for the writeBeliefToDisk method.
       */
-    BeliefExporter(DestinNetworkAlt & network, uint bottom):
+    BeliefExporter(DestinNetworkAlt & network, uint bottom, string file_name="OutputBeliefs.txt"):
         destin(network),
-        nLayers(destin.getLayerCount())
+        fileIsOpen(false),
+        fileName(file_name),
+        filePtr(NULL),
+        nLayers(destin.getLayerCount()),
+        beliefs(NULL)
     {
         setBottomLayer(bottom);
     }
 
     ~BeliefExporter(){
         deleteBeliefs();
+        if(fileIsOpen){
+            fclose(filePtr);
+            filePtr = NULL;
+            fileIsOpen = false;
+        }
     }
 
     void setBottomLayer(unsigned int bottom){
@@ -52,7 +65,7 @@ public:
     }
 
     /** Calulate how large the belief vector should be.
-      * Starts a the top laver of the network and
+      * Starts at the top layer of the network and
       * adds up the space for each layer
       * stopping at and including the layer specified
       * by setBottomLayer()
@@ -61,8 +74,8 @@ public:
         return outputSize;
     }
 
-    /** Get the pointer to the begining of the destin beliefs.
-      * The begining of the belief vector depends on what
+    /** Get the pointer to the beginning of the destin beliefs.
+      * The beginning of the belief vector depends on what
       * the bottom layer is set to via the constructor or by
       * setBottomLayer method. The end of the vector is
       * beliefs of the top layer node.
@@ -80,41 +93,53 @@ public:
         return beliefs;
     }
 
-    void createMatFile(){
-        FILE *filePtr;
-        filePtr=fopen("OutPutBeliefs.txt","w");
-        fclose(filePtr);
-    }
-
-    void closeMatFile(){
-
-    }
-
     /**
-     * This appends the current beliefs to the Mat file.
-     * First it writes the label ( i.e. cifar image class)
-     * that was used to generate the current beliefs.
-     * Then it writes the concatonated beliefs given by the getBeliefs() method.
+     * This appends the current destin beliefs to the file specified in the constructor.
+     *
+     * The first call to this method will create the file. The file is closed by the
+     * closeBeliefFile() method or by the destructor.
+     *
+     * The data is written to file as plain text with columns seperated by tabs, and
+     * rows delimited with a new line '\n' character.
+     *
+     * Each call to this method will append a new row to the file.
+     *
+     * The first column is the label. Then it writes the concatonated beliefs
+     * vector given by the getBeliefs() method.
      * The lenght of the belief vector is given by getOutputSize()
      *
      * @brief writeBeliefToDisk
-     * @param label - used to identify what type of input image was given to Destin that
+     * @param label - used to identify what type of input image (class) was given to Destin that
      * led to the current output beliefs.
      */
-    void writeBeliefToMat(){
-        float *label=getBeliefs();
+    void writeBeliefToDisk(int label){
+        float *beliefs = getBeliefs();
         int i = 0;
-        FILE *filePtr;
+
+        if(!fileIsOpen){
+            filePtr = fopen(fileName.c_str(),"w");
+            if(filePtr == NULL){
+                std::cerr << "Could not open file for writing beliefs!" << std::endl;
+                return;
+            }
+            fileIsOpen = true;
+        }
  	
-        filePtr = fopen("OutPutBeliefs.txt","a+");
- 	
-        //for (i = 0; i < ( int(sizeof(*label)/sizeof(label[0]))); i++)
-        uint size=getOutputSize();
+        fprintf(filePtr, "%i\t", label);
+
+        uint size = getOutputSize();
         for (i = 0; i < size; i++){
-            fprintf(filePtr, "%.9f\t", label[i]);
+            fprintf(filePtr, "%.9f\t", beliefs[i]);
         }
         fprintf(filePtr, "\n");
-        fclose(filePtr);
+    }
+
+    void closeBeliefFile(){
+        if(fileIsOpen){
+            fclose(filePtr);
+            fileIsOpen = false;
+            filePtr = NULL;
+        }
     }
 
 protected:
