@@ -35,9 +35,8 @@ enum SupportedImageWidths {
     W64 = 64,   //5 16x16
     W128 = 128, //6 32x32
     W256 = 256, //7 64x64
-    W512 = 512  //8 128x128 layers needed
+    W512 = 512  //8 layers 128x128 nodes
 };
-#define MAX_IMAGE_WIDTH 512
 
 using std::string;
 
@@ -78,6 +77,16 @@ private:
 
     void init(SupportedImageWidths width, unsigned int layers,
              unsigned int centroid_counts [], bool isUniform, int extRatio,  unsigned int layer_widths[]);
+
+    /*** helper methods for rescaling centroids ***/
+    void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
+    void normalizeChildrenPart(std::vector<float> & inCen, int ni);
+    // Prints all centroids
+    void printFloatCentroids(int layer);
+    // Prints the vector with a given title
+    void printFloatVector(std::string title, std::vector<float> vec);
+    void rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, int dstLayer);
+    void rescaleRecursiveDown(int srcLayer, std::vector<float> selCen, int dstLayer);
 
 public:
 
@@ -136,17 +145,7 @@ public:
 
     /*************************************************************************/
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);
-    void rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, int dstLayer);
-    void rescaleRecursiveDown(int srcLayer, std::vector<float> selCen, int dstLayer);
 
-    // Prints all centroids
-    void printFloatCentroids(int layer);
-
-    // Prints the vector with a given title
-    void printFloatVector(std::string title, std::vector<float> vec);
-
-    void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
-    void normalizeChildrenPart(std::vector<float> & inCen, int ni);
 
     void isTraining(bool isTraining);
 
