@@ -172,15 +172,12 @@ std::vector<float> DestinNetworkAlt::getLayersVariances()
     return variances;
 }
 
-// 2013.7.4
-// CZT: get quality;
 float DestinNetworkAlt::getQuality(int layer)
 {
     return getSep(layer)-getVar(layer);
 }
 
-// CZT: to display all centroids
-void DestinNetworkAlt::displayFloatCentroids(int layer)
+void DestinNetworkAlt::printFloatCentroids(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
 
@@ -211,8 +208,7 @@ void DestinNetworkAlt::displayFloatCentroids(int layer)
     printf("\n\n");
 }
 
-// CZT: to display the vector with a given title
-void DestinNetworkAlt::displayFloatVector(std::string title, std::vector<float> vec)
+void DestinNetworkAlt::printFloatVector(std::string title, std::vector<float> vec)
 {
     printf("%s", title.c_str());
     for(int i=0; i<vec.size(); ++i)
@@ -292,8 +288,7 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
 {
     if(srcLayer == dstLayer)
     {
-        displayFloatVector("---Result is:\n", selCen);
-        //displayFloatCentroids(dstLayer);
+        printFloatVector("---Result is:\n", selCen);
         return;
     }
     else
@@ -306,9 +301,9 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
         std::vector<std::vector<float> > extendCen;
 
         // Display all centroids on source layer
-        displayFloatCentroids(srcLayer);
+        printFloatCentroids(srcLayer);
         // Display the selected centroid
-        displayFloatVector("---The selected centroid is:\n", selCen);
+        printFloatVector("---The selected centroid is:\n", selCen);
 
         if(srcLayer == 0)
         {
@@ -408,8 +403,6 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
 
                 extendCen.push_back(quaCen);
 
-                // testing
-                //displayFloatVector("\n", quaCen);
             }
         }
 
@@ -468,8 +461,7 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
 {
     if(srcLayer == dstLayer)
     {
-        displayFloatVector("---Result is:\n", selCen);
-        //displayFloatCentroids(dstLayer);
+        printFloatVector("---Result is:\n", selCen);
         return;
     }
     else
@@ -480,16 +472,15 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
         std::vector<float> normSelCen;
 
         // Display all centroids on source layer
-        displayFloatCentroids(srcLayer);
+        printFloatCentroids(srcLayer);
         // Display the selected centroid
-        displayFloatVector("---The selected centroid is:\n", selCen);
+        printFloatVector("---The selected centroid is:\n", selCen);
 
         if(srcLayer == 1)
         {
             // Use every quarter as a single lower level centroid, then downsample
             //int level0 = 0;
             //Node * childNode = getNode(level0, 0, 0);
-            //displayFloatCentroids(level0);
 
             // Normalize for every quarter
             // This is inspired by 'cent_image_gen.c';
@@ -505,10 +496,6 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                     normSelCen.push_back(selCen[i*childNode->nb + j] / sum);
                 }
             }
-
-            // Display the selected centroid
-            //displayFloatVector("---The selected centroid is:\n", selCen);
-            //displayFloatVector("---The normalized selected centroid is:\n", normSelCen);
 
             // Downsampling method: pickping left-up one
             std::vector<int> vecIdx;
@@ -528,7 +515,6 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                         tempCen[k-j*childNode->ns] += normSelCen[i*childNode->nb+j] * childNode->mu[j][k-j*childNode->ns];
                     }
                 }
-                //displayFloatVector("\n", tempCen);
                 for(int j=0; j<vecIdx.size(); ++j)
                 {
                     newSelCen.push_back(tempCen[vecIdx[j]]);

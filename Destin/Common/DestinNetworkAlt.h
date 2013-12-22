@@ -138,9 +138,13 @@ public:
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);
     void rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, int dstLayer);
     void rescaleRecursiveDown(int srcLayer, std::vector<float> selCen, int dstLayer);
-    //
-    void displayFloatCentroids(int layer);
-    void displayFloatVector(std::string title, std::vector<float> vec);
+
+    // Prints all centroids
+    void printFloatCentroids(int layer);
+
+    // Prints the vector with a given title
+    void printFloatVector(std::string title, std::vector<float> vec);
+
     void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
     void normalizeChildrenPart(std::vector<float> & inCen, int ni);
 
