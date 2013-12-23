@@ -44,10 +44,10 @@ def load_ims_fld(ims, fld):
 Used to init DeSTIN, but compatible by setting 'extRatio'!
 """
 def init_destin(siw=pd.W512, nLayer=8, centroids=[4,8,16,32,64,32,16,8],
-                isUniform=True, extRatio=1):
-    
-    temp_network = pd.DestinNetworkAlt(siw, nLayer, centroids, isUniform, extRatio)
+                isUniform=True, imageMode=pd.DST_IMG_MODE_GRAYSCALE):
+    temp_network = pd.DestinNetworkAlt(siw, nLayer, centroids, isUniform, imageMode)
     #temp_network.setBeliefTransform(pd.DST_BT_NONE)
+    
     return temp_network
 
 """

@@ -5,6 +5,13 @@
 #include "destin.h"
 #include "cent_image_gen.h"
 
+static void _Cig_UpdateCentroidImages(Destin * d,
+                                      float *** images,      // preallocated images to update
+                                      float weightParameter); // higher value means higher contrast
+
+static void _Cig_UpdateLayerZeroImages(Destin * d,
+                                       float *** images);   // preallocated images to update
+
 void Cig_Normalize(float * weights_in, float * weights_out, int len, float not_used){
     memcpy(weights_out, weights_in, len * sizeof(float));
     int i;
@@ -108,26 +115,60 @@ void Cig_ConcatImages(float ** images,// Array of the 4 images to concat.
     }
 }
 
-float*** Cig_CreateCentroidImages(Destin * d, float weightParameter){
+/**
+ * Allocates memory to hold the centroid images.
+ * Then calls Cig_UpdateCentroidImages to generate them.
+ *
+ * The returned images is a 4 dimenional array index by
+ * images[channel][layer][centroid][pixel].
+ *
+ * Range of the indicies:
+ * channel: 0 to d->extRatio - 1
+ * layer: 0 to destin->nLayers - 1
+ * centroid: 0 to destin->nb[layer] - 1
+ * pixel: 0 to number of pixels in that centroid image
+ *
+ * The channel can represent color, or a side in a steroscopic image.
+ * For example, if dealing with only 1 grayscale image, then there's only 1 channel,
+ * and extRatio = 1. If dealing with color images, then there may be 3 channels,
+ * extRatio = 3, one channel for each Red, Green, Blue. If dealing with a pair of
+ * color images for color 3D vision, then there may be 6 channels, extRatio = 6,
+ * representing a pair of RGB images.
+ *
+ * This code generates centroid images for each channel independently.
+ * Then it is up to calling code to combine the channels into one image.
+ * For example, combine 3 R,G,B channels to show color images to the user.
+ *
+ * User should deallocate the images with Cig_DestroyCentroidImages function.
+ *
+ * @brief Cig_CreateCentroidImages
+ * @param d
+ * @param weightParameter
+ * @return generated images.
+ */
+float**** Cig_CreateCentroidImages(Destin * d, float weightParameter){
 
     if(!d->isUniform){
         return NULL;
     }
 
     // allocate memory for the centroid images
-    float *** images;
-    MALLOC(images, float **, d->nLayers);
-    int l, c, image_width = sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni);
-    for(l = 0 ; l < d->nLayers; l++){
-        MALLOC(images[l], float *, d->nb[l]);
-        for(c = 0 ; c < d->nb[l]; c++){
-            MALLOC(images[l][c], float, (l==0 ? image_width*image_width*d->extRatio : image_width*image_width));
+    float**** images;
+    MALLOC(images, float ***, d->extRatio); // allocate for each channel
+
+    int channel, l, c, image_width;
+    for(channel = 0 ; channel < d->extRatio ; channel++){
+        MALLOC(images[channel], float **, d->nLayers);
+        image_width = sqrt(GetNodeFromDestin(d, 0, 0, 0)->ni);
+        for(l = 0 ; l < d->nLayers; l++){
+            MALLOC(images[channel][l], float *, d->nb[l]);
+            for(c = 0 ; c < d->nb[l]; c++){
+                MALLOC(images[channel][l][c], float, image_width*image_width);
+            }
+            image_width *= 2;
         }
-        image_width *= 2;
+        _Cig_UpdateCentroidImages(d, images[channel], weightParameter);
     }
-
-    Cig_UpdateCentroidImages(d, images, weightParameter);
-
     return images;
 }
 
@@ -140,13 +181,12 @@ int Cig_GetCentroidImageWidth(Destin * d, int layer){
 static void _Cig_UpdateLayerZeroImages(Destin * d,
                                        float *** images    // preallocated images to update
                                        ){
-
     int p, c;
     Node * n = GetNodeFromDestin(d, 0, 0, 0);
 
     for(c = 0 ; c < d->nb[0]; c++){
         for(p = 0 ; p < n->ni ; p++){
-            images[0][c][p] = n->mu[c][p];
+            images[0][c][p] = n->mu[c][p]; // layer 0 centroids directly represent their images
         }
 
         int ext_ratio;
@@ -158,9 +198,28 @@ static void _Cig_UpdateLayerZeroImages(Destin * d,
     }
 }
 
-void Cig_UpdateCentroidImages(Destin * d,
+/** Updates centroid images for all channels
+ * @param d
+ * @param images
+ * @param weightParameter
+ */
+void Cig_UpdateCentroidImages(Destin *d,
+                              float ****images,
+                              float weightParameter){
+    int channel;
+    for(channel = 0 ; channel < d->extRatio ; channel++){
+        _Cig_UpdateCentroidImages(d, images[channel], weightParameter);
+    }
+}
+
+/** Update centroid images for 1 channel
+ * @param d
+ * @param images
+ * @param weighParameter
+ */
+static void _Cig_UpdateCentroidImages(Destin * d,
                               float *** images,    // preallocated images to update
-                              float weighParameter // higher value means higher contrast
+                              float weightParameter // higher value means higher contrast
                               ){
 
     int child_section, i, l, c;
@@ -190,7 +249,7 @@ void Cig_UpdateCentroidImages(Destin * d,
                               &n->mu[c][child_section * d->nb[l - 1]],
                               d->nb[l - 1],
                               child_image_width * child_image_width,
-                              weighParameter,
+                              weightParameter,
                               combined_images[child_section],
                               l,
                               d->extRatio);
@@ -211,14 +270,17 @@ void Cig_UpdateCentroidImages(Destin * d,
     return;
 }
 
-void Cig_DestroyCentroidImages(Destin * d, float *** images){
+void Cig_DestroyCentroidImages(Destin * d, float **** images){
 
-    int l, c;
-    for(l = 0 ; l < d->nLayers ; l++){
-        for(c = 0; c < d->nb[l]; c++){
-            FREE(images[l][c]);
+    int l, c, channel;
+    for(channel = 0 ; channel < d->extRatio ; channel++){
+        for(l = 0 ; l < d->nLayers ; l++){
+            for(c = 0; c < d->nb[l]; c++){
+                FREE(images[channel][l][c]);
+            }
+            FREE(images[channel][l]);
         }
-        FREE(images[l]);
+        FREE(images[channel]);
     }
     FREE(images);
     return;

@@ -203,7 +203,8 @@ def eatDogFood(centroid):
         return
     dn.displayCentroidImage(top_layer, centroid)
     dn.setCentImgWeightExponent(8)
-    img = dn.getCentroidImage(top_layer, centroid)
+    channel = 0
+    img = dn.getCentroidImage(channel, top_layer, centroid)
     freezeTraining()
     for i in range(layers):
         dn.doDestin(img)

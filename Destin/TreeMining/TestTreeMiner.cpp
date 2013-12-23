@@ -531,7 +531,7 @@ int testOverLappingDestinHeirarchy(){
     uint centroids []= {4,4,4,4};
     uint layer_widths[] = {4,3,2,1};
 
-    DestinNetworkAlt dn(W16, 4, centroids, true, 1, layer_widths );
+    DestinNetworkAlt dn(W16, 4, centroids, true, layer_widths, DST_IMG_MODE_GRAYSCALE);
     DestinTreeManager dtm(dn, 0);
 
     assertIntEquals(169,dtm.getWinningCentroidTreeSize())

@@ -854,22 +854,22 @@ int testCentroidImageGeneration(){
     //all black, bottom right dark grey
     assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.75, 0.25);
 
-    float *** images = Cig_CreateCentroidImages(d, 1.0);
+    float **** images = Cig_CreateCentroidImages(d, 1.0);
 
     // check that the generated images are correct
-    assertFloatArrayEqualsEV(images[0][0], 0.0, 1, 0.0);
-    assertFloatArrayEqualsEV(images[0][1], 0.0, 1, 1.0);
+    assertFloatArrayEqualsEV(images[0][0][0], 0.0, 1, 0.0);
+    assertFloatArrayEqualsEV(images[0][0][1], 0.0, 1, 1.0);
 
-    assertFloatArrayEqualsEV(images[1][0], 0.0, 4, 1.0, 1.0, 1.0, 1.0);
-    assertFloatArrayEqualsEV(images[1][1], 0.0, 4, 0.0, 0.0, 0.0, 0.0);
+    assertFloatArrayEqualsEV(images[0][1][0], 0.0, 4, 1.0, 1.0, 1.0, 1.0);
+    assertFloatArrayEqualsEV(images[0][1][1], 0.0, 4, 0.0, 0.0, 0.0, 0.0);
 
-    assertFloatArrayEqualsEV(images[2][0], 0.0, 16,
+    assertFloatArrayEqualsEV(images[0][2][0], 0.0, 16,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 1.0, 1.0,
                              0.0, 0.0, 0.0, 0.0,
                              0.0, 0.0, 0.0, 0.0);
 
-    assertFloatArrayEqualsEV(images[2][1], 0.0, 16,
+    assertFloatArrayEqualsEV(images[0][2][1], 0.0, 16,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 0.75, 0.75,

@@ -150,7 +150,8 @@ def go(frames=20):
 def printCentImage(layer, cent):
     l = pd.GetCentroidImageWidth(network.getNetwork(), layer)
     l = l * l
-    fa = pd.SWIG_FloatArray_frompointer(network.getCentroidImage(layer, cent))
+    channel = 0
+    fa = pd.SWIG_FloatArray_frompointer(network.getCentroidImage(channel, layer, cent))
     for i in xrange(l):
         print fa[i]
 
@@ -211,7 +212,9 @@ def eatOwnDogFood(centroid):
         return
     network.displayCentroidImage(top_layer, centroid)
     network.setCentImgWeightExponent(8)
-    img = network.getCentroidImage(top_layer, centroid)
+    channel = 0
+    #TODO: update to work with multi channels
+    img = network.getCentroidImage(channel, top_layer, centroid)
     freezeTraining()
     for i in xrange(layers):
         network.doDestin(img)
