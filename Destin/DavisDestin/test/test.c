@@ -896,6 +896,26 @@ int testCentroidImageGeneration(){
     return 0;
 }
 
+int testColorCentroidImageGeneration(){
+    DestinConfig * dc = CreateDefaultConfig(3); // create a 3 layer heiaracy
+    dc->inputDim = 1; // 1 pixel input per node
+    assignUIntArray(dc->centroids, 3, 3, 2, 2); // centroids per node, for each layer botttom to top.
+
+    dc->extRatio = 3; // allow for RGB processing
+
+    Destin * d = InitDestinWithConfig(dc);
+    DestroyConfig(dc);
+
+
+
+
+    DestroyDestin(d);
+    return 0;
+}
+
+
+
+
 // Used for delete element callback tests
 long _testDeleteLongCounter;
 void _testDeleteLong(void * elem)
@@ -1111,6 +1131,97 @@ int testBuildOverlappingHeirarchy(){
     return 0;
 }
 
+int testExtRatio()
+{
+    // extRatio will affect 'ns', thus the size of 'observation', 'mu' and the related parameters
+
+    uint nl;
+    nl = 1;
+    uint inputDim = 16;
+    uint max_nb [] = {4};
+    uint nb [] = {4};  // 4 centroids;
+    uint nc = 0;
+    uint layer_widths[] = {1};
+    float beta = 1;
+    float lambdaCoeff = 1;
+    float gamma = 1;
+    float temperature [] = {1};
+    float starvCoef = 0.1;
+    uint nMovements = 0;
+    bool isUniform = true;
+    int extRatio = 3;  // For TEST;
+    float image[48] = {
+        .01, .02, .03, .04,
+        .05, .06, .07, .08,
+        .09, .10, .11, .12,
+        .13, .14, .15, .16,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9
+    };
+
+    Destin * d = InitDestin(    // initialize Destin.
+        inputDim,      // length of input vector for each bottom layer node. i.e. is 16 for 4x4 pixel input.
+                            // numbers of children should be square
+        nl,       // number of layers
+        nb,           // initial number of centroids for each layer
+        max_nb,   // maximum number of centroids for each layer
+        layer_widths,  // width of each layer
+        nc,            // number of classes
+        beta,         // beta coeff
+        lambdaCoeff,  // lambdaCoeff coeff
+        gamma,        // gamma coeff
+        temperature,        // temperature for each layer
+        starvCoef,   // starv coeff
+        .05,    // frequency coeff
+        0, // frequency treshold
+        0,     // TODO: comment
+        nMovements,    // number of movements per digit presentation
+        isUniform,     // is uniform - if nodes in a layer share one list of centroids
+        extRatio,      // input extension ratio
+        false    // If nodes cluster on their firstParent's beliefs and their own previous beliefs
+    );
+
+    SetBeliefTransform(d, DST_BT_BOLTZ);
+
+    d->layerMask[0] = 1;
+    int nid = 0;
+
+    Node * n = &d->nodes[0];
+
+    assertTrue(n->ni == 16);
+    assertTrue(n->d->extRatio == extRatio);
+    assertTrue(n->ns == inputDim*extRatio+nb[0]+0+nc);
+
+    // GetObservation; test whether it's extended to contain more info;
+    GetObservation( d->nodes, image, nid );
+    float expected_obs [] = {
+        .01, .02, .03, .04,
+        .05, .06, .07, .08,
+        .09, .10, .11, .12,
+        .13, .14, .15, .16,
+        0.25, 0.25, 0.25, 0.25,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9
+    };
+    assertFloatArrayEquals( expected_obs , n->observation, 52);
+
+    int currLayer = 0;
+
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
@@ -1130,7 +1241,9 @@ int main(int argc, char ** argv ){
     RUN(test8Layers);
     RUN(testArrayOperations);
     RUN(testCentroidImageGeneration);
+    RUN(testColorCentroidImageGeneration);
     RUN(testBuildOverlappingHeirarchy);
+    RUN(testExtRatio);
 
     UT_REPORT_RESULTS();
 
