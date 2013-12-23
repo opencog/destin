@@ -827,10 +827,10 @@ int testLinkParentsToChildren(){
 }
 
 int testCentroidImageGeneration(){
-    DestinConfig * dc = CreateDefaultConfig(3);
-    dc->inputDim = 1;
-    assignUIntArray(dc->centroids, 3, 2, 2, 2);
-    assignFloatArray(dc->temperatures, 3, 7.5, 8.5, 4.0);
+    DestinConfig * dc = CreateDefaultConfig(3); // create a 3 layer heiaracy
+    dc->inputDim = 1; // 1 pixel input per node
+    assignUIntArray(dc->centroids, 3, 2, 2, 2); // centroids per node, for each layer botttom to top.
+    assignFloatArray(dc->temperatures, 3, 7.5, 8.5, 4.0); // arbitrary, doesn't matter
 
     Destin * d = InitDestinWithConfig(dc);
 
@@ -839,48 +839,54 @@ int testCentroidImageGeneration(){
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = GetNodeFromDestin(d, 0, 0 ,0);
-    n->mu[0][0] = 0.0;
-    n->mu[1][0] = 1.0; // black ( or is it white?)
+    n->mu[0][0] = 0.0; // assign centroid 0 white
+    n->mu[1][0] = 1.0; // assign centroid 1 black ( or is it white?)
 
     n = GetNodeFromDestin(d, 1, 0 ,0);
-    assignFloatArray(n->mu[0], 8,  0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //all black
-    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //all white
+    assignFloatArray(n->mu[0], 8,  0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //1st centroid is a black 2x2 square
+    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //2nd centroid is a white 2x2 square
 
     n = GetNodeFromDestin(d, 2, 0 ,0);
 
-    //top half black, bottom half white
+    //Assign 1st centroid to be top half black, bottom half white
     assignFloatArray(n->mu[0], 8,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0);
 
-    //all black, bottom right dark grey
+    //Assign 2nd centroid to be all black, bottom right dark grey
     assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.75, 0.25);
 
     float **** images = Cig_CreateCentroidImages(d, 1.0);
 
-    // check that the generated images are correct
-    assertFloatArrayEqualsEV(images[0][0][0], 0.0, 1, 0.0);
-    assertFloatArrayEqualsEV(images[0][0][1], 0.0, 1, 1.0);
+    // Check that the generated images are correct.
+    // Bottom centroid
+    assertFloatArrayEqualsEV(images[0][0][0], 0.0, 1, 0.0); // 1st centroid is white
+    assertFloatArrayEqualsEV(images[0][0][1], 0.0, 1, 1.0); // 2nd is black ( or is it the other way around...)
 
-    assertFloatArrayEqualsEV(images[0][1][0], 0.0, 4, 1.0, 1.0, 1.0, 1.0);
-    assertFloatArrayEqualsEV(images[0][1][1], 0.0, 4, 0.0, 0.0, 0.0, 0.0);
+    assertFloatArrayEqualsEV(images[0][1][0], 0.0, 4, 1.0, 1.0, 1.0, 1.0); // 1st centroid is a black 2x2 square
+    assertFloatArrayEqualsEV(images[0][1][1], 0.0, 4, 0.0, 0.0, 0.0, 0.0); // 2nd centroid is a white 2x2 square
 
+    // The images array is indexed like this: images[channel][layer][centroid].
+    // First centroid of top layer should generate an image of top half black
+    // and bottom half white
     assertFloatArrayEqualsEV(images[0][2][0], 0.0, 16,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 1.0, 1.0,
                              0.0, 0.0, 0.0, 0.0,
                              0.0, 0.0, 0.0, 0.0);
 
+    // Second centroid of top layer should generate everything black (1.0)
+    // except for the bottom right corner which is gray (0.75)
     assertFloatArrayEqualsEV(images[0][2][1], 0.0, 16,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 0.75, 0.75,
                              1.0, 1.0, 0.75, 0.75);
 
+    // Test Cig_PowerNormalize that it normalizes vector [1,2,3] properly ( when exponent parameter is 2)
     float aDist[3] = {1.0,2.0,3.0};
     float aDistNormed[3];
     Cig_PowerNormalize(aDist, aDistNormed, 3, 2);
     assertFloatArrayEqualsEV(aDistNormed, 1e-6, 3, 0.0714285714, 0.2857142857, 0.6428571429 );
-
-    //try if the source is same as dest
+    //Try if the source is same as dest
     Cig_PowerNormalize(aDist, aDist, 3, 2);
     assertFloatArrayEqualsEV(aDist, 1e-6, 3, 0.0714285714, 0.2857142857, 0.6428571429 );
 
