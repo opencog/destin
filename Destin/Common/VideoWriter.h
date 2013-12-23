@@ -4,8 +4,8 @@
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 
-/** simple wrapper around OpenCV VideoWriter
-  * suitable to be used with python bindings
+/** A Simple wrapper around OpenCV VideoWriter.
+  * so it can be used easily with Python bindings.
   */
 class VideoWriter {
 
@@ -17,6 +17,12 @@ public:
     VideoWriter(std::string filename, float fps):
         isOpened(false), filename(filename),fps(fps){}
 
+    /** Write a video frame to the movie file.
+     * Opens the video file if not open already.
+     * Uses
+     * @brief write
+     * @param img - opencv image to write to the video
+     */
     void write(cv::Mat &img);
 };
 

@@ -8,7 +8,8 @@
 /**
  * Performs subtree mining using CMOrderedTreeMinerWrapper.
  * Is able to display the found mined trees.
- * Currently only supports 4 children to 1 parent node destin heirarchies
+ * Currently only supports a mix of 4 children to 1 parent node destin heirarchies,
+ * or parent_layer_width = child_layer_width + 1 heirarchy.
  */
 class DestinTreeManager {
 
