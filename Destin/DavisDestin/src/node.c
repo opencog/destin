@@ -109,6 +109,7 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     }
 
     // Apply extended input
+    // Adds an extra length to the observation of length inputImageSize * ( extRatio - 1)
     if(n->layer == 0)
     {
         for(j=1; j<n->d->extRatio; ++j)

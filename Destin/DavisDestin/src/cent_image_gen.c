@@ -181,18 +181,20 @@ int Cig_GetCentroidImageWidth(Destin * d, int layer){
 static void _Cig_UpdateLayerZeroImages(Destin * d,
                                        float *** images    // preallocated images to update
                                        ){
-    int p, c;
+    int pixel, c;
     Node * n = GetNodeFromDestin(d, 0, 0, 0);
-
+    const int layer = 0;
     for(c = 0 ; c < d->nb[0]; c++){
-        for(p = 0 ; p < n->ni ; p++){
-            images[0][c][p] = n->mu[c][p]; // layer 0 centroids directly represent their images
+        for(pixel = 0 ; pixel < n->ni ; pixel++){
+            //images[layer][centroid][pixel]
+            images[0][c][pixel] = n->mu[c][pixel]; // layer 0 centroids directly represent their images
         }
 
         int ext_ratio;
         for(ext_ratio = 1; ext_ratio < d->extRatio; ++ext_ratio){
-            for(p=0; p < n->ni; ++p){
-                images[0][c][n->ni*ext_ratio + p] = n->mu[c][n->ni*ext_ratio + n->nb + n->np + p];
+            for(pixel=0; pixel < n->ni; ++pixel){
+                //images[layer][centroid][pixel]
+                images[0][c][n->ni*ext_ratio + pixel] = n->mu[c][n->ni*ext_ratio + n->nb + n->np + pixel];
             }
         }
     }

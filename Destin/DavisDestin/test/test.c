@@ -899,6 +899,7 @@ int testCentroidImageGeneration(){
 int testColorCentroidImageGeneration(){
     DestinConfig * dc = CreateDefaultConfig(3); // create a 3 layer heiaracy
     dc->inputDim = 1; // 1 pixel input per node
+    dc->isRecurrent = false;
     assignUIntArray(dc->centroids, 3, 3, 2, 2); // centroids per node, for each layer botttom to top.
 
     dc->extRatio = 3; // allow for RGB processing
@@ -906,15 +907,16 @@ int testColorCentroidImageGeneration(){
     Destin * d = InitDestinWithConfig(dc);
     DestroyConfig(dc);
 
+    Node * n = GetNodeFromDestin(d, 0, 0 ,0);
 
+    //
+    n->mu[0][0] = 0.0; // assign centroid 0 white
+    n->mu[1][0] = 1.0; // assign centroid 1 black ( or is it white?)
 
 
     DestroyDestin(d);
     return 0;
 }
-
-
-
 
 // Used for delete element callback tests
 long _testDeleteLongCounter;
@@ -1176,7 +1178,7 @@ int testExtRatio()
         .05, .06, .07, .08,
         .09, .10, .11, .12,
         .13, .14, .15, .16,
-        0.25, 0.25, 0.25, 0.25, // where does this line come from?
+        0.25, 0.25, 0.25, 0.25, // self previous beliefs, no parent previous beliefs
         .5, .5, .5, .5,
         .5, .5, .5, .5,
         .5, .5, .5, .5,
