@@ -5,7 +5,6 @@ import time
 import pydestin as pd
 import czt_mod as czm
 import charting as chart
-import threading
 
 batch_mode = False
 experiment_id = None
@@ -67,12 +66,6 @@ weight_exponent = 4
 
 save_root="./saves/"
 
-class ChartingThread(threading.Thread):
-    def run(self):
-        chart.draw()
-        
-chart_thread = ChartingThread()
-#chart_thread.start()
 
 def train():
     for i in xrange(iterations):
@@ -124,11 +117,6 @@ def mkdir(path):
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else: raise
-
-
-def window_callback(event, x, y, flag, param):
-    if event == cv.CV_EVENT_LBUTTONUP:
-        pass
 
 def saveCenImages(run_id, layer):
     run_dir = experiment_root_dir + "/"+run_id+"/"
