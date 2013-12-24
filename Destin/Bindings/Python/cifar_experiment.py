@@ -155,27 +155,13 @@ def showCifarImage(id):
      cs.setCurrentImage(id)
      ci = cs.getColorImageMat()
      pd.imshow("Cifar Image: " + str(id), ci)
-                
-
-# This waitkey thread lets the opencv windows refresh automatically
-# without needed to manually call the cv::waitkey method
-kill_waitkey = False
-class waitkey(threading.Thread):
-    def run(self):
-        while True:    
-            hg.cvWaitKey(100)
-            if kill_waitkey:
-                print "waitkey killed"
-                return
-
-waitkey().start()
-
 
 def go():
-	train_destin()
-	print "Training Supervision..."
-	# show cifar images, and dump resulting beliefs to a .txt file
-	dump_beliefs()
-	print "Done."
+    train_destin()
+    print "Training Supervision..."
+    # show cifar images, and dump resulting beliefs to a .txt file
+    dump_beliefs()
+    be.closeBeliefFile()
+    print "Done."
 #Start it all up
 go()

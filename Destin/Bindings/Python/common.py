@@ -50,7 +50,7 @@ def init(img_width, centroids=[2,4,16,32,64,32,16,8],
     global network, layers, video_source, layerMask, top_layer
     layers = len(centroids)
     top_layer = layers - 1
-    network = pd.DestinNetworkAlt(img_width, layers, centroids, True, 1, layer_widths)
+    network = pd.DestinNetworkAlt(img_width, layers, centroids, True, layer_widths)
 
     temps = []
     for i in xrange(layers):        

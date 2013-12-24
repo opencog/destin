@@ -892,7 +892,12 @@ cv::Mat DestinNetworkAlt::getCentroidImageM(int layer, int centroid, int disp_wi
     cv::Mat toShow = convertCentroidImageToMatImage(layer, centroid);
 
     if(enhanceContrast){
-        cv::equalizeHist(toShow, toShow);
+        if(getCvByteImageType() == CV_8UC1){
+            cv::equalizeHist(toShow, toShow);
+        } else {
+            std::cerr << "getCentroidImageM: cv::equalizeHist only currently supported on image type CV_8UC1\n";
+            // see http://stackoverflow.com/a/14709331 on how to do equalization on color images
+        }
     }
 
     cv::resize(toShow, centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);

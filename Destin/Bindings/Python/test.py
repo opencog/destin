@@ -24,7 +24,7 @@ class TestHeirarchyBuilder(unittest.TestCase):
     def test_DestinNetworkAlt(self):
         layer_widths=[32, 16, 8, 7, 6, 5, 4, 3, 2, 1]
         centroids=   [2,   8, 32,32,64,16,16,16,16,4]
-        network = pd.DestinNetworkAlt(pd.W512,len(layer_widths), centroids, True, 1, layer_widths)
+        network = pd.DestinNetworkAlt(pd.W512,len(layer_widths), centroids, True, layer_widths, pd.DST_IMG_MODE_GRAYSCALE)
         node = pd.GetNodeFromDestin(network.getNetwork(), 0, 1, 1)
         self.assertEqual(1, node.nParents)
         node = pd.GetNodeFromDestin(network.getNetwork(), 2, 1, 1)
@@ -43,7 +43,7 @@ class TestHeirarchyBuilder(unittest.TestCase):
     def test_tree_sizes(self):
         layer_widths=[32, 16, 8, 7, 6, 5, 4, 3, 2, 1]
         centroids=   [2,   8, 32,32,64,16,16,16,16,4]
-        network = pd.DestinNetworkAlt(pd.W512,len(layer_widths), centroids, True, 1, layer_widths)
+        network = pd.DestinNetworkAlt(pd.W512,len(layer_widths), centroids, True, layer_widths, pd.DST_IMG_MODE_GRAYSCALE)
         dtm = pd.DestinTreeManager(network, 0)
         print "Size is:" + str(dtm.getWinningCentroidTreeSize())
 
