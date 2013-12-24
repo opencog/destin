@@ -64,10 +64,8 @@ protected:
     * to be used by getBGRImageFloat()
     */
     void addColorFloatImage(cv::Mat & colorIm){
-        cv::Mat mixedMat(colorIm.rows, colorIm.cols, colorIm.type());
-        cv::cvtColor(colorIm, mixedMat, CV_BGR2RGB);  // switch from BGR to RGB
         float * colorFloatImage = new float[imageSize * 3];
-        convertMatToFloat(mixedMat, colorFloatImage);
+        convertMatToFloat(colorIm, colorFloatImage);
         colorFloatImages.push_back(colorFloatImage);
     }
 
