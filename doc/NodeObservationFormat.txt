@@ -1,4 +1,8 @@
 See GetObservation function in node.c
+        uint np = ((l + 1 == nLayers) ? 0 : nb[l+1]);
+        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
+        uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
+
 A node's input vector consists of 5 parts appened together:
 
 1)
