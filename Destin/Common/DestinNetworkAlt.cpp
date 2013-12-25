@@ -770,7 +770,7 @@ void DestinNetworkAlt::load(const char * fileName){
     }
     temperatures = new float[getLayerCount()];
     memcpy(temperatures, destin->temp, sizeof(float) * getLayerCount());
-
+    imageMode = extRatioToImageMode(destin->extRatio);
 }
 
 void DestinNetworkAlt::moveCentroidToInput(int layer, int row, int col, int centroid){
@@ -812,6 +812,19 @@ int DestinNetworkAlt::getCvByteImageType(){
     }
 }
 
+DstImageMode DestinNetworkAlt::extRatioToImageMode(int extRatio){
+    switch(extRatio){
+        case 1:
+            return DST_IMG_MODE_GRAYSCALE;
+        case 2:
+            return DST_IMG_MODE_GRAYSCALE_STEREO;
+        case 3:
+            return DST_IMG_MODE_RGB;
+        default:
+            throw std::runtime_error("extRatioToImageMode: unsupported extRatio\n.");
+    }
+}
+
 int DestinNetworkAlt::getExtendRatio(DstImageMode imageMode){
     if(imageMode == DST_IMG_MODE_GRAYSCALE){
         return 1;
@@ -824,7 +837,7 @@ int DestinNetworkAlt::getExtendRatio(DstImageMode imageMode){
     }
 }
 
-cv::Mat DestinNetworkAlt::convertCentroidImageToMatImage(int layer, int centroid){
+cv::Mat DestinNetworkAlt::convertCentroidImageToMatImage(int layer, int centroid, bool toByteType){
     uint width = Cig_GetCentroidImageWidth(destin, layer);
 
     int height = width;
@@ -837,8 +850,9 @@ cv::Mat DestinNetworkAlt::convertCentroidImageToMatImage(int layer, int centroid
 
     cv::Mat toShow;
     if(imageMode == DST_IMG_MODE_GRAYSCALE){
+        float * data = (float *)centroidImage.data;
         // Copy generated centroid image to the Opencv mat.
-        memcpy(centroidImage.data, getCentroidImages()[0][layer][centroid], width*width*sizeof(float));
+        memcpy(data, getCentroidImages()[0][layer][centroid], width*width*sizeof(float));
     } else if(imageMode == DST_IMG_MODE_RGB){
         // Copy  generated centroid to the color OpenCV mat.
         for(int channel = 0 ; channel < 3 ; channel++){ // iterate over R, G, B
@@ -870,12 +884,18 @@ cv::Mat DestinNetworkAlt::convertCentroidImageToMatImage(int layer, int centroid
 
         leftImage.copyTo(left_region);   // copy left centroid image to left side of the bigger image
         rightImage.copyTo(right_region); // copy right centroid image to right side of the bigger image
-        throw std::runtime_error("convertCentroidImageToMatImage: need to test DST_IMG_MODE_GRAYSCALE_STEREO");
+
+        //TODO: test this section and remove the throw
+        throw std::runtime_error("convertCentroidImageToMatImage: TODO: need to test the code for DST_IMG_MODE_GRAYSCALE_STEREO");
     } else {
         throw std::runtime_error("fillMatWithCentroidImage: unsupported image mode.\n");
     }
     // make it suitable for equalizeHist
-    centroidImage.convertTo(toShow, getCvByteImageType(), 255);
+    if(toByteType){
+        centroidImage.convertTo(toShow, getCvByteImageType(), 255);
+    } else {
+        toShow  = centroidImage;
+    }
 
     return toShow;
 }
@@ -889,14 +909,22 @@ cv::Mat DestinNetworkAlt::getCentroidImageM(int layer, int centroid, int disp_wi
         throw std::domain_error("displayCentroidImage: layer, centroid out of bounds\n");
     }
 
-    cv::Mat toShow = convertCentroidImageToMatImage(layer, centroid);
+    cv::Mat toShow = convertCentroidImageToMatImage(layer, centroid, true);
 
     if(enhanceContrast){
         if(getCvByteImageType() == CV_8UC1){
             cv::equalizeHist(toShow, toShow);
+        } else if(getCvByteImageType() == CV_8UC3){
+            // This section is borrowed from http://stackoverflow.com/a/14709331
+            // on how to do equalization on color images
+            std::vector<cv::Mat> hsv_planes;
+            cvtColor(toShow,toShow,CV_BGR2HSV);
+            cv::split(toShow, hsv_planes);
+            cv::equalizeHist(hsv_planes[2], hsv_planes[2]);
+            cv::merge(hsv_planes,toShow);
+            cvtColor(toShow, toShow, CV_HSV2BGR);
         } else {
-            std::cerr << "getCentroidImageM: cv::equalizeHist only currently supported on image type CV_8UC1\n";
-            // see http://stackoverflow.com/a/14709331 on how to do equalization on color images
+            std::cerr << __PRETTY_FUNCTION__ << ": unsupported image type for cv::equalizeHist" << std::endl;
         }
     }
 
@@ -957,7 +985,7 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
             x = c * wpb;
             y = r * wpb;
 
-            cv::Mat subimage = convertCentroidImageToMatImage(layer, centroid);
+            cv::Mat subimage = convertCentroidImageToMatImage(layer, centroid, false);
             cv::Mat subimage_resized;
             cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
             cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );

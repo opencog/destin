@@ -73,7 +73,7 @@ private:
     bool isUniform;
     const int inputImageWidth;
 
-    const DstImageMode imageMode; //Grayscale or color input
+    DstImageMode imageMode; //Grayscale or color input
 
     /**
      * initTemperatures
@@ -87,7 +87,11 @@ private:
               unsigned int centroid_counts [], bool isUniform,
               int extRatio,  unsigned int layer_widths[]);
 
-    cv::Mat convertCentroidImageToMatImage(int layer, int centroid);
+    /** Convert raw float array centroid image to OpenCV mat.
+      * @param toByteType - if true, then convert to a CV_U8 byte type, otherwise
+      * it will be a CV_32F type
+      */
+    cv::Mat convertCentroidImageToMatImage(int layer, int centroid, bool toByteType);
 
     //get OpenCV float image/mat type depending on the imageMode
     int getCvFloatImageType();
@@ -98,6 +102,7 @@ private:
      * grayscale = 1, RGB = 3
      */
     int getExtendRatio(DstImageMode imageMode);
+    DstImageMode extRatioToImageMode(int extRatio);
 
     /*** helper methods for rescaling centroids ***/
     void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
@@ -116,10 +121,6 @@ public:
       * @param layers - number of layers in the heirarchy
       * @param centroid_counts - centroids per layer. Starts from the bottom layer.
       * @param isUniform - if nodes in a level share the same pool of centroids.
-      * @param extendRatio - Specifies if destin should expect the input image to be duplicated.
-      * A value other than one means that the input size will be multiplied by this ration.
-      * For instance it may be 2 if inputing a pair of stereo images of the same size.
-      *
       * @param layer_widths - if null, it will build a classic 4 to 1 non overlapping heirarchy based on the
       * number of layers. Otherwise it will build the heirarchy according to these rules:
       * 1) If parent layer width is exactly one less than the child layer width, it assumes the parent nodes share their
@@ -128,6 +129,7 @@ public:
       * 2) Otherwise, if child_layer_width % parent_layer_width == 0 then it assumes that parent nodes do not share children nodes
       * Each child has just 1 parent. Each parent will have (child_layer_width / parent_layer_width) ^ 2 children.
       * 3) If neither of the two conditions do not apply, a runtime_error exception will be thrown.
+      * @param imageMode - specify wheter using grascale or color images
       */
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
                      unsigned int centroid_counts [], bool isUniform,

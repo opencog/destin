@@ -175,16 +175,6 @@ static void _Cig_UpdateLayerZeroImages(Destin * d,
                 images[0][c][pixel] = n->mu[c][n->ni*channel + n->nb + n->np + pixel];
             }
         }
-        /*
-        int ext_ratio;
-        for(ext_ratio = 1; ext_ratio < d->extRatio; ++ext_ratio){
-            for(pixel=0; pixel < n->ni; ++pixel){
-                //images[layer][centroid][pixel]
-                //images[0][c][n->ni*ext_ratio + pixel] = n->mu[c][n->ni*ext_ratio + n->nb + n->np + pixel];
-                // weird like this because we push the extended input to the end of the observation /centroid.
-                images[0][c][pixel] = n->mu[c][n->ni*ext_ratio + n->nb + n->np + pixel];
-            }
-        }*/
     }
 }
 
