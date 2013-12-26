@@ -17,6 +17,7 @@ set(SWIG_EXECUTABLE    C:/swigwin-2.0.11/swig.exe)
 set(OpenCV_DIR  C:/opencv-2.4.6/mingwbuild/install)
 set(CMAKE_MODULE_PATH  C:/opencv-2.4.6/mingwbuild/install)
 set(CMAKE_LIBRARY_PATH C:/opencv-2.4.6/mingwbuild/install/lib)
+INSTALL(FILES mingw_run_test.bat DESTINATION bin)
 endif()
 ####
 

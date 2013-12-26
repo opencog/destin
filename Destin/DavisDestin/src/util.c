@@ -594,6 +594,47 @@ void ClearBeliefs( Destin *d )
     CopyOutputBeliefs( d );
 }
 
+
+void _DstReadCheck(void * dest, size_t element_size, size_t count, FILE * file, int line){
+    int read_count = fread(dest, element_size, count, file);
+    if(read_count != count){
+        int error = ferror(file);
+        if(error){
+            oops("File read error. Error number %i, line %i, file %s\n", error, line, __FILE__);
+        } else if(feof(file)){
+            oops("End of file reached, line %i, file %s\n", line, __FILE__);
+        } else {
+            oops("Unknown file read error\n");
+        }
+    }
+    return;
+}
+
+// reads from the file and checks for errors
+#define DstReadCheck(dest, size, count, file) { \
+    _DstReadCheck(dest, size, count, file, __LINE__);\
+}
+
+void _DstWriteCheck(void * dest, size_t element_size, size_t count, FILE * file, int line){
+    int write_count = fwrite(dest, element_size, count, file);
+    if(write_count != count){
+        int error = ferror(file);
+        if(error){
+            oops("File write error. Error number %i, line %i, file %s\n", error, line, __FILE__);
+        } else if(feof(file)){
+            oops("End of file reached, line %i, file %s\n", line, __FILE__);
+        } else {
+            oops("Unknown file read error\n");
+        }
+    }
+    return;
+}
+
+// writes to the file and checks for errors
+#define DstWriteCheck(dest, size, count, file) { \
+    _DstWriteCheck(dest, size, count, file, __LINE__);\
+}
+
 void SaveDestin( Destin *d, char *filename )
 {
     uint i, j, l;
@@ -601,49 +642,49 @@ void SaveDestin( Destin *d, char *filename )
 
     FILE *dFile;
 
-    dFile = fopen(filename, "w");
+    dFile = fopen(filename, "wb");
     if( !dFile )
     {
         fprintf(stderr, "Error: Cannot open %s", filename);
         return;
     }
 
-    fwrite(&d->serializeVersion, sizeof(uint), 1,       dFile);
+    DstWriteCheck(&d->serializeVersion, sizeof(uint), 1,       dFile);
 
     // write destin hierarchy information to disk
-    fwrite(&d->nMovements,  sizeof(uint), 1,            dFile);
-    fwrite(&d->nc,          sizeof(uint), 1,            dFile);
-    fwrite(&d->nLayers,     sizeof(uint), 1,            dFile);
-    fwrite(&d->isUniform,   sizeof(bool), 1,            dFile);
-    fwrite(d->nb,           sizeof(uint), d->nLayers,   dFile);
-    fwrite(d->layerMaxNb,   sizeof(uint), d->nLayers,   dFile);
-    fwrite(d->layerWidth,   sizeof(uint), d->nLayers,   dFile);
+    DstWriteCheck(&d->nMovements,  sizeof(uint), 1,            dFile);
+    DstWriteCheck(&d->nc,          sizeof(uint), 1,            dFile);
+    DstWriteCheck(&d->nLayers,     sizeof(uint), 1,            dFile);
+    DstWriteCheck(&d->isUniform,   sizeof(bool), 1,            dFile);
+    DstWriteCheck(d->nb,           sizeof(uint), d->nLayers,   dFile);
+    DstWriteCheck(d->layerMaxNb,   sizeof(uint), d->nLayers,   dFile);
+    DstWriteCheck(d->layerWidth,   sizeof(uint), d->nLayers,   dFile);
 
     // write destin params to disk
-    fwrite(d->temp,                 sizeof(float),              d->nLayers,  dFile);
-    fwrite(&d->nodes[0].beta,       sizeof(float),              1,           dFile); //TODO consider moving these constants to the destin struc
-    fwrite(&d->nodes[0].lambdaCoeff,sizeof(float),              1,           dFile);
-    fwrite(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
-    fwrite(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
-    fwrite(&d->freqCoeff,           sizeof(float),              1,           dFile);
-    fwrite(&d->freqTreshold,        sizeof(float),              1,           dFile);
-    fwrite(&d->addCoeff,            sizeof(float),              1,           dFile);
-    fwrite(&d->extRatio,            sizeof(uint),               1,           dFile);
-    fwrite(&d->isRecurrent,         sizeof(bool),               1,           dFile);
+    DstWriteCheck(d->temp,                 sizeof(float),              d->nLayers,  dFile);
+    DstWriteCheck(&d->nodes[0].beta,       sizeof(float),              1,           dFile); //TODO consider moving these constants to the destin struc
+    DstWriteCheck(&d->nodes[0].lambdaCoeff,sizeof(float),              1,           dFile);
+    DstWriteCheck(&d->nodes[0].gamma,      sizeof(float),              1,           dFile);
+    DstWriteCheck(&d->nodes[0].starvCoeff, sizeof(float),              1,           dFile);
+    DstWriteCheck(&d->freqCoeff,           sizeof(float),              1,           dFile);
+    DstWriteCheck(&d->freqTreshold,        sizeof(float),              1,           dFile);
+    DstWriteCheck(&d->addCoeff,            sizeof(float),              1,           dFile);
+    DstWriteCheck(&d->extRatio,            sizeof(uint),               1,           dFile);
+    DstWriteCheck(&d->isRecurrent,         sizeof(bool),               1,           dFile);
 
     // save input dimensionality i.e. nci[0]
-    fwrite(&d->nci[0],              sizeof(uint),               1,           dFile);
+    DstWriteCheck(&d->nci[0],              sizeof(uint),               1,           dFile);
 
-    fwrite(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
-    fwrite(&d->beliefTransform,     sizeof(BeliefTransformEnum),1,           dFile);
-    fwrite(&d->fixedLearnRate,      sizeof(float),              1,           dFile);
+    DstWriteCheck(&d->centLearnStrat,      sizeof(CentroidLearnStrat), 1,           dFile);
+    DstWriteCheck(&d->beliefTransform,     sizeof(BeliefTransformEnum),1,           dFile);
+    DstWriteCheck(&d->fixedLearnRate,      sizeof(float),              1,           dFile);
 
     // write node belief states
     for( i=0; i < d->nNodes; i++ )
     {
         nTmp = &d->nodes[i];
-        fwrite(nTmp->belief,           sizeof(float), nTmp->nb, dFile);
-        fwrite(nTmp->outputBelief,     sizeof(float), nTmp->nb, dFile);
+        DstWriteCheck(nTmp->belief,           sizeof(float), nTmp->nb, dFile);
+        DstWriteCheck(nTmp->outputBelief,     sizeof(float), nTmp->nb, dFile);
     }
 
     // write node statistics to disk
@@ -651,16 +692,16 @@ void SaveDestin( Destin *d, char *filename )
         for(l = 0 ; l < d->nLayers; l++){
             nTmp = GetNodeFromDestin(d, l, 0, 0); //get the 0th node of the layer
             for (i = 0; i < d->nb[l]; i++){
-                fwrite(d->uf_mu[l][i],          sizeof(float),  nTmp->ns,    dFile);
-                fwrite(d->uf_sigma[l][i],       sizeof(float),  nTmp->ns,    dFile);
-                fwrite(d->uf_avgDelta[l][i],    sizeof(float),  nTmp->ns,    dFile);
+                DstWriteCheck(d->uf_mu[l][i],          sizeof(float),  nTmp->ns,    dFile);
+                DstWriteCheck(d->uf_sigma[l][i],       sizeof(float),  nTmp->ns,    dFile);
+                DstWriteCheck(d->uf_avgDelta[l][i],    sizeof(float),  nTmp->ns,    dFile);
             }
-            fwrite(d->uf_absvar[l],             sizeof(float),  nTmp->ns,               dFile);
-            fwrite(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],               dFile);
-            fwrite(d->uf_winFreqs[l],           sizeof(float),  d->nb[l],               dFile);
-            fwrite(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
-            fwrite(d->uf_persistWinCounts_detailed[l],   sizeof(long),   d->nb[l],      dFile);
-            fwrite(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
+            DstWriteCheck(d->uf_absvar[l],             sizeof(float),  nTmp->ns,               dFile);
+            DstWriteCheck(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],               dFile);
+            DstWriteCheck(d->uf_winFreqs[l],           sizeof(float),  d->nb[l],               dFile);
+            DstWriteCheck(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],               dFile);
+            DstWriteCheck(d->uf_persistWinCounts_detailed[l],   sizeof(long),   d->nb[l],      dFile);
+            DstWriteCheck(d->uf_starv[l],              sizeof(float),  d->nb[l],               dFile);
         }
     }else{
         for( i=0; i < d->nNodes; i++ )
@@ -668,11 +709,11 @@ void SaveDestin( Destin *d, char *filename )
             nTmp = &d->nodes[i];
             // write statistics
             for (j = 0; j < nTmp->nb; j++){
-                fwrite(nTmp->mu[j],          sizeof(float),  nTmp->ns,    dFile);
-                fwrite(nTmp->sigma[j],       sizeof(float),  nTmp->ns,    dFile);
+                DstWriteCheck(nTmp->mu[j],          sizeof(float),  nTmp->ns,    dFile);
+                DstWriteCheck(nTmp->sigma[j],       sizeof(float),  nTmp->ns,    dFile);
             }
-            fwrite(nTmp->starv,     sizeof(float),  nTmp->nb,           dFile);
-            fwrite(nTmp->nCounts,   sizeof(long),   nTmp->nb,           dFile);
+            DstWriteCheck(nTmp->starv,     sizeof(float),  nTmp->nb,           dFile);
+            DstWriteCheck(nTmp->nCounts,   sizeof(long),   nTmp->nb,           dFile);
         }
     }
 
@@ -684,7 +725,6 @@ Destin * LoadDestin( Destin *d, const char *filename )
     FILE *dFile;
     uint i, j, l;
     Node *nTmp;
-    size_t freadResult;
 
     if( d != NULL )
     {
@@ -701,50 +741,50 @@ Destin * LoadDestin( Destin *d, const char *filename )
     float beta, lambdaCoeff, gamma, starvCoeff, freqCoeff, freqTreshold, addCoeff;
     float *temp;
 
-    dFile = fopen(filename, "r");
+    dFile = fopen(filename, "rb");
     if( !dFile )
     {
         fprintf(stderr, "Error: Cannot open %s", filename);
         return NULL;
     }
 
-    freadResult = fread(&serializeVersion, sizeof(uint), 1, dFile);
+    DstReadCheck(&serializeVersion, sizeof(uint), 1, dFile);
     if(serializeVersion != SERIALIZE_VERSION){
         fprintf(stderr, "Error: can't load %s because its version is %i, and we're expecting %i\n", filename, serializeVersion, SERIALIZE_VERSION);
         return NULL;
     }
 
     // read destin hierarchy information from disk
-    freadResult = fread(&nMovements,  sizeof(uint), 1, dFile);
-    freadResult = fread(&nc,          sizeof(uint), 1, dFile);
-    freadResult = fread(&nl,          sizeof(uint), 1, dFile);
-    freadResult = fread(&isUniform,   sizeof(bool), 1, dFile);
+    DstReadCheck(&nMovements,  sizeof(uint), 1, dFile);
+    DstReadCheck(&nc,          sizeof(uint), 1, dFile);
+    DstReadCheck(&nl,          sizeof(uint), 1, dFile);
+    DstReadCheck(&isUniform,   sizeof(bool), 1, dFile);
 
     MALLOC(nb, uint, nl);
     MALLOC(layerMaxNb, uint, nl);
     MALLOC(layerWidths, uint, nl);
     MALLOC(temp, float, nl);
 
-    freadResult = fread(nb,            sizeof(uint),    nl,   dFile);
-    freadResult = fread(layerMaxNb,    sizeof(uint),    nl,   dFile);
-    freadResult = fread(layerWidths,   sizeof(uint),    nl,   dFile);
+    DstReadCheck(nb,            sizeof(uint),    nl,   dFile);
+    DstReadCheck(layerMaxNb,    sizeof(uint),    nl,   dFile);
+    DstReadCheck(layerWidths,   sizeof(uint),    nl,   dFile);
 
     // read destin params from disk
-    freadResult = fread(temp,          sizeof(float),    nl,  dFile);
-    freadResult = fread(&beta,         sizeof(float),    1,   dFile);
-    freadResult = fread(&lambdaCoeff,  sizeof(float),    1,   dFile);
-    freadResult = fread(&gamma,        sizeof(float),    1,   dFile);
-    freadResult = fread(&starvCoeff,   sizeof(float),    1,   dFile);
-    freadResult = fread(&freqCoeff,    sizeof(float),    1,   dFile);
-    freadResult = fread(&freqTreshold, sizeof(float),    1,   dFile);
-    freadResult = fread(&addCoeff,     sizeof(float),    1,   dFile);
-    freadResult = fread(&extendRatio,  sizeof(uint),     1,   dFile);
-    freadResult = fread(&isRecurrent,  sizeof(bool),     1,   dFile);
+    DstReadCheck(temp,          sizeof(float),    nl,  dFile);
+    DstReadCheck(&beta,         sizeof(float),    1,   dFile);
+    DstReadCheck(&lambdaCoeff,  sizeof(float),    1,   dFile);
+    DstReadCheck(&gamma,        sizeof(float),    1,   dFile);
+    DstReadCheck(&starvCoeff,   sizeof(float),    1,   dFile);
+    DstReadCheck(&freqCoeff,    sizeof(float),    1,   dFile);
+    DstReadCheck(&freqTreshold, sizeof(float),    1,   dFile);
+    DstReadCheck(&addCoeff,     sizeof(float),    1,   dFile);
+    DstReadCheck(&extendRatio,  sizeof(uint),     1,   dFile);
+    DstReadCheck(&isRecurrent,  sizeof(bool),     1,   dFile);
 
     //TODO: verify the results of the read
 
     uint inputDim; // i.e. destin->nci[0]
-    freadResult = fread(&inputDim,     sizeof(uint),     1,   dFile);
+    DstReadCheck(&inputDim,     sizeof(uint),     1,   dFile);
 
     d = InitDestin(inputDim, nl, nb, layerMaxNb, layerWidths, nc, beta, lambdaCoeff, gamma, temp, starvCoeff,
                    freqCoeff, freqTreshold, addCoeff, nMovements, isUniform, extendRatio, isRecurrent);
@@ -756,36 +796,36 @@ Destin * LoadDestin( Destin *d, const char *filename )
     FREE(layerWidths); layerWidths = NULL;
 
 
-    freadResult = fread(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
+    DstReadCheck(&d->centLearnStrat,sizeof(CentroidLearnStrat),   1,         dFile);
     SetLearningStrat(d, d->centLearnStrat);
 
-    freadResult = fread(&d->beliefTransform, sizeof(BeliefTransformEnum),1,         dFile);
+    DstReadCheck(&d->beliefTransform, sizeof(BeliefTransformEnum),1,         dFile);
     SetBeliefTransform(d, d->beliefTransform);
 
-    freadResult = fread(&d->fixedLearnRate,sizeof(float),                1,         dFile);
+    DstReadCheck(&d->fixedLearnRate,sizeof(float),                1,         dFile);
 
     // load node belief states
     for( i=0; i < d->nNodes; i++ )
     {
         nTmp = &d->nodes[i];
-        freadResult = fread(nTmp->belief,       sizeof(float), nTmp->nb, dFile);
-        freadResult = fread(nTmp->outputBelief, sizeof(float), nTmp->nb, dFile);
+        DstReadCheck(nTmp->belief,       sizeof(float), nTmp->nb, dFile);
+        DstReadCheck(nTmp->outputBelief, sizeof(float), nTmp->nb, dFile);
     }
 
     if(isUniform){
         for(l = 0 ; l < d->nLayers; l++){
             nTmp = GetNodeFromDestin(d, l, 0, 0);
             for(i = 0 ; i < d->nb[l]; i++){
-                freadResult = fread(d->uf_mu[l][i],          sizeof(float),  nTmp->ns,    dFile);
-                freadResult = fread(d->uf_sigma[l][i],       sizeof(float),  nTmp->ns,    dFile);
-                freadResult = fread(d->uf_avgDelta[l][i],    sizeof(float),  nTmp->ns,    dFile);
+                DstReadCheck(d->uf_mu[l][i],          sizeof(float),  nTmp->ns,    dFile);
+                DstReadCheck(d->uf_sigma[l][i],       sizeof(float),  nTmp->ns,    dFile);
+                DstReadCheck(d->uf_avgDelta[l][i],    sizeof(float),  nTmp->ns,    dFile);
             }
-            freadResult = fread(d->uf_absvar[l],             sizeof(float),  nTmp->ns,    dFile);
-            freadResult = fread(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],    dFile);
-            freadResult = fread(d->uf_winFreqs[l],           sizeof(float),  d->nb[l],    dFile);
-            freadResult = fread(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],    dFile);
-            freadResult = fread(d->uf_persistWinCounts_detailed[l],   sizeof(long),   d->nb[l],    dFile);
-            freadResult = fread(d->uf_starv[l],              sizeof(float),  d->nb[l],    dFile);
+            DstReadCheck(d->uf_absvar[l],             sizeof(float),  nTmp->ns,    dFile);
+            DstReadCheck(d->uf_winCounts[l],          sizeof(uint),   d->nb[l],    dFile);
+            DstReadCheck(d->uf_winFreqs[l],           sizeof(float),  d->nb[l],    dFile);
+            DstReadCheck(d->uf_persistWinCounts[l],   sizeof(long),   d->nb[l],    dFile);
+            DstReadCheck(d->uf_persistWinCounts_detailed[l],   sizeof(long),   d->nb[l],    dFile);
+            DstReadCheck(d->uf_starv[l],              sizeof(float),  d->nb[l],    dFile);
         }
 
     }else{
@@ -795,11 +835,11 @@ Destin * LoadDestin( Destin *d, const char *filename )
 
             // load statistics
             for(j = 0 ; j < nTmp->nb; j++){
-                freadResult = fread(nTmp->mu[j],    sizeof(float),  nTmp->ns,    dFile);
-                freadResult = fread(nTmp->sigma[j], sizeof(float),  nTmp->ns,    dFile);
+                DstReadCheck(nTmp->mu[j],    sizeof(float),  nTmp->ns,    dFile);
+                DstReadCheck(nTmp->sigma[j], sizeof(float),  nTmp->ns,    dFile);
             }
-            freadResult = fread(nTmp->starv, sizeof(float), nTmp->nb, dFile);
-            freadResult = fread(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
+            DstReadCheck(nTmp->starv, sizeof(float), nTmp->nb, dFile);
+            DstReadCheck(nTmp->nCounts, sizeof(long), nTmp->nb, dFile);
         }
     }
 
