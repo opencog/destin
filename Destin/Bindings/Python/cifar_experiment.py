@@ -8,7 +8,7 @@ Created on Wed Nov  6 20:52:28 2013
 import pydestin as pd
 import cv2.cv as cv
 import charting as chart
-import sys
+import SimpleMovingAverage as sma
 
 """
 This script defines a "go()" function which will train DeSTIN on CIFAR images ( see http://www.cs.toronto.edu/~kriz/cifar.html )
@@ -95,6 +95,10 @@ If doing 8 iteration per image, then since half the time the top layers will be 
 junk beliefs, the training on those top ones should be disabled
 """
 
+# moving average for centroid quality graph
+moving_average_period = 5
+moving_average = sma.SimpleMovingAverage(moving_average_period)
+
 def getCifarFloatImage():
     if image_mode == pd.DST_IMG_MODE_RGB:
         return cs.getRGBImageFloat()
@@ -113,13 +117,15 @@ def train_destin():
             
             #chart.update([dn.getQuality(top_layer), dn.getVar(top_layer), dn.getSep(top_layer)])
             #chart.update([dn.getVar(top_layer), dn.getSep(top_layer)])
-            variance = dn.getVar(0)
-            seperation = dn.getSep(0)
-            quality = dn.getQuality(0)
+            report_layer = 0
+            variance = dn.getVar(report_layer)
+            seperation = dn.getSep(report_layer)
+            quality = dn.getQuality(report_layer)
+            qual_moving_average = moving_average(quality)
             #chart.update([variance, seperation])
-            chart.update([quality])
+            chart.update([quality, qual_moving_average])
             chart.draw()
-            print "Qual: %f, Variance: %f, seperation: %f" % (quality, variance, seperation)
+            print "Qual: %f, Variance: %f, seperation: %f, average: %f" % (quality, variance, seperation, qual_moving_average)
 
         #find an image of an enabled class
         cs.findNextImage()
