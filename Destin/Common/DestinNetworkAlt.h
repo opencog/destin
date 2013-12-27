@@ -129,7 +129,7 @@ public:
       * 2) Otherwise, if child_layer_width % parent_layer_width == 0 then it assumes that parent nodes do not share children nodes
       * Each child has just 1 parent. Each parent will have (child_layer_width / parent_layer_width) ^ 2 children.
       * 3) If neither of the two conditions do not apply, a runtime_error exception will be thrown.
-      * @param imageMode - specify wheter using grascale or color images
+      * @param imageMode - specify wheter using grayscale or color images
       */
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
                      unsigned int centroid_counts [], bool isUniform,
