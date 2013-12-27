@@ -32,7 +32,7 @@ cs = pd.CifarSource(cifar_dir, cifar_batch)
 
 #must have 4 layers because the cifar data is 32x32
 layers = 4
-centroids = [8,32,23,2]
+centroids = [128,32,23,2]
 
 image_mode = pd.DST_IMG_MODE_RGB
 #image_mode = pd.DST_IMG_MODE_GRAYSCALE
@@ -40,7 +40,7 @@ image_mode = pd.DST_IMG_MODE_RGB
 # How many CIFAR images to train destin with. If larger than
 # If this this is larger than the number of possible CIFAR images then some
 # images will be repeated
-training_iterations = 10000
+training_iterations = 20000
 
 supervise_train_iterations = 10000
 
@@ -112,7 +112,7 @@ def train_destin():
     global image_ids
     image_ids = []
     for i in range(training_iterations):
-        if i % 50 == 0:
+        if i % 100 == 0:
             print "Training DeSTIN iteration: " + str(i), 
             
             #chart.update([dn.getQuality(top_layer), dn.getVar(top_layer), dn.getSep(top_layer)])
@@ -124,7 +124,8 @@ def train_destin():
             qual_moving_average = moving_average(quality)
             #chart.update([variance, seperation])
             chart.update([quality, qual_moving_average])
-            chart.draw()
+            if i%200 == 0:
+                chart.draw()
             print "Qual: %f, Variance: %f, seperation: %f, average: %f" % (quality, variance, seperation, qual_moving_average)
 
         #find an image of an enabled class
@@ -189,8 +190,13 @@ def go():
     train_destin()
     print "Training Supervision..."
     # show cifar images, and dump resulting beliefs to a .txt file
-    dump_beliefs()
+    #dump_beliefs()
     be.closeBeliefFile()
     print "Done."
+    
+def dcis(layer = 0):
+    dn.displayLayerCentroidImages(layer)
+    cv.WaitKey(100)
 #Start it all up
 go()
+dcis(0)
