@@ -32,8 +32,15 @@ def getCifarFloatImage():
     else:
         raise Exception("unsupported image mode")
 
+
+def train_stages(iterations_per_layer_list):
+    for layer, iterations in enumerate(iterations_per_layer_list):
+        pass
+        
+        
+
 #train the network
-def train_destin():
+def train_destin(training_iterations):
     global image_ids
     image_ids = []
     for i in range(training_iterations):
@@ -59,21 +66,8 @@ def train_destin():
         #save the image's id / index for layer replay
         image_ids.append(cs.getImageIndex())
 
-        #clear beliefs so previous images dont affect this one
-        dn.clearBeliefs()
+        dn.doDestin(getCifarFloatImage())
 
-        #disable all training, then re-enable the layers
-        #one by one while the image "signal" propagates up the
-        #heirarchy over the iterations
-        for j in range(layers):
-            dn.setLayerIsTraining(j, False)
-        for j in range(layers):
-            dn.setLayerIsTraining(j, True)
-            dn.doDestin(getCifarFloatImage())
-            
-        #let it train for 2 more times with all layers training
-        for j in range(2):
-            dn.doDestin(getCifarFloatImage())
 
     
     dn.save( "saved.dst")
@@ -112,7 +106,7 @@ def showCifarImage(id):
      cv.WaitKey(500)
 
 def go():
-    train_destin()
+    train_destin(training_iterations)
     print "Training Supervision..."
     # show cifar images, and dump resulting beliefs to a .txt file
     #dump_beliefs()

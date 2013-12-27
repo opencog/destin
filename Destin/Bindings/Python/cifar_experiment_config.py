@@ -106,5 +106,10 @@ training_iterations = 5000
 
 """
 Run 3
+Undo the strategy of clearing beliefs between each one. 
+I think for training then,centroids will be able to move easier.
+Results:
+    It seems to result in more colors on the bottom layers
 """
-run_id = "003"
+run_id = "004"
+training_iterations = 10000
