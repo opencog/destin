@@ -1,0 +1,39 @@
+See GetObservation function in node.c
+        uint np = ((l + 1 == nLayers) ? 0 : nb[l+1]);
+        uint ni = (l == 0 ? d->nci[0] : d->nci[l] * nb[l-1]);
+        uint ns = nb[l] + np + nc + ((l == 0) ? ni*extRatio : ni);
+
+A node's input vector consists of 5 parts appened together:
+
+1)
+For input layer nodes:
+    Size: inputDim
+    Note: is usually equal to 16 for a 4x4 input pixel region.
+    
+For upper layer nodes:
+    Child node belief input.
+    Size: 4 x ( child layer centroids per node )
+
+2)
+Previous self beliefs
+Size: number of centroids of this layer
+Note: when recurrence is off, this is hardcoded to a constant uniform distribution
+equal to 1 /  ( # of centroids )
+
+3)
+Parents previous beliefs
+Size: number of parent centroids
+Note: when recurrence is off, this is hardcoded to a constant uniform distribution 
+equal to 1 /  ( # of parent centroids )
+
+4)
+Number of "classes"
+Size: nc ( usually 0)
+Note: this feature has basically been abandoned.
+
+5)
+Extended Input ( extRatio ), used for color or stereo vision.
+Size: Input image size x ( extRatio - 1)
+Note: is absent in default case of grayscale input with extRatio = 1.
+For color RGB images, extRatio = 3.
+

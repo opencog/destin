@@ -21,7 +21,7 @@ import czt_mod as cm
 # 2013.5.7
 '''
 dn = cm.init_destin(extRatio=1)
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 #cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_2")
 #cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_2_2")
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_only1")
@@ -58,7 +58,7 @@ cm.dcis(dn, 7)
 # 2013.5.13
 '''
 dn = cm.init_destin()
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_only1")
 cm.train_ims(dn, ims, maxCount=5000)
 for i in range(8):
@@ -70,7 +70,7 @@ for i in range(8):
 # 2013.5.15
 '''
 dn = cm.init_destin()
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_only1")
 cm.train_ims(dn, ims, maxCount=3500)
 cm.dcis(dn, 7)
@@ -82,7 +82,7 @@ cm.dcis(dn, 7)
 # 2013.5.15 centroids=[8,16,32,64,32,16,8,4]
 '''
 dn = cm.init_destin()
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_2_2")
 cm.train_ims(dn, ims, maxCount=5000)
 cm.dcis(dn, 7)
@@ -93,7 +93,7 @@ cm.dcis(dn, 7)
 # 2013.5.16
 '''
 dn = cm.init_destin(centroids=[8,16,32,64,64,64,32,16])
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 #cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_4")
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.8/pro_5")
 cm.train_ims(dn, ims, maxCount=5000)
@@ -143,7 +143,7 @@ cm.processFld(cm.homeFld + "/Work/RECORD/2013.5.20/org_1", cm.homeFld + "/Work/R
 '''
 #dn = cm.init_destin(centroids=[12,18,24,30,30,24,18,12])
 dn = cm.init_destin()
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.20/pro_2/")
 cm.train_ims(dn, ims, maxCount=5000)
 cm.dcis(dn, 7)
@@ -171,7 +171,7 @@ centroids=[4,8,16,32,32,16,4,1]
 for i in range(8):
     centroids[i] *= numImg
 dn = cm.init_destin(centroids=centroids)
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.5.21/z_2")
 cm.train_ims(dn, ims, maxCount=2000)
 cm.dcis(dn, 7)
@@ -190,7 +190,7 @@ size = 512*512
 extRatio = 1
 isUniform = True
 dn = cm.init_destin(centroids=centroids, extRatio=extRatio)
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 ims.addImage(cm.homeFld + "/Work/RECORD/2013.5.8/pro_1/3.jpg")
 #cl2 = pd.czt_lib2()
 #fOut = cl2.createFloatArr(size)
@@ -275,7 +275,7 @@ dn = cm.init_destin(centroids=centroids)
 
 cl2 = pd.czt_lib2()
 
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 # Test just ONE image
 #ims.addImage(cm.homeFld + "/Work/RECORD/2013.7.8/test1/3.jpg")
 # Test FOUR images from the folder
@@ -322,7 +322,7 @@ nLayer = 4
 centroids = [64, 64, 32, 16]
 dn = cm.init_destin(siw=siw, nLayer=nLayer, centroids=centroids)
 
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(32, 32)
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.7.22/32")
 
 sepDict = {}
@@ -367,7 +367,7 @@ nLayer = 4
 centroids = [64, 64, 32, 16]
 dn = cm.init_destin(siw=siw, nLayer=nLayer, centroids=centroids)
 
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(32, 32)
 cm.load_ims_fld(ims, cm.homeFld + "/Work/RECORD/2013.7.22/32")
 
 class ChartingThread(threading.Thread):

@@ -5,7 +5,6 @@ import time
 import pydestin as pd
 import czt_mod as czm
 import charting as chart
-import threading
 
 batch_mode = False
 experiment_id = None
@@ -32,7 +31,7 @@ if (len(sys.argv) > 1):
 
 experiment_root_dir="./experiment_runs"
 
-ims = pd.ImageSouceImpl()
+ims = pd.ImageSouceImpl(512, 512)
 
 #letters = "LO+"
 letters = "ABCDE"
@@ -49,7 +48,9 @@ layers = len(centroids)
 top_layer = layers - 1
 draw_layer = top_layer
 iterations = 3000
-dn = pd.DestinNetworkAlt( pd.W512, 8, centroids, True)
+#image_mode = pd.DST_IMG_MODE_RGB
+image_mode = pd.DST_IMG_MODE_GRAYSCALE
+dn = pd.DestinNetworkAlt( pd.W512, layers, centroids, True, None, image_mode)
 dn.setFixedLearnRate(.1)
 dn.setBeliefTransform(pd.DST_BT_NONE)
 pd.SetLearningStrat(dn.getNetwork(), pd.CLS_FIXED)
@@ -67,12 +68,6 @@ weight_exponent = 4
 
 save_root="./saves/"
 
-class ChartingThread(threading.Thread):
-    def run(self):
-        chart.draw()
-        
-chart_thread = ChartingThread()
-#chart_thread.start()
 
 def train():
     for i in xrange(iterations):
@@ -100,7 +95,12 @@ def train():
         ims.findNextImage()
         #dn.clearBeliefs()
         for j in range(1):
-            f = ims.getGrayImageFloat()    
+            if image_mode == pd.DST_IMG_MODE_GRAYSCALE:
+                f = ims.getGrayImageFloat()    
+            elif image_mode == pd.DST_IMG_MODE_RGB:
+                f = ims.getRGBImageFloat()
+            else:
+                raise Exception("unsupported image mode")
             dn.doDestin(f)
 
 #display centroid image
@@ -124,11 +124,6 @@ def mkdir(path):
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else: raise
-
-
-def window_callback(event, x, y, flag, param):
-    if event == cv.CV_EVENT_LBUTTONUP:
-        pass
 
 def saveCenImages(run_id, layer):
     run_dir = experiment_root_dir + "/"+run_id+"/"
@@ -173,9 +168,6 @@ def saveCenImages(run_id, layer):
         fn = highweightede_dir + f
         dn.saveCentroidImage(layer, i, fn, 512, True )
 
-def getTreeLabel(layer, cent, child_num):
-    return tm.getTreeLabelForCentroid()
-
 def print_csv_entry():
     variances = dn.getLayersVariances();
     separations = dn.getLayersSeparations();
@@ -193,7 +185,6 @@ def print_csv_entry():
     separator = ","
     print "CSV: " + separator.join(entries)
 
-
 do_train = True
 save = True
 if do_train:
@@ -205,19 +196,14 @@ if do_train:
         fn = save_root + t + ".dst"
         print "Saving " + fn
         dn.save(fn)
-        for i in range(8):
+        for i in range(layers):
             saveCenImages(t,i)
         if batch_mode:
             print_csv_entry()
 else:
-    to_load = "+LO.dst"
+    to_load = "letter_exp.dst"
     dn.load(to_load)
 
-dn.save("+LO.dst")
-#dci(7,0,False, weight_exponent)
-dcis(7)
-
-tm = pd.DestinTreeManager(dn, 0)
-#tm.displayTree()
-
+dn.save("letter_exp.dst")
+dcis(top_layer)
 

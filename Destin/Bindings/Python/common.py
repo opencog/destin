@@ -50,7 +50,7 @@ def init(img_width, centroids=[2,4,16,32,64,32,16,8],
     global network, layers, video_source, layerMask, top_layer
     layers = len(centroids)
     top_layer = layers - 1
-    network = pd.DestinNetworkAlt(img_width, layers, centroids, True, 1, layer_widths)
+    network = pd.DestinNetworkAlt(img_width, layers, centroids, True, layer_widths)
 
     temps = []
     for i in xrange(layers):        
@@ -150,7 +150,8 @@ def go(frames=20):
 def printCentImage(layer, cent):
     l = pd.GetCentroidImageWidth(network.getNetwork(), layer)
     l = l * l
-    fa = pd.SWIG_FloatArray_frompointer(network.getCentroidImage(layer, cent))
+    channel = 0
+    fa = pd.SWIG_FloatArray_frompointer(network.getCentroidImage(channel, layer, cent))
     for i in xrange(l):
         print fa[i]
 
@@ -211,7 +212,9 @@ def eatOwnDogFood(centroid):
         return
     network.displayCentroidImage(top_layer, centroid)
     network.setCentImgWeightExponent(8)
-    img = network.getCentroidImage(top_layer, centroid)
+    channel = 0
+    #TODO: update to work with multi channels
+    img = network.getCentroidImage(channel, top_layer, centroid)
     freezeTraining()
     for i in xrange(layers):
         network.doDestin(img)

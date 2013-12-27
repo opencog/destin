@@ -8,7 +8,8 @@
 /**
  * Performs subtree mining using CMOrderedTreeMinerWrapper.
  * Is able to display the found mined trees.
- * Currently only supports 4 children to 1 parent node destin heirarchies
+ * Currently only supports a mix of 4 children to 1 parent node destin heirarchies,
+ * or parent_layer_width = child_layer_width + 1 heirarchy.
  */
 class DestinTreeManager {
 
@@ -84,6 +85,8 @@ public:
     /** Gets a tree of the winning centroid indexes of the destin network, represented a list.
       * Encodes the tree by a depth first search path, using the getTreeLabelForCentroid()
       * method to get the label for each node, and using a -1 to represent a traceback.
+      *
+      * The tree will only go down to and including the bottom layer as set by setBotomLayer(int)
       */
     short * getWinningCentroidTree();
 
@@ -270,6 +273,14 @@ public:
      * @param winname - The name of the window that displays the image.
      */
     void displayFoundSubtreeBorders(int foundMinedSubtree, cv::Mat & canvas, bool justOne = true, int thickness = 2, int waitkey_delay = 300, const string & winname = "Tree borders");
+
+    /** Clears the list of added trees and list of found subtrees.
+      */
+    void reset(){
+        foundSubtrees.clear();
+        tmw.reset();
+    }
+
 };
 
 

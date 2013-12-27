@@ -281,10 +281,12 @@ public:
     }
     void turnOnColor()
     {
-        this->isShowColor = true;
-        bFrame = new float[target_size.area()];
-        gFrame = new float[target_size.area()];
-        rFrame = new float[target_size.area()];
+        if(!isShowColor){
+            isShowColor = true;
+            bFrame = new float[target_size.area()];
+            gFrame = new float[target_size.area()];
+            rFrame = new float[target_size.area()];
+        }
     }
 };
 

@@ -324,34 +324,36 @@ int experiment(){
     return 0;
 }
 
-void setWinningCentroids(Destin * d, uint a, uint b, uint c){
-    uint wc[3] = {a, b, c};
-    for(int layer = 0 ; layer < 3; layer++){
-        for(int i = 0 ; i < d->layerSize[layer]; i++){
-            GetNodeFromDestinI(d, layer, i)->winner = wc[layer];
+void setWinningCentroids(Destin * dest, uint a, uint b, uint c, uint d){
+    uint wc[4] = {a, b, c, d};
+    for(int layer = 0 ; layer < 4; layer++){
+        for(int i = 0 ; i < dest->layerSize[layer]; i++){
+            GetNodeFromDestinI(dest, layer, i)->winner = wc[layer];
         }
     }
     return;
 }
 
 int testTimeSliceTreeExporter(){
-    uint centroids[] = {4,4,4};
-    DestinNetworkAlt dn(W16, 3, centroids, true);
-    DestinTreeManager tm(dn, 0);
+    uint centroids[] = {4,4,4,4};
+    DestinNetworkAlt dn(W32, 4, centroids, true);
+    int bottom_layer = 1;
+    DestinTreeManager tm(dn, bottom_layer);
     CMOrderedTreeMinerWrapper & tmw = tm.getTreeMiner();
 
     Destin * d = dn.getNetwork();
 
-    setWinningCentroids(d, 1,2,3);
+    setWinningCentroids(d, 1,2,3,4);
     tm.addTree();
-    setWinningCentroids(d, 3,1,2);
+    setWinningCentroids(d, 4,1,2,3);
     tm.addTree();
-    setWinningCentroids(d, 2,3,1);
+    setWinningCentroids(d, 3,4,1,2);
     tm.addTree();
-    setWinningCentroids(d, 1,2,3);
+    setWinningCentroids(d, 2,3,4,1);
     tm.addTree();
-    setWinningCentroids(d, 3,1,2);
+    setWinningCentroids(d, 1,2,3,4);
     tm.addTree();
+
 
     assertIntEquals(5, tm.getAddedTreeCount());
     tm.timeShiftTrees();
@@ -363,18 +365,19 @@ int testTimeSliceTreeExporter(){
     int treesize = ((1 + 4 + 16) * 2 - 1);
 
     tmw.treeToVector(tmw.getAddedTree(0), tree);
-    assertIntEquals( treesize, tree.size());
+    assertIntEquals(treesize, tree.size());
+    assertIntEquals(tm.getWinningCentroidTreeSize(), tree.size());
 
-    setWinningCentroids(d, 1, 1, 1);
-    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), treesize );
+    setWinningCentroids(d, 2, 2, 2, 2); // bottom layer is 1, so it starts at 2
+    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), tree.size() );
 
     tmw.treeToVector(tmw.getAddedTree(1), tree);
-    setWinningCentroids(d, 3, 3, 3);
-    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), treesize );
+    setWinningCentroids(d, 1, 1, 1, 1);
+    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), tree.size() );
 
     tmw.treeToVector(tmw.getAddedTree(2), tree);
-    setWinningCentroids(d, 2, 2, 2);
-    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), treesize );
+    setWinningCentroids(d, 4, 4, 4, 4);
+    assertShortArrayEquals(tm.getWinningCentroidTree(), tree.data(), tree.size() );
 
     return 0;
 }
@@ -528,7 +531,7 @@ int testOverLappingDestinHeirarchy(){
     uint centroids []= {4,4,4,4};
     uint layer_widths[] = {4,3,2,1};
 
-    DestinNetworkAlt dn(W16, 4, centroids, true, 1, layer_widths );
+    DestinNetworkAlt dn(W16, 4, centroids, true, layer_widths, DST_IMG_MODE_GRAYSCALE);
     DestinTreeManager dtm(dn, 0);
 
     assertIntEquals(169,dtm.getWinningCentroidTreeSize())

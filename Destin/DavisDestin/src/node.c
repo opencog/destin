@@ -48,10 +48,6 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
     if( n->layer > 0 )
     {
         // If not, use input from the child nodes
-
-        // Number of beliefs for child nodes
-        uint childBeliefs = n->d->nb[n->layer - 1];
-
         i = 0;
         for ( j = 0; j < n->nChildren; j++ )
         {
@@ -65,6 +61,8 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
                 }
             } else {
                 // child not exists, fill in zeros
+                // Number of beliefs for child nodes
+                uint childBeliefs = n->d->nb[n->layer - 1];
                 for ( k = 0; k < childBeliefs; k++, i++ )
                 {
                     n->observation[i] = 0;
@@ -78,21 +76,24 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
             n->observation[i] = framePtr[n->inputOffsets[i]];
         }
     }
+
+    //If recurrent, get observation from node's previous belief and parent's previous belief.
     if(isRecurrent){
         for( i=0; i < nb; i++ ){
             // get previous beliefs
             n->observation[i+ni] = n->outputBelief[i] * n->gamma;
         }
         for( i=0; i < np; i++ ){
+
+            // if have a parent
             if (n->firstParent != NULL){
                 // get parent's beliefs
                 n->observation[i+ni+nb] = n->firstParent->outputBelief[i] * n->lambdaCoeff;
-            } else {
+            } else { // does not have a parent, must be the top node
                 n->observation[i+ni+nb] = 0;
             }
         }
-    }else{
-        // set these to uniform for now.
+    }else{ // No recurrence so set these to uniform for now.
         for( i=0; i < nb; i++ ){
             n->observation[i+ni] = 1 / (float) nb;
         }
@@ -107,7 +108,8 @@ void GetObservation( Node *n, float *framePtr, uint nIdx )
         n->observation[i+ni+nb+np] = 0;
     }
 
-    // 2013.4.11, 2013.7.3
+    // Apply extended input
+    // Adds an extra length to the observation of length inputImageSize * ( extRatio - 1)
     if(n->layer == 0)
     {
         for(j=1; j<n->d->extRatio; ++j)

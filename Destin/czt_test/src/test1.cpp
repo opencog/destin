@@ -85,7 +85,6 @@ int main(int argc, char ** argv){
 
 int CZT_UT()
 {
-    RUN(test_extRatio);
     RUN(test_add);
     RUN(test_kill);
     UT_REPORT_RESULTS();
@@ -453,10 +452,10 @@ void test_CztMod()
     // Test czt_lib2 (which is my own library of functions!)
 
     CztMod * cm = new CztMod();
-    ImageSouceImpl isi;
+    SupportedImageWidths siw = W512;
+    ImageSouceImpl isi(siw, siw);
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
 
-    SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,8,16,32,64,32,16,8};
     bool isUniform = true;
     int size = 512*512;
@@ -568,7 +567,8 @@ void test_Update()
 // using the same one for all 3000 iterations.
 #define TEST_addAndKill
 
-    ImageSouceImpl isi;
+    SupportedImageWidths siw = W512;
+    ImageSouceImpl isi(siw, siw);
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
     //isi.addImage("/home/teaera/Work/RECORD/2013.5.8/pro_1/3.jpg");
     CztMod * cl2 = new CztMod();
@@ -580,7 +580,6 @@ void test_Update()
 #define TEST_layer0
 #define TEST_layer7
 
-    SupportedImageWidths siw = W512;
     uint nLayer = 8;
 #ifdef TEST_add
     uint centroid_counts[]  = {1,8,16,32,32,16,8,4}; // For adding
@@ -860,7 +859,8 @@ void test_RandomInput()
 
 void test_SOM()
 {
-    ImageSouceImpl isi;
+    SupportedImageWidths siw = W32;
+    ImageSouceImpl isi(siw, siw);
     string imgs = "ABCDEFGHIJKLMNYZ", img;
     uint nImgs = imgs.length();
     for(int i=0; i<nImgs; ++i)
@@ -870,7 +870,6 @@ void test_SOM()
         isi.addImage("/home/teaera/Work/RECORD/2013.7.22/32/" + img + ".png");
     }
 
-    SupportedImageWidths siw = W32;
     uint nLayer = 4;
     //uint centroid_counts[]  = {96, 64, 32, 16};
     uint centroid_counts[]  = {64, 64, 32, 16};
@@ -1071,7 +1070,8 @@ void test_Quality()
     // To follow the habits from C, initialize i,j,k outside the loops first;
     int i, j, l;
 
-    ImageSouceImpl isi;
+    SupportedImageWidths siw = W32;
+    ImageSouceImpl isi(siw, siw);
     string imgs = "ABCDEFGHIJKLMNYZ", img;
     for(i=0; i<imgs.length(); ++i)
     {
@@ -1080,7 +1080,6 @@ void test_Quality()
         isi.addImage("/home/teaera/Work/RECORD/2013.7.22/32/" + img + ".png");
     }
 
-    SupportedImageWidths siw = W32;
     uint nLayer = 4;
     //uint centroid_counts[]  = {96, 64, 32, 16};
     uint centroid_counts[]  = {64, 64, 32, 16};
@@ -1153,7 +1152,8 @@ void test_Quality()
 
 void test_SOM2()
 {
-    ImageSouceImpl isi;
+    SupportedImageWidths siw = W32;
+    ImageSouceImpl isi(siw, siw);
     string imgs = "ABCDEFGHIJKLMNYZ", img;
     uint nImgs = imgs.length();
     for(int i=0; i<nImgs; ++i)
@@ -1163,7 +1163,6 @@ void test_SOM2()
         isi.addImage("/home/teaera/Work/RECORD/2013.7.22/32/" + img + ".png");
     }
 
-    SupportedImageWidths siw = W32;
     uint nLayer = 4;
     uint centroid_counts[]  = {64, 64, 32, 16};
     //uint centroid_counts[]  = {4, 4, 4, 16};
@@ -1324,73 +1323,6 @@ void test_SOM2()
     }
 
     delete network;
-}
-
-int test_extRatio()
-{
-    // extRatio will affect 'ns', thus the size of 'observation', 'mu' and the related parameters
-
-    uint nl;
-    nl = 1;
-    uint nci [] = {16};
-    uint nb [] = {4};  // 4 centroids;
-    uint nc = 0;
-    float beta = 1;
-    float lambdaCoeff = 1;
-    float gamma = 1;
-    float temperature [] = {1};
-    float starvCoef = 0.1;
-    uint nMovements = 0;
-    bool isUniform = true;
-    int extRatio = 3;  // For TEST;
-    float image[48] = {
-        .01, .02, .03, .04,
-        .05, .06, .07, .08,
-        .09, .10, .11, .12,
-        .13, .14, .15, .16,
-        .5, .5, .5, .5,
-        .5, .5, .5, .5,
-        .5, .5, .5, .5,
-        .5, .5, .5, .5,
-        .9, .9, .9, .9,
-        .9, .9, .9, .9,
-        .9, .9, .9, .9,
-        .9, .9, .9, .9
-    };
-    Destin * d = InitDestin(nci, nl, nb, nc, beta, lambdaCoeff, gamma, temperature, starvCoef, nMovements, isUniform, extRatio);
-    SetBeliefTransform(d, DST_BT_BOLTZ);
-
-    d->layerMask[0] = 1;
-    int nid = 0;
-
-    Node * n = &d->nodes[0];
-
-    assertTrue(n->ni == 16);
-    assertTrue(n->d->extRatio == extRatio);
-    assertTrue(n->ns == nci[0]*extRatio+nb[0]+0+nc);
-
-    // GetObservation; test whether it's extended to contain more info;
-    GetObservation( d->nodes, image, nid );
-    float expected_obs [] = {
-        .01, .02, .03, .04,
-        .05, .06, .07, .08,
-        .09, .10, .11, .12,
-        .13, .14, .15, .16,
-        0.25, 0.25, 0.25, 0.25,
-        .5, .5, .5, .5,
-        .5, .5, .5, .5,
-        .5, .5, .5, .5,
-        .5, .5, .5, .5,
-        .9, .9, .9, .9,
-        .9, .9, .9, .9,
-        .9, .9, .9, .9,
-        .9, .9, .9, .9
-    };
-    assertFloatArrayEquals( expected_obs , n->observation, 52);
-
-    int currLayer = 0;
-
-    return 0;
 }
 
 int test_add()
@@ -2014,10 +1946,10 @@ int showUpdate(DestinNetworkAlt * network, int currLayer)
 
 void test_Rescale()
 {
-    ImageSouceImpl isi;
+    SupportedImageWidths siw = W512;
+    ImageSouceImpl isi(siw, siw);
     isi.addImage("/home/teaera/Downloads/destin_toshare/train images/A.png");
 
-    SupportedImageWidths siw = W512;
     uint centroid_counts[]  = {4,8,16,32,32,16,8,4};
     bool isUniform = true;
     int size = 512*512;

@@ -48,7 +48,7 @@ set(destalt_sources
 )
 
 ADD_LIBRARY( destinalt SHARED ${destalt_sources})
-TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS} gomp )
+TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS} gomp m)
 
 ADD_LIBRARY( destinalt_test SHARED ${destalt_sources})
 TARGET_LINK_LIBRARIES( destinalt_test ${OpenCV_LIBS} m gomp)
@@ -59,7 +59,7 @@ TARGET_LINK_LIBRARIES( destin destinalt )
 SET_TARGET_PROPERTIES( destin PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin )
 
 
-ADD_EXECUTABLE( test test/test.c )
+ADD_EXECUTABLE( test test/test.c test/testconfig.conf)
 TARGET_LINK_LIBRARIES( test destinalt_test )
 SET_TARGET_PROPERTIES( test PROPERTIES RUNTIME_OUTPUT_DIRECTORY test )
 
@@ -67,3 +67,15 @@ INSTALL( TARGETS test destin destinalt_test destinalt
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static )
+
+INSTALL(FILES test/testconfig.conf DESTINATION bin)
+
+if(WIN32)
+    FILE(GLOB MINGW_DLLS C:/Qt/Qt*/Tools/mingw48_32/bin/*.dll)
+    INSTALL(FILES ${MINGW_DLLS} DESTINATION bin)
+    INSTALL(DIRECTORY ${OpenCV_DIR}/bin/ DESTINATION bin FILES_MATCHING REGEX "bin/libopencv_.*[0-9]+.dll")
+endif(WIN32)
+
+
+
+

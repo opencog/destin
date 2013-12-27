@@ -219,10 +219,10 @@ Running DeSTIN compiled executables:
 
 Type the commands:
 
-	$ export PATH="$PATH:/cygdrive/c/opencv-2.4.6/mingwbuild/bin"
-	$ export PATH="$PATH:/cygdrive/c/Qt/Qt5.1.1/Tools/mingw48_32/bin"
-	$ cd ~/destin/Destin-build/install/bin
-	$ ./destin.exe
+    export PATH="$PATH:/cygdrive/c/opencv-2.4.6/mingwbuild/bin"
+    export PATH="$PATH:/cygdrive/c/Qt/Qt5.1.1/Tools/mingw48_32/bin"
+    cd ~/destin/Destin-build/install/bin
+    ./destin.exe
 
 #### To run it from Qt Creator IDE:
 

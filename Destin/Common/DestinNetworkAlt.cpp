@@ -16,7 +16,7 @@ void DestinNetworkAlt::initTemperatures(int layers, uint * centroids){
     }
 }
 
-float *** DestinNetworkAlt::getCentroidImages(){
+float **** DestinNetworkAlt::getCentroidImages(){
     if(centroidImages==NULL){
         centroidImages = Cig_CreateCentroidImages(destin, centroidImageWeightParameter);
     }
@@ -24,22 +24,25 @@ float *** DestinNetworkAlt::getCentroidImages(){
 }
 
 DestinNetworkAlt::DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-        unsigned int centroid_counts [], bool isUniform, int extRatio, unsigned int layer_widths[]):
-
+                                   unsigned int centroid_counts [], bool isUniform,
+                                   unsigned int layer_widths[],
+                                   DstImageMode imageMode):
         training(true),
         lambdaCoeff(.1),
         gamma(.1),
         isUniform(isUniform),
         centroidImages(NULL),
         centroidImageWeightParameter(1.0),
-        inputImageWidth(width)
+        inputImageWidth(width),
+        imageMode(imageMode)
         {
-
+    int extRatio = getExtendRatio(imageMode);
     init(width, layers, centroid_counts, isUniform, extRatio, layer_widths);
 }
 
 void DestinNetworkAlt::init(SupportedImageWidths width, unsigned int layers,
-                            unsigned int centroid_counts [], bool isUniform, int extRatio, unsigned int layer_widths[]){
+                            unsigned int centroid_counts [], bool isUniform,
+                            int extRatio, unsigned int layer_widths[]){
     callback = NULL;
     initTemperatures(layers, centroid_counts);
 
@@ -83,9 +86,6 @@ void DestinNetworkAlt::init(SupportedImageWidths width, unsigned int layers,
     ClearBeliefs(destin);
     SetLearningStrat(destin, CLS_FIXED);
     destin->fixedLearnRate = 0.1;
-
-    //SetLearningStrat(destin, CLS_DECAY_c1);
-
     isTraining(true);
 }
 
@@ -172,15 +172,12 @@ std::vector<float> DestinNetworkAlt::getLayersVariances()
     return variances;
 }
 
-// 2013.7.4
-// CZT: get quality;
 float DestinNetworkAlt::getQuality(int layer)
 {
     return getSep(layer)-getVar(layer);
 }
 
-// CZT: to display all centroids
-void DestinNetworkAlt::displayFloatCentroids(int layer)
+void DestinNetworkAlt::printFloatCentroids(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
 
@@ -211,8 +208,7 @@ void DestinNetworkAlt::displayFloatCentroids(int layer)
     printf("\n\n");
 }
 
-// CZT: to display the vector with a given title
-void DestinNetworkAlt::displayFloatVector(std::string title, std::vector<float> vec)
+void DestinNetworkAlt::printFloatVector(std::string title, std::vector<float> vec)
 {
     printf("%s", title.c_str());
     for(int i=0; i<vec.size(); ++i)
@@ -292,8 +288,7 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
 {
     if(srcLayer == dstLayer)
     {
-        displayFloatVector("---Result is:\n", selCen);
-        //displayFloatCentroids(dstLayer);
+        printFloatVector("---Result is:\n", selCen);
         return;
     }
     else
@@ -306,9 +301,9 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
         std::vector<std::vector<float> > extendCen;
 
         // Display all centroids on source layer
-        displayFloatCentroids(srcLayer);
+        printFloatCentroids(srcLayer);
         // Display the selected centroid
-        displayFloatVector("---The selected centroid is:\n", selCen);
+        printFloatVector("---The selected centroid is:\n", selCen);
 
         if(srcLayer == 0)
         {
@@ -408,8 +403,6 @@ void DestinNetworkAlt::rescaleRecursiveUp(int srcLayer, std::vector<float> selCe
 
                 extendCen.push_back(quaCen);
 
-                // testing
-                //displayFloatVector("\n", quaCen);
             }
         }
 
@@ -468,8 +461,7 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
 {
     if(srcLayer == dstLayer)
     {
-        displayFloatVector("---Result is:\n", selCen);
-        //displayFloatCentroids(dstLayer);
+        printFloatVector("---Result is:\n", selCen);
         return;
     }
     else
@@ -480,16 +472,15 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
         std::vector<float> normSelCen;
 
         // Display all centroids on source layer
-        displayFloatCentroids(srcLayer);
+        printFloatCentroids(srcLayer);
         // Display the selected centroid
-        displayFloatVector("---The selected centroid is:\n", selCen);
+        printFloatVector("---The selected centroid is:\n", selCen);
 
         if(srcLayer == 1)
         {
             // Use every quarter as a single lower level centroid, then downsample
             //int level0 = 0;
             //Node * childNode = getNode(level0, 0, 0);
-            //displayFloatCentroids(level0);
 
             // Normalize for every quarter
             // This is inspired by 'cent_image_gen.c';
@@ -505,10 +496,6 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                     normSelCen.push_back(selCen[i*childNode->nb + j] / sum);
                 }
             }
-
-            // Display the selected centroid
-            //displayFloatVector("---The selected centroid is:\n", selCen);
-            //displayFloatVector("---The normalized selected centroid is:\n", normSelCen);
 
             // Downsampling method: pickping left-up one
             std::vector<int> vecIdx;
@@ -528,7 +515,6 @@ void DestinNetworkAlt::rescaleRecursiveDown(int srcLayer, std::vector<float> sel
                         tempCen[k-j*childNode->ns] += normSelCen[i*childNode->nb+j] * childNode->mu[j][k-j*childNode->ns];
                     }
                 }
-                //displayFloatVector("\n", tempCen);
                 for(int j=0; j<vecIdx.size(); ++j)
                 {
                     newSelCen.push_back(tempCen[vecIdx[j]]);
@@ -759,7 +745,6 @@ void DestinNetworkAlt::setPreviousBeliefDamping(float lambdaCoeff){
     for(int n = 0; n < destin->nNodes ; n++){
         destin->nodes[n].lambdaCoeff = lambdaCoeff;
     }
-
 }
 
 
@@ -785,7 +770,7 @@ void DestinNetworkAlt::load(const char * fileName){
     }
     temperatures = new float[getLayerCount()];
     memcpy(temperatures, destin->temp, sizeof(float) * getLayerCount());
-
+    imageMode = extRatioToImageMode(destin->extRatio);
 }
 
 void DestinNetworkAlt::moveCentroidToInput(int layer, int row, int col, int centroid){
@@ -797,42 +782,153 @@ void DestinNetworkAlt::moveCentroidToInput(int layer, int row, int col, int cent
     memcpy(cent, n->observation, n->ns * sizeof(float));
 }
 
-float * DestinNetworkAlt::getCentroidImage(int layer, int centroid){
+float * DestinNetworkAlt::getCentroidImage(int channel, int layer, int centroid){
     if(!destin->isUniform){
         printf("getCentroidImage: must be uniform");
         return NULL;
     }
 
     displayCentroidImage(layer, centroid);
-    return getCentroidImages()[layer][centroid];
+    return getCentroidImages()[channel][layer][centroid];
 }
 
+int DestinNetworkAlt::getCvFloatImageType(){
+    if(imageMode == DST_IMG_MODE_GRAYSCALE || imageMode == DST_IMG_MODE_GRAYSCALE_STEREO){
+        return CV_32FC1;
+    } else if (imageMode == DST_IMG_MODE_RGB){
+        return CV_32FC3;
+    } else {
+        throw std::runtime_error("getCvFloatImageType: unsupported image mode.\n");
+    }
+}
+
+int DestinNetworkAlt::getCvByteImageType(){
+    if(imageMode == DST_IMG_MODE_GRAYSCALE || imageMode == DST_IMG_MODE_GRAYSCALE_STEREO){
+        return CV_8UC1;
+    } else if (imageMode == DST_IMG_MODE_RGB){
+        return CV_8UC3;
+    } else {
+        throw std::runtime_error("getCvByteImageType: unsupported image mode.\n");
+    }
+}
+
+DstImageMode DestinNetworkAlt::extRatioToImageMode(int extRatio){
+    switch(extRatio){
+        case 1:
+            return DST_IMG_MODE_GRAYSCALE;
+        case 2:
+            return DST_IMG_MODE_GRAYSCALE_STEREO;
+        case 3:
+            return DST_IMG_MODE_RGB;
+        default:
+            throw std::runtime_error("extRatioToImageMode: unsupported extRatio\n.");
+    }
+}
+
+int DestinNetworkAlt::getExtendRatio(DstImageMode imageMode){
+    if(imageMode == DST_IMG_MODE_GRAYSCALE){
+        return 1;
+    } else if (imageMode == DST_IMG_MODE_GRAYSCALE_STEREO){
+        return 2;
+    } else if (imageMode == DST_IMG_MODE_RGB){
+        return 3;
+    } else {
+        throw std::runtime_error("DstImageMode: unsupported image mode.\n");
+    }
+}
+
+cv::Mat DestinNetworkAlt::convertCentroidImageToMatImage(int layer, int centroid, bool toByteType){
+    uint width = Cig_GetCentroidImageWidth(destin, layer);
+
+    int height = width;
+
+    if(imageMode == DST_IMG_MODE_GRAYSCALE_STEREO){
+        width = width * 2;
+    }
+
+    cv::Mat centroidImage(height, width, getCvFloatImageType());
+
+    cv::Mat toShow;
+    if(imageMode == DST_IMG_MODE_GRAYSCALE){
+        float * data = (float *)centroidImage.data;
+        // Copy generated centroid image to the Opencv mat.
+        memcpy(data, getCentroidImages()[0][layer][centroid], width*width*sizeof(float));
+    } else if(imageMode == DST_IMG_MODE_RGB){
+        // Copy  generated centroid to the color OpenCV mat.
+        for(int channel = 0 ; channel < 3 ; channel++){ // iterate over R, G, B
+            float * centroid_image = getCentroidImages()[channel][layer][centroid];
+            cv::Point p;
+            int pixel = 0;
+            for(p.y = 0 ; p.y < centroidImage.rows ; p.y++){
+                for(p.x = 0 ; p.x < centroidImage.cols; p.x++){
+                    centroidImage.at<cv::Vec3f>(p)[channel] = centroid_image[pixel];
+                    pixel++;
+                }
+            }
+        }
+    } else if(imageMode == DST_IMG_MODE_GRAYSCALE_STEREO){
+
+        // This section copies left and right pair of stereo images into a rectangle shapped image.
+
+        cv::Rect left_region_rect(cv::Point(0, 0), cv::Size(width, width));
+        cv::Rect right_region_rect(cv::Point(width, 0), cv::Size(width, width));
+
+        cv::Mat left_region = centroidImage(left_region_rect);
+        cv::Mat right_region = centroidImage(right_region_rect);
+
+        cv::Mat leftImage (width, width, getCvFloatImageType());
+        memcpy(leftImage.data,  getCentroidImages()[0][layer][centroid], width*width*sizeof(float));
+
+        cv::Mat rightImage(width, width, getCvFloatImageType());
+        memcpy(rightImage.data, getCentroidImages()[1][layer][centroid], width*width*sizeof(float));
+
+        leftImage.copyTo(left_region);   // copy left centroid image to left side of the bigger image
+        rightImage.copyTo(right_region); // copy right centroid image to right side of the bigger image
+
+        //TODO: test this section and remove the throw
+        throw std::runtime_error("convertCentroidImageToMatImage: TODO: need to test the code for DST_IMG_MODE_GRAYSCALE_STEREO");
+    } else {
+        throw std::runtime_error("fillMatWithCentroidImage: unsupported image mode.\n");
+    }
+    // make it suitable for equalizeHist
+    if(toByteType){
+        centroidImage.convertTo(toShow, getCvByteImageType(), 255);
+    } else {
+        toShow  = centroidImage;
+    }
+
+    return toShow;
+}
 
 cv::Mat DestinNetworkAlt::getCentroidImageM(int layer, int centroid, int disp_width, bool enhanceContrast){
     if(!isUniform){
         throw std::logic_error("can't displayCentroidImage with non uniform DeSTIN.");
     }
+
     if(layer > destin->nLayers ||  centroid > destin->nb[layer]){
         throw std::domain_error("displayCentroidImage: layer, centroid out of bounds\n");
     }
 
-    uint width = Cig_GetCentroidImageWidth(destin, layer);
+    cv::Mat toShow = convertCentroidImageToMatImage(layer, centroid, true);
 
-    //initialize or create new grid if needed
-    if(centroidImage.rows != width || centroidImage.cols != width){
-        centroidImage = cv::Mat(width, width, CV_32FC1);
-    }
-    float * data = (float *)centroidImage.data;
-
-    memcpy(data, getCentroidImages()[layer][centroid], width*width*sizeof(float));
-
-    cv::Mat toShow;
-    centroidImage.convertTo(toShow, CV_8UC1, 255); // make it suitable for equalizeHist
     if(enhanceContrast){
-        cv::equalizeHist(toShow, toShow);
+        if(getCvByteImageType() == CV_8UC1){
+            cv::equalizeHist(toShow, toShow);
+        } else if(getCvByteImageType() == CV_8UC3){
+            // This section is borrowed from http://stackoverflow.com/a/14709331
+            // on how to do equalization on color images
+            std::vector<cv::Mat> hsv_planes;
+            cvtColor(toShow,toShow,CV_BGR2HSV);
+            cv::split(toShow, hsv_planes);
+            cv::equalizeHist(hsv_planes[2], hsv_planes[2]);
+            cv::merge(hsv_planes,toShow);
+            cvtColor(toShow, toShow, CV_HSV2BGR);
+        } else {
+            std::cerr << __PRETTY_FUNCTION__ << ": unsupported image type for cv::equalizeHist" << std::endl;
+        }
     }
 
-    cv::resize(toShow,centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);
+    cv::resize(toShow, centroidImageResized, cv::Size(disp_width, disp_width), 0, 0, cv::INTER_NEAREST);
 
     return centroidImageResized;
 }
@@ -869,36 +965,38 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
         throw std::logic_error("can't displayLayerCentroidImages with non uniform DeSTIN.");
     }
 
-    int images = getBeliefsPerNode(layer);
-    int images_wide = ceil(sqrt(images));
+    int centroids = getBeliefsPerNode(layer);
+    int images_wide = ceil(sqrt(centroids));
     int sub_img_width = (int)((double)scale_width / (double)images_wide - (double)border_width);
 
-    int wpb = sub_img_width + border_width; // sub image width plus boarder. Each image gets a right and bottom boarder only.
+    // sub image width plus boarder. Each image gets a right and bottom boarder only.
+    int wpb = sub_img_width + border_width;
 
-    int images_high = ceil((float)images / (float)images_wide);
+    int images_high = ceil((float)centroids / (float)images_wide);
 
     // initialize the big image as solid black
-    cv::Mat big_img = cv::Mat::zeros(wpb*images_high, wpb*images_wide, CV_32FC1);
+    cv::Mat big_img = cv::Mat::zeros(wpb*images_high, wpb*images_wide, getCvFloatImageType());
 
     int r, c, x, y;
     // copies the subimages into the correct place in the big image
-    for(int i = 0 ; i < images ; i++){
-            r = i  / images_wide;
-            c = i - r * images_wide;
+    for(int centroid = 0 ; centroid < centroids ; centroid++){
+            r = centroid  / images_wide;
+            c = centroid - r * images_wide;
             x = c * wpb;
             y = r * wpb;
-            int w = Cig_GetCentroidImageWidth(destin, layer);
-            cv::Mat subimage(w, w, CV_32FC1, getCentroidImages()[layer][i]);
+
+            cv::Mat subimage = convertCentroidImageToMatImage(layer, centroid, false);
             cv::Mat subimage_resized;
             cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
             cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );
             cv::Mat dest = big_img( roi );
 
+            // copy centroid image into big image
             subimage_resized.copyTo( dest );
     }
 
     //cv::Mat toShow;
-    big_img.convertTo(layerCentroidsImage, CV_8UC1, 255);
+    big_img.convertTo(layerCentroidsImage, getCvByteImageType(), 255);
 
     //layerCentroidsImage = big_img;
     return layerCentroidsImage;

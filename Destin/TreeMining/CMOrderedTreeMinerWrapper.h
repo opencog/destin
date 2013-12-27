@@ -24,7 +24,6 @@ void dfsVisit(const short current, const TextTree& rhs, vector<short>& zakiCode)
  */
 class CMOrderedTreeMinerWrapper {
 
-    int support;
     int current_tid;
     PatternTree currentPatternTree;
     vector<TextTree> database;
@@ -37,10 +36,17 @@ class CMOrderedTreeMinerWrapper {
       */
     void timeShiftDatabaseHelper(const short vertex, const int level, const int tree_index);
 
+    void resetStats(){
+        MIN_VERTEX = (1 << 15) - 1;
+        MAX_VERTEX = 0;
+        current_tid = 0;
+    }
+
 public:
 
-    CMOrderedTreeMinerWrapper():current_tid(0), MIN_VERTEX((1 << 15) - 1), MAX_VERTEX(0)
+    CMOrderedTreeMinerWrapper()
     {
+        resetStats();
     }
 
     /** Returns how many trees have been added with addTree()
@@ -179,7 +185,9 @@ public:
      */
     vector<int> findSubtreeLocations(TextTree & haystack, TextTree & needle);
 
-
+    /** Clears added and found trees.
+      */
+    void reset();
 };
 
 #endif

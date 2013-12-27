@@ -1,0 +1,30 @@
+You can debug your C code while it is being used from the python bindings.
+To create a debug build, in the root CMakeList.txt uncomment the line
+SET(CMAKE_BUILD_TYPE Debug)
+
+Then the general process is that first you set a break point in your python code.
+While the python code is on the break point, open QT creator and attach to the
+running python process, ( press resume to allow python to continue). 
+Then set the break point in the C code. Then resume
+the python debugger. Qt Creator should then stop on the C breakpoint.
+
+In ubuntu, enable being able to attach to processes by running from the
+command line:
+
+sudo bash
+echo 0 > /proc/sys/kernel/yama/ptrace_scope
+
+
+In your python code, identify its process id (pid):
+    import os
+    print os.getpid()
+
+In QT Creator:
+    debug -> attach to external process
+    search for python, narrow down with the pid
+
+    hit resume in qt creator debugger
+    set breakpoint in the c/c++ code
+    resume python
+    
+   

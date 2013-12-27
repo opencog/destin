@@ -6,7 +6,7 @@ Created on Sat May 18 20:45:29 2013
 """
 
 import common as cm
-
+import pydestin as pd
 # load the layer_widths and centroids from the 
 # object_tracking_config.py
 from object_tracking_config import *
@@ -24,6 +24,12 @@ cm.init(centroids=centroids,
 cm.video_source.enableDisplayWindow()
 cm.network.setIsPOSTraining(True)
 
+write_video=True
+
+video_writer = pd.VideoWriter("obtracking_output.avi",15)
+
+
+callback_iters=0
 def callback(iter):
     #cm.network.printBeliefGraph(cm.top_layer, 0, 0)
     if iter %20 == 0:
@@ -44,7 +50,11 @@ def doTracking(delay=0):
         m = cm.video_source.getOutputColorMat()
         for j in xrange(tm.getFoundSubtreeCount()):
             tm.displayFoundSubtreeBorders(j, m, False, 2, 0)
-        #cm.wk(delay)
+        if write_video:
+                video_writer.write(m)
+                
+        if delay != -1:        
+            cm.wk(delay)
     
 cm.the_callback = callback
 

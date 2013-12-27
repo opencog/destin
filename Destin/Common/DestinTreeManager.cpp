@@ -134,6 +134,7 @@ void DestinTreeManager::setBottomLayer(unsigned int bottom){
 
     bottomLayer = bottom;
     updateTreeParameters(bottom);
+    reset();
     return;
 }
 
@@ -210,8 +211,14 @@ void DestinTreeManager::saveFoundSubtreeImg(const int treeIndex, const string & 
 }
 
 void DestinTreeManager::paintCentroidImage(int cent_layer, int centroid, int x, int y, cv::Mat & img){
+
+    if(destin.getNetwork()->extRatio != 1){
+        throw std::runtime_error("paintCentroidImage: currently only supports grayscale\n");
+    }
     int w = Cig_GetCentroidImageWidth(destin.getNetwork(), cent_layer); //TODO: what is smallest depth
-    cv::Mat subimage(w, w, CV_32FC1,destin.getCentroidImages()[cent_layer][centroid]); // wrap centroid image with cv::Mat
+
+    //TODO: update to draw color images
+    cv::Mat subimage(w, w, CV_32FC1,destin.getCentroidImages()[0][cent_layer][centroid]); // wrap centroid image with cv::Mat
     cv::Rect roi(cv::Point( x, y ), subimage.size()); // make roi = region of interest
     cv::Mat dest = img( roi );     // get the subsection of img where the centroid image will go
     subimage.copyTo(dest);                                                  // copy the subimage to the subsection of img
@@ -294,7 +301,7 @@ void DestinTreeManager::printFoundSubtree(const int treeIndex){
 }
 
 void DestinTreeManager::timeShiftTrees(){
-    tmw.timeShiftDatabase(destin.getLayerCount());
+    tmw.timeShiftDatabase(destin.getLayerCount() - bottomLayer);
 }
 
 vector<int> DestinTreeManager::matchSubtree(int foundSubtreeIndex){

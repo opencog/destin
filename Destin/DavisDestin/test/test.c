@@ -827,10 +827,10 @@ int testLinkParentsToChildren(){
 }
 
 int testCentroidImageGeneration(){
-    DestinConfig * dc = CreateDefaultConfig(3);
-    dc->inputDim = 1;
-    assignUIntArray(dc->centroids, 3, 2, 2, 2);
-    assignFloatArray(dc->temperatures, 3, 7.5, 8.5, 4.0);
+    DestinConfig * dc = CreateDefaultConfig(3); // create a 3 layer heiaracy
+    dc->inputDim = 1; // 1 pixel input per node
+    assignUIntArray(dc->centroids, 3, 2, 2, 2); // centroids per node, for each layer botttom to top.
+    assignFloatArray(dc->temperatures, 3, 7.5, 8.5, 4.0); // arbitrary, doesn't matter
 
     Destin * d = InitDestinWithConfig(dc);
 
@@ -839,54 +839,270 @@ int testCentroidImageGeneration(){
     SetBeliefTransform(d, DST_BT_BOLTZ);
 
     Node * n = GetNodeFromDestin(d, 0, 0 ,0);
-    n->mu[0][0] = 0.0;
-    n->mu[1][0] = 1.0; // black ( or is it white?)
+    n->mu[0][0] = 0.0; // assign centroid 0 white
+    n->mu[1][0] = 1.0; // assign centroid 1 black ( or is it white?)
 
     n = GetNodeFromDestin(d, 1, 0 ,0);
-    assignFloatArray(n->mu[0], 8,  0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //all black
-    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //all white
+    assignFloatArray(n->mu[0], 8,  0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0); //1st centroid is a black 2x2 square
+    assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0); //2nd centroid is a white 2x2 square
 
     n = GetNodeFromDestin(d, 2, 0 ,0);
 
-    //top half black, bottom half white
+    //Assign 1st centroid to be top half black, bottom half white
     assignFloatArray(n->mu[0], 8,  1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0);
 
-    //all black, bottom right dark grey
+    //Assign 2nd centroid to be all black, bottom right dark grey
     assignFloatArray(n->mu[1], 8,  1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.75, 0.25);
 
-    float *** images = Cig_CreateCentroidImages(d, 1.0);
+    float **** images = Cig_CreateCentroidImages(d, 1.0);
 
-    // check that the generated images are correct
-    assertFloatArrayEqualsEV(images[0][0], 0.0, 1, 0.0);
-    assertFloatArrayEqualsEV(images[0][1], 0.0, 1, 1.0);
+    // Check that the generated images are correct.
+    // Bottom centroid
+    assertFloatArrayEqualsEV(images[0][0][0], 0.0, 1, 0.0); // 1st centroid is white
+    assertFloatArrayEqualsEV(images[0][0][1], 0.0, 1, 1.0); // 2nd is black ( or is it the other way around...)
 
-    assertFloatArrayEqualsEV(images[1][0], 0.0, 4, 1.0, 1.0, 1.0, 1.0);
-    assertFloatArrayEqualsEV(images[1][1], 0.0, 4, 0.0, 0.0, 0.0, 0.0);
+    assertFloatArrayEqualsEV(images[0][1][0], 0.0, 4, 1.0, 1.0, 1.0, 1.0); // 1st centroid is a black 2x2 square
+    assertFloatArrayEqualsEV(images[0][1][1], 0.0, 4, 0.0, 0.0, 0.0, 0.0); // 2nd centroid is a white 2x2 square
 
-    assertFloatArrayEqualsEV(images[2][0], 0.0, 16,
+    // The images array is indexed like this: images[channel][layer][centroid].
+    // First centroid of top layer should generate an image of top half black
+    // and bottom half white
+    assertFloatArrayEqualsEV(images[0][2][0], 0.0, 16,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 1.0, 1.0,
                              0.0, 0.0, 0.0, 0.0,
                              0.0, 0.0, 0.0, 0.0);
 
-    assertFloatArrayEqualsEV(images[2][1], 0.0, 16,
+    // Second centroid of top layer should generate everything black (1.0)
+    // except for the bottom right corner which is gray (0.75)
+    assertFloatArrayEqualsEV(images[0][2][1], 0.0, 16,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 1.0, 1.0,
                              1.0, 1.0, 0.75, 0.75,
                              1.0, 1.0, 0.75, 0.75);
 
+    // Test Cig_PowerNormalize that it normalizes vector [1,2,3] properly ( when exponent parameter is 2)
     float aDist[3] = {1.0,2.0,3.0};
     float aDistNormed[3];
     Cig_PowerNormalize(aDist, aDistNormed, 3, 2);
     assertFloatArrayEqualsEV(aDistNormed, 1e-6, 3, 0.0714285714, 0.2857142857, 0.6428571429 );
-
-    //try if the source is same as dest
+    //Try if the source is same as dest
     Cig_PowerNormalize(aDist, aDist, 3, 2);
     assertFloatArrayEqualsEV(aDist, 1e-6, 3, 0.0714285714, 0.2857142857, 0.6428571429 );
 
     Cig_DestroyCentroidImages(d, images);
     DestroyDestin(d);
 
+    return 0;
+}
+
+int testColorCentroidImageGeneration(){
+    DestinConfig * dc = CreateDefaultConfig(3); // create a 3 layer heiaracy
+    dc->inputDim = 1; // 1 pixel input per node
+    dc->isRecurrent = false;
+    assignUIntArray(dc->centroids, 3, 3, 4, 2); // centroids per node, for each layer botttom to top.
+
+    dc->extRatio = 3; // allow for RGB processing
+
+    Destin * d = InitDestinWithConfig(dc);
+    DestroyConfig(dc);
+
+    Node * n = GetNodeFromDestin(d, 0, 0 ,0);
+
+    assertIntEquals(10, n->ns);
+    assertIntEquals(3, n->nb);
+
+    // Assign bottom layer centroids.
+
+    // First centroid represent white pixel ( Red + Green + Blue mixed).
+    assignFloatArray(n->mu[0], n->ns,
+            1.0, // Red
+            .33, .33, .33, // previous self belielfs, this node has 3 centroids, one for each centroid
+            .25, .25, .25, .25,// parent prev belief, parent nodes have 4 centroids
+            /*empty*/ // class, empty because nc = 0
+            1.0,// Green
+            1.0 // Blue
+            );
+
+    // Second centroid represents a red pixel.
+    assignFloatArray(n->mu[1],  n->ns,
+            1.0, // Red
+            .33, .33, .33, // previous self belielfs, this node has 3 centroids, one for each centroid
+            .25, .25, .25, .25,// parent prev belief, parent nodes have 4 centroids
+            /*empty*/ // class, empty because nc = 0
+            0.0,// Green
+            0.0 // Blue
+            );
+
+
+    // Third centroid represents a blue pixel.
+    assignFloatArray(n->mu[2],  n->ns,
+            0.0, // Red
+            .33, .33, .33, // previous self belielfs, this node has 3 centroids, one for each centroid
+            .25, .25, .25, .25,// parent prev belief, parent nodes have 4 centroids
+            /*empty*/ // class, empty because nc = 0
+            0.0,// Green
+            1.0 // Blue
+            );
+
+    //// Assign layer 1 centrois
+    n = GetNodeFromDestin(d, 1, 0 ,0);
+    assertIntEquals(18, n->ns);
+    // First centroid represent magenta 2x2 patch ( Red + Blue mixed).
+    assignFloatArray(n->mu[0], n->ns,
+            //W    R    B
+            0.0, 0.5, 0.5, // 1st child node belief distribution, W R B, R+B = magenta
+            0.0, 0.5, 0.5, // 2nd child
+            0.0, 0.5, 0.5, // 3rd child
+            0.0, 0.5, 0.5, // 4th child
+            .25, .25, .25, .25, // previous self belielfs, this node has 4 centroids, one for each centroid
+            .5, .5// parent prev belief, parent nodes have 2 centroids
+            /*empty*/ // class, empty because nc = 0
+            /*empty*/ // extended input empty, because it only concerns the input layer
+            );
+
+    // Second centroid represent red 2x2 patch.
+    assignFloatArray(n->mu[1], n->ns,
+          //W    R    B
+            0.0, 1.0, 0.0, // 1st child node belief distribution, W R B
+            0.0, 1.0, 0.0, // 2nd child
+            0.0, 1.0, 0.0, // 3rd child
+            0.0, 1.0, 0.0, // 4th child
+            .25, .25, .25, .25, // previous self belielfs, this node has 4 centroids, one for each centroid
+            .5, .5// parent prev belief, parent nodes have 2 centroids
+            /*empty*/ // class, empty because nc = 0
+            /*empty*/ // extended input empty, because it only concerns the input layer
+            );
+
+    // Third centroid represent Blue 2x2 patch.
+    assignFloatArray(n->mu[2], n->ns,
+          //W    R    B
+            0.0, 0.0, 1.0, // 1st child node belief distribution, W R B
+            0.0, 0.0, 1.0, // 2nd child
+            0.0, 0.0, 1.0, // 3rd child
+            0.0, 0.0, 1.0, // 4th child
+            .25, .25, .25, .25, // previous self belielfs, this node has 4 centroids, one for each centroid
+            .5, .5// parent prev belief, parent nodes have 2 centroids
+            /*empty*/ // class, empty because nc = 0
+            /*empty*/ // extended input empty, because it only concerns the input layer
+            );
+
+    // Fourth centroid represent White 2x2 patch.
+    assignFloatArray(n->mu[3], n->ns,
+          //W    R    B
+            1.0, 0.0, 0.0, // 1st child node belief distribution, W R B
+            1.0, 0.0, 0.0, // 2nd child
+            1.0, 0.0, 0.0, // 3rd child
+            1.0, 0.0, 0.0, // 4th child
+            .25, .25, .25, .25, // previous self belielfs, this node has 4 centroids, one for each centroid
+            .5, .5// parent prev belief, parent nodes have 2 centroids
+            /*empty*/ // class, empty because nc = 0
+            /*empty*/ // extended input empty, because it only concerns the input layer
+            );
+
+    //// Assign top layer centroids
+    n = GetNodeFromDestin(d, 2, 0 ,0); // get top layer node
+    assertIntEquals(18, n->ns);
+
+    // First centroid represents: ( M = magenta, R = red, B = Blue, W = white)
+    // MMRR
+    // MMRR
+    // BBWW
+    // BBWW
+    assignFloatArray(n->mu[0], n->ns,
+          //M    R    B     W
+            1.0, 0.0, 0.0, 0.0,// 1st child node belief distribution over centroids M R B W
+            0.0, 1.0, 0.0, 0.0,// 2nd child
+            0.0, 0.0, 1.0, 0.0, // 3rd child
+            0.0, 0.0, 0.0, 1.0,// 4th child
+            .5, .5 // previous self belielfs, this node has 2 centroids, one for each centroid
+            /*empty no parent */ // parent prev belief, parent nodes have 2 centroids
+            /*empty*/ // class, empty because nc = 0
+            /*empty*/ // extended input empty, because it only concerns the input layer
+            );
+
+    // Second centroid represents: ( M = magenta, R = red, B = Blue, W = white)
+    // WWWW
+    // WWWW
+    // WWMM
+    // WWMM
+    assignFloatArray(n->mu[1], n->ns,
+          //M    R    B     W
+            0.0, 0.0, 0.0, 1.0,// 1st child node belief distribution over centroids M R B W
+            0.0, 0.0, 0.0, 1.0,// 2nd child
+            0.0, 0.0, 0.0, 1.0,// 3rd child
+            1.0, 0.0, 0.0, 0.0,// 4th child
+            .5, .5 // previous self belielfs, this node has 2 centroids, one for each centroid
+            /*empty no parent */ // parent prev belief, parent nodes have 2 centroids
+            /*empty*/ // class, empty because nc = 0
+            /*empty*/ // extended input empty, because it only concerns the input layer
+            );
+
+    float **** images = Cig_CreateCentroidImages(d, 1.0);
+
+
+    int channel = 0; // red channel
+    // Check first centroid image for:
+    // MMRR
+    // MMRR
+    // BBWW
+    // BBWW
+    // Check red channel
+    //                      images[channel][layer][centoid]
+    assertFloatArrayEqualsEV(images[channel][2][0], 1e-12, 16,
+            0.5, 0.5, 1.0, 1.0,
+            0.5, 0.5, 1.0, 1.0,
+            0.0, 0.0, 1.0, 1.0,
+            0.0, 0.0, 1.0, 1.0);
+
+    // green channel
+    channel = 1;
+    assertFloatArrayEqualsEV(images[channel][2][0], 1e-12, 16,
+            0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 1.0,
+            0.0, 0.0, 1.0, 1.0);
+
+    // blue channel
+    channel = 2;
+    assertFloatArrayEqualsEV(images[channel][2][0], 1e-12, 16,
+            0.5, 0.5, 0.0, 0.0,
+            0.5, 0.5, 0.0, 0.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0);
+
+    // Check second centroid image for:
+    // WWWW
+    // WWWW
+    // WWMM
+    // WWMM
+
+    // red channel
+    channel = 0;
+    assertFloatArrayEqualsEV(images[channel][2][1], 1e-12, 16,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 0.5, 0.5,
+            1.0, 1.0, 0.5, 0.5);
+
+    // green channel
+    channel = 1;
+    assertFloatArrayEqualsEV(images[channel][2][1], 1e-12, 16,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 0.0, 0.0,
+            1.0, 1.0, 0.0, 0.0);
+
+    // blue channel
+    channel = 2;
+    assertFloatArrayEqualsEV(images[channel][2][1], 1e-12, 16,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 0.5, 0.5,
+            1.0, 1.0, 0.5, 0.5);
+
+    Cig_DestroyCentroidImages(d, images);
+    DestroyDestin(d);
     return 0;
 }
 
@@ -1105,6 +1321,66 @@ int testBuildOverlappingHeirarchy(){
     return 0;
 }
 
+int testExtRatio()
+{
+    // extRatio will affect 'ns', thus the size of 'observation', 'mu' and the related parameters
+    DestinConfig * dc = CreateDefaultConfig(1);
+    int inputDim = 16;
+    dc->inputDim = inputDim;
+    uint nb_0 = 4;
+    dc->centroids[0] = nb_0;
+    dc->extRatio = 3;
+    dc->layerMaxNb[0] = 4;
+
+    Destin * d = InitDestinWithConfig(dc);
+
+    DestroyConfig(dc);
+
+    float image[48] = {
+        .01, .02, .03, .04,
+        .05, .06, .07, .08,
+        .09, .10, .11, .12,
+        .13, .14, .15, .16,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9
+    };
+
+    Node * n = &d->nodes[0];
+
+    assertTrue(n->ni == 16);
+    int extRatio = 3;
+    assertTrue(n->d->extRatio == extRatio);
+    assertTrue(n->ns == inputDim * extRatio + nb_0 + 0 + 0 /*nc*/);
+
+    // GetObservation; test whether it's extended to contain more info;
+    int nid = 0;
+    GetObservation( d->nodes, image, nid );
+    float expected_obs [] = {
+        .01, .02, .03, .04,
+        .05, .06, .07, .08,
+        .09, .10, .11, .12,
+        .13, .14, .15, .16,
+        0.25, 0.25, 0.25, 0.25, // self previous beliefs, no parent previous beliefs
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .5, .5, .5, .5,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9,
+        .9, .9, .9, .9
+    };
+    assertFloatArrayEquals( expected_obs , n->observation, 52);
+    DestroyDestin(d);
+    return 0;
+}
+
 int main(int argc, char ** argv ){
 
     //RUN( shouldFail );
@@ -1124,7 +1400,9 @@ int main(int argc, char ** argv ){
     RUN(test8Layers);
     RUN(testArrayOperations);
     RUN(testCentroidImageGeneration);
+    RUN(testColorCentroidImageGeneration);
     RUN(testBuildOverlappingHeirarchy);
+    RUN(testExtRatio);
 
     UT_REPORT_RESULTS();
 

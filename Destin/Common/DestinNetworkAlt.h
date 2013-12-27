@@ -35,9 +35,14 @@ enum SupportedImageWidths {
     W64 = 64,   //5 16x16
     W128 = 128, //6 32x32
     W256 = 256, //7 64x64
-    W512 = 512  //8 128x128 layers needed
+    W512 = 512  //8 layers 128x128 nodes
 };
-#define MAX_IMAGE_WIDTH 512
+
+enum DstImageMode {
+    DST_IMG_MODE_GRAYSCALE,
+    DST_IMG_MODE_RGB,
+    DST_IMG_MODE_GRAYSCALE_STEREO
+};
 
 using std::string;
 
@@ -51,22 +56,24 @@ private:
     float lambdaCoeff; //previous belief damping, 0 = disable, 1.0 = keep the same
     float gamma;  //parents previous belief damping, 0 = disable, 1.0 = keep the same
 
-    float * temperatures; //one temperature per layer. If temperature = #
-                          //centroids then the belief distribution doesn't change.
-                          //Higher temperature makes the belief more winner
-                          //take all, lower temperature makes it more uniform.
+    //One temperature per layer. If temperature = #
+    //centroids then the belief distribution doesn't change.
+    //Higher temperature makes the belief more winner
+    //take all, lower temperature makes it more uniform.
+    float * temperatures;
 
     float centroidImageWeightParameter; // higher value gives centroids images higher contrast
 
     cv::Mat winningGrid;
     cv::Mat winningGridLarge;
-    cv::Mat centroidImage;
     cv::Mat centroidImageResized;
     cv::Mat layerCentroidsImage;//one large image of all centroid images of one layer put together in a grid fashion
 
-    float *** centroidImages;
+    float **** centroidImages;
     bool isUniform;
     const int inputImageWidth;
+
+    DstImageMode imageMode; //Grayscale or color input
 
     /**
      * initTemperatures
@@ -77,7 +84,35 @@ private:
     void initTemperatures(int layers, uint * centroids);
 
     void init(SupportedImageWidths width, unsigned int layers,
-             unsigned int centroid_counts [], bool isUniform, int extRatio,  unsigned int layer_widths[]);
+              unsigned int centroid_counts [], bool isUniform,
+              int extRatio,  unsigned int layer_widths[]);
+
+    /** Convert raw float array centroid image to OpenCV mat.
+      * @param toByteType - if true, then convert to a CV_U8 byte type, otherwise
+      * it will be a CV_32F type
+      */
+    cv::Mat convertCentroidImageToMatImage(int layer, int centroid, bool toByteType);
+
+    //get OpenCV float image/mat type depending on the imageMode
+    int getCvFloatImageType();
+    //get OpenCV byte image/mat type depending on the imageMode
+    int getCvByteImageType();
+
+    /** Get destin extRatio for the given image mode
+     * grayscale = 1, RGB = 3
+     */
+    int getExtendRatio(DstImageMode imageMode);
+    DstImageMode extRatioToImageMode(int extRatio);
+
+    /*** helper methods for rescaling centroids ***/
+    void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
+    void normalizeChildrenPart(std::vector<float> & inCen, int ni);
+    // Prints all centroids
+    void printFloatCentroids(int layer);
+    // Prints the vector with a given title
+    void printFloatVector(std::string title, std::vector<float> vec);
+    void rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, int dstLayer);
+    void rescaleRecursiveDown(int srcLayer, std::vector<float> selCen, int dstLayer);
 
 public:
 
@@ -86,10 +121,6 @@ public:
       * @param layers - number of layers in the heirarchy
       * @param centroid_counts - centroids per layer. Starts from the bottom layer.
       * @param isUniform - if nodes in a level share the same pool of centroids.
-      * @param extendRatio - Specifies if destin should expect the input image to be duplicated.
-      * A value other than one means that the input size will be multiplied by this ration. For instance
-      * it may be 2 if inputing a pair of stereo images of the same size.
-      *
       * @param layer_widths - if null, it will build a classic 4 to 1 non overlapping heirarchy based on the
       * number of layers. Otherwise it will build the heirarchy according to these rules:
       * 1) If parent layer width is exactly one less than the child layer width, it assumes the parent nodes share their
@@ -98,9 +129,12 @@ public:
       * 2) Otherwise, if child_layer_width % parent_layer_width == 0 then it assumes that parent nodes do not share children nodes
       * Each child has just 1 parent. Each parent will have (child_layer_width / parent_layer_width) ^ 2 children.
       * 3) If neither of the two conditions do not apply, a runtime_error exception will be thrown.
+      * @param imageMode - specify wheter using grascale or color images
       */
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
-            unsigned int centroid_counts [], bool isUniform, int extendRatio = 1, unsigned int layer_widths[] = NULL);
+                     unsigned int centroid_counts [], bool isUniform,
+                     unsigned int layer_widths[] = NULL,
+                     DstImageMode imageMode = DST_IMG_MODE_GRAYSCALE);
 
     virtual ~DestinNetworkAlt();
 
@@ -115,7 +149,7 @@ public:
         return inputImageWidth;
     }
 
-    float *** getCentroidImages();
+    float**** getCentroidImages();
 
     void setBeliefTransform(BeliefTransformEnum e){
         SetBeliefTransform(destin, e);
@@ -136,13 +170,7 @@ public:
 
     /*************************************************************************/
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);
-    void rescaleRecursiveUp(int srcLayer, std::vector<float> selCen, int dstLayer);
-    void rescaleRecursiveDown(int srcLayer, std::vector<float> selCen, int dstLayer);
-    //
-    void displayFloatCentroids(int layer);
-    void displayFloatVector(std::string title, std::vector<float> vec);
-    void getSelectedCentroid(int layer, int idx, std::vector<float> & outCen);
-    void normalizeChildrenPart(std::vector<float> & inCen, int ni);
+
 
     void isTraining(bool isTraining);
 
@@ -172,6 +200,9 @@ public:
         this->callback = callback;
     }
 
+    /**
+     * @return - Number of centroids or beliefs per node.
+     */
     int getBeliefsPerNode(int layer){
         return destin->nb[layer];
     }
@@ -279,7 +310,7 @@ public:
       * Then displays it.
       * Opencv cvWaitKey function must be called after to see the image.
       */
-    float * getCentroidImage(int layer, int centroid);
+    float * getCentroidImage(int channel, int layer, int centroid);
 
     /** Returns generated centroid image.
       * Method updateCentroidImages should be called to get a refreshed version of the image.
@@ -289,22 +320,27 @@ public:
       * passing enhanceContrast parameter as true.
       * @param layer - which layer the centroid belongs
       * @param centroid - which centroid of the given layer to display.
-      * @param disp_width - scales the square centroid image to this width to be displayed. Defaults to 256 pixels
-      * @param enhanceContrast - if true, the image contrast is enhanced using the opencv function cvEqualizeHist as a post processing step
+      * @param disp_width - scales the square centroid image to this width to be displayed.
+      * Defaults to 256 pixels
+      * @param enhanceContrast - if true, the image contrast is enhanced using the opencv function
+      * cvEqualizeHist as a post processing step
       * @param window_name - name to give the display window
       */
-    cv::Mat getCentroidImageM(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false);
+    cv::Mat getCentroidImageM(int layer, int centroid, int disp_width = 256,
+                              bool enhanceContrast = false);
 
 
     /** Displays the image generated from getCentroidImageM method.
       * updateCentroidImages() should be called to recalulate the images to see changes.
       * Opencv cvWaitKey function must be called after to see the image.
       */
-    void displayCentroidImage(int layer, int centroid, int disp_width = 256, bool enhanceContrast = false, string window_name="Centroid Image" );
+    void displayCentroidImage(int layer, int centroid, int disp_width = 256,
+                              bool enhanceContrast = false, string window_name="Centroid Image" );
 
     /** Saves the image generated from getCentroidImageM method.
       */
-    void saveCentroidImage(int layer, int centroid, string filename, int disp_width = 256, bool enhanceContrast = false);
+    void saveCentroidImage(int layer, int centroid, string filename, int disp_width = 256,
+                           bool enhanceContrast = false);
 
     /** Displays all the centroid images of a layer into one large image.
       * Displays the image generated from method getLayerCentroidImages.
@@ -318,8 +354,7 @@ public:
     void displayLayerCentroidImages(int layer,
                                     int scale_width = 600,
                                     int border_width = 5,
-                                    string window_title="Centroid Images"
-                                    );
+                                    string window_title="Centroid Images");
 
     /** Creates an image that arranges all the centroid images of a layer into a grid.
       * The centroid images are arranged into a grid and are seperated by a black boarder.
@@ -334,8 +369,8 @@ public:
       * @param boarder_width - how wide, in pixels, the black border is that seperates the images.
       */
     cv::Mat getLayerCentroidImages(int layer,
-                                  int scale_width = 1000,
-                                  int border_width = 5);
+                                   int scale_width = 1000,
+                                   int border_width = 5);
 
     /** Saves the image generated from getLayerCentroidImages method to disk.
       * @param layer - which layer to generate the image for
@@ -345,9 +380,8 @@ public:
       * @param border_width -  how wide, in pixels, the black border is that seperates the images.
       */
     void saveLayerCentroidImages(int layer, const string & filename,
-                                  int scale_width = 1000,
-                                  int border_width = 5
-                                  );
+                                 int scale_width = 1000,
+                                 int border_width = 5);
 
 };
 
