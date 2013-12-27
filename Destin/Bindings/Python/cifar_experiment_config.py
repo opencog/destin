@@ -90,3 +90,13 @@ moving_average = sma.SimpleMovingAverage(moving_average_period)
 
 ################## Experiment Run Log ###################
 
+"""
+Run 2
+It appears the quality doesn't change much after 5000 iterations.
+Will try just 5000 to see if the images look the same.
+
+Results: 
+    Didn't change much as expected.
+"""
+
+training_iterations = 5000
