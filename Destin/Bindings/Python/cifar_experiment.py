@@ -7,13 +7,7 @@ Created on Wed Nov  6 20:52:28 2013
 
 import pydestin as pd
 import cv2.cv as cv
-import os
-import threading
 
-hg = lambda: None
-
-hg.cvWaitKey = cv.WaitKey
-hg.cvSetMouseCallback = cv.SetMouseCallback
 """
 This script defines a "go()" function which will train DeSTIN on CIFAR images ( see http://www.cs.toronto.edu/~kriz/cifar.html )
 and then presents the DeSTIN beliefs on a self organizing map ( SOM ).
@@ -28,14 +22,18 @@ If you click on SOM it will show you CIFAR image of the nearest dot.
 
 # Downlaod the required data at http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz
 # Set this variable to the folder containing data_batch_1.bin to data_batch_5.bin
-cifar_dir = os.getenv("HOME") + "/Downloads/cifar-10-batches-bin"
+# cifar_dir = os.getenv("HOME") + "/Downloads/cifar-10-batches-bin"
+cifar_dir = "/home/ted/destin_git_repo/Destin/Data/CIFAR/cifar-10-batches-bin"
 
 cifar_batch = 1 #which CIFAR batch to use from 1 to 5
 cs = pd.CifarSource(cifar_dir, cifar_batch)
 
 #must have 4 layers because the cifar data is 32x32
 layers = 4
-centroids = [7,5,5,5]
+centroids = [8,32,23,2]
+
+image_mode = pd.DST_IMG_MODE_RGB
+#image_mode = pd.DST_IMG_MODE_GRAYSCALE
 
 # How many CIFAR images to train destin with. If larger than
 # If this this is larger than the number of possible CIFAR images then some
@@ -45,7 +43,7 @@ training_iterations = 10000
 supervise_train_iterations = 10000
 
 is_uniform = True # uniform DeSTIN or not
-dn = pd.DestinNetworkAlt(pd.W32, layers, centroids, is_uniform)
+dn = pd.DestinNetworkAlt(pd.W32, layers, centroids, True, None, image_mode)
 
 # I turned off using previous beliefs in DeSTIN because I dont
 # think they would be useful in evaluating static images.
@@ -68,15 +66,15 @@ iterations_per_image = 8
 # See http://www.cs.toronto.edu/~kriz/cifar.html for the possible image classes.
 cs.disableAllClasses()
 cs.setClassIsEnabled(0, True) #airplane
-cs.setClassIsEnabled(1, True) #automobile
-cs.setClassIsEnabled(2, True) #bird
-cs.setClassIsEnabled(3, True) #cat
+#cs.setClassIsEnabled(1, True) #automobile
+#cs.setClassIsEnabled(2, True) #bird
+#cs.setClassIsEnabled(3, True) #cat
 cs.setClassIsEnabled(4, True) #deer
-cs.setClassIsEnabled(5, True) #dog
-cs.setClassIsEnabled(6, True) #frog
-cs.setClassIsEnabled(7, True) #horse
-cs.setClassIsEnabled(8, True) #ship
-cs.setClassIsEnabled(9, True) #truck
+#cs.setClassIsEnabled(5, True) #dog
+#cs.setClassIsEnabled(6, True) #frog
+#cs.setClassIsEnabled(7, True) #horse
+#cs.setClassIsEnabled(8, True) #ship
+#cs.setClassIsEnabled(9, True) #truck
 
 # which ids of the CIFAR images that were used in training
 image_ids = []
@@ -93,6 +91,14 @@ I don't understand how the parent nodes would be able to help the bottom nodes.
 If doing 8 iteration per image, then since half the time the top layers will be seeing
 junk beliefs, the training on those top ones should be disabled
 """
+
+def getCifarFloatImage():
+    if image_mode == pd.DST_IMG_MODE_RGB:
+        return cs.getRGBImageFloat()
+    elif image_mode == pd.DST_IMG_MODE_GRAYSCALE:
+        return cs.getGrayImageFloat()
+    else:
+        raise Exception("unsupported image mode")
 
 #train the network
 def train_destin():
@@ -118,11 +124,11 @@ def train_destin():
             dn.setLayerIsTraining(j, False)
         for j in range(layers):
             dn.setLayerIsTraining(j, True)
-            dn.doDestin(cs.getGrayImageFloat())
+            dn.doDestin(getCifarFloatImage())
             
         #let it train for 2 more times with all layers training
         for j in range(2):
-            dn.doDestin(cs.getGrayImageFloat())
+            dn.doDestin(getCifarFloatImage())
 
     #
     dn.save( "saved.dst")
@@ -133,7 +139,8 @@ def showDestinImage(i):
     cs.setCurrentImage(image_ids[im_id])
     dn.clearBeliefs()
     for j in range(layers):
-        dn.doDestin(cs.getGrayImageFloat())
+        
+        dn.doDestin(getCifarFloatImage())
             
 #Show the cifar images, and write the beliefs to the mat file.
 def dump_beliefs():
@@ -148,13 +155,16 @@ def dump_beliefs():
         
         # write the cifar image type/class ( i.e. cat / dog )
         # and the current beliefs to the mat file
-        print "class label: %i " % (cs.getImageClassLabel())
+        # print "class label: %i " % (cs.getImageClassLabel())
         be.writeBeliefToDisk(cs.getImageClassLabel())
+        if i % 100 == 0:
+            print "Iteration %d" % i
     
 def showCifarImage(id):
      cs.setCurrentImage(id)
      ci = cs.getColorImageMat()
      pd.imshow("Cifar Image: " + str(id), ci)
+     cv.WaitKey(500)
 
 def go():
     train_destin()
