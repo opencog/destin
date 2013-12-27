@@ -120,7 +120,7 @@ def go():
     print "Done."
     
 def dcis(layer = 0):
-    dn.displayLayerCentroidImages(layer)
+    dn.displayLayerCentroidImages(layer, 1000)
     cv.WaitKey(100)
 #Start it all up
 go()
