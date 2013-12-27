@@ -7,6 +7,8 @@ Created on Wed Nov  6 20:52:28 2013
 
 import pydestin as pd
 import cv2.cv as cv
+import charting as chart
+import sys
 
 """
 This script defines a "go()" function which will train DeSTIN on CIFAR images ( see http://www.cs.toronto.edu/~kriz/cifar.html )
@@ -78,6 +80,7 @@ cs.setClassIsEnabled(4, True) #deer
 
 # which ids of the CIFAR images that were used in training
 image_ids = []
+top_layer = len(centroids) - 1
 
 """
 consider belief propagation delay. For a static image, if there are
@@ -105,8 +108,18 @@ def train_destin():
     global image_ids
     image_ids = []
     for i in range(training_iterations):
-        if i % 100 == 0:
-            print "Training DeSTIN iteration: " + str(i)
+        if i % 50 == 0:
+            print "Training DeSTIN iteration: " + str(i), 
+            
+            #chart.update([dn.getQuality(top_layer), dn.getVar(top_layer), dn.getSep(top_layer)])
+            #chart.update([dn.getVar(top_layer), dn.getSep(top_layer)])
+            variance = dn.getVar(0)
+            seperation = dn.getSep(0)
+            quality = dn.getQuality(0)
+            #chart.update([variance, seperation])
+            chart.update([quality])
+            chart.draw()
+            print "Qual: %f, Variance: %f, seperation: %f" % (quality, variance, seperation)
 
         #find an image of an enabled class
         cs.findNextImage()
@@ -130,7 +143,7 @@ def train_destin():
         for j in range(2):
             dn.doDestin(getCifarFloatImage())
 
-    #
+    
     dn.save( "saved.dst")
 
 
