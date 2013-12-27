@@ -12,6 +12,7 @@ import SimpleMovingAverage as sma
 # Set this variable to the folder containing data_batch_1.bin to data_batch_5.bin
 # cifar_dir = os.getenv("HOME") + "/Downloads/cifar-10-batches-bin"
 cifar_dir = "/home/ted/destin_git_repo/Destin/Data/CIFAR/cifar-10-batches-bin"
+experiment_save_dir="./cifar_experiment_runs"
 
 cifar_batch = 1 #which CIFAR batch to use from 1 to 5
 cs = pd.CifarSource(cifar_dir, cifar_batch)
@@ -66,6 +67,8 @@ cs.setClassIsEnabled(4, True) #deer
 
 # which ids of the CIFAR images that were used in training
 image_ids = []
+
+save_image_width = 1000
 top_layer = len(centroids) - 1
 
 """
@@ -86,7 +89,7 @@ moving_average_period = 5
 moving_average = sma.SimpleMovingAverage(moving_average_period)
 
 
-
+weight_exponent = 4
 
 ################## Experiment Run Log ###################
 
@@ -98,5 +101,10 @@ Will try just 5000 to see if the images look the same.
 Results: 
     Didn't change much as expected.
 """
-
 training_iterations = 5000
+
+
+"""
+Run 3
+"""
+run_id = "003"

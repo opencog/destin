@@ -8,7 +8,7 @@ Created on Wed Nov  6 20:52:28 2013
 import pydestin as pd
 import cv2.cv as cv
 import charting as chart
-
+import common as cm
 
 """
 This script defines a "go()" function which will train DeSTIN on CIFAR images ( see http://www.cs.toronto.edu/~kriz/cifar.html )
@@ -125,3 +125,4 @@ def dcis(layer = 0):
 #Start it all up
 go()
 dcis(0)
+cm.saveCentroidLayerImages(dn, experiment_save_dir, run_id, save_image_width, weight_exponent)
