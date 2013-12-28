@@ -146,3 +146,16 @@ Resutls:
 """
 run_id = "007"
 centroids = [128,64,32,16]
+
+"""
+Run 8
+Will try to determine if there's a practical limit to the top layer
+centroids. Will they continue to be diverse as the number increases?
+
+Results:
+    A few centroids look pretty simulator, but they still look pretty diverse.
+    It takes a little bit longer still for the quality of the top layer to 
+    stabalize.
+"""
+run_id = "008"
+centroids = [128,64,32,32]

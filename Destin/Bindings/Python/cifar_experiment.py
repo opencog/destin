@@ -146,4 +146,4 @@ go()
 
 cm.saveCentroidLayerImages(dn, experiment_save_dir, run_id, save_image_width, weight_exponent)
 chart.savefig("%s/%s/chart_%s.jpg" % ( experiment_save_dir, run_id, run_id))
-cm.displayAllLayers(dn)
+cm.displayAllLayers(dn, weight_exponent)

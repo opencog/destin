@@ -301,7 +301,7 @@ def saveCenImages(network, root_dir, run_id, layer, centroid_image_width, weight
         fn = highweightede_dir + f
         network.saveCentroidImage(layer, i, fn, centroid_image_width, True )
         
-def displayAllLayers(network):
+def displayAllLayers(network, image_weight_exponent):
     """
         diplay centriod layer images
         Left key, go to previous layer
@@ -312,6 +312,8 @@ def displayAllLayers(network):
     left_arrow = 1113937
     current_image = 0
     close_button = -1
+    network.setCentImgWeightExponent(image_weight_exponent)
+    network.updateCentroidImages()
     while True:
         network.displayLayerCentroidImages(current_image, 1000)
         pressed = cv.WaitKey()
