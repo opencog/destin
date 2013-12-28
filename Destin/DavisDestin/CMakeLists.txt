@@ -71,11 +71,10 @@ INSTALL( TARGETS test destin destinalt_test destinalt
 INSTALL(FILES test/testconfig.conf DESTINATION bin)
 
 if(WIN32)
-    FILE(GLOB MINGW_DLLS C:/Qt/Qt*/Tools/mingw48_32/bin/*.dll)
+    # copy mingw dlls to bin directory
+    GET_FILENAME_COMPONENT(MINGW_BIN_DIR ${CMAKE_C_COMPILER} DIRECTORY)
+    FILE(GLOB MINGW_DLLS "${MINGW_BIN_DIR}/*.dll")
     INSTALL(FILES ${MINGW_DLLS} DESTINATION bin)
+    #copy opencv dlls to bin directory
     INSTALL(DIRECTORY ${OpenCV_DIR}/bin/ DESTINATION bin FILES_MATCHING REGEX "bin/libopencv_.*[0-9]+.dll")
 endif(WIN32)
-
-
-
-

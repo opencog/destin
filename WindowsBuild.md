@@ -32,6 +32,8 @@ Install CMake
 -----------------
 Download and install using the defaults: http://www.cmake.org/files/v2.8/cmake-2.8.12-win32-x86.exe
 
+Have it added to the windows path.	
+
 ( Link was found from this page: http://www.cmake.org/cmake/resources/software.html )
 
 Install prebuilt OpenCV for Mingw
@@ -42,8 +44,8 @@ https://dl.dropboxusercontent.com/u/49968823/destin/opencv-2.4.6-mingw-x86.zip G
 * Move the zip to c:\ and extract all. Move the inner "opencv-2.4.6" folder out to the root to c:\, then delete the left over empty opencv-2.4.6-mingw-x86 folder. When done
 properly you should able to find the file OpenCVConfig.cmake at C:\opencv-2.4.6\mingwbuild\install\OpenCVConfig.cmake and the rest of the files there too. 
 
-Build OpenCV From source ( If not using my prebuilt OpenCV):
-------------------------------------------------------------
+Build OpenCV From source ( If not using prebuilt from previous step):
+----------------------------------------------------------------------
 ( Note: if you have an opencv installation already at c:\ then you may want to rename it to c:\dontuse-opencv so that cmake does not automatically try to use that one. )
 
 * Download the source from https://github.com/Itseez/opencv/archive/2.4.6.zip
@@ -212,6 +214,12 @@ These settings save automatically.
 
 * You can ignore the compile warning "Returning a pointer or reference in a director method is not recommended." 
 
+Running DeSTIN unit tests:
+----------------------------
+These tests should be ran before checking in code.
+
+Navigate to c:\<your destin home>\Destin-build\install\bin in the command line or windows explorer. 
+
 Running DeSTIN compiled executables:
 -----------------------------------------------------
 
@@ -219,8 +227,6 @@ Running DeSTIN compiled executables:
 
 Type the commands:
 
-    export PATH="$PATH:/cygdrive/c/opencv-2.4.6/mingwbuild/bin"
-    export PATH="$PATH:/cygdrive/c/Qt/Qt5.1.1/Tools/mingw48_32/bin"
     cd ~/destin/Destin-build/install/bin
     ./destin.exe
 
@@ -232,13 +238,20 @@ Type the commands:
 
 * In the Run section, use the "Run configuration" dropdown to chose the executable to run. Unfortunately, each time you change the executable, you have to re enter the settings below.
 
-* Set the Working Directory to C:\cygwin\home\<your home>\destin\Destin-build\install\bin
+* Set the Working Directory to C:\<your destin home>\Destin-build\install\bin
 
 * In the Run Environment settings:
-	* Base Environment: Clean Environment
-	* Use the Add Button: 
-		* Variable: PATH 
-		* Value: `C:\opencv-2.4.6\mingwbuild\install\bin;C:\Qt\Qt5.1.1\Tools\mingw48_32\bin`
+	* Base Environment: Build Environment
 
 * Click the green triangle button on the left pane to run it. Press the "Application Output" button on the bottom to see the output.
 
+Using Python Bindings:
+-----------------------------------------------------
+
+Create (or append to) the windows environment variable PYTHONPATH the value:
+
+	C:\<your destin home>\Destin-build\install\bin
+	
+Then in your python scripts:
+
+	import pydestin

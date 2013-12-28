@@ -16,3 +16,4 @@ if "%has_errors%" == "yes" (
 	echo ALL PASS
 )
 
+pause
