@@ -22,7 +22,18 @@ If you click on SOM it will show you CIFAR image of the nearest dot.
 
 """
 
+# Loads the destin config from  cifar_experiment_config.py
 from cifar_experiment_config import *
+
+dn = pd.DestinNetworkAlt(pd.W32, layers, centroids, True, None, image_mode)
+
+# I turned off using previous beliefs in DeSTIN because I dont
+# think they would be useful in evaluating static images.
+dn.setParentBeliefDamping(0)
+dn.setPreviousBeliefDamping(0)
+
+# BeliefExporter - picks which beliefs from destin to show to the SOM
+be = pd.BeliefExporter(dn, bottom_belief_layer)
 
 def getCifarFloatImage():
     if image_mode == pd.DST_IMG_MODE_RGB:
@@ -134,5 +145,5 @@ def dcis(layer = 0):
 go()
 
 cm.saveCentroidLayerImages(dn, experiment_save_dir, run_id, save_image_width, weight_exponent)
-chart.savefig(experiment_save_dir+"/"+run_id+"/chart.jpg")
+chart.savefig("%s/%s/chart_%s.jpg" % ( experiment_save_dir, run_id, run_id))
 cm.displayAllLayers(dn)

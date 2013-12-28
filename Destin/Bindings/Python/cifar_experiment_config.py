@@ -32,20 +32,13 @@ training_iterations = 20000
 supervise_train_iterations = 10000
 
 is_uniform = True # uniform DeSTIN or not
-dn = pd.DestinNetworkAlt(pd.W32, layers, centroids, True, None, image_mode)
-
-# I turned off using previous beliefs in DeSTIN because I dont
-# think they would be useful in evaluating static images.
-dn.setParentBeliefDamping(0)
-dn.setPreviousBeliefDamping(0)
 
 # The som trains on concatenated beliefs starting from this layer to the top layer.
 # If  bottom_belief_layer = 0 then it will use all the beliefs from all the layers.
 # If bottom_belief_layer = 3 then only the top layer's beliefs will be used.
 bottom_belief_layer = 2 
 
-# BeliefExporter - picks which beliefs from destin to show to the SOM
-be = pd.BeliefExporter(dn, bottom_belief_layer)
+
 
 # How many times  at once an individual CIAR image should be shown to destin in one training iteration
 # Should be at least 4 because it takes a few iterations for an image to propagate through all the layers.
@@ -126,3 +119,13 @@ The quality seems to stabalize pretty quickly.
 run_id = "005"
 training_iterations = [3000,3000,3000,3000]
 
+
+"""
+Run 6
+See if adding more centroids on layer 1 will result in more diverse centroids
+
+Results:
+    It takes a little longer for layer 1 quality to stabalize
+"""
+run_id = "006"
+centroids = [128,64,32,2]
