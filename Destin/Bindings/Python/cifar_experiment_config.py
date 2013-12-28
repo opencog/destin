@@ -105,7 +105,7 @@ training_iterations = 5000
 
 
 """
-Run 3
+Run 4
 Undo the strategy of clearing beliefs between each one. 
 I think for training then,centroids will be able to move easier.
 Results:
@@ -113,3 +113,16 @@ Results:
 """
 run_id = "004"
 training_iterations = 10000
+
+"""
+Run 5
+
+Try to train each layer in stages, starting from the bottom.
+
+Results;
+The quality seems to stabalize pretty quickly.
+
+"""
+run_id = "005"
+training_iterations = [3000,3000,3000,3000]
+
