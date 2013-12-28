@@ -129,3 +129,20 @@ Results:
 """
 run_id = "006"
 centroids = [128,64,32,2]
+
+"""
+Run 7
+See if adding more centroids to the top layer will result in more diverse
+centroid images.
+
+Resutls:
+    The top centroid images were more unique. Before there was variance in the
+    quality measure of the top layer when there was only 2 centroids, now
+    the quality measure seemed to perfectly stabalize. It's hard to tell
+    what the quality is. 
+    
+    Need to add ability to log the quality measures.
+    
+"""
+run_id = "007"
+centroids = [128,64,32,16]
