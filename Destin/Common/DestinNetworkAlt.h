@@ -167,6 +167,7 @@ public:
 
     std::vector<float> getLayersVariances();
     std::vector<float> getLayersSeparations();
+    std::vector<float> getLayersQualities();
 
     /*************************************************************************/
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);

@@ -147,7 +147,6 @@ std::vector<float> DestinNetworkAlt::getLayersSeparations()
 float DestinNetworkAlt::getVar(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
-    std::vector<float> var(currNode->nb);
     int j;
     float fSum = 0.0;
     for(j=0; j<currNode->ni; ++j)
@@ -175,6 +174,16 @@ std::vector<float> DestinNetworkAlt::getLayersVariances()
 float DestinNetworkAlt::getQuality(int layer)
 {
     return getSep(layer)-getVar(layer);
+}
+
+std::vector<float> DestinNetworkAlt::getLayersQualities()
+{
+    std::vector<float> qualities(destin->nLayers);
+    for (int i = 0; i < destin->nLayers; i++)
+    {
+        qualities[i] = getQuality(i);
+    }
+    return qualities;
 }
 
 void DestinNetworkAlt::printFloatCentroids(int layer)

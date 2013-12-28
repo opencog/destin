@@ -46,3 +46,8 @@ def draw():
         plt.plot(axises)
     plt.pause(.01) # give the chart a change to draw itself
    
+def savefig(fname):
+    """
+        save the figure to file
+    """
+    plt.savefig(fname)

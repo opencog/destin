@@ -6,7 +6,7 @@ Created on Sat May 18 20:46:36 2013
 """
 
 import pydestin as pd
-import cv2.cv
+import cv2.cv as cv
 import time
 import czt_mod as czm
 import os, errno
@@ -300,3 +300,29 @@ def saveCenImages(network, root_dir, run_id, layer, centroid_image_width, weight
         network.saveCentroidImage(layer, i, fn, centroid_image_width, False )
         fn = highweightede_dir + f
         network.saveCentroidImage(layer, i, fn, centroid_image_width, True )
+        
+def displayAllLayers(network):
+    """
+        diplay centriod layer images
+        Left key, go to previous layer
+        Esc to cancel
+        Any other key to move to next image
+    """
+    esc_key = 1048603
+    left_arrow = 1113937
+    current_image = 0
+    close_button = -1
+    while True:
+        network.displayLayerCentroidImages(current_image, 1000)
+        pressed = cv.WaitKey()
+        if pressed == esc_key or pressed == close_button:
+            return
+        elif pressed == left_arrow:
+            current_image = current_image - 1
+        else:
+            current_image = current_image + 1
+        if current_image < 0:
+            current_image = network.getLayerCount() - 1
+        if current_image >= network.getLayerCount():
+            current_image = 0
+            

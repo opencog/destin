@@ -32,34 +32,48 @@ def getCifarFloatImage():
     else:
         raise Exception("unsupported image mode")
 
-
 def train_stages(iterations_per_layer_list):
-    for layer, iterations in enumerate(iterations_per_layer_list):
-        pass
-        
+    """
+    Train each layer one at a time, using the 
+    list of iterations per layer.
+    
+    If it's not  a list then just train all layers at once.
+    """
+    if type(iterations_per_layer_list) == list:        
+        for layer, iterations in enumerate(iterations_per_layer_list):
+            train_destin(iterations, layer)
+    else:
+        train_destin(iterations_per_layer_list)
         
 
 #train the network
-def train_destin(training_iterations):
+def train_destin(training_iterations, train_only_layer=-1):
     global image_ids
     image_ids = []
+    
+    # only enable one layer if specified
+    if train_only_layer != -1:
+        for i in xrange(layers):
+            dn.setLayerIsTraining(i, False)
+        dn.setLayerIsTraining(train_only_layer, True)
+        
     for i in range(training_iterations):
         if i % 100 == 0:
-            print "Training DeSTIN iteration: " + str(i), 
+            print "Training DeSTIN iteration: " + str(i)
             
             #chart.update([dn.getQuality(top_layer), dn.getVar(top_layer), dn.getSep(top_layer)])
             #chart.update([dn.getVar(top_layer), dn.getSep(top_layer)])
-            report_layer = 0
-            variance = dn.getVar(report_layer)
-            seperation = dn.getSep(report_layer)
-            quality = dn.getQuality(report_layer)
-            qual_moving_average = moving_average(quality)
+            #report_layer = 0
+            #variance = dn.getVar(report_layer)
+            #seperation = dn.getSep(report_layer)
+            #quality = dn.getQuality(report_layer)
+            #qual_moving_average = moving_average(quality)
             #chart.update([variance, seperation])
-            chart.update([quality, qual_moving_average])
+            chart.update(dn.getLayersQualities())
             if i%200 == 0:
                 chart.draw()
-            print "Qual: %f, Variance: %f, seperation: %f, average: %f" % (quality, variance, seperation, qual_moving_average)
-
+           # print "Qual: %f, Variance: %f, seperation: %f, average: %f" % (quality, variance, seperation, qual_moving_average)
+        
         #find an image of an enabled class
         cs.findNextImage()
 
@@ -67,8 +81,6 @@ def train_destin(training_iterations):
         image_ids.append(cs.getImageIndex())
 
         dn.doDestin(getCifarFloatImage())
-
-
     
     dn.save( "saved.dst")
 
@@ -106,7 +118,7 @@ def showCifarImage(id):
      cv.WaitKey(500)
 
 def go():
-    train_destin(training_iterations)
+    train_stages(training_iterations)
     print "Training Supervision..."
     # show cifar images, and dump resulting beliefs to a .txt file
     #dump_beliefs()
@@ -116,7 +128,11 @@ def go():
 def dcis(layer = 0):
     dn.displayLayerCentroidImages(layer, 1000)
     cv.WaitKey(100)
+
+
 #Start it all up
 go()
-dcis(0)
+
 cm.saveCentroidLayerImages(dn, experiment_save_dir, run_id, save_image_width, weight_exponent)
+chart.savefig(experiment_save_dir+"/"+run_id+"/chart.jpg")
+cm.displayAllLayers(dn)
