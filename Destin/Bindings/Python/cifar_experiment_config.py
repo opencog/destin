@@ -159,3 +159,17 @@ Results:
 """
 run_id = "008"
 centroids = [128,64,32,32]
+
+
+"""
+Run 8
+Determine if doubling layer 1 to 128 centroid will maintain or increase diversity.
+Determine if it resulted in more diversity in layer 2.
+
+Results:
+    Didn't decrease, but was harder to tell if it increased it. 
+    Could probably write a was to sort the centroid images based on simularity.
+    
+"""
+run_id="009"
+centroids = [128,128,32,32]
