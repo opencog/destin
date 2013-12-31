@@ -88,7 +88,7 @@ def train_destin(training_iterations, train_only_layer=-1):
         #find an image of an enabled class
         cs.findNextImage()
 
-        #save the image's id / index for layer replay
+        #save the image's id / index for later replay
         image_ids.append(cs.getImageIndex())
 
         dn.doDestin(getCifarFloatImage())
@@ -101,7 +101,6 @@ def showDestinImage(i):
     cs.setCurrentImage(image_ids[im_id])
     dn.clearBeliefs()
     for j in range(layers):
-        
         dn.doDestin(getCifarFloatImage())
             
 #Show the cifar images, and write the beliefs to the mat file.
@@ -110,6 +109,8 @@ def dump_beliefs():
     #its beliefs for a given image stay fixed
     for j in range(layers):
         dn.setLayerIsTraining(j, False)
+        
+    print "Dumping beliefs for %i iterations..." % (supervise_train_iterations)
         
     for i in range(supervise_train_iterations):
         # show DeSTIN a CIFAR image
