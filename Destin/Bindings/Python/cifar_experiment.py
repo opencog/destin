@@ -25,6 +25,11 @@ If you click on SOM it will show you CIFAR image of the nearest dot.
 # Loads the destin config from  cifar_experiment_config.py
 from cifar_experiment_config import *
 
+cs = pd.CifarSource(cifar_dir, cifar_batch)
+cs.disableAllClasses()
+for cifar_class in cifar_classes_enabled:
+    cs.setClassIsEnabled(cifar_class, True)
+
 dn = pd.DestinNetworkAlt(pd.W32, layers, centroids, True, None, image_mode)
 
 # I turned off using previous beliefs in DeSTIN because I dont
@@ -93,7 +98,7 @@ def train_destin(training_iterations, train_only_layer=-1):
 
         dn.doDestin(getCifarFloatImage())
     
-    dn.save( "saved.dst")
+    dn.save( experiment_save_dir+"/network_"+run_id+".dst")
 
 
 def showDestinImage(i):
@@ -131,9 +136,9 @@ def showCifarImage(id):
 
 def go():
     train_stages(training_iterations)
-    print "Training Supervision..."
+
     # show cifar images, and dump resulting beliefs to a .txt file
-    #dump_beliefs()
+    dump_beliefs()
     be.closeBeliefFile()
     print "Done."
     

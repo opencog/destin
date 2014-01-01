@@ -7,6 +7,12 @@ Created on Fri Dec 27 15:30:49 2013
 import pydestin as pd
 import SimpleMovingAverage as sma
 
+"""
+Important:
+    Check this whole file for values of the variables.
+    Each experiment run may override, the last set value
+    is the one that matters.
+"""
 
 # Downlaod the required data at http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz
 # Set this variable to the folder containing data_batch_1.bin to data_batch_5.bin
@@ -15,7 +21,20 @@ cifar_dir = "/home/ted/destin_git_repo/Destin/Data/CIFAR/cifar-10-batches-bin"
 experiment_save_dir="./cifar_experiment_runs"
 
 cifar_batch = 1 #which CIFAR batch to use from 1 to 5
-cs = pd.CifarSource(cifar_dir, cifar_batch)
+
+# This block picks which image classes to use.
+# See http://www.cs.toronto.edu/~kriz/cifar.html for the possible image classes.
+#0 airplane
+#1 automobile
+#2 bird
+#3 cat
+#4 deer
+#5 dog
+#6 frog
+#7 horse
+#8 ship
+#9 truck
+cifar_classes_enabled = [0,4]
 
 #must have 4 layers because the cifar data is 32x32
 layers = 4
@@ -44,24 +63,13 @@ bottom_belief_layer = 2
 # Should be at least 4 because it takes a few iterations for an image to propagate through all the layers.
 iterations_per_image = 8
 
-# This block picks which image classes to use.
-# See http://www.cs.toronto.edu/~kriz/cifar.html for the possible image classes.
-cs.disableAllClasses()
-cs.setClassIsEnabled(0, True) #airplane
-#cs.setClassIsEnabled(1, True) #automobile
-#cs.setClassIsEnabled(2, True) #bird
-#cs.setClassIsEnabled(3, True) #cat
-cs.setClassIsEnabled(4, True) #deer
-#cs.setClassIsEnabled(5, True) #dog
-#cs.setClassIsEnabled(6, True) #frog
-#cs.setClassIsEnabled(7, True) #horse
-#cs.setClassIsEnabled(8, True) #ship
-#cs.setClassIsEnabled(9, True) #truck
+
 
 # which ids of the CIFAR images that were used in training
 image_ids = []
 
-save_image_width = 1000
+save_image_width = 1000 # width of centroid layer images saved to file.
+
 top_layer = len(centroids) - 1
 
 """
@@ -81,7 +89,7 @@ junk beliefs, the training on those top ones should be disabled
 moving_average_period = 5
 moving_average = sma.SimpleMovingAverage(moving_average_period)
 
-
+# See weightParameter of Cig_CreateCentroidImages in cent_image_gen.c
 weight_exponent = 4
 
 ################## Experiment Run Log ###################
@@ -162,7 +170,7 @@ centroids = [128,64,32,32]
 
 
 """
-Run 8
+Run 9
 Determine if doubling layer 1 to 128 centroid will maintain or increase diversity.
 Determine if it resulted in more diversity in layer 2.
 
@@ -170,6 +178,66 @@ Results:
     Didn't decrease, but was harder to tell if it increased it. 
     Could probably write a was to sort the centroid images based on simularity.
     
+Waffles gave pretty good results.
+99.36% accuracy
 """
 run_id="009"
 centroids = [128,128,32,32]
+
+
+"""
+Run 10
+
+Enable all cifar classes, see how the nn can predict the results
+
+Results:
+        run_10_01:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.005 -momentum 0.3 -windowepochs 100 -minwindowimprovement 0.002    
+            Accuracy: .4237
+            Baseline Accuracy: .1069
+        run_10_02:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 400 -learningrate 0.005 -momentum 0.3 -windowepochs 100 -minwindowimprovement 0.002
+            Accuracy: .4422
+        run_10_03:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.002 -momentum 0.3 -windowepochs 100 -minwindowimprovement 0.002
+            file: nn3.model
+            train time: 22m3.478s
+            Mean squared error: 0.0348
+            
+        run_10_04:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.002 -momentum 0.2 -windowepochs 100 -minwindowimprovement 0.002
+            file: nn4.model
+            traintime: 8m34.904s
+            Mean squared error: 0.098
+                       
+        run_10_05:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 100 -learningrate 0.005 -momentum 0.3 -windowepochs 100 -minwindowimprovement 0.002
+            file: nn5.model
+            traintime: 1m46.884s
+            Mean squared error: 0.4967
+            
+        run_10_06:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.001 -momentum 0.2 -windowepochs 100 -minwindowimprovement 0.002
+            file: nn6.model
+            traintime: 8m2.960s
+            Mean squared error: 0.1171
+        
+        run_10_07:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 100 -learningrate 0.002 -momentum 0.2 -windowepochs 100 -minwindowimprovement 0.002 > nn7.model
+            train time: 6m9.983s
+            Mean squared error: 0.1126
+            
+        run_10_08:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.002 -momentum 0.1 -windowepochs 100 -minwindowimprovement 0.002 > nn8.model
+            train time: 8m51.823s
+            Mean squared error: 0.1063
+            
+        run_10_09:
+            waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.002 -momentum 0.2 -windowepochs 100 -minwindowimprovement 0.001 > nn9.model
+            train time: 8m43.846s
+            Mean squared error: 0.098
+"""
+
+run_id="010"
+cifar_classes_enabled = [0,1,2,3,4,5,6,7,8,9]
+
