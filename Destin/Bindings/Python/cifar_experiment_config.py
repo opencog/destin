@@ -21,6 +21,10 @@ cifar_dir = "/home/ted/destin_git_repo/Destin/Data/CIFAR/cifar-10-batches-bin"
 experiment_save_dir="./cifar_experiment_runs"
 
 cifar_batch = 1 #which CIFAR batch to use from 1 to 5
+cifar_test_batch = 2 #which CIFAR batch to test trained destin with
+
+output_training_beliefs_filename = "OutputTrainBeliefs.txt"
+output_test_beliefs_filename = "OutputTestBeliefs.txt"
 
 # This block picks which image classes to use.
 # See http://www.cs.toronto.edu/~kriz/cifar.html for the possible image classes.
@@ -44,10 +48,12 @@ image_mode = pd.DST_IMG_MODE_RGB
 #image_mode = pd.DST_IMG_MODE_GRAYSCALE
 
 # How many CIFAR images to train destin with. If larger than
-# If this this is larger than the number of possible CIFAR images then some
+# If this this is larger than the number of possible CIFAR images (10000) then some
 # images will be repeated
 training_iterations = 20000
 
+# How many belief rows( features ) will be dumped to a beliefs file
+# so that it can be used for supervised training ( for a neural network, or other classifier)
 supervise_train_iterations = 10000
 
 is_uniform = True # uniform DeSTIN or not

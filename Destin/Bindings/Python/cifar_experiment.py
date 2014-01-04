@@ -26,9 +26,12 @@ If you click on SOM it will show you CIFAR image of the nearest dot.
 from cifar_experiment_config import *
 
 cs = pd.CifarSource(cifar_dir, cifar_batch)
-cs.disableAllClasses()
-for cifar_class in cifar_classes_enabled:
-    cs.setClassIsEnabled(cifar_class, True)
+cs_test = pd.CifarSource(cifar_dir, cifar_test_batch)
+
+for the_cs in [cs, cs_test]:
+    the_cs.disableAllClasses()
+    for cifar_class in cifar_classes_enabled:
+        the_cs.setClassIsEnabled(cifar_class, True)
 
 dn = pd.DestinNetworkAlt(pd.W32, layers, centroids, True, None, image_mode)
 
@@ -40,11 +43,11 @@ dn.setPreviousBeliefDamping(0)
 # BeliefExporter - picks which beliefs from destin to show to the SOM
 be = pd.BeliefExporter(dn, bottom_belief_layer)
 
-def getCifarFloatImage():
+def getCifarFloatImage(cifar_source):
     if image_mode == pd.DST_IMG_MODE_RGB:
-        return cs.getRGBImageFloat()
+        return cifar_source.getRGBImageFloat()
     elif image_mode == pd.DST_IMG_MODE_GRAYSCALE:
-        return cs.getGrayImageFloat()
+        return cifar_source.getGrayImageFloat()
     else:
         raise Exception("unsupported image mode")
 
@@ -96,7 +99,7 @@ def train_destin(training_iterations, train_only_layer=-1):
         #save the image's id / index for later replay
         image_ids.append(cs.getImageIndex())
 
-        dn.doDestin(getCifarFloatImage())
+        dn.doDestin(getCifarFloatImage(cs))
     
     dn.save( experiment_save_dir+"/network_"+run_id+".dst")
 
@@ -106,14 +109,13 @@ def showDestinImage(i):
     cs.setCurrentImage(image_ids[im_id])
     dn.clearBeliefs()
     for j in range(layers):
-        dn.doDestin(getCifarFloatImage())
+        dn.doDestin(getCifarFloatImage(cs))
             
 #Show the cifar images, and write the beliefs to the mat file.
-def dump_beliefs():
+def dump_beliefs(beliefs_file_name):
     #turn off destin training so
     #its beliefs for a given image stay fixed
-    for j in range(layers):
-        dn.setLayerIsTraining(j, False)
+    dn.isTraining(False)
         
     print "Dumping beliefs for %i iterations..." % (supervise_train_iterations)
         
@@ -124,10 +126,22 @@ def dump_beliefs():
         # write the cifar image type/class ( i.e. cat / dog )
         # and the current beliefs to the mat file
         # print "class label: %i " % (cs.getImageClassLabel())
-        be.writeBeliefToDisk(cs.getImageClassLabel())
+        be.writeBeliefToDisk(cs.getImageClassLabel(), beliefs_file_name)
         if i % 100 == 0:
             print "Iteration %d" % i
-    
+
+def test():
+    print "Testing..."
+    dn.isTraining(False)
+    for i in xrange(supervise_train_iterations):
+        cs_test.findNextImage()
+        dn.clearBeliefs()
+        for j in xrange(layers): # let the image propagate through all layers
+            dn.doDestin(getCifarFloatImage(cs_test))
+        be.writeBeliefToDisk(cs_test.getImageClassLabel(), output_test_beliefs_filename)    
+    be.closeBeliefFile()
+     
+     
 def showCifarImage(id):
      cs.setCurrentImage(id)
      ci = cs.getColorImageMat()
@@ -138,8 +152,9 @@ def go():
     train_stages(training_iterations)
 
     # show cifar images, and dump resulting beliefs to a .txt file
-    dump_beliefs()
+    dump_beliefs(output_training_beliefs_filename)
     be.closeBeliefFile()
+    test()
     print "Done."
     
 def dcis(layer = 0):
@@ -149,6 +164,7 @@ def dcis(layer = 0):
 
 #Start it all up
 go()
+#dn.load("saved.dst")
 
 cm.saveCentroidLayerImages(dn, experiment_save_dir, run_id, save_image_width, weight_exponent)
 chart.savefig("%s/%s/chart_%s.jpg" % ( experiment_save_dir, run_id, run_id))

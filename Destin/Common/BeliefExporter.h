@@ -27,10 +27,10 @@ public:
       * @param bottom - layer to start including the beliefs for. See getOutputSize()
       * @param file_name - uses this file name for the writeBeliefToDisk method.
       */
-    BeliefExporter(DestinNetworkAlt & network, uint bottom, string file_name="OutputBeliefs.txt"):
+    BeliefExporter(DestinNetworkAlt & network, uint bottom):
         destin(network),
         fileIsOpen(false),
-        fileName(file_name),
+        fileName(""),
         filePtr(NULL),
         nLayers(destin.getLayerCount()),
         beliefs(NULL)
@@ -110,19 +110,27 @@ public:
      *
      * @brief writeBeliefToDisk
      * @param label - used to identify what type of input image (class) was given to Destin that
-     * led to the current output beliefs.
+     * led to the current output beliefs. Is written to the first column of the output beliefs
+     * @param file_name - File to write to. If this file name changes between calls,
+     * then the current file is closed and a new file is opened with the file name.
      */
-    void writeBeliefToDisk(int label){
+    void writeBeliefToDisk(int label, string file_name){
         float *beliefs = getBeliefs();
         int i = 0;
 
+        if(fileIsOpen && file_name != fileName){
+            // trying to write to a new file so close the curret one.
+            closeBeliefFile();
+        }
+
         if(!fileIsOpen){
-            filePtr = fopen(fileName.c_str(),"w");
+            filePtr = fopen(file_name.c_str(),"w");
             if(filePtr == NULL){
                 std::cerr << "Could not open file for writing beliefs!" << std::endl;
                 return;
             }
             fileIsOpen = true;
+            fileName = file_name;
         }
  	
         fprintf(filePtr, "%i\t", label);
