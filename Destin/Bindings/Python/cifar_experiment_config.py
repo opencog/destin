@@ -185,7 +185,7 @@ Results:
     Could probably write a was to sort the centroid images based on simularity.
     
 Waffles gave pretty good results.
-99.36% accuracy
+99.36% accuracy ( actually this was overtraining, cross validation reveals more like 79% accuracy)
 """
 run_id="009"
 centroids = [128,128,32,32]
@@ -197,6 +197,8 @@ Run 10
 Enable all cifar classes, see how the nn can predict the results
 
 Results:
+        Note: waffles reports Mean squared error, but it really means 1 - Accuracy rate when predicting discreet labels instead of continuous values
+        
         run_10_01:
             waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.005 -momentum 0.3 -windowepochs 100 -minwindowimprovement 0.002    
             Accuracy: .4237
@@ -242,6 +244,12 @@ Results:
             waffles_learn train -seed 0 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 200 -learningrate 0.002 -momentum 0.2 -windowepochs 100 -minwindowimprovement 0.001 > nn9.model
             train time: 8m43.846s
             Mean squared error: 0.098
+            
+Note: those previous runs were overfitting the data with too many neurons. 
+The best results with a 3 fold crossvalidation came from:
+    waffles_learn crossvalidate -seed 0 -reps 1 -folds 3 OutputBeliefs.txt.arff -labels 0 neuralnet -addlayer 160 -learningrate 0.002 -momentum 0.3 -windowepochs 1600 -minwindowimprovement .002
+    Error rate: 0.2023 = 79.77% accuracy
+            
 """
 
 run_id="010"
