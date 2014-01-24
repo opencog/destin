@@ -167,9 +167,6 @@ void CalculateDistances( Node *n, uint nIdx )
             // Start distance calculation
             delta *= delta;
 
-            // 2013.7.24
-            // CZT: allDelta
-            //n->allDelta[i][j] = fabs(delta);
 #ifdef CHECK_BELIEF_ZERO
             if(isnan(delta)){
                 oops("delta was nan\n");
