@@ -42,35 +42,14 @@ See https://swig.svn.sourceforge.net/svnroot/swig/trunk/Examples/java/callback/
 %feature("director") INetwork; 
 %include "INetwork.h"
 
-
-/* the other classes to generate wrappers for */
-%include "destin.h"
-%include "node.h"
-%include "VideoSource.h"
-%include "VideoWriter.h"
-%include "Transporter.h"
-%include "DestinNetworkAlt.h"
-%include "learn_strats.h"
-%include "ImageSourceBase.h"
-%include "CifarSource.h"
-%include "ImageSourceImpl.h"
-%include "ISom.h"
-%include "ClusterSom.h"
-%include "SomPresentor.h"
-%include "BeliefExporter.h"
-%include "cent_image_gen.h"
-%include "belief_transform.h"
-%include "DestinTreeManager.h"
-%include "CztMod.h"
-
 /* use c++ vector like a python list */
 %include "std_vector.i"
 namespace std {
 %template(IntVector) vector<int>;
+%template(UIntVector) vector<uint>;
 %template(ShortVector) vector<short>;
 %template(FloatVector) vector<float>;
 }
-
 
 /* carrays.i so you can use a c++ pointer like an array */
 %include "carrays.i" 
@@ -93,3 +72,23 @@ typedef struct CvPoint
       int y;
 }
 CvPoint;
+
+/* the other classes to generate wrappers for */
+%include "destin.h"
+%include "node.h"
+%include "VideoSource.h"
+%include "VideoWriter.h"
+%include "Transporter.h"
+%include "DestinNetworkAlt.h"
+%include "learn_strats.h"
+%include "ImageSourceBase.h"
+%include "CifarSource.h"
+%include "ImageSourceImpl.h"
+%include "ISom.h"
+%include "ClusterSom.h"
+%include "SomPresentor.h"
+%include "BeliefExporter.h"
+%include "cent_image_gen.h"
+%include "belief_transform.h"
+%include "DestinTreeManager.h"
+%include "CztMod.h"
