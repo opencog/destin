@@ -50,15 +50,13 @@ class CifarSource : public ImageSourceBase {
 
     string cifar_dir;
 
-    const int batch;            // batch being used Immutable
-
     const int numClasses;       // Number of classes, i.e. airplane, dog... currently = 10
 
     bool * classesEnabled;      // one boolean for each class, true for enabled otherwise disabled
 
     map< string, unsigned int> name_to_class; // maps the class name to the class number
 
-    const int imageDataSize;    // size of an image in bytes ( label + image data)
+    int imageDataSize;          // size of an image in bytes ( label + image data)
 
     size_t batch_size;          // size of raw batch data in bytes
     uchar * raw_batch;          // raw batch file data
@@ -70,6 +68,8 @@ class CifarSource : public ImageSourceBase {
     } image_info;
 
     vector<image_info> images;  // saves info about all the images
+
+    vector<int> batches;        // which CIFAR batches to use.
 
 
     void setupNameToClass(){
@@ -104,10 +104,20 @@ class CifarSource : public ImageSourceBase {
       * Divides it into indivual images saving info
       * about each one into a image_info struct.
       */
-    void loadBatch(){
+    void loadBatch(int batch, int images_per_batch){
         //create batch filename from cifar directory
         stringstream fn;
-        fn << cifar_dir << "/data_batch_" << batch << ".bin";
+        fn << cifar_dir;
+#ifdef _WIN32 // use the right path seperator depending on the platform
+        fn << "\\" ;
+#else
+        fn << "/" ;
+#endif
+        if(batch == 6){
+            fn << "test_batch.bin" ;
+        } else {
+            fn << "data_batch_" << batch << ".bin";
+        }
 
         //open it for reading
         FILE * f = fopen(fn.str().c_str(), "rb");
@@ -123,13 +133,18 @@ class CifarSource : public ImageSourceBase {
         // see http://www.cs.toronto.edu/~kriz/cifar.html for structure of raw batch image data
         size_t imageOffset = 0;
 
-        for(int i = 0 ; i < nImages ; i++){
-            images[i].classLabel = raw_batch[imageOffset]; // first byte is the class label 0 to 9
-            images[i].image_offset = imageOffset + 1; //skip the class label to get the offset of the begining of the image data
-            images[i].image = &raw_batch[images[i].image_offset]; //store pointer to the begining of the image part
+        for(int i = 0 ; i < images_per_batch ; i++){
+
+            image_info info;
+
+            info.classLabel = raw_batch[imageOffset]; // first byte is the class label 0 to 9
+            info.image_offset = imageOffset + 1; //skip the class label to get the offset of the begining of the image data
+            info.image = &raw_batch[info.image_offset]; //store pointer to the begining of the image part
 
             //turn it into an opencv color image
-            cv::Mat temp = convertToColorMat(images[i].image);
+            cv::Mat temp = convertToColorMat(info.image);
+
+            images.push_back(info);
 
             //save it
             colorMats.push_back(temp);
@@ -153,44 +168,21 @@ class CifarSource : public ImageSourceBase {
         }
         fclose(f);
     }
-protected:
 
-    /** Return true if the given image is allowed to be shown.
-      */
-     bool isImageIncluded(int index){
-        return classesEnabled[images[index].classLabel];
-     }
+    void initialize(string cifar_dir,  vector<int> & batches){
+        imageDataSize = 1 + 32 * 32 * 3;
 
-public:
-
-    /** Constructor
-      *
-      * @param cifar_dir - the directory which contains the
-      * CIFAR data files data_batch_1.bin to data_batch_5.bin
-      *
-      * @param batch - Integer 1 to 5 of which data_batch_*.bin file to use
-      * as the image source
-      * @throws runtime_error if the data_batch bin file cannot be loaded.
-      */
-    CifarSource(string cifar_dir, int batch ) :
-        ImageSourceBase(32, 32),
-        batch(batch),
-        numClasses(10),
-        imageDataSize(1 + 32 * 32 * 3)
-      // 10000 images in a batch. Each image is 1 byte
-      // class label, then 32x32 pixels by 3 colors (RGB)
-    {
-
-        nImages = 10000; // each cifar batch file as 10,000 images.
+        const int images_per_batch = 10000; // each cifar batch file as 10,000 images.
+        nImages = batches.size() * images_per_batch;
         images.reserve(nImages);
-        batch_size =  imageDataSize * nImages;
+        batch_size = imageDataSize * images_per_batch;
         struct stat s;
         stat(cifar_dir.c_str(), &s);
 
         if(!S_ISDIR(s.st_mode)){
             throw runtime_error(string("not a directory: ")+cifar_dir);
-
         }
+
         this->cifar_dir = cifar_dir;
 
         classesEnabled = new bool[numClasses];
@@ -202,7 +194,53 @@ public:
         setupNameToClass();
         raw_batch = new uchar[batch_size];
 
-        loadBatch();
+        for(int i = 0 ; i < batches.size() ; i++){
+            loadBatch(batches[i], images_per_batch);
+        }
+    }
+
+protected:
+
+    /** Return true if the given image is allowed to be shown.
+      */
+     bool isImageIncluded(int index){
+        return classesEnabled[images[index].classLabel];
+     }
+
+public:
+
+     /** Constructor
+       *
+       * @param cifar_dir - the directory which contains the
+       * CIFAR data files data_batch_1.bin to data_batch_5.bin
+       *
+       * @param batch - Integer 1 to 5 of which data_batch_*.bin file to use
+       * as the image source, or 6 to specify the test batch
+       * @throws runtime_error if the data_batch bin file cannot be loaded.
+       */
+     CifarSource(string cifar_dir, int batch) :
+         ImageSourceBase(32, 32), numClasses(10)
+     {
+        vector<int> batches;
+        batches.push_back(batch);
+        initialize(cifar_dir, batches);
+     }
+
+    /** Constructor
+      *
+      * @param cifar_dir - the directory which contains the
+      * CIFAR data files data_batch_1.bin to data_batch_5.bin
+      *
+      * @param batches - list of integers 1 to 5 of which data_batch_*.bin file to use
+      * as the image source, or 6 to specify the test batch
+      * @throws runtime_error if the data_batch bin file cannot be loaded.
+      */
+    CifarSource(string cifar_dir, vector<int> batches) :
+        ImageSourceBase(32, 32), numClasses(10)
+      // 10000 images in a batch. Each image is 1 byte
+      // class label, then 32x32 pixels by 3 colors (RGB)
+    {
+        initialize(cifar_dir, batches);
     }
 
     virtual ~CifarSource(){
@@ -227,7 +265,7 @@ public:
       * @param enabled - if true then images of this class can be found otherwise they will be skipped
       */
     void setClassIsEnabled(unsigned int classLabel, bool enabled){
-        if(classLabel >= 10){
+        if(classLabel >= numClasses){
             string message("setClassIsEnabled: classLabel must be less than ");
             message+=numClasses;
             message+="\n";
