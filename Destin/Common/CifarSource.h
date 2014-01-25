@@ -110,7 +110,7 @@ class CifarSource : public ImageSourceBase {
         fn << cifar_dir << "/data_batch_" << batch << ".bin";
 
         //open it for reading
-        FILE * f = fopen(fn.str().c_str(), "r");
+        FILE * f = fopen(fn.str().c_str(), "rb");
         if(f == NULL){
             throw runtime_error("could not open file at "+fn.str()+"\n");
         }
