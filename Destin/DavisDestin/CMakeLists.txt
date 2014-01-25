@@ -76,5 +76,5 @@ if(WIN32)
     FILE(GLOB MINGW_DLLS "${MINGW_BIN_DIR}/*.dll")
     INSTALL(FILES ${MINGW_DLLS} DESTINATION bin)
     #copy opencv dlls to bin directory
-    INSTALL(DIRECTORY ${OpenCV_DIR}/bin/ DESTINATION bin FILES_MATCHING REGEX "bin/libopencv_.*[0-9]+.dll")
+    INSTALL(DIRECTORY ${OpenCV_DIR}/bin/ DESTINATION bin FILES_MATCHING REGEX "bin/.*dll")
 endif(WIN32)
