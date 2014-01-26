@@ -11,22 +11,16 @@ import charting as chart
 import common as cm
 
 """
-This script defines a "go()" function which will train DeSTIN on CIFAR images ( see http://www.cs.toronto.edu/~kriz/cifar.html )
-and then presents the DeSTIN beliefs on a self organizing map ( SOM ).
-
-See http://www.mediafire.com/view/?17ehjc28z922g#um21dwtl1lz1f8v for a screen shot of this script.
-Each colored dot represents an image. The color of the dot is determined by the image class such as dog or airplane.
-The self organizing map should put simular images near each other.
-
-If you click on SOM it will show you CIFAR image of the nearest dot.
-
+This script defines a "go()" function which will train DeSTIN on CIFAR images 
+( see http://www.cs.toronto.edu/~kriz/cifar.html )
 """
 
 # Loads the destin config from  cifar_experiment_config.py
 from cifar_experiment_config import *
 
-cs = pd.CifarSource(cifar_dir, cifar_batch)
+cs = pd.CifarSource(cifar_dir, cifar_batches)
 cs_test = pd.CifarSource(cifar_dir, cifar_test_batch)
+top_layer = len(centroids) - 1
 
 for the_cs in [cs, cs_test]:
     the_cs.disableAllClasses()
@@ -66,17 +60,15 @@ def train_stages(iterations_per_layer_list):
         
 
 #train the network
-def train_destin(training_iterations, train_only_layer=-1):
-    global image_ids
-    image_ids = []
-    
+def train_destin(destin_train_iterations, train_only_layer=-1):
+  
     # only enable one layer if specified
     if train_only_layer != -1:
         for i in xrange(layers):
             dn.setLayerIsTraining(i, False)
         dn.setLayerIsTraining(train_only_layer, True)
         
-    for i in range(training_iterations):
+    for i in range(destin_train_iterations):
         if i % 100 == 0:
             print "Training DeSTIN iteration: " + str(i)
             
@@ -96,76 +88,64 @@ def train_destin(training_iterations, train_only_layer=-1):
         #find an image of an enabled class
         cs.findNextImage()
 
-        #save the image's id / index for later replay
-        image_ids.append(cs.getImageIndex())
-
         dn.doDestin(getCifarFloatImage(cs))
     
     dn.save( experiment_save_dir+"/network_"+run_id+".dst")
 
 
-def showDestinImage(i):
-    im_id = i % len(image_ids)
-    cs.setCurrentImage(image_ids[im_id])
-    dn.clearBeliefs()
-    for j in range(layers):
-        dn.doDestin(getCifarFloatImage(cs))
-            
-#Show the cifar images, and write the beliefs to the mat file.
-def dump_beliefs(beliefs_file_name):
+def dump_beliefs(output_filename, purpose, image_count, cifar_source):
+    print "Dumping %s beliefs for %d images..." %(purpose, image_count)
     #turn off destin training so
     #its beliefs for a given image stay fixed
     dn.isTraining(False)
-        
-    print "Dumping beliefs for %i iterations..." % (supervise_train_iterations)
-        
-    for i in range(supervise_train_iterations):
-        # show DeSTIN a CIFAR image
-        showDestinImage(i)
-        
-        # write the cifar image type/class ( i.e. cat / dog )
-        # and the current beliefs to the mat file
-        # print "class label: %i " % (cs.getImageClassLabel())
-        be.writeBeliefToDisk(cs.getImageClassLabel(), beliefs_file_name)
-        if i % 100 == 0:
-            print "Iteration %d" % i
-
-def test():
-    print "Testing..."
-    dn.isTraining(False)
-    for i in xrange(supervise_train_iterations):
-        cs_test.findNextImage()
+    cifar_source.setCurrentImage(-1)
+    for i in xrange(image_count):
+        cifar_source.findNextImage()
         dn.clearBeliefs()
         for j in xrange(layers): # let the image propagate through all layers
-            dn.doDestin(getCifarFloatImage(cs_test))
-        be.writeBeliefToDisk(cs_test.getImageClassLabel(), output_test_beliefs_filename)    
+            dn.doDestin(getCifarFloatImage(cifar_source))
+            
+        # write the cifar image type/class ( i.e. cat / dog )
+        # and the current beliefs to the mat file
+        be.writeBeliefToDisk(cifar_source.getImageClassLabel(), output_filename)
+        if i % 100 == 0:
+            print "Image %d of %d" % (i, image_count)
     be.closeBeliefFile()
+        
+#Show the cifar images, and write the beliefs to the mat file.
+def dump_training_beliefs():
+    dump_beliefs(output_training_beliefs_filename, "training", n_output_training_features, cs)
+    
+def dump_testing_beliefs():
+    dump_beliefs(output_test_beliefs_filename, "testing", n_output_testing_features, cs_test)
      
-     
-def showCifarImage(id):
+def displayCifarImage(id):
      cs.setCurrentImage(id)
      ci = cs.getColorImageMat()
      pd.imshow("Cifar Image: " + str(id), ci)
      cv.WaitKey(500)
 
-def go():
-    train_stages(training_iterations)
-
-    # show cifar images, and dump resulting beliefs to a .txt file
-    dump_beliefs(output_training_beliefs_filename)
-    be.closeBeliefFile()
-    test()
-    print "Done."
-    
 def dcis(layer = 0):
+    """ display centroid images """
     dn.displayLayerCentroidImages(layer, 1000)
     cv.WaitKey(100)
+    
+def go():
+    train_stages(destin_train_iterations)
 
+    cm.saveCentroidLayerImages(dn, experiment_save_dir, run_id, save_image_width, weight_exponent)
+    chart.savefig("%s/%s/chart_%s.jpg" % ( experiment_save_dir, run_id, run_id))
+    
+    # show training cifar images and dump resulting beliefs to a .txt file 
+    # to be used by supervising algorithm ( i.e. neural net)    
+    dump_training_beliefs()
 
+    # show testing cifar images and dump resulting beliefs to a .txt file 
+    # to be used fpr test the supervising algorithm.
+    dump_testing_beliefs()
+        
+    print "Displaying centroid images: ..."
+    cm.displayAllLayers(dn, weight_exponent)
+    
 #Start it all up
 go()
-#dn.load("saved.dst")
-
-cm.saveCentroidLayerImages(dn, experiment_save_dir, run_id, save_image_width, weight_exponent)
-chart.savefig("%s/%s/chart_%s.jpg" % ( experiment_save_dir, run_id, run_id))
-cm.displayAllLayers(dn, weight_exponent)

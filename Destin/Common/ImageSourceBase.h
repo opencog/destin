@@ -100,10 +100,10 @@ public:
     /** Sets the current image.
       * Methods such as getGrayImageFloat will reflect what this is set to.
       * The next invocation of the findNextImage method will start from this location.
-      * @param id - image id between 0 and nImages
+      * @param id - image id between 0 and nImages. Use -1 to restart from begining on next call to findNextImage()
       */
-    void setCurrentImage(uint image_id){
-        if(image_id > nImages){
+    void setCurrentImage(int image_id){
+        if(image_id > nImages || image_id < -1){
             throw std::domain_error("setCurrentImage: id out of range\n");
         }
         currentImage = image_id;

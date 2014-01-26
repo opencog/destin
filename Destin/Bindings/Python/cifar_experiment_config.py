@@ -6,6 +6,7 @@ Created on Fri Dec 27 15:30:49 2013
 """
 import pydestin as pd
 import SimpleMovingAverage as sma
+import czt_mod as czm
 
 """
 Important:
@@ -17,10 +18,13 @@ Important:
 # Downlaod the required data at http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz
 # Set this variable to the folder containing data_batch_1.bin to data_batch_5.bin
 # cifar_dir = os.getenv("HOME") + "/Downloads/cifar-10-batches-bin"
-cifar_dir = "/home/ted/destin_git_repo/Destin/Data/CIFAR/cifar-10-batches-bin"
+
+#cifar_dir = czm.homeFld + "/destin-data/cifar-10-batches-bin"
+cifar_dir="C:\\Users\\ts5012\\destin-data\\cifar-10-batches-bin"
+
 experiment_save_dir="./cifar_experiment_runs"
 
-cifar_batch = 1 #which CIFAR batch to use from 1 to 5
+cifar_batches = [1] #which CIFAR batch to use from 1 to 5
 cifar_test_batch = 2 #which CIFAR batch to test trained destin with
 
 output_training_beliefs_filename = "OutputTrainBeliefs.txt"
@@ -47,49 +51,32 @@ centroids = [128,32,23,2]
 image_mode = pd.DST_IMG_MODE_RGB
 #image_mode = pd.DST_IMG_MODE_GRAYSCALE
 
-# How many CIFAR images to train destin with. If larger than
-# If this this is larger than the number of possible CIFAR images (10000) then some
-# images will be repeated
-training_iterations = 20000
+# How many CIFAR images to train destin with.
+# If this this is larger than the number of possible CIFAR images then some
+# images will be repeated.
+# This can also be a list the size of the number of layer for example [2000,2000,200,2000]
+# If using a list, this means to freeze all layers except the layer being trained for
+# the number of iterations given in the list
+destin_train_iterations = 20000
 
-# How many belief rows( features ) will be dumped to a beliefs file
-# so that it can be used for supervised training ( for a neural network, or other classifier)
-supervise_train_iterations = 10000
+# Number of rows of destin beliefs or features ( one image per feature), 
+# that is output to file for training a supervised algorithm ( neural network or other)
+n_output_training_features = 10000
 
-is_uniform = True # uniform DeSTIN or not
+# Number of rows of destin beliefs or features ( one image per feature), 
+# that is output to file for testing the supervised algorithm ( neural network or other)
+n_output_testing_features = 10000
+
+# uniform DeSTIN or not ( this script has not been tested with False )
+is_uniform = True
 
 # The som trains on concatenated beliefs starting from this layer to the top layer.
 # If  bottom_belief_layer = 0 then it will use all the beliefs from all the layers.
 # If bottom_belief_layer = 3 then only the top layer's beliefs will be used.
 bottom_belief_layer = 2 
 
-
-
-# How many times  at once an individual CIAR image should be shown to destin in one training iteration
-# Should be at least 4 because it takes a few iterations for an image to propagate through all the layers.
-iterations_per_image = 8
-
-
-
-# which ids of the CIFAR images that were used in training
-image_ids = []
-
-save_image_width = 1000 # width of centroid layer images saved to file.
-
-top_layer = len(centroids) - 1
-
-"""
-consider belief propagation delay. For a static image, if there are
-4 layers, then it will take 4 iterations for the upper layers to
-start seeing anything, unless we implement a way to only enable 1
-layer processing at a time to avoid the propagation delay.
-
-Since the image is static, I dont think it would need previous belief recurrence.
-I don't understand how the parent nodes would be able to help the bottom nodes.
-
-If doing 8 iteration per image, then since half the time the top layers will be seeing
-junk beliefs, the training on those top ones should be disabled
-"""
+# width of centroid layer images saved to file.
+save_image_width = 1000 
 
 # moving average for centroid quality graph
 moving_average_period = 5
@@ -108,7 +95,7 @@ Will try just 5000 to see if the images look the same.
 Results: 
     Didn't change much as expected.
 """
-training_iterations = 5000
+destin_train_iterations = 5000
 
 
 """
@@ -119,7 +106,7 @@ Results:
     It seems to result in more colors on the bottom layers
 """
 run_id = "004"
-training_iterations = 10000
+destin_train_iterations = 10000
 
 """
 Run 5
@@ -131,7 +118,7 @@ The quality seems to stabalize pretty quickly.
 
 """
 run_id = "005"
-training_iterations = [3000,3000,3000,3000]
+destin_train_iterations = [3000,3000,3000,3000]
 
 
 """
@@ -255,3 +242,17 @@ The best results with a 3 fold crossvalidation came from:
 run_id="010"
 cifar_classes_enabled = [0,1,2,3,4,5,6,7,8,9]
 
+"""
+Run 11
+
+Use all 5 cifar batches, test against the test_batch
+
+    -labels 0 neuralnet -addlayer 160 -learningrate 0.002 -momentum 0.3 -windowepochs 200 -minwindowimprovement .002
+
+"""
+run_id="011"
+
+cifar_batches=[1,2,3,4,5]
+cifar_test_batch=6
+n_output_training_features=50000
+n_output_testing_features=10000
