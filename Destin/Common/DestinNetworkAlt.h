@@ -404,6 +404,15 @@ public:
      */
     float distanceBetweenCentroids(int layer, int centroid1, int centroid2);
 
+    /**
+     * Returns the indicies of centroids for a layer sorted according to apearance.
+     * This tries to group similar looking centroids to be near each other.
+     * The returned list can be passed to saveLayerCentroidImages and getLayerCentroidImages methods
+     * to have them show the images in the given order.
+     *
+     * @param layer
+     * @return - list of centroid incies in the sorted order
+     */
     std::vector<int> sortLayerCentroids(int layer);
 
 };
