@@ -19,8 +19,7 @@ Important:
 # Set this variable to the folder containing data_batch_1.bin to data_batch_5.bin
 # cifar_dir = os.getenv("HOME") + "/Downloads/cifar-10-batches-bin"
 
-#cifar_dir = czm.homeFld + "/destin-data/cifar-10-batches-bin"
-cifar_dir="C:\\Users\\ts5012\\destin-data\\cifar-10-batches-bin"
+cifar_dir = czm.homeFld + "/destin-data/cifar-10-batches-bin"
 
 experiment_save_dir="./cifar_experiment_runs"
 
@@ -247,7 +246,7 @@ Run 11
 
 Use all 5 cifar batches, test against the test_batch
 
-    -labels 0 neuralnet -addlayer 160 -learningrate 0.002 -momentum 0.3 -windowepochs 200 -minwindowimprovement .002
+    
 
 """
 run_id="011"
@@ -256,3 +255,27 @@ cifar_batches=[1,2,3,4,5]
 cifar_test_batch=6
 n_output_training_features=50000
 n_output_testing_features=10000
+
+"""
+Run 12
+
+Try to train destin on more of the features. 
+
+Results: Didn't really change much. still around 40% accuracy.    
+
+"""
+run_id="012"
+destin_train_iterations = [12000,12000,12000,12000]
+
+"""
+Run 13
+
+Add more centroids to the top layers. Revert back to previous training amount. 
+
+
+
+"""
+
+run_id="013"
+centroids = [128,128,64,64]
+destin_train_iterations = [3000,3000,3000,3000]

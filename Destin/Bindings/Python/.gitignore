@@ -11,3 +11,5 @@ ot.dst
 +LO.dst
 OutputBeliefs.txt
 letter_exp.dst
+OutputTestBeliefs.txt
+OutputTrainBeliefs.txt
