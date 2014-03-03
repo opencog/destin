@@ -18,6 +18,9 @@ Save the current user's home folder.
 """
 homeFld = os.getenv("HOME")
 
+if not homeFld:
+    homeFld = os.getenv("USERPROFILE")
+
 """
 Display centroids images!
 """

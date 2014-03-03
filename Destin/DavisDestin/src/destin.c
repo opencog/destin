@@ -94,13 +94,13 @@ void TrainDestin( Destin *d, char *dataFileName, char *labelsFileName )
     FILE *dataFile;
     FILE *labelFile;
     
-    dataFile = fopen(dataFileName, "r");
+    dataFile = fopen(dataFileName, "rb");
     if( !dataFile ) {
         fprintf(stderr, "Cannot open data file %s\n", dataFileName);
         exit(1);
     }
 
-    labelFile = fopen(labelsFileName, "r");
+    labelFile = fopen(labelsFileName, "rb");
     if( !labelFile ) {
         fprintf(stderr, "Cannot open data file %s\n", labelsFileName);
         exit(1);
@@ -204,20 +204,20 @@ void TestDestin( Destin *d, char *dataFileName, char *labelsFileName, bool gener
     FILE *beliefsFile;
     if (!generative)
     {
-        beliefsFile = fopen("beliefs.dat", "w");
+        beliefsFile = fopen("beliefs.dat", "wb");
     }
     size_t freadResult; // Not used, added to remove compiler warnings.
     
     FILE *dataFile;
     FILE *labelFile;
     
-    dataFile = fopen(dataFileName, "r");
+    dataFile = fopen(dataFileName, "rb");
     if( !dataFile ) {
         fprintf(stderr, "Cannot open data file %s\n", dataFileName);
         exit(1);
     }
 
-    labelFile = fopen(labelsFileName, "r");
+    labelFile = fopen(labelsFileName, "rb");
     if( !labelFile ) {
         fprintf(stderr, "Cannot open data file %s\n", labelsFileName);
         exit(1);

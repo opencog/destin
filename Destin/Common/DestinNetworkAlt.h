@@ -129,7 +129,7 @@ public:
       * 2) Otherwise, if child_layer_width % parent_layer_width == 0 then it assumes that parent nodes do not share children nodes
       * Each child has just 1 parent. Each parent will have (child_layer_width / parent_layer_width) ^ 2 children.
       * 3) If neither of the two conditions do not apply, a runtime_error exception will be thrown.
-      * @param imageMode - specify wheter using grascale or color images
+      * @param imageMode - specify wheter using grayscale or color images
       */
     DestinNetworkAlt(SupportedImageWidths width, unsigned int layers,
                      unsigned int centroid_counts [], bool isUniform,
@@ -149,6 +149,14 @@ public:
         return inputImageWidth;
     }
 
+    /** Gets centroid images as raw float arrays
+      * To get a particular centroid image:
+      * float * image_array = getCentroidImages()[channel][layer][centroid];
+      * The size of the image_array be determined from:
+      * width = Cig_GetCentroidImageWidth(destin, layer); size = width * width;
+      * The number of channels is destin->extRatio, which would be
+      * 1 channel for grayscale and 3 for RGB images.
+      */
     float**** getCentroidImages();
 
     void setBeliefTransform(BeliefTransformEnum e){
@@ -167,6 +175,7 @@ public:
 
     std::vector<float> getLayersVariances();
     std::vector<float> getLayersSeparations();
+    std::vector<float> getLayersQualities();
 
     /*************************************************************************/
     void rescaleCentroid(int srcLayer, int idx, int dstLayer);
@@ -350,11 +359,14 @@ public:
       * @param scale_width - resizes the square image grid width to this size.
       * @param boarder_width - how wide, in pixels, the black border is that seperates the images.
       * @param window_title - name given to the window that is displayed.
+      * @param sorted_centroids - if true, will try to arrange the centroid images according to appearance
       */
     void displayLayerCentroidImages(int layer,
                                     int scale_width = 600,
                                     int border_width = 5,
-                                    string window_title="Centroid Images");
+                                    string window_title="Centroid Images",
+                                    std::vector<int> sort_order = std::vector<int>());
+
 
     /** Creates an image that arranges all the centroid images of a layer into a grid.
       * The centroid images are arranged into a grid and are seperated by a black boarder.
@@ -367,10 +379,11 @@ public:
       * @param layer - what layer the centroids belong to
       * @param scale_width - resizes the square image grid width to this size.
       * @param boarder_width - how wide, in pixels, the black border is that seperates the images.
+      * @param sorted_centroids - if true, will try to arrange the centroid images according to appearance
       */
     cv::Mat getLayerCentroidImages(int layer,
                                    int scale_width = 1000,
-                                   int border_width = 5);
+                                   int border_width = 5, std::vector<int> sort_order=std::vector<int>());
 
     /** Saves the image generated from getLayerCentroidImages method to disk.
       * @param layer - which layer to generate the image for
@@ -378,10 +391,29 @@ public:
       *     Has been tested on *.png.
       * @param scale_width - resizes the square image grid width to this size.
       * @param border_width -  how wide, in pixels, the black border is that seperates the images.
+      * @param sorted_centroids - if true, will try to arrange the centroid images according to appearance
       */
     void saveLayerCentroidImages(int layer, const string & filename,
                                  int scale_width = 1000,
-                                 int border_width = 5);
+                                 int border_width = 5,
+                                 std::vector<int> sort_order = std::vector<int>());
+
+
+    /**
+     * Calculate rectilinear (taxicab) distance between two centroid points
+     */
+    float distanceBetweenCentroids(int layer, int centroid1, int centroid2);
+
+    /**
+     * Returns the indicies of centroids for a layer sorted according to apearance.
+     * This tries to group similar looking centroids to be near each other.
+     * The returned list can be passed to saveLayerCentroidImages and getLayerCentroidImages methods
+     * to have them show the images in the given order.
+     *
+     * @param layer
+     * @return - list of centroid incies in the sorted order
+     */
+    std::vector<int> sortLayerCentroids(int layer);
 
 };
 

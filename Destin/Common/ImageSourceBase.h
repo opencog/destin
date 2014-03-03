@@ -100,10 +100,10 @@ public:
     /** Sets the current image.
       * Methods such as getGrayImageFloat will reflect what this is set to.
       * The next invocation of the findNextImage method will start from this location.
-      * @param id - image id between 0 and nImages
+      * @param id - image id between 0 and nImages. Use -1 to restart from begining on next call to findNextImage()
       */
-    void setCurrentImage(uint image_id){
-        if(image_id > nImages){
+    void setCurrentImage(int image_id){
+        if(image_id > nImages || image_id < -1){
             throw std::domain_error("setCurrentImage: id out of range\n");
         }
         currentImage = image_id;
@@ -166,7 +166,7 @@ public:
       * If not specifed, it defaults to the rows, cols to -1 which means
       * use the values that were passed into the constructor
       */
-    void displayCifarColorImage(int image_id, int rows=-1, int cols=-1, string window_title="CIFAR Color Image"){
+    void displayColorImage(int image_id, int rows=-1, int cols=-1, string window_title="Color Image"){
         if(image_id < 0 || image_id >= nImages){
             printf("displayCifarColorImage, index out of bounds\n");
             return;
@@ -178,7 +178,7 @@ public:
 
     /** Same as displayCifarColorImage method, except in grayscale
       */
-    void displayCifarGrayImage(int image_id, int rows=-1, int cols=-1, string window_title="CIFAR Gray Image"){
+    void displayGrayImage(int image_id, int rows=-1, int cols=-1, string window_title="Gray Image"){
         if(image_id < 0 || image_id >= nImages){
             printf("displayCifarGrayImage, index out of bounds\n");
             return;

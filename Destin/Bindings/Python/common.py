@@ -6,9 +6,10 @@ Created on Sat May 18 20:46:36 2013
 """
 
 import pydestin as pd
-import cv2.cv
+import cv2.cv as cv
 import time
 import czt_mod as czm
+import os, errno
 
 layers_to_enum = {
         1: pd.W4,
@@ -231,4 +232,107 @@ def cycleCentroidImages(layer):
         time.sleep(1)
     
     
+def mkdir(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise
+
+def saveCentroidLayerImages(network, root_dir, run_id, image_width, weight_exponent):
+    run_dir = root_dir + "/"+run_id+"/"
+    mkdir(run_dir)
+    border_width = 5
+
+    network.setCentImgWeightExponent(weight_exponent)
+    network.updateCentroidImages()
+        
+    sort_orders = []
+    for i in xrange(network.getLayerCount()):
+        file_name = run_dir+"layer_%i_images_exp_%s.jpg" % (i, "{0:.2f}".format(weight_exponent))
+        sort_orders.append(network.sortLayerCentroids(i))
+        network.saveLayerCentroidImages(i, file_name, image_width, border_width, sort_orders[i])
+        
+    network.setCentImgWeightExponent(1)
+    network.updateCentroidImages()
+    for i in xrange(network.getLayerCount()):
+        network.saveLayerCentroidImages(i, run_dir+"layer_%i_images_exp_1.jpg" % (i), image_width, border_width, sort_orders[i])        
+        
+
+def saveCenImages(network, root_dir, run_id, layer, centroid_image_width, weight_exponent):
+    run_dir = root_dir + "/"+run_id+"/"
+    mkdir(run_dir)
+
+    # with centroid weight = 1 
+    orig_dir = run_dir+"orig/"
     
+    # with centroid weight = 1 and enhanced = true
+    orige_dir = run_dir+"orig_e/"
+    
+    # store centroid with higher weighting
+    highweighted_dir = run_dir+"highweight/"
+    
+    highweightede_dir = run_dir+"highweight_e/"
+
+    for d in [orig_dir, orige_dir, highweighted_dir, highweightede_dir]:
+        mkdir(d)
+    
+    # Save centriod images
+    bn = network.getBeliefsPerNode(layer)
+        
+    network.setCentImgWeightExponent(1)
+    network.updateCentroidImages()
+    
+    for i in range(bn):
+        f = "%02d_%02d_%s.png" % (layer, i,run_id)
+        # save original
+        fn = orig_dir + f 
+        network.saveCentroidImage(layer, i, fn, centroid_image_width, False )
+    
+        # save original enhanced
+        fn = orige_dir + f
+        network.saveCentroidImage(layer, i, fn, centroid_image_width, True )
+    
+    
+    network.setCentImgWeightExponent(weight_exponent)
+    network.updateCentroidImages()
+    for i in range(bn):
+        f = "%02d_%02d_%s.png" % (layer, i,run_id)
+        fn = highweighted_dir + f 
+        network.saveCentroidImage(layer, i, fn, centroid_image_width, False )
+        fn = highweightede_dir + f
+        network.saveCentroidImage(layer, i, fn, centroid_image_width, True )
+        
+def displayAllLayers(network, image_weight_exponent, sortCentroids=True):
+    """
+        diplay centriod layer images
+        Left key, go to previous layer
+        Esc to cancel
+        Any other key to move to next image
+    """
+    esc_key = 1048603
+    left_arrow = 1113937
+    current_image = 0
+    close_button = -1
+    network.setCentImgWeightExponent(image_weight_exponent)
+    network.updateCentroidImages()
+    while True:
+        if sortCentroids:
+            sort_order = network.sortLayerCentroids(current_image)
+            network.displayLayerCentroidImages(current_image, 1000, 5, "Centroid Images", sort_order)
+        else:
+            network.displayLayerCentroidImages(current_image, 1000, 5, "Centroid Images")
+            
+        pressed = cv.WaitKey()
+        if pressed == esc_key or pressed == close_button:
+            return
+        elif pressed == left_arrow:
+            current_image = current_image - 1
+        else:
+            current_image = current_image + 1
+        if current_image < 0:
+            current_image = network.getLayerCount() - 1
+        if current_image >= network.getLayerCount():
+            current_image = 0
+            

@@ -1,11 +1,33 @@
 import matplotlib.pyplot as plt
 
+"""
+Typical usage, 
+Draw a single line graph with two points:
+    
+charting.update([10])
+charting.draw()
+
+charting.update([4.5])
+charting.draw()
+
+Draw a chart with two line graphs:
+    
+charting.update([1,5])
+charting.draw()
+
+charting.update([12,45])
+charting.draw()    
+
+"""
 #plt.ion()
 
 axesis = []
 data = []
 the_plot = None
 def update(values):
+    """
+        update([x-asxis, y-axis,... n-axis])
+    """
     for index, val in enumerate(values):
         if(index >= len(data)):
             data.append([])
@@ -24,3 +46,8 @@ def draw():
         plt.plot(axises)
     plt.pause(.01) # give the chart a change to draw itself
    
+def savefig(fname):
+    """
+        save the figure to file
+    """
+    plt.savefig(fname)

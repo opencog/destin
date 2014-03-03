@@ -147,7 +147,6 @@ std::vector<float> DestinNetworkAlt::getLayersSeparations()
 float DestinNetworkAlt::getVar(int layer)
 {
     Node * currNode = getNode(layer, 0, 0);
-    std::vector<float> var(currNode->nb);
     int j;
     float fSum = 0.0;
     for(j=0; j<currNode->ni; ++j)
@@ -175,6 +174,16 @@ std::vector<float> DestinNetworkAlt::getLayersVariances()
 float DestinNetworkAlt::getQuality(int layer)
 {
     return getSep(layer)-getVar(layer);
+}
+
+std::vector<float> DestinNetworkAlt::getLayersQualities()
+{
+    std::vector<float> qualities(destin->nLayers);
+    for (int i = 0; i < destin->nLayers; i++)
+    {
+        qualities[i] = getQuality(i);
+    }
+    return qualities;
 }
 
 void DestinNetworkAlt::printFloatCentroids(int layer)
@@ -946,7 +955,8 @@ void DestinNetworkAlt::saveCentroidImage(int layer, int centroid, string filenam
 void DestinNetworkAlt::displayLayerCentroidImages(int layer,
                                 int scale_width,
                                 int border_width,
-                                string window_title
+                                string window_title,
+                                std::vector<int> sort_order
                                 ){
 
     if(layer < 0 || layer >= getLayerCount()){
@@ -954,13 +964,67 @@ void DestinNetworkAlt::displayLayerCentroidImages(int layer,
         std::cerr << "displayLayerCentroidImages: layer out of bounds " << std::endl;
         return;
     }
-    cv::imshow(window_title, getLayerCentroidImages(layer, scale_width, border_width));
+    cv::imshow(window_title, getLayerCentroidImages(layer, scale_width, border_width, sort_order));
     return;
+}
+
+float DestinNetworkAlt::distanceBetweenCentroids(int layer, int centroid1, int centroid2){
+
+    float distance = 0;
+
+    int width = Cig_GetCentroidImageWidth(destin, layer);
+    int size = width * width;
+    for(int channel = 0 ; channel < destin->extRatio ; channel++ ){
+        float * first = getCentroidImages()[channel][layer][centroid1];
+        float * second = getCentroidImages()[channel][layer][centroid2];
+        for(int pix = 0 ; pix < size ; pix++){
+            distance += fabs(first[pix] - second[pix]);
+        }
+    }
+    return distance;
+}
+
+std::vector<int> DestinNetworkAlt::sortLayerCentroids(int layer){
+    int centroids = getBeliefsPerNode(layer);
+    std::vector<int> order;
+    std::vector<int> candidates;
+    for(int i = 1 ; i < centroids ; i++){
+        candidates.push_back(i);
+    }
+
+    order.push_back(0); // centroid 0 is always first
+    for(int first = 0 ; first < centroids - 1; first++){
+        int first_centroid = order.at(order.size() - 1);
+        if(first == 125){
+            first_centroid = first_centroid;
+        }
+        int min_cand_index = 0;
+        int min_centroid = candidates.at(min_cand_index);
+        float min_dist = distanceBetweenCentroids(layer, first_centroid, min_centroid);
+        for(int cand_index = 1 ; cand_index < candidates.size() ; cand_index++){
+            float  dist = distanceBetweenCentroids(layer, first_centroid, candidates.at(cand_index));
+            if(dist < min_dist){
+                min_cand_index = cand_index;
+                min_centroid = candidates.at(cand_index);
+                min_dist = dist;
+            }
+        }
+
+        order.push_back(min_centroid);
+        if(min_cand_index >= candidates.size() || min_cand_index < 0){
+            std::logic_error("DestinNetworkAlt::sortLayerCentroids min index out of bounds");
+        }
+        candidates.erase(candidates.begin() + min_cand_index);
+    }
+    if(order.size() != centroids){
+        throw std::logic_error("DestinNetworkAlt::sortLayerCentroids: order did not match number of centroids\n");
+    }
+    return order;
 }
 
 cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
                               int scale_width,
-                              int border_width){
+                              int border_width, std::vector<int> sort_order){
     if(!isUniform){
         throw std::logic_error("can't displayLayerCentroidImages with non uniform DeSTIN.");
     }
@@ -977,6 +1041,16 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
     // initialize the big image as solid black
     cv::Mat big_img = cv::Mat::zeros(wpb*images_high, wpb*images_wide, getCvFloatImageType());
 
+    // specify centroid sort order
+    std::vector<int> centroid_sort_order;
+    if(sort_order.size() > 0){
+        centroid_sort_order = sort_order;
+    } else { // otherwize, default to centroid number
+        for(int i = 0 ; i < centroids ; i ++){
+            centroid_sort_order.push_back(i);
+        }
+    }
+
     int r, c, x, y;
     // copies the subimages into the correct place in the big image
     for(int centroid = 0 ; centroid < centroids ; centroid++){
@@ -985,7 +1059,8 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
             x = c * wpb;
             y = r * wpb;
 
-            cv::Mat subimage = convertCentroidImageToMatImage(layer, centroid, false);
+            int centroid_sorted = centroid_sort_order.at(centroid);
+            cv::Mat subimage = convertCentroidImageToMatImage(layer, centroid_sorted, false);
             cv::Mat subimage_resized;
             cv::resize(subimage, subimage_resized, cv::Size(sub_img_width, sub_img_width), 0,0,cv::INTER_NEAREST);
             cv::Rect roi( cv::Point( x, y ), subimage_resized.size() );
@@ -1003,10 +1078,10 @@ cv::Mat DestinNetworkAlt::getLayerCentroidImages(int layer,
 }
 
 void DestinNetworkAlt::saveLayerCentroidImages(int layer, const string & filename,
-                              int scale_width,
-                              int border_width
-                              ){
-    cv::imwrite(filename, getLayerCentroidImages(layer, scale_width, border_width) );
+                                               int scale_width,
+                                               int border_width,
+                                               std::vector<int> sort_order){
+    cv::imwrite(filename, getLayerCentroidImages(layer, scale_width, border_width, sort_order) );
     return;
 }
 
