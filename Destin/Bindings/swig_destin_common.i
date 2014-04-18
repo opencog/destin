@@ -4,8 +4,8 @@
 /* includes that are needed to compile */
 #include "macros.h"
 #include "DestinIterationFinishedCallback.h"
-#include "opencv/cv.h"
-#include "opencv/highgui.h"
+#include "opencv2/core/core_c.h"
+#include "opencv2/highgui/highgui_c.h"
 #include "VideoSource.h"
 #include "VideoWriter.h"
 #include "Transporter.h"

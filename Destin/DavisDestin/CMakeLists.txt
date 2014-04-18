@@ -47,6 +47,8 @@ set(destalt_sources
     src/centroid.c
 )
 
+FIND_PACKAGE(OpenCV REQUIRED )
+
 ADD_LIBRARY( destinalt SHARED ${destalt_sources})
 TARGET_LINK_LIBRARIES( destinalt ${OpenCV_LIBS} gomp m)
 

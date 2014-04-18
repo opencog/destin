@@ -3,9 +3,6 @@
 #include<math.h>
 #include<string.h>
 
-#include "opencv/cv.h"
-#include "opencv/highgui.h"
-
 #include "macros.h"
 #include "node.h"
 #include "destin.h"
