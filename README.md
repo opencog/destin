@@ -32,10 +32,9 @@ Instructions below are for Ubuntu.
 See Windows build instructions at https://github.com/opencog/destin/blob/master/WindowsBuild.md
 
 Dependencies:
-CMake ( >= 2.8 )
-OpenCV 
 
-Its been hard to pin down the exact opencv packages required for different versions of Ubuntu. Until we get this straightened out, use synaptic or the Ubuntu Software Center and do a search for opencv and install all the opencv related libs you can see. There may be around 10 different opencv libraries. 
+* CMake (>= 2.8)
+* OpenCV 2 (libopencv-dev)
 
 Java Bindings: JDK, ant and SWIG 2.x
 
@@ -122,6 +121,3 @@ changing the line:
 to 
 
     vs = pd.VideoSource(True, "")
-    
-    
-    
