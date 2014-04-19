@@ -1,8 +1,9 @@
 #ifndef VideoWriter_H
 #define VideoWriter_H
 
-#include "opencv/cv.h"
-#include "opencv/highgui.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include <stdexcept>
 
 /** A Simple wrapper around OpenCV VideoWriter.
   * so it can be used easily with Python bindings.

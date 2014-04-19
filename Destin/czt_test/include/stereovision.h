@@ -2,14 +2,14 @@
 #define STEREOVISION_H
 
 
-#include "cv.h"
-#include "cxmisc.h"
-#include "cvaux.h"
-#include "highgui.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/imgproc/imgproc_c.h"
 
 using namespace std;
 #include <vector>
-
+#include <stdio.h>
 
 #define RESULT_OK   0
 #define RESULT_FAIL 1
