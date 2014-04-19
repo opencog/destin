@@ -242,8 +242,8 @@ def som_click_callback(event, x, y, flag, param):
 
         image_index = coords_to_image_index[min_bmu_coords]
         print "BMU X: %i Y:%i, Image index: %i" % (min_bmu_coords[0], min_bmu_coords[1], image_index )
-        cs.displayCifarColorImage(image_index)
-        cs.displayCifarGrayImage(image_index)
+        cs.displayColorImage(image_index)
+        cs.displayGrayImage(image_index)
                 
                 
 
