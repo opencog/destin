@@ -168,7 +168,7 @@ public:
       */
     void displayColorImage(int image_id, int rows=-1, int cols=-1, string window_title="Color Image"){
         if(image_id < 0 || image_id >= nImages){
-            printf("displayCifarColorImage, index out of bounds\n");
+            printf("displayColorImage, index out of bounds\n");
             return;
         }
 
@@ -176,11 +176,11 @@ public:
         cv::imshow(window_title, bigger);
     }
 
-    /** Same as displayCifarColorImage method, except in grayscale
+    /** Same as displayColorImage method, except in grayscale
       */
     void displayGrayImage(int image_id, int rows=-1, int cols=-1, string window_title="Gray Image"){
         if(image_id < 0 || image_id >= nImages){
-            printf("displayCifarGrayImage, index out of bounds\n");
+            printf("displayGrayImage, index out of bounds\n");
             return;
         }
 
