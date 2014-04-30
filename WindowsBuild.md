@@ -38,7 +38,7 @@ Have it added to the windows path.
 
 Install prebuilt OpenCV for Mingw
 ----------------------------------
-* Download from my dropbox ( I've compiled it): 
+* Download from Ted Sanders' dropbox: 
 https://dl.dropboxusercontent.com/u/49968823/destin/opencv-2.4.6-mingw-x86.zip Google Chrome may complain that it's not commonly downloaded. Use the dropdown button to keep it.
 
 * Move the zip to c:\ and extract all. Move the inner "opencv-2.4.6" folder out to the root to c:\, then delete the left over empty opencv-2.4.6-mingw-x86 folder. When done
@@ -188,7 +188,9 @@ Building DeSTIN with Qt Creator IDE
 	* Generator: MinGW Generator
 	* Click Run CMake.
 
-The log window should say something like
+* You can ignore the warning "Couldn't find jni. Is a jdk installed? Not building java interfaces"
+
+The log window should say something like this at the bottom
 
     -- Build files have been written to: C:/cygwin/home/<your home/destin/Destin-build
 
@@ -202,7 +204,7 @@ Then you forgot to run the git submodule command from the "Using Cygwin Git to g
 * Click Finish.
 
 * Click the "Projects" tab button on the left.
-    * Under Build Steps section, click the "Details" drop down button on the right. 
+    * Under "Build Steps" section, click the "Details" drop down button to the very right
     * Check the "install" target. Uncheck the "all" target. 
     * In "Additional Arguments" section use -j to speed up compiling. For example, use -j8 for if your CPU has a quad core with hyper threading.
 
@@ -218,7 +220,15 @@ Running DeSTIN unit tests:
 ----------------------------
 These tests should be ran before checking in code.
 
-Navigate to c:\<your destin home>\Destin-build\install\bin in the command line or windows explorer. 
+* Navigate to c:\<your destin home>\Destin-build\install\bin in the command line or Windows Explorer. 
+
+* Execute mingw_run_test.bat
+
+* The tests should finish running in less than 10 seconds or so. The last line of the output should say:
+
+	FINISHED TESTING: PASS
+	ALL PASS
+
 
 Running DeSTIN compiled executables:
 -----------------------------------------------------
@@ -241,9 +251,9 @@ Type the commands:
 * Set the Working Directory to C:\<your destin home>\Destin-build\install\bin
 
 * In the Run Environment settings:
-	* Base Environment: Build Environment
+	* Use Build Environment
 
-* Click the green triangle button on the left pane to run it. Press the "Application Output" button on the bottom to see the output.
+* Click the green Play (triangle) button on the left pane to run it. Press the "Application Output" button on the bottom to see the output. Sometimes Build -> "Run Without Deployment" is convenient to use.
 
 Using Python Bindings:
 -----------------------------------------------------
