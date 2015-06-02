@@ -33,7 +33,7 @@ See Windows build instructions at https://github.com/opencog/destin/blob/master/
 
 Dependencies:
 
-* CMake (>= 2.8)
+* CMake (2.8.x, >= 3.2)
 * OpenCV 2 (libopencv-dev)
 
 Java Bindings: JDK, ant and SWIG 2.x
