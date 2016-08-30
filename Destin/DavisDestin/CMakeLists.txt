@@ -61,11 +61,11 @@ TARGET_LINK_LIBRARIES( destin destinalt )
 SET_TARGET_PROPERTIES( destin PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin )
 
 
-ADD_EXECUTABLE( test test/test.c test/testconfig.conf)
-TARGET_LINK_LIBRARIES( test destinalt_test )
-SET_TARGET_PROPERTIES( test PROPERTIES RUNTIME_OUTPUT_DIRECTORY test )
+ADD_EXECUTABLE( tests tests/test.c tests/testconfig.conf)
+TARGET_LINK_LIBRARIES( tests destinalt_test )
+SET_TARGET_PROPERTIES( tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY tests )
 
-INSTALL( TARGETS test destin destinalt_test destinalt
+INSTALL( TARGETS tests destin destinalt_test destinalt
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static )
