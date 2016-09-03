@@ -31,6 +31,8 @@ Instructions below are for Ubuntu.
 
 See Windows build instructions at https://github.com/opencog/destin/blob/master/WindowsBuild.md
 
+You may build docker image containing all dependencies apart from CUDA SDK by using https://github.com/opencog/destin/blob/master/Dockerfile
+
 Dependencies:
 
 * CMake (2.8.x, >= 3.2)
