@@ -34,7 +34,7 @@ RUN apt-get install software-properties-common -y;\
 RUN apt-get -y install libopencv-dev
 
 # Python
-RUN apt-get -y install python-dev python-opencv
+RUN apt-get -y install python-dev python-opencv python-matplotlib idle
 
 # Create and switch user. The user is privileged with no password required
 RUN adduser --disabled-password --gecos "OpenCog Developer" opencog
@@ -52,5 +52,9 @@ RUN tar -zxf swig-2.0.12.tar.gz; cd swig-2.0.12; ./configure;\
 RUN git clone http://github.com/opencog/destin.git;\
     cd destin; git submodule init; git submodule update;\
     cd Destin; cmake .; make -j$(nproc);
+
+# Ciphar Data
+RUN cd ~/destin/Destin/Data; wget http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz;\
+    tar -xzf cifar-10-binary.tar.gz; rm cifar-10-binary.tar.gz
 
 CMD /bin/bash
